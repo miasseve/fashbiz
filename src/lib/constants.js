@@ -1,0 +1,25 @@
+
+  export const filters = [
+    { key: "al_dente", label: "Al Dente" },
+    { key: "athena", label: "Athena" },
+    { key: "audrey", label: "Audrey" },
+    { key: "aurora", label: "Aurora" },
+    { key: "daguerre", label: "Daguerre" },
+    { key: "eucalyptus", label: "Eucalyptus" },
+    { key: "fes", label: "Fes" },
+    { key: "frost", label: "Frost" },
+    { key: "hairspray", label: "Hairspray" },
+    { key: "hokusai", label: "Hokusai" },
+    { key: "incognito", label: "Incognito" },
+    { key: "linen", label: "Linen" },
+    { key: "peacock", label: "Peacock" },
+    { key: "primavera", label: "Primavera" },
+    { key: "quartz", label: "Quartz" },
+    { key: "red_rock", label: "Red Rock" },
+    { key: "refresh", label: "Refresh" },
+    { key: "sizzle", label: "Sizzle" },
+    { key: "sonnet", label: "Sonnet" },
+    { key: "ukulele", label: "Ukulele" },
+    { key: "zorro", label: "Zorro" },
+
+  ];
