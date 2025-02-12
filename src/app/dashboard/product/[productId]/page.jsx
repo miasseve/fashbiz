@@ -36,9 +36,7 @@ const page = async ({ params }) => {
           </li>
           <li className="">
             <strong>Link:</strong>
-          
-            
-            {`https://fash-app-iota.vercel.app/product/${parsedProduct._id}`}
+            {`https://fash-roan.vercel.app/product/${parsedProduct._id}`}
           </li>
         </ul>
         <p className="text-gray-700">{parsedProduct.description}</p>
