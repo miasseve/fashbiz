@@ -5,13 +5,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function GET(req) {
   try {
-
+    // const { account } = await req.json();
     const account = await stripe.accounts.create({
-      type: 'custom',
-      country: 'IN', // Set the country to India for testing
-      business_type: 'individual',
-    });    
-
+      type: 'standard',  // You can choose 'express' or 'custom' based on your needs
+    });
     // Step 2: Create an account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,

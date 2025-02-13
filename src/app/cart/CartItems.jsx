@@ -8,7 +8,6 @@ const CartItems = () => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
   
-  console.log(productTotal,'productTotal');
   const dispatch = useDispatch(); // Initialize the dispatch function
 
   // Function to handle removing a product from the cart

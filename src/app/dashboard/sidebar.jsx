@@ -51,6 +51,7 @@ const Sidebar = () => {
         { name: "Profile", href: "/dashboard/profile",icon:<FaUser/> },
         { name: "Store", href: "/dashboard/store",icon:<FaStore/> },
         { name: "Consignors", href: "/dashboard/consignors",icon:<FaUsers/> },
+        { name: "Stripe Connect", href: "/dashboard/stripe-connect",icon:<FaUsers/> },
         { name: "Add Product", href: "/dashboard/add-product",icon:<BiLogoProductHunt/> },
         // { name: "Settings", href: "/dashboard/settings" ,icon:<IoMdSettings/>},
       ].map((link, index) => (
