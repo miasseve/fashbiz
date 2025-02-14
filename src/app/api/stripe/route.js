@@ -13,8 +13,8 @@ export async function GET(req) {
     // Step 2: Create an account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `http://localhost:3000/onboarding/refresh`,
-      return_url: `http://localhost:3000/onboarding/success`,
+      refresh_url: `${process.env.NODE_ENV=='development' ? 'http://localhost:3000/onboarding/refresh' : 'https://fash-roan.vercel.app/onboarding/refresh'}`,
+      return_url:  `${process.env.NODE_ENV=='development' ? 'http://localhost:3000/onboarding/success' : 'https://fash-roan.vercel.app/onboarding/success'}`,
       type: 'account_onboarding',
     });
 
