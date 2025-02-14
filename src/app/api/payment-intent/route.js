@@ -21,8 +21,7 @@ export async function POST(req) {
       payment_method: payment_method,
       transfer_data: {
         destination: account.accountId,
-      },
-      application_fee_amount: Math.round(2000 * 0.2),
+      }
     });
 
     return NextResponse.json({
