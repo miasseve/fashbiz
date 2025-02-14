@@ -1,9 +1,10 @@
 import React from 'react'
 import CartItems from './CartItems'
-
-const page = () => {
+import { auth } from '@/auth';
+const page = async() => {
+      const session = await auth();
   return (
-    <CartItems/>
+    <CartItems user={session.user}/>
   )
 }
 

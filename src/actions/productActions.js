@@ -1,5 +1,5 @@
 "use server";
-
+ 
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
@@ -156,7 +156,6 @@ export async function deleteProduct (productId) {
         },
       }
     );
-    console.log('Product deleted successfully:', response.data);
   } catch (error) {
     console.error('Error deleting product:', error);
   }

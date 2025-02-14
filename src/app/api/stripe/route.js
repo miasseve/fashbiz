@@ -9,6 +9,7 @@ export async function GET(req) {
     const account = await stripe.accounts.create({
       type: 'standard',  // You can choose 'express' or 'custom' based on your needs
     });
+
     // Step 2: Create an account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,

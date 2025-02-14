@@ -2,16 +2,21 @@
 import React, { useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import { Button } from "@heroui/button";
 
-const CheckoutForm = () => {
+const CheckoutForm = ({ user }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState("");
+  const productTotal = useSelector((state) => state.cart.total);
+
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return; 
+    setError("");
+    if (!stripe || !elements) return;
 
     setIsProcessing(true);
 
@@ -31,28 +36,38 @@ const CheckoutForm = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ payment_method: paymentMethod.id }),
-    });
-
-    const paymentIntent = await res.json();
-    const { client_secret } = paymentIntent;
-
-    // Confirm the payment
-    const { error: confirmError } = await stripe.confirmCardPayment(
-      client_secret,
-      {
+      body: JSON.stringify({
         payment_method: paymentMethod.id,
-      }
-    );
-
-    if (confirmError) {
-      console.error(confirmError);
+        total: productTotal,
+        userId: user.id,
+      }),
+    });
+    if (res.status == 400) {
+      setError(
+        "Something went wrong! Please check store owner account is connected to stripe"
+      );
       setIsProcessing(false);
-      return;
-    }
+    } else {
+      const paymentIntent = await res.json();
+      const { client_secret } = paymentIntent;
 
-    // Payment was successful
-    router.push("/thankyou");
+      // Confirm the payment
+      const { error: confirmError } = await stripe.confirmCardPayment(
+        client_secret,
+        {
+          payment_method: paymentMethod.id,
+        }
+      );
+
+      if (confirmError) {
+        console.error(confirmError);
+        setIsProcessing(false);
+        return;
+      }
+
+      // Payment was successful
+      router.push("/thankyou");
+    }
   };
 
   return (
@@ -66,6 +81,7 @@ const CheckoutForm = () => {
       >
         {isProcessing ? "Processing..." : "Pay Now"}
       </Button>
+      {error && <p style={{ color: "red" }}>{error}</p>}
     </form>
   );
 };

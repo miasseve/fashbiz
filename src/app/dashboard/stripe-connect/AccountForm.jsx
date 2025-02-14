@@ -3,29 +3,29 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import React, { useState } from "react";
 import axios from "axios";
+import { storeAccountId } from "@/actions/accountAction";
 
 import { useForm } from "react-hook-form";
-const AccountForm = () => {
+import { toast } from "react-toastify";
+const AccountForm = ({ accountId }) => {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
     mode: "onTouched",
+    defaultValues: {
+      account: accountId || "", // Set the default value for the account field
+    },
   });
 
   const onSubmit = async (data) => {
-    console.log(data, "ss"); // You can log or handle form data here
-
     try {
-      const response = await axios.post("/api/stripe", {
-        account: data.account, // Assume accountId is a field in the form
-      });
-      console.log("API Response:", response.data); // Log or handle the API response
-      if (response.data.url) {
-        window.location.href = response.data.url; // This will redirect the user to the Stripe onboarding page
+      const res = await storeAccountId(data);
+      if (res.status === 200) {
+        toast.success(res.message);
       } else {
-        console.error("No URL received in the response");
+        toast.error(res.message);
       }
     } catch (error) {
       console.error("API Error:", error.message); // Handle the error
@@ -40,7 +40,6 @@ const AccountForm = () => {
     // Make the API call to your backend to create the Stripe account
     try {
       const response = await axios.get("/api/stripe");
-      console.log("API Response:", response.data); // Log or handle the API response
       if (response.data.url) {
         window.location.href = response.data.url; // This will redirect the user to the Stripe onboarding page
       } else {
@@ -55,36 +54,38 @@ const AccountForm = () => {
 
   return (
     <div>
-      <Button onPress={handleStripeOnboarding} disabled={loading}>
-        {loading ? "Loading..." : "Connect Stripe Account"}
-      </Button>
-      {/* <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
-                <div className="mb-8">
-                  <Input
-                    placeholder="Enter Your Stripe Account ID"
-                    type="text"
-                    size="lg"
-                    {...register("account", {
-                      required: "Account ID is required",
-                    })}
-                  />
-                  {errors.account && (
-                    <span style={{ color: "red", fontSize: "12px" }}>
-                      {errors.account.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-4 bg">
-                  <Button
-                    isLoading={isSubmitting}
-                    color="primary"
-                    type="submit"
-                    className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg"
-                  >
-                    Verify
-                  </Button>
-                </div>
-                </form> */}
+      <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
+        <div className="mb-8">
+          <Input
+            placeholder="Enter Your Stripe Account ID"
+            type="text"
+            size="lg"
+            {...register("account", {
+              required: "Account ID is required",
+            })}
+          />
+          {errors.account && (
+            <span style={{ color: "red", fontSize: "12px" }}>
+              {errors.account.message}
+            </span>
+          )}
+        </div>
+        <div className="mb-4 bg">
+          <Button
+            isLoading={isSubmitting}
+            color="primary"
+            type="submit"
+            className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg"
+          >
+            Save
+          </Button>
+        </div>
+      </form>
+      <div>
+        <Button onPress={handleStripeOnboarding} disabled={loading}>
+          {loading ? "Loading..." : "Connect with Stripe And get Account ID"}
+        </Button>
+      </div>
     </div>
   );
 };
