@@ -8,6 +8,7 @@ import { FaStore } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
+import { PiStripeLogoFill } from "react-icons/pi";
 import { LuLogOut } from "react-icons/lu";
 import { IoMdSettings } from "react-icons/io";
 import { signOutUser } from "@/actions/authActions";
@@ -20,19 +21,17 @@ const Sidebar = () => {
     const result = await Swal.fire({
       title: 'Are you sure you want to log out?',
       icon: 'warning',
-      showCancelButton: true, // Shows a cancel button
+      showCancelButton: true,
       confirmButtonText: 'Yes, log me out!',
       cancelButtonText: 'No, keep me logged in!',
-      reverseButtons: true, // Reverses the position of confirm and cancel buttons
+      reverseButtons: true,
       customClass: {
         confirmButton:'btn-danger'
       }
     });
   
     if (result.isConfirmed) {
-      // Perform logout actions (e.g., clearing user session or token)
-      // Example: localStorage.removeItem('userToken');
-      await signOutUser({ callbackUrl: "/login" }); // Assuming signOutUser handles sign-out and redirect
+      await signOutUser({ callbackUrl: "/login" }); 
     }
   };
 
@@ -51,7 +50,7 @@ const Sidebar = () => {
         { name: "Profile", href: "/dashboard/profile",icon:<FaUser/> },
         { name: "Store", href: "/dashboard/store",icon:<FaStore/> },
         { name: "Consignors", href: "/dashboard/consignors",icon:<FaUsers/> },
-        { name: "Stripe Connect", href: "/dashboard/stripe-connect",icon:<FaUsers/> },
+        { name: "Stripe Connect", href: "/dashboard/stripe-connect",icon:<PiStripeLogoFill/> },
         { name: "Add Product", href: "/dashboard/add-product",icon:<BiLogoProductHunt/> },
         // { name: "Settings", href: "/dashboard/settings" ,icon:<IoMdSettings/>},
       ].map((link, index) => (

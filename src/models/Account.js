@@ -12,6 +12,10 @@ const AccountSchema = new mongoose.Schema({
     required: true, 
     unique: true 
   },
+  isAccountComplete: { 
+    type: Boolean, 
+    default: false, // Default value set to false
+  },
 });
 
 export default mongoose.models.Account || mongoose.model("Account", AccountSchema);

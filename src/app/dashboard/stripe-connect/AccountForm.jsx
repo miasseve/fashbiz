@@ -11,11 +11,11 @@ const AccountForm = ({ accountId }) => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting }
   } = useForm({
     mode: "onTouched",
     defaultValues: {
-      account: accountId || "", // Set the default value for the account field
+      account: accountId || "", 
     },
   });
 
@@ -53,8 +53,10 @@ const AccountForm = ({ accountId }) => {
   };
 
   return (
+
     <div>
-      <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
+      
+      {/* <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-8">
           <Input
             placeholder="Enter Your Stripe Account ID"
@@ -80,10 +82,11 @@ const AccountForm = ({ accountId }) => {
             Save
           </Button>
         </div>
-      </form>
+      </form> */}
       <div>
-        <Button onPress={handleStripeOnboarding} disabled={loading}>
-          {loading ? "Loading..." : "Connect with Stripe And get Account ID"}
+        <p>Stripe Connect</p>
+        <Button onPress={handleStripeOnboarding} color="success" disabled={loading}>
+          {loading ? "Loading..." : "Connect with Stripe"}
         </Button>
       </div>
     </div>
