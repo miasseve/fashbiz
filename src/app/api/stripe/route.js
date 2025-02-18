@@ -12,20 +12,19 @@ export async function GET(req) {
     //  await stripe.accounts.del('acct_1QtRJuPCoiaW3x5A');
 
     //     console.log(deleted, "existingAccount");
-    // const account = await stripe.accounts.create({
-    //   country: 'DK',
-    //   type: 'standard',
-    // });
-    
     const account = await stripe.accounts.create({
-      country: "DK",
-      type: "express",
-      business_type: "individual", // Specify business type
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
+      type: 'standard',
     });
+    
+    // const account = await stripe.accounts.create({
+    //   country: "DK",
+    //   type: "express",
+    //   business_type: "individual", // Specify business type
+    //   capabilities: {
+    //     card_payments: { requested: true },
+    //     transfers: { requested: true },
+    //   },
+    // });
     // // // Step 2: Create an account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
