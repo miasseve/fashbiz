@@ -112,7 +112,7 @@ const SecondStep = ({
     if (res.status == 200) {
       const parsedData = JSON.parse(res.data);
       setGeneratedLink(
-        `https://fash-app-iota.vercel.app/product/${parsedData._id}`
+        `https://fash-roan.vercel.app/product/${parsedData._id}`
       );
       dispatch(clearProductState());
       setShowConfirmation(true);
