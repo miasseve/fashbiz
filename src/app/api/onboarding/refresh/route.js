@@ -18,7 +18,7 @@ export async function GET(req) {
     // Retrieve the account from Stripe
     const account = await stripe.accounts.retrieve(accountId);
 
-    if (account.requirements && account.requirements.currently_due.length > 0) {
+    // if (account.requirements && account.requirements.currently_due.length > 0 || account.requirements.eventually_due.length > 0) {
       const accountLink = await stripe.accountLinks.create({
         account: account.id,
         refresh_url:
@@ -27,19 +27,22 @@ export async function GET(req) {
             : `https://fash-roan.vercel.app/api/onboarding/refresh?accountId=${account.id}`,
         return_url:
           process.env.NODE_ENV === "development"
-            ? `http://localhost:3000/api/onboarding/success?accountId=${account.id}`
-            : `https://fash-roan.vercel.app/onboarding/success?accountId=${account.id}`,
+            ? `http://localhost:3000/dashboard/onboarding/success/${account.id}`
+            : `https://fash-roan.vercel.app/dashboard/onboarding/success/${account.id}`,
         type: "account_onboarding",
       });
 
       return NextResponse.redirect(accountLink.url);
-    }
+    // }
 
-    // If onboarding is complete, send a success response
-    return NextResponse.json(
-      { message: "Account onboarding is complete or not required." },
-      { status: 200 }
-    );
+    // const successUrl =
+    // process.env.NODE_ENV === "development"
+    //   ? `http://localhost:3000/dashboard/onboarding/success?accountId=${account.id}`
+    //   : `https://fash-roan.vercel.app/dashboard/onboarding/success?accountId=${account.id}`;
+
+    //  // Redirect to the success page
+    //   return NextResponse.redirect(successUrl);
+
   } catch (error) {
     console.error("Error during refresh:", error);
     return NextResponse.json(
