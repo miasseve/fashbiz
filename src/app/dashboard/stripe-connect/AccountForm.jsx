@@ -11,11 +11,11 @@ const AccountForm = ({ accountId }) => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm({
     mode: "onTouched",
     defaultValues: {
-      account: accountId || "", 
+      account: accountId || "",
     },
   });
 
@@ -53,9 +53,7 @@ const AccountForm = ({ accountId }) => {
   };
 
   return (
-
     <div>
-      
       {/* <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-8">
           <Input
@@ -83,9 +81,14 @@ const AccountForm = ({ accountId }) => {
           </Button>
         </div>
       </form> */}
-      <div>
+      <div className="p-4 flex flex-col gap-[12px]">
         <p>Stripe Connect</p>
-        <Button onPress={handleStripeOnboarding} color="success" disabled={loading}>
+        <Button
+          onPress={handleStripeOnboarding}
+          color="success"
+          disabled={loading}
+          className="text-white lg:w-[25%]"
+        >
           {loading ? "Loading..." : "Connect with Stripe"}
         </Button>
       </div>

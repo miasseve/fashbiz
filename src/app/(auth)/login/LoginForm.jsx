@@ -25,6 +25,7 @@ const LoginForm = () => {
 
   const onSubmit = async (data) => {
     const res = await signInUser(data);
+    console.log(res,'resssssssssssssssssssssssssssssssss')
     if (res.status === 200) {
       router.push("/dashboard/add-product");
     } else {

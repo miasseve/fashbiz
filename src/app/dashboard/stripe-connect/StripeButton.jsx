@@ -20,12 +20,12 @@ const StripeButton = ({ accountId }) => {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-[12px] p-4">
       <p>
         Your account is connected with Stripe, but some details are still
         pending. Please complete them to enable payouts and accept payments.
       </p>
-      <Button onPress={handleButton} color="danger">
+      <Button onPress={handleButton} color="danger" className="lg:w-[45%]">
         Complete your Stripe details to enable payouts
       </Button>
     </div>
