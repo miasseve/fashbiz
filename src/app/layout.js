@@ -1,3 +1,4 @@
+// changes in this file
 import { Inria_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
@@ -10,16 +11,16 @@ export const metadata = {
 };
 
 const inriaSans = Inria_Sans({
-  subsets: ["latin"], // Correct subset
-  weight: ["300", "400", "700"], // Only supported weights
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
 });
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inriaSans.className}>
       <body>
-        <Providers>{children}</Providers>
-        <ToastContainer />
+          <Providers>{children}</Providers>
+          <ToastContainer />
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { Button } from "@heroui/react";
 
 const LogoutButton = () => {
   const handleLogout = async () => {
-    const res = await signOutUser();
+    await signOutUser();
   };
 
   return (

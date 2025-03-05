@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import getStripe from "./getStripe";
 import { Elements } from "@stripe/react-stripe-js";
-import CheckoutForm from "@/app/cart/CheckoutForm";
+import CheckoutForm from "@/app/cart/components/CheckoutForm";
 
 const BuyNow = ({ user }) => {
   const stripePromise = getStripe();

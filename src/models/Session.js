@@ -7,4 +7,5 @@ const SessionSchema = new mongoose.Schema({
   accessToken: String,
 });
 
-export default mongoose.models.Session || mongoose.model("Session", SessionSchema);
+export default mongoose.models.Session ||
+  mongoose.model("Session", SessionSchema);

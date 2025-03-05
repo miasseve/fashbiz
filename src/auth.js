@@ -1,3 +1,4 @@
+// changes in this file
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 
@@ -10,6 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.email = user.email;
         token.storename = user.storename;
+        token.role = user.role;
       }
 
       return token;
@@ -20,6 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.storename=token.storename;
+        session.user.role=token.role;
       }
 
       return session;

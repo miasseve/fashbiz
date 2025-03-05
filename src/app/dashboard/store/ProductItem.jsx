@@ -2,10 +2,9 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "@heroui/react";
-import { getProductById } from "@/actions/productActions";
 const ProductItem = ({ product }) => {
   const router = useRouter();
-  const hanleClick = () => {
+  const handleClick = () => {
     router.push(`/dashboard/product/${product._id}`);
   };
   return (
@@ -32,7 +31,7 @@ const ProductItem = ({ product }) => {
 
       <CardFooter>
         <Button
-          onPress={hanleClick}
+          onPress={handleClick}
           className="text-[1.2rem] px-6 py-6 text-white rounded-lg"
           color="success"
           size="md"

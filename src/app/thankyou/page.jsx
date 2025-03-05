@@ -12,11 +12,11 @@ const page = () => {
         <p className="text-center">Your payment was successful.</p>
         <Button
           as={Link}
-          href="/"
+          href="/dashboard/store"
           color="primary"
           className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-4"
         >
-          Home
+          Dashboard
         </Button>
       </div>
     </div>

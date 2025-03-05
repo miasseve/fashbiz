@@ -25,7 +25,6 @@ export async function POST(req) {
         }
       );
 
-      // Write the buffer to the upload stream
       uploadStream.end(buffer);
     });
 
@@ -43,7 +42,7 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
-    const { searchParams } = new URL(req.url); // Get the URL's search params
+    const { searchParams } = new URL(req.url);
     const publicId = searchParams.get("publicId");
     const removeBgPublicId = searchParams.get("removeBgPublicId");
 
@@ -54,7 +53,14 @@ export async function DELETE(req) {
       );
     }
 
-    // Delete image from Cloudinary
+       const imageExists = await cloudinary.api.resource(publicId, {
+        resource_type: "image",
+      }).catch(() => null);
+  
+      if (!imageExists) {
+        return NextResponse.json({ message: "Image deleted successfully" });
+      }
+
     const deleteResponse = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
     });
@@ -74,7 +80,6 @@ export async function DELETE(req) {
       );
     }
   } catch (error) {
-    console.error("Delete error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

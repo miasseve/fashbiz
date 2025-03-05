@@ -1,5 +1,5 @@
 "use server";
- 
+
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
@@ -11,84 +11,98 @@ export async function createProduct(formData) {
     // Connect to the database
     const session = await auth();
     if (!session) {
-      throw new Error("User is not authenticated");
+      return { status: 400, error: "User is not authenticated" };
     }
-
-    const { title, sku, description, price, images } = formData;
-    const firstName = "test";
-    const email = "testing@gmail.com";
+    const {
+      title,
+      sku,
+      brand,
+      description,
+      price,
+      images,
+      firstName,
+      lastName,
+      email,
+      accountId,
+    } = formData;
+console.log(brand,'brand')
     await dbConnect();
 
     // Construct product data for Wix API
-    const productData = {
-      product: {
-        name: title,
-        productType: "physical",
-        priceData: {
-          price: price,
-        },
-        description: description,
-        sku: sku,
-        visible: false,
-      },
-    };
+    // const productData = {
+    //   product: {
+    //     name: title,
+    //     productType: "physical",
+    //     priceData: {
+    //       price: price,
+    //     },
+    //     description: description,
+    //     sku: sku,
+    //     visible: false,
+    //   },
+    // };
     try {
       // Make the POST request to Wix API to create the product
-      const response = await axios.post(
-        "https://www.wixapis.com/stores/v1/products",
-        productData,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-            "wix-account-id": process.env.WIX_ACCOUNT_ID,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // const response = await axios.post(
+      //   "https://www.wixapis.com/stores/v1/products",
+      //   productData,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+      //       "wix-site-id": process.env.WIX_SITE_ID,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // );
 
-      const productImages = {
-        media: images.map((image) => ({ url: image.url })),
-      };
-      const res = await axios.post(
-        `https://www.wixapis.com/stores/v1/products/${response.data.product.id}/media`,
-        productImages,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-            "wix-account-id": process.env.WIX_ACCOUNT_ID,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // const productImages = {
+      //   media: images.map((image) => ({ url: image.url })),
+      // };
+      // const res = await axios.post(
+      //   `https://www.wixapis.com/stores/v1/products/${response.data.product.id}/media`,
+      //   productImages,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+      //       "wix-site-id": process.env.WIX_SITE_ID,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // );
 
       // Create a new product in your local MongoDB
       const newProduct = new Product({
         sku,
         title,
-        category: "dsfsdds",
+        brand:brand,
+        category: "test",
         description,
         price,
         images,
         userId: session.user.id,
-        consignorName: firstName,
+        consignorName: firstName + lastName,
         consignorEmail: email,
+        consignorAccount: accountId,
+        // wixProductId: response.data.product.id,
       });
 
       // Save the product to MongoDB
       await newProduct.save();
-
+      console.log(newProduct,'newProduct')
       // Add the product ID to the user's products array
       const user = await User.findById(session.user.id);
       if (user) {
         user.products.push(newProduct._id);
         await user.save();
       }
+      const link = `https://fash-roan.vercel.app/product/${newProduct._id}`;
+
       return {
         status: 200,
         message: "Product created successfully",
-        data: JSON.stringify(newProduct),
+        data: link,
       };
     } catch (error) {
       if (error.response) {
@@ -99,27 +113,114 @@ export async function createProduct(formData) {
         ) {
           return {
             status: 400,
-            message: "SKU already exist",
+            error: "SKU already exist",
           };
         } else {
           return {
             status: 400,
-            message: data?.message,
+            error: data?.message,
           };
         }
       } else {
         return {
           status: 400,
-          message: data?.message,
+          error: data?.message,
         };
       }
     }
   } catch (error) {
-    console.error("Error creating product:", error);
-    throw new Error("Failed to create product. Please try again later.");
+    return { status: 500, error: error.message || "Failed to create product" };
   }
 }
 export async function getUserProducts() {
+  try {
+    // Authenticate and get the session
+    const session = await auth();
+
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+    // Connect to the database
+    await dbConnect();
+
+    // Fetch products for the authenticated user
+    const userProducts = await Product.find({
+      userId: session.user.id,
+      sold: false,
+    }).sort({
+      createdAt: -1,
+    });
+
+    return { status: 200, products: JSON.stringify(userProducts) }; // Return the user's products
+  } catch (error) {
+    return { status: 500, error: error.message || "Failed to fetch products" };
+  }
+}
+
+export async function getProductsByEmail(email) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    const existingUser = await User.findOne({ email });
+
+    if (!existingUser) {
+      throw new Error("User not found");
+    }
+
+    await dbConnect();
+    const groupedProducts = await Product.aggregate([
+      {
+        $match: {
+          consignorEmail: email,
+          sold: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetails",
+          pipeline: [
+            {
+              $project: {
+                firstname: 1,
+                lastname: 1,
+                email: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: "$userDetails",
+      },
+      {
+        $group: {
+          _id: "$userId",
+          products: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $sort: { "products.createdAt": -1 },
+      },
+    ]);
+    return {
+      status: 200,
+      products: JSON.stringify(groupedProducts),
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      error: "Failed to fetch products",
+    };
+  }
+}
+export async function getUserProductsSold() {
   try {
     // Authenticate and get the session
     const session = await auth();
@@ -132,40 +233,125 @@ export async function getUserProducts() {
     await dbConnect();
 
     // Fetch products for the authenticated user
-    const userProducts = await Product.find({ userId: session.user.id }).sort({
+    const userProducts = await Product.find({
+      userId: session.user.id,
+      sold: true,
+    }).sort({
       createdAt: -1,
     });
 
-    return JSON.stringify(userProducts); // Return the user's products
+    return {
+      status: 200,
+      products: JSON.stringify(userProducts),
+    };
   } catch (error) {
-    console.error("Error fetching user products:", error);
-    throw new Error("Unable to fetch products. Please try again later.");
+    return {
+      status: 500,
+      message: error.message || "Something went wrong",
+    };
   }
 }
 
-export async function deleteProduct (productId) {
+export async function deleteProductsFromWix(products) {
   try {
-    const response = await axios.delete(
-      `https://www.wixapis.com/stores/v1/products/${productId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-          "wix-account-id": process.env.WIX_ACCOUNT_ID,
-          "wix-site-id": process.env.WIX_SITE_ID,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    if (!Array.isArray(products) || products.length === 0) {
+      return;
+    }
+
+    // Loop through the products array and delete each product using its wixProductId
+    for (const product of products) {
+      const { wixProductId } = product; // Get the wixProductId for each product
+      // Make a DELETE request to Wix API to delete the product
+      const response = await axios.delete(
+        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+            "wix-account-id": process.env.WIX_ACCOUNT_ID,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Log the response for each product deletion
+      console.log(
+        `Product with ID ${wixProductId} deleted successfully:`,
+        response.data
+      );
+    }
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error("Error deleting product:", error);
   }
-};
+}
 
 export async function getUserProductCount() {
   try {
     // Authenticate and get the session
     const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
 
+    await dbConnect();
+    const productCount = await Product.countDocuments({
+      userId: session.user.id,
+    });
+
+    return { status: 200, count: productCount };
+  } catch (error) {
+    return { status: 500, error: "Failed to fetch count" };
+  }
+}
+
+
+export async function getProductById(productId) {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    // Connect to the database
+    await dbConnect();
+    // Fetch the product by ID for the authenticated user
+    const product = await Product.findOne({
+      _id: productId,
+    });
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    if (product.userId.toString() !== session.user.id.toString()) {
+      throw new Error("You are not authorized to view this product");
+    }
+
+    const user = await User.findOne({ email: product.consignorEmail },
+      'firstname lastname email address phoneNumber city'
+    );
+    if (!user) {
+      throw new Error("User related to the product not found");
+    }
+    return {
+      status: 200, // Success status code
+      message: "Product fetched successfully",
+      data: {
+        product: JSON.stringify(product),
+        user: JSON.stringify(user),
+      },
+    }; // Return the product details
+  } catch (error) {
+    return {
+      status: 500, // Internal server error status code
+      error: error.message || "Failed to fetch product",
+    };
+  }
+}
+
+export async function deleteProductById(productId) {
+  try {
+    const session = await auth();
     if (!session) {
       throw new Error("User is not authenticated");
     }
@@ -173,43 +359,63 @@ export async function getUserProductCount() {
     // Connect to the database
     await dbConnect();
 
-    // Count the number of products for the authenticated user
-    const productCount = await Product.countDocuments({
-      userId: session.user.id,
-    });
-
-    return productCount; // Return the product count
-  } catch (error) {
-    console.error("Error fetching product count:", error);
-    throw new Error("Unable to fetch product count. Please try again later.");
-  }
-}
-export async function getProductById(productId) {
-  try {
-    // Authenticate and get the session
-    // const session = await auth();
-
-    // if (!session) {
-    //   throw new Error("User is not authenticated");
-    // }
-
-    // Connect to the database
-    await dbConnect();
-
-    // Fetch the product by ID for the authenticated user
-    const product = await Product.findOne({
-      _id: productId,
-    });
-
+    // Check if the product exists before attempting to delete
+    const product = await Product.findById(productId);
     if (!product) {
-      throw new Error(
-        "Product not found or you don't have permission to view it"
-      );
+      throw new Error("Product not found.");
     }
 
-    return JSON.stringify(product); // Return the product details
+    if (product.userId.toString() !== session.user.id) {
+      throw new Error("You do not have permission to delete this product.");
+    }
+    // Delete the product by ID
+    await Product.deleteOne({ _id: productId });
+
+    return { status: 200, message: "Product deleted successfully." };
   } catch (error) {
-    console.error("Error fetching product by ID:", error);
-    throw new Error("Unable to fetch the product. Please try again later.");
+    return { status: 500, error: error.message || "Something went wrong" };
+  }
+}
+
+export async function soldProductsByIds(products) {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    await dbConnect();
+
+    // Ensure the array is not empty
+    if (!Array.isArray(products) || products.length === 0) {
+      return {
+        status: 400,
+        message: "Products not exist",
+      };
+    }
+
+    const productIds = products.map((product) => product._id);
+
+    // Delete the products with the given IDs
+    const result = await Product.updateMany(
+      { _id: { $in: productIds } },
+      { $set: { sold: true } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return {
+        status: 400,
+        message: "No products were updated",
+      };
+    }
+    return {
+      status: 200,
+      message: "Products status updated to sold successfully",
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      error: "Something went wrong",
+    };
   }
 }

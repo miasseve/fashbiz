@@ -5,11 +5,11 @@ import "react-responsive-carousel/lib/styles/carousel.min.css";
 
 const ImageCarousel = ({ images }) => {
   return (
-    <div>
-      <Carousel showThumbs={true} infiniteLoop autoPlay>
+    <div className="">
+      <Carousel showThumbs={true} infiniteLoop autoPlay showArrows={false}>
         {images.map((image, index) => (
-          <div key={index} className="lg:w-[80%] w-full">
-            <img src={image.url}  />
+          <div key={index} className="lg:w-[100%]">
+            <img src={image.url} />
           </div>
         ))}
       </Carousel>

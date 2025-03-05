@@ -23,25 +23,17 @@ export async function GET(req) {
         account: account.id,
         refresh_url:
           process.env.NODE_ENV === "development"
-            ? `http://localhost:3000/api/onboarding/refresh?accountId=${account.id}`
+            ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/onboarding/refresh?accountId=${account.id}`
             : `https://fash-roan.vercel.app/api/onboarding/refresh?accountId=${account.id}`,
         return_url:
           process.env.NODE_ENV === "development"
-            ? `http://localhost:3000/dashboard/onboarding/success/${account.id}`
+            ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard/onboarding/success/${account.id}`
             : `https://fash-roan.vercel.app/dashboard/onboarding/success/${account.id}`,
         type: "account_onboarding",
       });
 
       return NextResponse.redirect(accountLink.url);
-    // }
 
-    // const successUrl =
-    // process.env.NODE_ENV === "development"
-    //   ? `http://localhost:3000/dashboard/onboarding/success?accountId=${account.id}`
-    //   : `https://fash-roan.vercel.app/dashboard/onboarding/success?accountId=${account.id}`;
-
-    //  // Redirect to the success page
-    //   return NextResponse.redirect(successUrl);
 
   } catch (error) {
     console.error("Error during refresh:", error);

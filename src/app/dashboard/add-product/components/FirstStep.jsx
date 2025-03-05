@@ -9,10 +9,7 @@ import { removeBackground } from "@imgly/background-removal";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 
-import {
-  setPropertiesOfProduct,
-  setUploadedImagesOfProduct,
-} from "@/features/productSlice";
+import { setUploadedImagesOfProduct } from "@/features/productSlice";
 import {
   Input,
   Slider,
@@ -27,11 +24,9 @@ import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
-  const [properties, setProperties] = useState([]);
   const [uploadedImages, setUploadedImages] = useState([]);
   const topRef = useRef(null);
   //fetch data from redux
-  const storedProperties = useSelector((state) => state.product.properties);
   const storedProductImages = useSelector(
     (state) => state.product.uploadedImages
   );
@@ -44,34 +39,14 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const [removeBackgroundLoader, setRemoveBackgroundLoader] = useState({});
 
   useEffect(() => {
-    if (storedProperties && storedProperties.length > 0) {
-      setProperties(storedProperties);
-    }
     if (storedProductImages && storedProductImages.length > 0) {
       setUploadedImages(storedProductImages);
     }
-  }, [storedProperties, storedProductImages]);
-
-  useEffect(() => {
-    setProperties((prevProperties) => {
-      const updatedProperties = [...prevProperties];
-      uploadedImages.forEach((_, index) => {
-        if (!updatedProperties[index]) {
-          updatedProperties[index] = {
-            brightness: 0,
-            contrast: 0,
-            filter: "",
-            removeBackground: false,
-          };
-        }
-      });
-      return updatedProperties;
-    });
-  }, [uploadedImages]);
+  }, [storedProductImages]);
 
   const handleCameraClick = () => {
     document.getElementById("fileInput");
-    fileInput.value = "";  
+    fileInput.value = "";
     fileInput.click();
   };
   // Upload image to Cloudinary
@@ -149,30 +124,38 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     });
   };
   const handleBrightness = (value, index) => {
-    setProperties((prevProperties) =>
-      prevProperties.map((property, i) =>
-        i === index ? { ...property, brightness: value } : property
-      )
-    );
-
+    setUploadedImages((prevImages) => {
+      const updatedImages = [...prevImages];
+      updatedImages[index] = {
+        ...updatedImages[index],
+        brightness: value,
+      };
+      return updatedImages;
+    });
     updateImageTransformations(index, value, "e_brightness:");
   };
 
   const handleContrast = (value, index) => {
-    setProperties((prevProperties) =>
-      prevProperties.map((property, i) =>
-        i === index ? { ...property, contrast: value } : property
-      )
-    );
+    setUploadedImages((prevImages) => {
+      const updatedImages = [...prevImages];
+      updatedImages[index] = {
+        ...updatedImages[index],
+        contrast: value,
+      };
+      return updatedImages;
+    });
     updateImageTransformations(index, value, "e_contrast:");
   };
 
   const handleFilter = (value, index) => {
-    setProperties((prevProperties) =>
-      prevProperties.map((property, i) =>
-        i === index ? { ...property, filter: value } : property
-      )
-    );
+    setUploadedImages((prevImages) => {
+      const updatedImages = [...prevImages];
+      updatedImages[index] = {
+        ...updatedImages[index],
+        filter: value,
+      };
+      return updatedImages;
+    });
     updateImageTransformations(index, value, "e_art:");
   };
 
@@ -186,18 +169,11 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   };
   const removeBackgroundHandler = async (e, index) => {
     const isChecked = e.target.checked;
-    setProperties((prevProperties) =>
-      prevProperties.map((property, i) =>
-        i === index ? { ...property, removeBackground: isChecked } : property
-      )
-    );
 
     if (isChecked) {
-      // setUploadImageLoader(true);
-      // setRemoveBackgroundLoader({index:index,loading:true});
       setRemoveBackgroundLoader((prevState) => ({
         ...prevState,
-        [index]: { loading: true }, // Update only the specific index
+        [index]: { loading: true },
       }));
 
       if (uploadedImages[index].removePublicId) {
@@ -221,11 +197,8 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
 
         // Convert Blob to Base64
         const base64File = await blobToBase64(processedBlob);
-        const res = await updateCloudinaryImage(
-          uploadedImages[index].publicId,
-          base64File
-        );
-        if (res.success == true) {
+        const res = await updateCloudinaryImage(base64File);
+        if (res.status == 200) {
           setUploadedImages((prevImages) => {
             const updatedImages = [...prevImages];
             updatedImages[index] = {
@@ -266,16 +239,16 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   };
   const step2Handler = () => {
     dispatch(setUploadedImagesOfProduct(uploadedImages));
-    dispatch(setPropertiesOfProduct(properties));
     handleSaveUrl(uploadedImages);
   };
-
   const handleFileSelection = async (e) => {
     const files = Array.from(e.target.files);
     // Check if any of the selected files are videos
-    const invalidFile = files.some(file => {
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      return ['mp4', 'avi', 'mov', 'mkv', 'webm','gif'].includes(fileExtension);
+    const invalidFile = files.some((file) => {
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+      return ["mp4", "avi", "mov", "mkv", "webm", "gif"].includes(
+        fileExtension
+      );
     });
 
     // If a video is found, show an error and prevent upload
@@ -331,6 +304,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <div className="text-center">
             <CropImage
               cropImage={croppingImage}
+              uploadImageLoader={uploadImageLoader}
               setCroppingImage={setCroppingImage}
               setUploadImageLoader={setUploadImageLoader}
               setUploadedImages={setUploadedImages}
@@ -344,7 +318,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
               Uploading image, please wait...
             </p>
             <div className="ml-2 ">
-              <Spinner size="sm" color="success" label="Loading..." />{" "}
+              <Spinner size="sm" color="success" />{" "}
             </div>
           </div>
         )}
@@ -352,19 +326,19 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <>
             <div className="mt-4 flex lg:flex-row flex-col gap-3">
               <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                 Front View
+                Front View
               </div>
               <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                 Side View
+                Side View
               </div>
             </div>
 
             <div className="mt-4 flex lg:flex-row flex-col gap-3">
               <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                 Back View
+                Back View
               </div>
               <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                 Detail View
+                Detail View
               </div>
             </div>
           </>
@@ -372,7 +346,10 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         {uploadedImages.length > 0 && (
           <div className="flex flex-wrap w-full justify-between lg:flex-row flex-col mt-4">
             {uploadedImages.map((imageUrl, index) => (
-              <div key={index} className="mt-4 lg:w-[49%] w-full">
+              <div
+                key={imageUrl?.publicId || index}
+                className="mt-4 lg:w-[49%] w-full"
+              >
                 <div className="border p-8 rounded mb-4 bg-[#f1f3f1]">
                   <div className="flex w-full justify-between]">
                     <div className="w-[40% pr-[2rem]">
@@ -400,9 +377,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                     <div className="w-[60%] lg:mt-[10px] mt-0 relative">
                       <div className="flex justify-between w-full">
                         <Slider
-                          defaultValue={
-                            storedProperties[index]?.brightness || 0
-                          }
+                          defaultValue={imageUrl?.brightness || 0}
                           label="Brightness"
                           maxValue={99}
                           minValue={-99}
@@ -414,7 +389,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                       </div>
                       <div className="flex my-5 justify-between w-full">
                         <Slider
-                          defaultValue={storedProperties[index]?.contrast || 0}
+                          defaultValue={imageUrl?.contrast || 0}
                           label="Contrast"
                           maxValue={99}
                           minValue={-99}
@@ -425,9 +400,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
 
                       <div className="custom-select text-start">
                         <Select
-                          defaultSelectedKeys={[
-                            storedProperties[index]?.filter || "",
-                          ]}
+                          defaultSelectedKeys={[imageUrl?.filter || ""]}
                           onChange={(e) => handleFilter(e.target.value, index)}
                           // label="Filters"
                           placeholder="Select filter option"
@@ -457,7 +430,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                           <Checkbox
                             size="sm"
                             defaultSelected={
-                              storedProperties[index]?.removeBackground || false
+                              imageUrl?.isBgRemovedImage || false
                             }
                             isDisabled={
                               Object.keys(removeBackgroundLoader).length > 0 ||
@@ -479,7 +452,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                             Object.keys(removeBackgroundLoader).length > 0 ||
                             false
                           }
-                        
                           publicId={imageUrl?.publicId}
                           uploadedImages={uploadedImages}
                           setDeleteImageLoader={setDeleteImageLoader}

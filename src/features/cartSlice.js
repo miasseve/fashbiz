@@ -11,22 +11,36 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addProductToCart: (state, action) => {
-      state.products.push(action.payload);
-      state.total += action.payload.price;
+      const productExists = state.products.some(
+        (product) => product._id === action.payload._id
+      );
+      if (!productExists) {
+        console.log(action.payload, "action");
+        state.products.push(action.payload);
+        state.total += action.payload.price;
+      }
     },
     setTotal: (state, action) => {
       state.total = action.payload;
+    },
+    clearCart: (state) => {
+      state.total = 0;
+      state.products = [];
     },
     removeProductFromCart: (state, action) => {
       state.products = state.products.filter(
         (product) => product._id !== action.payload._id
       );
-      state.total -= action.payload.price;
+      if (state.products.length === 0) {
+        state.total = 0;
+      } else {
+        state.total -= action.payload.price;
+      }
     },
   },
 });
 
-export const { addProductToCart, removeProductFromCart, setTotal } =
+export const { addProductToCart, removeProductFromCart, setTotal, clearCart } =
   cartSlice.actions;
 
 export default cartSlice.reducer;

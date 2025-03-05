@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@heroui/button";
 import { useDispatch } from "react-redux";
 import { addProductToCart } from "@/features/cartSlice";
-const AddToCart = ({ parsedProduct }) => {
+const AddToCart = ({ product }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const handleAddToCart = () => {
-    dispatch(addProductToCart(parsedProduct));
+    console.log(product,'prodyct')
+    dispatch(addProductToCart(product));
     router.push("/cart");
   };
 

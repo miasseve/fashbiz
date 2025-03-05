@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 import { Cropper } from "react-cropper";
 import "cropperjs/dist/cropper.css";
@@ -8,8 +8,10 @@ const CropImage = ({
   setCroppingImage,
   setUploadImageLoader,
   setUploadedImages,
+  uploadImageLoader
 }) => {
   const cropperRef = useRef(null);
+  const [error, setError] = useState();
   const dataURLToFile = (dataUrl, filename) => {
     const arr = dataUrl.split(",");
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -30,7 +32,6 @@ const CropImage = ({
       const croppedFile = dataURLToFile(croppedDataURL, "cropped-image.jpeg");
 
       await handleUpload(croppedFile);
-
       // Reset croppingImage to allow the next file to be cropped
       setCroppingImage(null);
     }
@@ -63,6 +64,7 @@ const CropImage = ({
         },
       ]);
     } catch (error) {
+      setError(error.message);
       console.error("Error uploading image:", error);
     }
   };
@@ -77,7 +79,14 @@ const CropImage = ({
         guides={false}
         ref={cropperRef}
       />
-      <Button onPress={handleCrop} color="danger" className="rounded-[7px]" >Crop and Upload</Button>
+      <Button 
+         isDisabled={uploadImageLoader}
+         onPress={handleCrop} 
+         color="danger" 
+         className="rounded-[7px]">
+        Crop and Upload
+      </Button>
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 };

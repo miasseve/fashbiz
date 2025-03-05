@@ -1,6 +1,6 @@
 // lib/cloudinary.js
 
-import cloudinary from 'cloudinary';
+import cloudinary from "cloudinary";
 
 // Set up Cloudinary configuration using your credentials
 cloudinary.v2.config({

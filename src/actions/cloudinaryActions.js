@@ -1,10 +1,10 @@
 'use server';
 import cloudinary from "@/lib/cloudinary";
 
-export async function updateCloudinaryImage(publicId, file) {
+export async function updateCloudinaryImage(file) {
   try {
-    if (!publicId || !file) {
-      throw new Error("Missing required parameters: 'publicId' or 'file'");
+    if (!file) {
+      throw new Error("Missing required parameters: 'file'");
     }
     // Upload the new file with the same publicId to replace the image
     const result = await cloudinary.v2.uploader.upload(file, {
@@ -13,15 +13,14 @@ export async function updateCloudinaryImage(publicId, file) {
     });
     
     return {
-      success: true,
-      message: "Image updated successfully",
+      status: 200,
+      message: "Image stored successfully",
       data: result,
     };
   } catch (error) {
-    console.error("Error updating Cloudinary image:", error);
     return {
-      success: false,
-      message: "Failed to update the image",
+      status: 500,
+      message: "Failed to store the image",
       error: error.message,
     };
   }

@@ -1,8 +1,9 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+import { Card } from "@heroui/react";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { signInUser } from "@/actions/authActions"; 
+import { signInUser } from "@/actions/authActions";
 import { useRouter } from "next/navigation";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -13,7 +14,7 @@ import { validatePassword } from "../validation/validation";
 const LoginForm = () => {
   const router = useRouter();
   const [isVisible, setIsVisible] = React.useState(false);
-
+  const [error, setError] = useState("");
   const toggleVisibility = () => setIsVisible(!isVisible);
   const {
     register,
@@ -24,16 +25,14 @@ const LoginForm = () => {
   });
 
   const onSubmit = async (data) => {
-    const res = await signInUser(data);
-    if (res.status === 200) {
+    setError("");
+    const result = await signInUser(data);
+    if (result.status === 200) {
       router.push("/dashboard/add-product");
     } else {
-      console.log(res.error);
+      setError(result.error);
     }
   };
-
-
- 
 
   return (
     <section className="min-h-screen md:pt-[10rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
@@ -86,68 +85,82 @@ const LoginForm = () => {
               <div className=" text-white mb-6 text-[1rem] font-bold">
                 Sign in to continue
               </div>
-
-              <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
-                <div className="mb-8">
-                  <Input
-                    placeholder="Enter Your Email"
-                    type="text"
-                    size="lg"
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                        message: "Please enter a valid email",
-                      },
-                    })}
-                  />
-                  {errors.email && (
-                    <span style={{ color: "red", fontSize: "12px" }}>
-                      {errors.email.message}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mb-8">
-                  <Input
-                    endContent={
-                      <button
-                        aria-label="toggle password visibility"
-                        className="focus:outline-none"
-                        type="button"
-                        onClick={toggleVisibility}
+              <Card className="p-6 bg-white shadow-lg rounded-lg">
+                <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
+                  <div className="mb-8 relative">
+                    <Input
+                      placeholder="Enter Your Email"
+                      type="text"
+                      size="lg"
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value:
+                            /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: "Please enter a valid email",
+                        },
+                      })}
+                    />
+                    {errors.email && (
+                      <span
+                        className="absolute left-0 py-2"
+                        style={{ color: "red", fontSize: "12px" }}
                       >
-                        {isVisible ? (
-                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        ) : (
-                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        )}
-                      </button>
-                    }
-                    type={isVisible ? "text" : "password"}
-                    size="lg"
-                    placeholder="Enter Your Password"
-                    {...register("password", { validate: validatePassword })}
-                  />
-                    {errors.password && (
-                    <span style={{ color: "red", fontSize: "12px" }}>
-                      {errors.password.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-4 bg">
-                  <Button
-                    isLoading={isSubmitting}
-                    color="primary"
-                    type="submit"
-                    className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg"
-                  >
-                    LOGIN
-                  </Button>
-                </div>
-              </form>
+                        {errors.email.message}
+                      </span>
+                    )}
+                  </div>
 
-              <div className="text-[1.5rem] text-white text-center leading-[2rem] ">
+                  <div className="mb-8 relative pt-3">
+                    <Input
+                      endContent={
+                        <button
+                          aria-label="toggle password visibility"
+                          className="focus:outline-none"
+                          type="button"
+                          onClick={toggleVisibility}
+                        >
+                          {isVisible ? (
+                            <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                          ) : (
+                            <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                          )}
+                        </button>
+                      }
+                      type={isVisible ? "text" : "password"}
+                      size="lg"
+                      placeholder="Enter Your Password"
+                      {...register("password", { validate: validatePassword })}
+                    />
+                    {errors.password && (
+                      <span
+                        className="absolute left-0 py-2"
+                        style={{ color: "red", fontSize: "12px" }}
+                      >
+                        {errors.password.message}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg">
+                    <Button
+                      isLoading={isSubmitting}
+                      color="primary"
+                      type="submit"
+                      className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-[20px]"
+                    >
+                      Login
+                    </Button>
+                  </div>
+                </form>
+          
+              <div className="text-center mt-2">
+                <Link href="/forgot-password" className="text-[1.2rem] hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
+              </Card>
+
+              <div className="text-[1.5rem] text-white text-center mt-4 leading-[2rem] ">
                 Don't have an account?{" "}
                 <Link
                   href="/register"

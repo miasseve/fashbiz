@@ -1,14 +1,13 @@
 import React from "react";
-import { auth } from "@/auth";
-import AccountForm from "./AccountForm";
-import { getAccountIdByUserId } from "@/actions/accountAction";
+import StripeConnect from "./StripeConnect";
+import { getAccountId } from "@/actions/accountAction";
 import StripeButton from "./StripeButton";
-import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
+import { Card, CardBody } from "@heroui/card";
 const page = async () => {
-  const session = await auth();
-  const result = await getAccountIdByUserId(session.user.id);
   let accountId = "";
   let isAccountComplete = "";
+
+  const result = await getAccountId();
 
   if (result.status == 200) {
     accountId = result.accountId;
@@ -20,7 +19,13 @@ const page = async () => {
       {result?.accountId && (
         <Card className="p-12 border border-green-500">
           <CardBody>
-            <p>Account ID - <span style={{color:'#c52d2d'}} className="font-semibold">{result?.accountId}</span> is connected with fashbiz</p>
+            <p>
+              Account ID -{" "}
+              <span style={{ color: "#c52d2d" }} className="font-semibold">
+                {result?.accountId}
+              </span>{" "}
+              is connected with fashbiz
+            </p>
           </CardBody>
         </Card>
       )}
@@ -35,7 +40,7 @@ const page = async () => {
 
       <Card>
         <CardBody>
-          <AccountForm accountId={result?.accountId} />
+          <StripeConnect />
         </CardBody>
       </Card>
     </div>

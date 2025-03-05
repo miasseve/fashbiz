@@ -3,6 +3,8 @@ import axios from "axios";
 import { Button } from "@heroui/react";
 import { toast } from "react-toastify";
 import { Spinner } from "@heroui/react";
+import { useDispatch, useSelector } from "react-redux";
+import { setUploadedImagesOfProduct } from "@/features/productSlice";
 const RemoveImage = ({
   index,
   publicId,
@@ -12,6 +14,11 @@ const RemoveImage = ({
   setUploadedImages,
   deleteImageLoader,
 }) => {
+  const dispatch = useDispatch();
+    const storedProductImages = useSelector(
+      (state) => state.product.uploadedImages
+    ); 
+    
   const handleRemoveImage = async (index, publicId) => {
     try {
       setDeleteImageLoader({ index, loading: true });
@@ -23,11 +30,16 @@ const RemoveImage = ({
         const latestImages = uploadedImages.filter(
           (image) => image.publicId !== publicId
         );
-
+        
         toast.success("Image deleted successfully!", {
           position: "top-right",
           autoClose: 2000,
         });
+        const newImages = storedProductImages.filter(
+          (image) => image.publicId !== publicId
+        );
+  
+        dispatch(setUploadedImagesOfProduct(newImages));
         setUploadedImages(latestImages);
       }
     } catch (error) {
@@ -41,7 +53,7 @@ const RemoveImage = ({
     deleteImageLoader.loading == true ? (
     <span className="text-[2rem]">
       {" "}
-      <Spinner />
+      <Spinner size="sm" color="success" />
     </span>
   ) : (
     <Button

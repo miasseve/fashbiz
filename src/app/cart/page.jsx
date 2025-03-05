@@ -1,11 +1,15 @@
-import React from 'react'
-import CartItems from './CartItems'
-import { auth } from '@/auth';
-const page = async() => {
-      const session = await auth();
-  return (
-    <CartItems user={session.user}/>
-  )
-}
+import React from "react";
+import CartItems from "./components/CartItems";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default page
+const page = async () => {
+  const session = await auth();
+  if (!session) {
+    redirect("/login"); 
+  }
+
+  return <CartItems user={session.user} />;
+};
+
+export default page;

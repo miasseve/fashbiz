@@ -1,7 +1,6 @@
 import { FaArrowRightLong } from "react-icons/fa6";
 import Link from "next/link";
 export default function Home() {
-  
   return (
     <section className="min-h-screen pt-6 sm:pt-16 lg:pt-[5rem] pb-6 sm:pb-16 lg:pb-[5rem] font-[family-name:var(--font-geist-sans)] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
       <div className="container mx-auto flex flex-col lg:flex-row h-full gap-8 mb-10 lg:mb-[4rem]">

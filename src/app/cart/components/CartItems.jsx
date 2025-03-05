@@ -1,22 +1,25 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { removeProductFromCart, setTotal } from "@/features/cartSlice";
+import { removeProductFromCart } from "@/features/cartSlice";
 import BuyNow from "./BuyNow";
+import { Button } from "@heroui/button";
 
 const CartItems = ({ user }) => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
-
-  const dispatch = useDispatch(); // Initialize the dispatch function
+  const [cartProducts, setCartProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const total = products.reduce((acc, product) => acc + product.price, 0);
-    dispatch(setTotal(total));
-  }, []);
-  // Function to handle removing a product from the cart
+    setCartProducts(products);
+    setTotal(productTotal);
+  }, [productTotal]);
+
   const handleRemove = (product) => {
-    dispatch(removeProductFromCart(product)); // Dispatch the remove action with the product to remove
+    dispatch(removeProductFromCart(product));
+    setCartProducts((prev) => prev.filter((item) => item._id !== product._id));
   };
 
   return (
@@ -24,15 +27,14 @@ const CartItems = ({ user }) => {
       <h2 className="text-[30px] font-semibold mb-4 text-center">
         Shopping Cart
       </h2>
-      {products.length > 0 ? (
+      {cartProducts.length > 0 ? (
         <>
           <ul>
-            {products.map((product, index) => (
+            {cartProducts.map((product, index) => (
               <li
                 key={index}
                 className="flex border border-gray-300 p-4 mb-4 rounded-lg bg-white flex items-center justify-between"
               >
-                {/* Image Section */}
                 <div className="flex-shrink-0 w-24 mr-4 flex items-center justify-start w-[50%] sm:w-[30%]">
                   <img
                     src={product.images[0].url}
@@ -48,22 +50,21 @@ const CartItems = ({ user }) => {
                   ${product.price}
                 </span>
 
-                {/* Product Details */}
                 <div className="">
                   <div className="mt-4">
-                    <button
-                      onClick={() => handleRemove(product)}
+                    <Button
+                      onPress={() => handleRemove(product)}
                       className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
           <div>
-            <p>Total : ${productTotal}</p>
+            <p>Total : ${total}</p>
           </div>
           <BuyNow user={user} />
         </>

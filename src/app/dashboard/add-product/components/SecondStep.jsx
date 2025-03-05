@@ -41,7 +41,6 @@ const SecondStep = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [imgColors, setImgColors] = useState("");
   const targetRef = React.useRef(null);
@@ -51,6 +50,9 @@ const SecondStep = ({
     isDisabled: !isOpen,
   });
   const reduxImages = useSelector((state) => state.product.uploadedImages);
+  const currentYear = new Date().getFullYear();
+  console.log(user , currentYear , (parseInt(productCount) + 1),'tetsttt');
+ 
   const {
     register,
     handleSubmit,
@@ -59,7 +61,7 @@ const SecondStep = ({
   } = useForm({
     mode: "onTouched",
     defaultValues: {
-      sku: user.storename + (parseInt(productCount) + 1),
+      sku: user.storename + currentYear + (parseInt(productCount) + 1),
       images:
         reduxImages?.map((image) => ({
           url: image.url,
@@ -68,56 +70,55 @@ const SecondStep = ({
     },
   });
 
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.post("/api/google-vision", {
-          imageUrl: reduxImages[0]?.url ?? "",
-        });
+  // useEffect(() => {
+  //   const fetchProductDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const response = await axios.post("/api/google-vision", {
+  //         imageUrl: reduxImages[0]?.url ?? "",
+  //       });
 
-        if (response.status == 200) {
-          const color = response.data?.colors[0];
+  //       if (response.status == 200) {
+  //         const color = response.data?.colors[0];
 
-          const { red, green, blue } = color;
-          // Update the state with the new array of color objects
-          setImgColors(`rgb(${red}, ${green}, ${blue})`);
-          const description = response.data?.texts
-            ?.map((text) => text.description)
-            .join(" , ");
-          const garments = response.data?.garmentLabels
-            ?.map((label) => label.description)
-            .join(" , ");
+  //         const { red, green, blue } = color;
+  //         // Update the state with the new array of color objects
+  //         setImgColors(`rgb(${red}, ${green}, ${blue})`);
+  //         const description = response.data?.texts
+  //           ?.map((text) => text.description)
+  //           .join(" , ");
+  //         const garments = response.data?.garmentLabels
+  //           ?.map((label) => label.description)
+  //           .join(" , ");
 
-          setValue("title", garments || "");
-          setValue(
-            "brand",
-            response.data?.logos[0]?.description || garments || ""
-          );
-          setValue("description", description || "");
-        }
-      } catch (error) {
-        toast.error("Failed to load product data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  //         setValue("title", garments || "");
+  //         setValue(
+  //           "brand",
+  //           response.data?.logos[0]?.description || garments || ""
+  //         );
+  //         setValue("description", description || "");
+  //       }
+  //     } catch (error) {
+  //       toast.error("Failed to load product data");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchProductDetails();
-  }, []);
+  //   fetchProductDetails();
+  // }, []);
 
   const onSubmit = async (data) => {
     setErrorMessage("");
-    const res = await createProduct({ ...data, ...consignorData });
-    if (res.status == 200) {
-      const parsedData = JSON.parse(res.data);
-      setGeneratedLink(
-        `https://fash-roan.vercel.app/product/${parsedData._id}`
-      );
+    console.log(data,'data')
+    const response = await createProduct({ ...data, ...consignorData });
+    if (response.status == 200) {
+      // const parsedData = JSON.parse(response.data);
+      setGeneratedLink(response.data);
       dispatch(clearProductState());
       setShowConfirmation(true);
     } else {
-      setErrorMessage(res.message);
+      setErrorMessage(response.error);
     }
   };
 
@@ -150,8 +151,10 @@ const SecondStep = ({
         </div>
       ) : (
         <Card className="lg:w-[38%] w-full m-auto mt-[50px]">
-      <form onSubmit={handleSubmit(onSubmit)} className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]">
-
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]"
+          >
             <CardHeader>
               <Button onPress={handleBackStep}>
                 <IoArrowBack />
@@ -159,7 +162,11 @@ const SecondStep = ({
               <h2 className="lg:ml-[10%] ml-[1%]">Enter Product Info</h2>
             </CardHeader>
             <CardBody className="gap-[15px]">
-              {errorMessage && <span style={{ color: "red", fontSize: "12px" }}>{errorMessage}</span>}
+              {errorMessage && (
+                <span style={{ color: "red", fontSize: "12px" }}>
+                  {errorMessage}
+                </span>
+              )}
               <div className="h-full">
                 <Input
                   label="SKU"
@@ -281,50 +288,57 @@ const SecondStep = ({
         </Card>
       )}
 
-{showConfirmation && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
-    <Modal
-      ref={targetRef}
-      isOpen={showConfirmation}
-      onOpenChange={onOpenChange}
-      className="max-w-sm w-full m-auto" // Ensures proper width
-    >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1 text-center">
-              Product Added Successfully ...
-              <Input
-                type="text"
-                value={generatedLink}
-                readOnly
-                className="w-full p-2 mt-2 border rounded"
-              />
-              <Button
-                onPress={handleCopyLink}
-                className="mt-2 px-6 py-6 rounded"
-              >
-                Copy Link
-              </Button>
-            </ModalHeader>
-            <ModalBody className="text-center">
-              <p>Do you want to add more products?</p>
-            </ModalBody>
-            <ModalFooter className="flex justify-center">
-              <Button color="secondary" onPress={handleAddMoreProducts} className="rounded-lg">
-                Yes
-              </Button>
-              <Button color="danger" onPress={handleGoToDashboard} className="rounded-lg">
-                No
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
-  </div>
-)}
-
+      {showConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
+          <Modal
+            ref={targetRef}
+            isOpen={showConfirmation}
+            onOpenChange={onOpenChange}
+            className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
+          >
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalHeader className="flex flex-col gap-1 text-center">
+                    Product Added Successfully 
+                    <Input
+                      type="text"
+                      value={generatedLink}
+                      readOnly
+                      className="w-full p-2 mt-2 border rounded"
+                    />
+                    <Button
+                      onPress={handleCopyLink}
+                      className="mt-2 px-6 py-6 rounded"
+                    >
+                      Copy Link
+                    </Button>
+                  </ModalHeader>
+                  <ModalBody className="text-center">
+                    <p>Do you want to add more products?</p>
+                  </ModalBody>
+                  <ModalFooter className="flex justify-center">
+                    <Button
+                      color="secondary"
+                      onPress={handleAddMoreProducts}
+                      className="rounded-lg"
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      color="danger"
+                      onPress={handleGoToDashboard}
+                      className="rounded-lg"
+                    >
+                      No
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+        </div>
+      )}
     </>
   );
 };

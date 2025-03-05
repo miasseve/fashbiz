@@ -1,45 +1,17 @@
 "use client";
-import React from "react";
-import { Button, Input } from "@heroui/react";
-import { useForm } from "react-hook-form";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { registerUser } from "@/actions/authActions";
-import { EyeFilledIcon } from "../icons/EyeFilledIcon ";
-import { EyeSlashFilledIcon } from "../icons/EyeSlashFilledIcon ";
-import { validatePassword } from "../validation/validation";
+import { Tabs, Tab, Card, CardBody } from "@heroui/react";
+import ConsignorForm from "./ConsignorForm";
+import StoreForm from "./StoreForm";
 
 const RegisterForm = () => {
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [selectedTab, setSelectedTab] = useState("consignor");
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    mode: "onTouched",
-  });
-  const router = useRouter();
-  const onSubmit = async (data) => {
-
-    try {
-      const result = await registerUser(data);
-
-      if (result.status === 200) {
-        toast.success("Your account has been created!", {
-          position: "top-center",
-        }); // Show success toast
-        router.push("/login");
-      } else {
-        console.log("Error:", result.error);
-      }
-    } catch (error) {
-      console.error("Error during signup:", error);
-    }
-  };
+  useEffect(() => {
+    setSelectedTab(selectedTab);
+  }, [selectedTab]);
 
   return (
     <section className="min-h-screen md:pt-[10rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
@@ -90,114 +62,28 @@ const RegisterForm = () => {
                 Register
               </div>
 
-              <form className="w-full mb-8" onSubmit={handleSubmit(onSubmit)}>
-                <div className="mb-8">
-                  <Input
-                    defaultValue=""
-                    placeholder="First Name"
-                    size="lg"
-                    {...register("firstname", {
-                      required: "First Name is required",
-                    })}
-                  />
-                  
-                  {errors.firstname && (
-                    <span style={{ color: "red", fontSize: "14px" }}>
-                      {errors.firstname.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-8">
-                  <Input
-                    defaultValue=""
-                    placeholder="Last Name"
-                    size="lg"
-                    {...register("lastname", {
-                      required: "Last Name is required",
-                    })}
-                  />
-                  {errors.lastname && (
-                    <span style={{ color: "red", fontSize: "14px" }}>
-                      {errors.lastname.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-8">
-                  <Input
-                    placeholder="Store Name"
-                    size="lg"
-                    {...register("storename", {
-                      required: "Store Name is required",
-                    })}
-                  />
-                  {errors.storename && (
-                    <span style={{ color: "red", fontSize: "14px" }}>
-                      {errors.storename.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-8">
-                  <Input
-                    placeholder="Email"
-                    type="text"
-                    size="lg"
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                        message: "Please enter a valid email",
-                      },
-                    })}
-                    // fontSize="16px"
-                  />
-                  {errors.email && (
-                    <span style={{ color: "red", fontSize: "14px", textAlign:"left" }}>
-                      {errors.email.message}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mb-8">
-                  <Input
-                    endContent={
-                      <button
-                        aria-label="toggle password visibility"
-                        className="focus:outline-none"
-                        type="button"
-                        onClick={toggleVisibility}
-                      >
-                        {isVisible ? (
-                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        ) : (
-                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        )}
-                      </button>
-                    }
-                    placeholder="Password"
-                    type={isVisible ? "text" : "password"}
-                    size="lg"
-                    {...register("password", { validate: validatePassword })}
-                  />
-                  {errors.password && (
-                    <span style={{ color: "red", fontSize: "14px" }}>
-                      {errors.password.message}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-4 bg">
-                  <Button
-                    isLoading={isSubmitting}
-                    color="primary"
-                    type="submit"
-                    className="bg-[#0c0907] text-white py-6 px-6 rounded-lg"
-                    fontSize="16px"
+              <Card className="w-full max-w-md">
+                <CardBody>
+                  <Tabs
+                    fullWidth
+                    aria-label="Register Tabs"
+                    selectedKey={selectedTab}
+                    onSelectionChange={(key) => {
+                      console.log("Tab changed to:", key);
+                      setSelectedTab(key);
+                    }}
                   >
-                    REGISTER
-                  </Button>
-                </div>
-              </form>
+                    <Tab key="store" title="Store">
+                      <StoreForm />
+                    </Tab>
+                    <Tab key="consignor" title="Consignor">
+                      <ConsignorForm />
+                    </Tab>
+                  </Tabs>
+                </CardBody>
+              </Card>
 
-              <div className="text-[1.5rem] text-white text-center leading-[2rem] ">
+              <div className="text-[1.5rem] text-white text-center mt-4 leading-[2rem] ">
                 Already have an account ?{" "}
                 <Link href="/login" className="hover:underline text-[#6e482d]">
                   Login
