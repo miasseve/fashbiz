@@ -12,7 +12,6 @@ const productSlice = createSlice({
   initialState,
   reducers: {
     setUploadedImagesOfProduct: (state, action) => {
-      console.log(action.payload,'action.payload')
       state.uploadedImages = action.payload;
     },
     setPropertiesOfProduct: (state, action) => {

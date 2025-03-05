@@ -9,7 +9,6 @@ import {
   TableCell,
 } from "@heroui/table";
 const ProductTable = ({ products }) => {
-  console.log(products, "products");
   return (
     <div>
       {products.map((product) => (

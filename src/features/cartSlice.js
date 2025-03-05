@@ -15,7 +15,6 @@ const cartSlice = createSlice({
         (product) => product._id === action.payload._id
       );
       if (!productExists) {
-        console.log(action.payload, "action");
         state.products.push(action.payload);
         state.total += action.payload.price;
       }

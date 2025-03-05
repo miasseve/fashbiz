@@ -7,15 +7,15 @@ import { redirect } from "next/navigation";
 const Page = async ({ params }) => {
   const { productId } = await params;
   const response = await getProductById(productId);
-  console.log(response,'responsee')
+
   if (response.status !== 200) {
     redirect("/");
   }
   const {product,user}=response.data;
-  console.log(JSON.parse(user),'user')
+
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
- console.log(parsedProduct,'parsedProduct')
+
   return (
     <div className="container mx-auto p-0 lg:p-12">
       <div className="flex flex-col lg:flex-row gap-12 lg:bg-white lg:shadow-lg rounded-lg p-6 lg:p-10">

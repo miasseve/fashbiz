@@ -38,7 +38,7 @@ export async function POST(req) {
     //     amount: consignor1Amount, // Amount to be transferred to the first consignor
     //   },
     // });
-    // console.log(product,'product')
+  
     // await stripe.transfers.create({
     //   amount: consignor2Amount, // Amount for the second consignor
     //   currency: "usd",
@@ -134,7 +134,7 @@ export async function POST(req) {
     //const platformFee = Math.round(total * 0.1 * 100);  // 10% platform fee
     // const amountToTransfer1 = Math.round(100 * 0.4 * 100);  // 90% to the account (after the platform fee)
     // const amountToTransfer2 = Math.round(100 * 0.5 * 100);  // 90% to the account (after the platform fee)
-    // console.log(amountToTransfer1,amountToTransfer2,'tetsttyt')
+
    
     // await stripe.transfers.create({
     //   amount: amountToTransfer1,

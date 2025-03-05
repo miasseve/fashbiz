@@ -43,7 +43,6 @@ const RemoveImage = ({
         setUploadedImages(latestImages);
       }
     } catch (error) {
-      console.log(error, "error");
       setDeleteImageLoader({ index, loading: false });
       toast.error("Error deleting image. Please try again.");
     }

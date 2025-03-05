@@ -8,7 +8,6 @@ const AddToCart = ({ product }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const handleAddToCart = () => {
-    console.log(product,'prodyct')
     dispatch(addProductToCart(product));
     router.push("/cart");
   };

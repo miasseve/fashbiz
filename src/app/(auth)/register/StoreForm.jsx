@@ -38,7 +38,6 @@ const StoreForm = () => {
         router.push("/login");
       } else {
         setError(result.error);
-        console.log("Error:", result.error);
       }
     } catch (error) {
       console.error("Error during signup:", error);

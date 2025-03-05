@@ -25,7 +25,6 @@ export async function createProduct(formData) {
       email,
       accountId,
     } = formData;
-console.log(brand,'brand')
     await dbConnect();
 
     // Construct product data for Wix API
@@ -90,7 +89,6 @@ console.log(brand,'brand')
 
       // Save the product to MongoDB
       await newProduct.save();
-      console.log(newProduct,'newProduct')
       // Add the product ID to the user's products array
       const user = await User.findById(session.user.id);
       if (user) {
@@ -274,11 +272,7 @@ export async function deleteProductsFromWix(products) {
         }
       );
 
-      // Log the response for each product deletion
-      console.log(
-        `Product with ID ${wixProductId} deleted successfully:`,
-        response.data
-      );
+   
     }
   } catch (error) {
     console.error("Error deleting product:", error);

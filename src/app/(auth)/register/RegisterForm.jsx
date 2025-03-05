@@ -69,7 +69,6 @@ const RegisterForm = () => {
                     aria-label="Register Tabs"
                     selectedKey={selectedTab}
                     onSelectionChange={(key) => {
-                      console.log("Tab changed to:", key);
                       setSelectedTab(key);
                     }}
                   >

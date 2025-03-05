@@ -11,30 +11,32 @@ const ProductPage = async ({ params }) => {
   if (response.status !== 200) {
     redirect("/");
   }
- 
-  const product = response.data ? JSON.parse(response.data) : null;
 
-  if (!product) {
+  const { product } = response.data;
+
+  const parsedProduct = JSON.parse(product);
+
+  if (!parsedProduct) {
     return <p>Product not found</p>;
   }
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-16  p-6 lg:p-12 m-auto w-[80%] h-[100vh] item-center">
       <div className="w-full lg:w-1/2 flex flex-col items-center">
-        <ImageCarousel images={product.images} />
+        <ImageCarousel images={parsedProduct.images} />
       </div>
 
       <div className="w-full lg:w-1/2 flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">{product.title}</h1>
+        <h1 className="text-3xl font-bold">{parsedProduct.title}</h1>
         <ul className="space-y-2 text-gray-600">
           <li>
-            <strong>Brand:</strong> {product.brand}
+            <strong>Brand:</strong> {parsedProduct.brand}
           </li>
           <li>
-            <strong>Price:</strong> ${product.price}
+            <strong>Price:</strong> ${parsedProduct.price}
           </li>
         </ul>
-        <p className="text-gray-700">{product.description}</p>
+        <p className="text-gray-700">{parsedProduct.description}</p>
         <AddToCart product={product} />
       </div>
     </div>

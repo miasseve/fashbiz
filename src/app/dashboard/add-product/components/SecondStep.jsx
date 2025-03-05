@@ -51,8 +51,7 @@ const SecondStep = ({
   });
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
-  console.log(user , currentYear , (parseInt(productCount) + 1),'tetsttt');
- 
+
   const {
     register,
     handleSubmit,
@@ -110,7 +109,6 @@ const SecondStep = ({
 
   const onSubmit = async (data) => {
     setErrorMessage("");
-    console.log(data,'data')
     const response = await createProduct({ ...data, ...consignorData });
     if (response.status == 200) {
       // const parsedData = JSON.parse(response.data);
