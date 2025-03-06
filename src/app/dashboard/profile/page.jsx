@@ -2,7 +2,7 @@ import React from "react";
 import Profile from "./Profile";
 import { getUser } from "@/actions/authActions";
 import { checkStripeIsConnected } from "@/actions/authActions";
-import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
 
 const Page = async () => {
   const response = await getUser(); 
@@ -10,7 +10,6 @@ const Page = async () => {
   
   if (response.status != 200) {
     throw new Error("Failed to fetch user profile");
-    // redirect("/login");
   }
   const user = JSON.parse(response.data);
   return <Profile user={user} stripeResponse={stripeResponse}/>; 
