@@ -82,11 +82,11 @@ export async function signInUser(data) {
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
-        error: error.errors.join(", "), // Join errors for easier reading
+        error: error.errors.join(", ")
       };
     }
 
-    return { status: 500, error: "Internal server error" };
+    return { status: 500, error: "Invalid credentials" };
   }
 }
 
@@ -315,9 +315,10 @@ export async function forgotPassword(email) {
     if (!user) {
       return { status: 404, message: "User not found" };
     }
+
     // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
-  
+
     const expirationDate = new Date(Date.now() + 5 * 60 * 1000);
     const localExpirationTime = expirationDate.getTime();
     user.resetPasswordToken = resetToken;
@@ -331,8 +332,8 @@ export async function forgotPassword(email) {
       message: "Password reset email sent!",
     };
   } catch (error) {
-    console.error("Error in forgot password:", error);
-    return { success: false, message: error.message, status: 500 };
+    console.log(error,'error');
+    return { status: 500, message: error.message };
   }
 }
 

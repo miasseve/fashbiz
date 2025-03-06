@@ -36,8 +36,7 @@ export async function GET(req) {
 
 
   } catch (error) {
-    console.error("Error during refresh:", error);
-    return NextResponse.json(
+     return NextResponse.json(
       { message: "An error occurred while refreshing the onboarding process." },
       { status: 500 }
     );

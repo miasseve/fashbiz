@@ -64,7 +64,6 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error processing image:", error);
 
     // Return the error message.
     return NextResponse.json(

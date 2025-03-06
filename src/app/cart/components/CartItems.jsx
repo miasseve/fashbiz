@@ -23,7 +23,7 @@ const CartItems = ({ user }) => {
   };
 
   return (
-    <div className="mx-auto p-4 my-[30px] max-w-[100%] sm:max-w-[80%] m-auto">
+    <div className="mx-auto p-4  max-w-[100%] sm:max-w-[80%] m-auto h-screen">
       <h2 className="text-[30px] font-semibold mb-4 text-center">
         Shopping Cart
       </h2>
@@ -33,7 +33,7 @@ const CartItems = ({ user }) => {
             {cartProducts.map((product, index) => (
               <li
                 key={index}
-                className="flex border border-gray-300 p-4 mb-4 rounded-lg bg-white flex items-center justify-between"
+                className="flex border border-gray-300 p-4 mb-4 rounded-lg bg-[#f4f4f4] flex items-center justify-between"
               >
                 <div className="flex-shrink-0 w-24 mr-4 flex items-center justify-start w-[50%] sm:w-[30%]">
                   <img
@@ -41,12 +41,12 @@ const CartItems = ({ user }) => {
                     alt={product.title}
                     className="w-[70px]  h-[70px] rounded-md"
                   />
-                  <h3 className="text-lg font-medium mb-2 ml-4">
+                  <h3 className="font-medium mb-2 ml-4">
                     {product.title}
                   </h3>
                 </div>
 
-                <span className="text-xl font-semibold w-[30%]">
+                <span className=" w-[30%]">
                   ${product.price}
                 </span>
 
@@ -54,7 +54,8 @@ const CartItems = ({ user }) => {
                   <div className="mt-4">
                     <Button
                       onPress={() => handleRemove(product)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none"
+                      color="danger"
+                      className="text-white px-4 py-2 rounded-md focus:outline-none"
                     >
                       Remove
                     </Button>

@@ -68,7 +68,7 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-6">
+    <div className="flex items-center justify-center min-h-screen px-6">
       <Card className="w-full max-w-2xl p-12 shadow-2xl rounded-2xl bg-white">
         <form onSubmit={handleResetPassword} className="space-y-6">
           <CardHeader className="text-center flex flex-col gap-4">

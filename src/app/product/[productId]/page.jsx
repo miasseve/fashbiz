@@ -21,7 +21,7 @@ const ProductPage = async ({ params }) => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-16  p-6 lg:p-12 m-auto w-[80%] h-[100vh] item-center">
+    <div className="flex flex-col lg:flex-row gap-8 lg:gap-16  p-6 lg:p-12 m-auto w-[80%] item-center">
       <div className="w-full lg:w-1/2 flex flex-col items-center">
         <ImageCarousel images={parsedProduct.images} />
       </div>
@@ -37,7 +37,7 @@ const ProductPage = async ({ params }) => {
           </li>
         </ul>
         <p className="text-gray-700">{parsedProduct.description}</p>
-        <AddToCart product={product} />
+        <AddToCart product={parsedProduct} />
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import cloudinary from "@/lib/cloudinary";
 import { NextResponse } from "next/server";
-
+import User from "@/models/User";
 export async function POST(req) {
   try {
     const formData = await req.formData();
+    const userId = formData.get("userId");
     const file = formData.get("file");
 
     if (!file) {
@@ -29,14 +30,19 @@ export async function POST(req) {
     });
 
     const uploadResponse = await uploadPromise;
-
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+    user.profileImage = {
+      url: uploadResponse.secure_url,
+      publicId: uploadResponse.public_id,
+    }; // Update the profile image URL
+    await user.save();
     return NextResponse.json({
       url: uploadResponse.secure_url,
       publicId: uploadResponse.public_id,
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -53,13 +59,15 @@ export async function DELETE(req) {
       );
     }
 
-       const imageExists = await cloudinary.api.resource(publicId, {
+    const imageExists = await cloudinary.api
+      .resource(publicId, {
         resource_type: "image",
-      }).catch(() => null);
-  
-      if (!imageExists) {
-        return NextResponse.json({ message: "Image deleted successfully" });
-      }
+      })
+      .catch(() => null);
+
+    if (!imageExists) {
+      return NextResponse.json({ message: "Image deleted successfully" });
+    }
 
     const deleteResponse = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",

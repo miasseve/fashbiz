@@ -20,7 +20,7 @@ const StoreList = ({ stores }) => {
             return (
               <li
                 key={store._id}
-                className="border flex-1 shadow-md py-4 px-4 flex gap-5 items-center lg:flex-row flex-col flex-wrap"
+                className="border bg-white flex-1 shadow-md py-4 px-4 flex gap-5 items-center lg:flex-row flex-col flex-wrap"
               >
                 <div className="w-[130px] h-[130px] flex-shrink-0">
                   <img

@@ -137,7 +137,6 @@ const SecondStep = ({
     try {
       await navigator.clipboard.writeText(generatedLink);
     } catch (err) {
-      console.error("Failed to copy: ", err);
       alert("Failed to copy link. Please try again.");
     }
   };
@@ -317,9 +316,10 @@ const SecondStep = ({
                   </ModalBody>
                   <ModalFooter className="flex justify-center">
                     <Button
-                      color="secondary"
+                      color="success"
                       onPress={handleAddMoreProducts}
                       className="rounded-lg"
+                      style={{color:'white'}}
                     >
                       Yes
                     </Button>

@@ -20,7 +20,7 @@ const ConsignorQR = ({ qrData, stripeResponse }) => {
   };
 
   return (
-    <div className="flex flex-col p-[100px] gap-10 mt-10 lg:w-[50%] h-[100%] items-center m-auto justify-center p-4 border rounded-lg shadow-md">
+    <div className="flex flex-col bg-white p-[100px] gap-10 mt-10 lg:w-[50%] h-[100%] items-center m-auto justify-center p-4 border rounded-lg shadow-md">
       {stripeResponse.status != 200 && (
         <p className="text-red-500 italic font-bold">*{stripeResponse.error}</p>
       )}

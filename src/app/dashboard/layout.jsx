@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shadowClass, setShadowClass] = useState("");
 
-  const toggleSidebar = () => {
+   const toggleSidebar = () => {
     if (shadowClass == "") {
       setShadowClass("sidebarOverlay");
     } else {
@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
           <Sidebar />
         </div>
 
-        <div className="lg:col-span-10 bg-[#F3F4F7] overflow-scroll h-screen border-r border[#e7e7e7] w-full">
+        <div className="lg:col-span-10  overflow-y-scroll h-screen border-r border[#e7e7e7] w-full">
           <Card className="overflow-hidden border-0 bg-white w-full py-4 px-8 rounded-none sticky top-0 h-[70px] shadow-2 flex flex-row items-center justify-between lg:justify-end z-50">
             <button className="lg:hidden" onClick={toggleSidebar}>
               {isSidebarOpen ? (
@@ -48,7 +48,7 @@ const Layout = ({ children }) => {
               <img className="w-[18px]" src="/visualization.png" alt="Logo" />
             </div>
           </Card>
-          <div className="max-w-[100%] mx-auto lg:p-5 p-1 ">{children}</div>
+          <div className="max-w-[100%] mx-auto lg:p-5 p-1">{children}</div>
         </div>
       </div>
     </SessionProvider>

@@ -18,7 +18,7 @@ const inriaSans = Inria_Sans({
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inriaSans.className}>
-      <body>
+      <body className="bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
           <Providers>{children}</Providers>
           <ToastContainer />
       </body>

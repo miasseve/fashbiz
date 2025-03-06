@@ -65,7 +65,6 @@ const CropImage = ({
       ]);
     } catch (error) {
       setError(error.message);
-      console.error("Error uploading image:", error);
     }
   };
 

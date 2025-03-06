@@ -30,14 +30,14 @@ const Page = async ({ params }) => {
               <strong>Brand:</strong> {parsedProduct.brand}
             </li>
             <li>
-              <strong>Price:</strong> <span className="text-lg font-semibold text-blue-600">${parsedProduct.price}</span>
+              <strong>Price:</strong> <span >${parsedProduct.price}</span>
             </li>
           </ul>
-          <p className="text-gray-600 leading-relaxed">{parsedProduct.description}</p>
+          <p className="text-gray-600 leading-relaxed"><strong>Description:</strong> {parsedProduct.description}</p>
           <Link
             href={`/product/${parsedProduct._id}`}
             target="_blank"
-            className="text-blue-600 hover:text-blue-800 font-semibold border-b-2 border-blue-600 hover:border-blue-800 transition duration-200 lg:w-[40%] w-[70%]"
+            className="hover:text-grey-800 font-semibold border-b-2 hover:border-grey-800 transition duration-200 lg:w-[35%] w-[70%]"
           >
             View Product Details
           </Link>

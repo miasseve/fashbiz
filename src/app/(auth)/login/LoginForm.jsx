@@ -28,7 +28,7 @@ const LoginForm = () => {
     setError("");
     const result = await signInUser(data);
     if (result.status === 200) {
-      router.push("/dashboard/add-product");
+      router.push("/dashboard/profile");
     } else {
       setError(result.error);
     }
@@ -87,6 +87,9 @@ const LoginForm = () => {
               </div>
               <Card className="p-6 bg-white shadow-lg rounded-lg">
                 <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
+                  {error && (
+                    <span className="text-red-500 left-0 text-[12px]">{error}</span>
+                  )}
                   <div className="mb-8 relative">
                     <Input
                       placeholder="Enter Your Email"
@@ -130,7 +133,9 @@ const LoginForm = () => {
                       type={isVisible ? "text" : "password"}
                       size="lg"
                       placeholder="Enter Your Password"
-                      {...register("password", { validate: validatePassword })}
+                      {...register("password", {
+                        required: "Password is required",
+                      })}
                     />
                     {errors.password && (
                       <span
@@ -152,12 +157,15 @@ const LoginForm = () => {
                     </Button>
                   </div>
                 </form>
-          
-              <div className="text-center mt-2">
-                <Link href="/forgot-password" className="text-[1.2rem] hover:underline">
-                  Forgot Password?
-                </Link>
-              </div>
+
+                <div className="text-center mt-2">
+                  <Link
+                    href="/forgot-password"
+                    className="text-[1.2rem] hover:underline"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
               </Card>
 
               <div className="text-[1.5rem] text-white text-center mt-4 leading-[2rem] ">

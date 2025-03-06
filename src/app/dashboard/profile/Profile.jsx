@@ -13,13 +13,14 @@ import { Select, SelectItem } from "@heroui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { State } from "country-state-city";
 import * as Yup from "yup";
+import { useRouter } from "next/navigation";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 
-const Profile = ({ user }) => {
+const Profile = ({ user, stripeResponse }) => {
   let sOptions = [];
-
+  const router = useRouter();
   if (user?.country) {
     sOptions = State.getStatesOfCountry(user.country).map((state) => ({
       value: state.isoCode,
@@ -118,6 +119,7 @@ const Profile = ({ user }) => {
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("userId", user._id);
 
       const response = await axios.post("/api/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -150,6 +152,9 @@ const Profile = ({ user }) => {
           position: "top-right",
           autoClose: 2000,
         });
+        if (stripeResponse.status != 200) {
+          router.push("/dashboard/stripe-connect");
+        }
       } else {
         setError(response.error);
       }
@@ -163,21 +168,25 @@ const Profile = ({ user }) => {
 
   const handleRemoveImage = async () => {
     setLoading(true);
-    const response = await removeProfile();
-    setLoading(false);
-    if (response.status === 200) {
-      setValue("profileImage", {});
-      setPreviewUrl("");
-      toast.success("Image deleted successfully!", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-    } else {
-      toast.error("Something went wrong!", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-    }
+
+  
+      const response = await removeProfile();
+      setLoading(false);
+      if (response.status === 200) {
+        setValue("profileImage", {});
+        setPreviewUrl("");
+        toast.success("Image deleted successfully!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } else {
+        setValue("profileImage", {});
+        toast.error("Something went wrong!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }
+    
   };
 
   const handleImageClick = () => {
