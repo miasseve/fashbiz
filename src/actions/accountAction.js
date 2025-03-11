@@ -94,9 +94,22 @@ export async function storeSuccessResult(accountId) {
     const existingAccount = await Account.findOne({ userId: session.user.id });
 
     if (existingAccount) {
+      try {
+        const account = await stripe.accounts.retrieve(
+          existingAccount.accountId
+        );
+        if (account) {
+          const oldAccount = existingAccount.accountId;
+          await stripe.accounts.del(oldAccount);
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete = isAccountComplete;
       await existingAccount.save();
+
       return {
         status: 200,
         message: "Account updated successfully",

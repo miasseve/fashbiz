@@ -5,155 +5,105 @@ import dbConnect from "@/lib/db";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+export async function GET(req) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 10000,
+      currency: "usd",
+    });
+
+    return NextResponse.json(
+      {
+        clientSecret: paymentIntent.client_secret,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+
 export async function POST(req) {
   try {
-    const { payment_method, total ,userId,product } = await req.json();
+    //await stripe.accounts.del('acct_1QvzrDPGltwucjGR');
+    const balance = await stripe.balance.retrieve();
+
     await dbConnect();
-    const totall=total*100;
-    const account = await Account.findOne({ userId:userId });
-    if(!account){
-      return NextResponse.json({ error: 'Account not exist' }, { status: 400 });
+    const { payment_method, total, userId, products } = await req.json();
+    const groupedProducts = products.reduce((acc, product) => {
+      const { consignorAccount } = product;
+      if (!acc[consignorAccount]) {
+        acc[consignorAccount] = [];
+      }
+      acc[consignorAccount].push(product);
+      return acc;
+    }, {});
+
+    const account = await Account.findOne({ userId: userId });
+    if (!account) {
+      return NextResponse.json({ error: "Account not exist" }, { status: 400 });
     }
+    // const paymentIntents = [];
 
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: totall * 100,
-    //   currency: "usd", 
-    //   description: "Description",
-    //   payment_method: payment_method,
-    //   transfer_data: {
-    //     destination: account.accountId,
-    //   },
-    //   application_fee_amount: Math.round(totall * 0.1 * 100), 
-    // });
-
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: totall * 100, // Total amount (in cents)
-    //   currency: "usd",
-    //   description: "Payment split between two consignors",
-    //   payment_method: payment_method,
-    //   transfer_group: "ORDER_12345", // Optional: a unique group identifier for tracking the payment and transfers
-    //   application_fee_amount: Math.round(totall * 0.1 * 100), // Platform fee (10% of total)
-    //   transfer_data: {
-    //     destination: account.accountId, // First consignor account
-    //     amount: consignor1Amount, // Amount to be transferred to the first consignor
-    //   },
-    // });
-  
-    // await stripe.transfers.create({
-    //   amount: consignor2Amount, // Amount for the second consignor
-    //   currency: "usd",
-    //   destination: product.consignorAccount, // Second consignor account
-    //   transfer_group: "ORDER_12345", // Same transfer group to link the transfers together
-    // });
-    // Step 1: Create a new Customer (if you don't have one yet)
-    // const customer = await stripe.customers.create({
-    //   email: 'test@gmail.com',
-    // });
-
-    // // Step 2: Attach the payment method to the customer
-    // await stripe.paymentMethods.attach(payment_method, {
-    //   customer: customer.id,
-    // });
-
-    // // Step 3: Set the payment method as default for the customer
-    // await stripe.customers.update(customer.id, {
-    //   invoice_settings: {
-    //     default_payment_method: payment_method,
-    //   },
-    // });
+    const transferGroup = `ORDER_${Date.now()}`;
+    // Step 4: Create the paymentIntent for the consignor group
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 100 * 100, // 50% of the total amount (50 EUR)
+      amount: total * 100,
       currency: "eur",
       payment_method: payment_method,
       confirm: true,
-      transfer_data: {
-        destination: account.accountId, // First connected account
-        amount:100*100*0.5
-      },
-      // on_behalf_of:account.accountId,
       automatic_payment_methods: {
-            enabled: true,
-            allow_redirects: 'never',
-          },
+        enabled: true,
+        allow_redirects: "never",
+      },
+      transfer_group: transferGroup, // Unique order identifier
     });
-    
-    if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({ error: "Payment failed to confirm" });
+
+    // Check if paymentIntent was successful
+    if (paymentIntent.status !== "succeeded") {
+      return NextResponse.json(
+        { error: "Payment failed to confirm" },
+        { status: 400 }
+      );
     }
 
-    const transfer2 = await stripe.transfers.create({
-      amount: 100*100*0.4, 
-      currency: 'eur',
-      destination: 'acct_1QuuY3POoiTja26l', // The second connected account
-    });
-    // The second payment intent that sends funds to the second connected account
-  //   const secondPaymentIntent = await stripe.paymentIntents.create({
-  //     amount: 100 * 100 * 0.4, // 50% of the total amount (50 EUR)
-  //     currency: "eur",
-  //     payment_method: payment_method,
-  //     confirm: true,
-  //     customer: customer.id,
-  //     automatic_payment_methods: { enabled: true },
-  //     transfer_data: {
-  //       destination: product.consignorAccount, // Second connected account
-  //     },
-  //     automatic_payment_methods: {
-  //           enabled: true,
-  //           allow_redirects: 'never',
-  //         },
-  //  });
+    for (let consignorAccount in groupedProducts) {
+      const consignorProducts = groupedProducts[consignorAccount];
 
-    // // Step 3: Transfer the remaining portion of the funds to the second connected account
-    // const transfer2 = await stripe.transfers.create({
-    //   amount: Math.floor(100 * 0.5 ), // 50% to the second connected account
-    //   currency: "eur",
-    //   destination: account.accountId,
-    //   transfer_group: paymentIntent.id,
-    // });
+      // Step 3: Calculate the total for the consignor's products
+      const consignorTotal = consignorProducts.reduce(
+        (sum, product) => sum + product.price,
+        0
+      );
 
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: 100*100 ,  
-    //   currency: "eur",
-    //   description: "Description",
-    //   payment_method: payment_method,
-    //   application_fee_amount: Math.round(100 * 0.1 * 100),
-    //   transfer_data: {
-    //         destination: account.accountId, // First consignor account
-    //   },
-    //   automatic_payment_methods: {
-    //     enabled: true,
-    //     allow_redirects: 'never',
-    //   },
-    // });
-   
-    // const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id, {
-    //   payment_method: payment_method,
-    // });
-    // if (confirmedPaymentIntent.status === 'succeeded') {
-     
-    //const platformFee = Math.round(total * 0.1 * 100);  // 10% platform fee
-    // const amountToTransfer1 = Math.round(100 * 0.4 * 100);  // 90% to the account (after the platform fee)
-    // const amountToTransfer2 = Math.round(100 * 0.5 * 100);  // 90% to the account (after the platform fee)
+      const retrievedPaymentIntent = await stripe.paymentIntents.retrieve(
+        paymentIntent.id
+      );
 
-   
-    // await stripe.transfers.create({
-    //   amount: amountToTransfer1,
-    //   currency: "eur",
-    //   destination: product.consignorAccount,  // The account to transfer the 90% to
-    //   transfer_group: paymentIntent.id,  // Link the transfer to the same payment group
-    // });
-    // // Step 3: Create the transfer for the platform fee (10%)
-    // await stripe.transfers.create({
-    //   amount: amountToTransfer2,
-    //   currency: "eur",
-    //   destination: account.accountId,  // Your platform account ID
-    //   transfer_group: paymentIntent.id,  // Link the transfer to the same payment group
-    // });
+      await stripe.transfers.create({
+        amount: consignorTotal * 100 * 0.6,
+        currency: "eur",
+        destination: consignorAccount,
+        source_transaction: retrievedPaymentIntent.latest_charge,
+        transfer_group: transferGroup,
+      });
 
-     return NextResponse.json({
-        paymentIntent: true,
-     },{status:200});
+      await stripe.transfers.create({
+        amount: consignorTotal * 100 * 0.3,
+        currency: "eur",
+        destination: account.accountId,
+        source_transaction: retrievedPaymentIntent.latest_charge,
+        transfer_group: transferGroup,
+      });
+    }
 
+    return NextResponse.json(
+      {
+        success: true,
+        paymentIntent: true, // Send the array of payment intents
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

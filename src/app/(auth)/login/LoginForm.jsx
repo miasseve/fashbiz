@@ -163,7 +163,7 @@ const LoginForm = () => {
                     href="/forgot-password"
                     className="text-[1.2rem] hover:underline"
                   >
-                    Forgot Password?
+                    Forgot Password ?
                   </Link>
                 </div>
               </Card>

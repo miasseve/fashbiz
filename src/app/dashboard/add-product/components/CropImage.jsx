@@ -42,6 +42,7 @@ const CropImage = ({
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("isProfileImage", false);
 
     try {
       setUploadImageLoader(true);
@@ -49,7 +50,7 @@ const CropImage = ({
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      });
+      }); 
       setUploadImageLoader(false);
       setUploadedImages((prevImages) => [
         ...prevImages,

@@ -4,7 +4,7 @@ import User from "@/models/User";
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    const userId = formData.get("userId");
+    const isProfileImage = formData.get("isProfileImage");
     const file = formData.get("file");
 
     if (!file) {
@@ -30,19 +30,23 @@ export async function POST(req) {
     });
 
     const uploadResponse = await uploadPromise;
-    const user = await User.findById(userId);
-    if (!user) throw new Error("User not found");
-    user.profileImage = {
-      url: uploadResponse.secure_url,
-      publicId: uploadResponse.public_id,
-    }; // Update the profile image URL
-    await user.save();
+    if (isProfileImage=='true') {
+      const userId = formData.get("userId");
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+      user.profileImage = {
+        url: uploadResponse.secure_url,
+        publicId: uploadResponse.public_id,
+      }; // Update the profile image URL
+      await user.save();
+    }
+
     return NextResponse.json({
       url: uploadResponse.secure_url,
       publicId: uploadResponse.public_id,
     });
   } catch (error) {
-     return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 

@@ -120,7 +120,7 @@ const Profile = ({ user, stripeResponse }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("userId", user._id);
-
+      formData.append("isProfileImage", true);
       const response = await axios.post("/api/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -265,7 +265,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input {...register("firstname")} className="mt-2 w-full" />
             {errors.firstname && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.firstname.message}
               </span>
             )}
@@ -276,7 +276,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input {...register("lastname")} className="mt-2 w-full" />
             {errors.lastname && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.lastname.message}
               </span>
             )}
@@ -315,7 +315,7 @@ const Profile = ({ user, stripeResponse }) => {
               )}
             />
             {errors.phoneNumber && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500 ">
                 {errors.phoneNumber.message}
               </span>
             )}
@@ -336,7 +336,7 @@ const Profile = ({ user, stripeResponse }) => {
           </label>
           <Input type="text" {...register("address")} className="mt-2 w-full" />
           {errors.address && (
-            <span className="text-red-500 text-sm">
+            <span className="text-red-500">
               {errors.address.message}
             </span>
           )}
@@ -348,7 +348,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input type="text" {...register("city")} />
             {errors.city && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.city.message}
               </span>
             )}
@@ -359,7 +359,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input type="text" {...register("zipcode")} />
             {errors.zipcode && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.zipcode.message}
               </span>
             )}
@@ -383,7 +383,7 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select>
             {errors.state && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.state.message}
               </span>
             )}
@@ -405,7 +405,7 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select>
             {errors.country && (
-              <span className="text-red-500 text-sm">
+              <span className="text-red-500">
                 {errors.country.message}
               </span>
             )}

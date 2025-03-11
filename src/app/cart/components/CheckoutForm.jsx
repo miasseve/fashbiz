@@ -11,7 +11,6 @@ import {
 } from "@/actions/productActions";
 import { clearCart } from "@/features/cartSlice";
 
-
 const CheckoutForm = ({ user }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -35,11 +34,11 @@ const CheckoutForm = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if(customerName=="" || customerEmail==""){
-      setError("Please enter customer details");
-      return  
-    }
-    
+    // if(customerName=="" || customerEmail==""){
+    //   setError("Please enter customer details");
+    //   return
+    // }
+
     setError("");
     if (!stripe || !elements) return;
 
@@ -51,10 +50,11 @@ const CheckoutForm = ({ user }) => {
     });
 
     if (error) {
+      setError("Payment method is not created.");
       setIsProcessing(false);
       return;
     }
-
+    
     // Make a request to the backend to create a payment intent or session
     const res = await fetch("/api/payment-intent", {
       method: "POST",
@@ -65,27 +65,42 @@ const CheckoutForm = ({ user }) => {
         payment_method: paymentMethod.id,
         total: productTotal,
         userId: user.id,
-        product:products[0]
+        products: products,
       }),
     });
-    if (res.status == 400) {
+    const data = await res.json();
+    
+    if (data.status == 400) {
       setError(
         "Something went wrong! Please check store owner account is connected to stripe"
       );
       setIsProcessing(false);
     } else {
-   
-        await soldProductsByIds(products);
-        await deleteProductsFromWix(products);
-        dispatch(clearCart());
-        router.push("/thankyou");
+      setIsProcessing(false);
+      // const { error: confirmError, paymentIntent } =
+//         await stripe.confirmCardPayment(data.paymentIntent.client_secret, {
+//           payment_method: paymentMethod.id, // Pass the paymentMethod ID here
+//         });
+
+//       if (confirmError) {
+//         setError("Payment confirmation failed: " + confirmError.message);
+//         setIsProcessing(false);
+//         return;
+//       }
+// console.log(paymentIntent,'payment')
+
+
+      // await soldProductsByIds(products);
+      // await deleteProductsFromWix(products);
+      // dispatch(clearCart());
+      router.push("/thankyou");
       // }
     }
   };
 
   return (
     <>
-     {/* <Input
+      {/* <Input
       placeholder="Customer Name"
       type="text" // You can use 'email' type to trigger native email validation
       size="lg"
@@ -101,18 +116,18 @@ const CheckoutForm = ({ user }) => {
       onChange={handleEmailChange} // Update state on user input
    
     /> */}
-    <form onSubmit={handleSubmit} className="text-right">
-      <CardElement />
-      <Button
-        color="primary"
-        type="submit"
-        className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-4"
-        disabled={isProcessing}
-      > 
-        {isProcessing ? "Processing..." : "Pay Now"}
-      </Button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </form>
+      <form onSubmit={handleSubmit} className="text-right">
+        <CardElement />
+        <Button
+          color="primary"
+          type="submit"
+          className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-4"
+          disabled={isProcessing}
+        >
+          {isProcessing ? "Processing..." : "Pay Now"}
+        </Button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </form>
     </>
   );
 };

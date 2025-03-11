@@ -7,7 +7,6 @@ export async function GET(req) {
   try {
     
     const account = await stripe.accounts.create({
-      country: "DK",
       type: "express",
       business_type: "individual", 
       capabilities: {

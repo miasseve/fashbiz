@@ -35,11 +35,14 @@ export async function GET(req) {
       !eventuallyDueRequirements;
     // Check if the account document exists for the user
     const existingAccount = await Account.findOne({ userId: session.user.id });
-
+     
     if (existingAccount) {
+    
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete=isAccountComplete;
+    
       await existingAccount.save(); 
+
       return NextResponse.json({message:'Account updated successfully'},{ status: 200 });
     } else {
       const newAccount = new Account({
