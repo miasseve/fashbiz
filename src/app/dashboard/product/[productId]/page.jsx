@@ -30,7 +30,7 @@ const Page = async ({ params }) => {
               <strong>Brand:</strong> {parsedProduct.brand}
             </li>
             <li>
-              <strong>Price:</strong> <span >${parsedProduct.price}</span>
+              <strong>Price:</strong> <span >€{parsedProduct.price}</span>
             </li>
           </ul>
           <p className="text-gray-600 leading-relaxed"><strong>Description:</strong> {parsedProduct.description}</p>

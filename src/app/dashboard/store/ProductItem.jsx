@@ -26,7 +26,7 @@ const ProductItem = ({ product }) => {
             ? product.description.slice(0, 30) + "..."
             : product.description}
         </p>
-        <p className="font-bold mt-2 text-lg">${product.price.toFixed(2)}</p>
+        <p className="font-bold mt-2 text-lg">€{product.price.toFixed(2)}</p>
       </CardBody>
 
       <CardFooter>

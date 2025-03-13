@@ -47,7 +47,7 @@ const CartItems = ({ user }) => {
                 </div>
 
                 <span className=" w-[30%]">
-                  ${product.price}
+                €{product.price}
                 </span>
 
                 <div className="">
@@ -65,7 +65,7 @@ const CartItems = ({ user }) => {
             ))}
           </ul>
           <div>
-            <p>Total : ${total}</p>
+            <p>Total : €{total}</p>
           </div>
           <BuyNow user={user} />
         </>

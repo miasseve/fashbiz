@@ -33,7 +33,7 @@ const ProductPage = async ({ params }) => {
             <strong>Brand:</strong> {parsedProduct.brand}
           </li>
           <li>
-            <strong>Price:</strong> ${parsedProduct.price}
+            <strong>Price:</strong> €{parsedProduct.price}
           </li>
         </ul>
         <p className="text-gray-700">{parsedProduct.description}</p>
