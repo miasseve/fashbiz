@@ -11,6 +11,10 @@ const AccountSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  percentage: {
+    type: String,
+    default:null
+  },
   isAccountComplete: {
     type: Boolean,
     default: false, 

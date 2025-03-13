@@ -42,11 +42,12 @@ export async function getAccountId() {
     }
     await dbConnect();
     const account = await Account.findOne({ userId: session.user.id });
-
+    const user = await User.findById(session.user.id);
     return {
       status: 200,
       accountId: account?.accountId || "",
       isAccountComplete: account?.isAccountComplete || false,
+      userRole: user?.role,
     };
   } catch (error) {
     return {
@@ -55,6 +56,48 @@ export async function getAccountId() {
     };
   }
 }
+
+export async function storePercentage(data) {
+  console.log(data);
+  const session = await auth();
+  if (!session) {
+    return { status: 400, error: "Invalid User" };
+  }
+  const user = await User.findById(session.user.id);
+
+  if (!user || user.role != "store") {
+    return { status: 404, error: "Invalid User" };
+  }
+
+  const account = await Account.findOne({ userId: session.user.id });
+  if (!account) {
+    return { status: 404, error: "Account not found" };
+  }
+
+  account.percentage = data.percentage;
+
+  try {
+    await account.save();
+    return { status: 200, message: "Percentage updated successfully" };
+  } catch (error) {
+    return { status: 500, error: "Error updating percentage" };
+  }
+}
+
+export async function getPercentage() {
+  const session = await auth();
+  if (!session) {
+    return { status: 400, error: "Invalid User" };
+  }
+
+  const account = await Account.findOne({ userId: session.user.id });
+  if (!account) {
+    return { status: 404, error: "Account not found" };
+  }
+
+  return { status: 200, percentage: account.percentage || null };
+}
+
 export async function storeSuccessResult(accountId) {
   try {
     const session = await auth();
@@ -105,7 +148,7 @@ export async function storeSuccessResult(accountId) {
       } catch (error) {
         console.log(error.message);
       }
-    
+
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete = isAccountComplete;
       await existingAccount.save();

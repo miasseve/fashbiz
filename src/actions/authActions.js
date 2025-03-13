@@ -325,7 +325,7 @@ export async function forgotPassword(email) {
     user.resetPasswordExpires = localExpirationTime;
 
     await user.save();
-    await sendResetPasswordEmail(user, resetToken);
+    // await sendResetPasswordEmail(user, resetToken);
 
     return {
       status: 200,

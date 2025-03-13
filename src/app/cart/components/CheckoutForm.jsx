@@ -14,15 +14,15 @@ import { clearCart } from "@/features/cartSlice";
 const CheckoutForm = ({ user }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
-  // const [customerName, setCustomerName] = useState("");
-  // const [customerEmail, setCustomerEmail] = useState("");
-  // const handleEmailChange = (e) => {
-  //   setCustomerEmail(e.target.value); // Update state with the input value
-  // };
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const handleEmailChange = (e) => {
+    setCustomerEmail(e.target.value); // Update state with the input value
+  };
 
-  // const handleNameChange = (e) => {
-  //   setCustomerName(e.target.value); // Update state with the input value
-  // };
+  const handleNameChange = (e) => {
+    setCustomerName(e.target.value); // Update state with the input value
+  };
 
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
@@ -34,10 +34,10 @@ const CheckoutForm = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // if(customerName=="" || customerEmail==""){
-    //   setError("Please enter customer details");
-    //   return
-    // }
+    if (customerName == "" || customerEmail == "") {
+      setError("Please enter customer details");
+      return;
+    }
 
     setError("");
     if (!stripe || !elements) return;
@@ -54,7 +54,7 @@ const CheckoutForm = ({ user }) => {
       setIsProcessing(false);
       return;
     }
-    
+
     // Make a request to the backend to create a payment intent or session
     const res = await fetch("/api/payment-intent", {
       method: "POST",
@@ -66,10 +66,12 @@ const CheckoutForm = ({ user }) => {
         total: productTotal,
         userId: user.id,
         products: products,
+        customerName: customerName,
+        customerEmail: customerEmail,
       }),
     });
     const data = await res.json();
-    
+
     if (data.status == 400) {
       setError(
         "Something went wrong! Please check store owner account is connected to stripe"
@@ -78,45 +80,45 @@ const CheckoutForm = ({ user }) => {
     } else {
       setIsProcessing(false);
       // const { error: confirmError, paymentIntent } =
-//         await stripe.confirmCardPayment(data.paymentIntent.client_secret, {
-//           payment_method: paymentMethod.id, // Pass the paymentMethod ID here
-//         });
+      //         await stripe.confirmCardPayment(data.paymentIntent.client_secret, {
+      //           payment_method: paymentMethod.id, // Pass the paymentMethod ID here
+      //         });
 
-//       if (confirmError) {
-//         setError("Payment confirmation failed: " + confirmError.message);
-//         setIsProcessing(false);
-//         return;
-//       }
-// console.log(paymentIntent,'payment')
-
+      //       if (confirmError) {
+      //         setError("Payment confirmation failed: " + confirmError.message);
+      //         setIsProcessing(false);
+      //         return;
+      //       }
+      // console.log(paymentIntent,'payment')
 
       // await soldProductsByIds(products);
       // await deleteProductsFromWix(products);
       // dispatch(clearCart());
-      router.push("/thankyou");
+      // router.push("/thankyou");
       // }
     }
   };
 
   return (
     <>
-      {/* <Input
-      placeholder="Customer Name"
-      type="text" // You can use 'email' type to trigger native email validation
-      size="lg"
-      value={customerName} // Bind the value of input to the state
-      onChange={handleNameChange} // Update state on user input
-   
-    />
-      <Input
-      placeholder="Customer Email"
-      type="email" // You can use 'email' type to trigger native email validation
-      size="lg"
-      value={customerEmail} // Bind the value of input to the state
-      onChange={handleEmailChange} // Update state on user input
-   
-    /> */}
-      <form onSubmit={handleSubmit} className="text-right">
+      <div className="flex flex-col gap-5">
+        <Input
+          placeholder="Customer Name"
+          type="text" // You can use 'email' type to trigger native email validation
+          size="lg"
+          value={customerName} // Bind the value of input to the state
+          onChange={handleNameChange} // Update state on user input
+        />
+        <Input
+          placeholder="Customer Email"
+          type="email" // You can use 'email' type to trigger native email validation
+          size="lg"
+          value={customerEmail} // Bind the value of input to the state
+          onChange={handleEmailChange} // Update state on user input
+        />
+      </div>
+
+      <form onSubmit={handleSubmit} className="text-right mt-[30px]">
         <CardElement />
         <Button
           color="primary"

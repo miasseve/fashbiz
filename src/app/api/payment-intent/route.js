@@ -25,11 +25,22 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    //await stripe.accounts.del('acct_1QvzrDPGltwucjGR');
-    const balance = await stripe.balance.retrieve();
+    // const balanceBeforePayment = await stripe.balance.retrieve();
+    // const balance = await stripe.balance.retrieve({
+    //   stripeAccount: 'acct_1R1ihVPDSFqSFylA',
+    // });
+    // console.log("Balance before payment:", balanceBeforePayment,balance);
 
     await dbConnect();
-    const { payment_method, total, userId, products } = await req.json();
+    const {
+      payment_method,
+      total,
+      userId,
+      products,
+      customerName,
+      customerEmail,
+    } = await req.json();
+
     const groupedProducts = products.reduce((acc, product) => {
       const { consignorAccount } = product;
       if (!acc[consignorAccount]) {
@@ -40,9 +51,29 @@ export async function POST(req) {
     }, {});
 
     const account = await Account.findOne({ userId: userId });
+  
     if (!account) {
       return NextResponse.json({ error: "Account not exist" }, { status: 400 });
     }
+
+    let storeOwnerPercentage = 0;
+    let consignorPercentage = 0;
+    
+    if(account.percentage)
+    {
+      storeOwnerPercentage = account.percentage;
+      consignorPercentage = 100-Number(account.percentage)-10;
+    } 
+    
+    const customer = await stripe.customers.create({
+      name: customerName,
+      email: customerEmail,
+      payment_method: payment_method, 
+      invoice_settings: {
+        default_payment_method: payment_method, 
+      },
+    });
+
     // const paymentIntents = [];
 
     const transferGroup = `ORDER_${Date.now()}`;
@@ -51,6 +82,7 @@ export async function POST(req) {
       amount: total * 100,
       currency: "eur",
       payment_method: payment_method,
+      customer: customer.id,
       confirm: true,
       automatic_payment_methods: {
         enabled: true,
@@ -81,7 +113,7 @@ export async function POST(req) {
       );
 
       await stripe.transfers.create({
-        amount: consignorTotal * 100 * 0.6,
+        amount: consignorTotal * 100 * consignorPercentage/100,
         currency: "eur",
         destination: consignorAccount,
         source_transaction: retrievedPaymentIntent.latest_charge,
@@ -89,7 +121,7 @@ export async function POST(req) {
       });
 
       await stripe.transfers.create({
-        amount: consignorTotal * 100 * 0.3,
+        amount: consignorTotal * 100 * storeOwnerPercentage/100,
         currency: "eur",
         destination: account.accountId,
         source_transaction: retrievedPaymentIntent.latest_charge,
