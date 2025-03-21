@@ -34,7 +34,7 @@ export async function POST(req, res) {
   switch (event.type) {
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
-      const customerId = paymentIntent.customer; // Get customer ID
+      const customerId = paymentIntent.customer; 
 
       // Retrieve customer details from Stripe
       try {
@@ -53,7 +53,6 @@ export async function POST(req, res) {
         console.error("Error retrieving customer:", err);
         // return NextResponse.json({ error: 'Failed to retrieve customer details' }, { status: 500 });
       }
-
       break;
     case "transfer.created":
       const transfer = event.data.object;

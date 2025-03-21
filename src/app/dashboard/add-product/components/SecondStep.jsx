@@ -11,6 +11,8 @@ import {
   Input,
   Textarea,
   Button,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import {
   Modal,
@@ -42,13 +44,11 @@ const SecondStep = ({
   const [generatedLink, setGeneratedLink] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [imgColors, setImgColors] = useState("");
+  //   const [imgColors, setImgColors] = useState("");
   const targetRef = React.useRef(null);
-  const { moveProps } = useDraggable({
-    targetRef,
-    canOverflow: true,
-    isDisabled: !isOpen,
-  });
+
+  const [collections, setCollections] = useState([]);
+
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
 
@@ -69,6 +69,22 @@ const SecondStep = ({
     },
   });
 
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await axios.get("/api/wixCollections");
+        if (response.status !== 200) {
+          setErrorMessage("Failed to fetch categories.Please try again !!");
+        }
+        setCollections(response.data.collections);
+      } catch (error) {
+        setErrorMessage("Failed to fetch categories.Please try again !!");
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
   // useEffect(() => {
   //   const fetchProductDetails = async () => {
   //     setLoading(true);
@@ -79,7 +95,7 @@ const SecondStep = ({
 
   //       if (response.status == 200) {
   //         const color = response.data?.colors[0];
-
+  //         console.log(color,"colorcolorcolor")
   //         const { red, green, blue } = color;
   //         // Update the state with the new array of color objects
   //         setImgColors(`rgb(${red}, ${green}, ${blue})`);
@@ -107,6 +123,46 @@ const SecondStep = ({
   //   fetchProductDetails();
   // }, []);
 
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.post("/api/google-vision", {
+          imageUrl: reduxImages[0]?.url ?? "",
+        });
+
+        if (response.status === 200) {
+          const color = response.data?.colors[0];
+
+          //   if (color) {
+          //     const { red, green, blue } = color;
+          //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
+          //     setImgColors(rgbColor);
+          //   }
+
+          const description = response.data?.texts
+            ?.map((text) => text.description)
+            .join(" , ");
+          const garments = response.data?.garmentLabels
+            ?.map((label) => label.description)
+            .join(" , ");
+
+          setValue("title", garments || "");
+          setValue(
+            "brand",
+            response.data?.logos[0]?.description || garments || ""
+          );
+          setValue("description", description || "");
+        }
+      } catch (error) {
+        toast.error("Failed to load product data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, []);
   const onSubmit = async (data) => {
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });
@@ -164,6 +220,29 @@ const SecondStep = ({
                   {errorMessage}
                 </span>
               )}
+
+              <div>
+                <label className="text-sm font-medium">Category</label>
+                <Select
+                  size="lg"
+                  {...register("collectionId", {
+                    required: "Category is required",
+                  })}
+                  placeholder="Select Category"
+                  fullWidth
+                >
+                  {collections.map((collection) => (
+                    <SelectItem key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                {errors.collectionId && (
+                  <span style={{ color: "red", fontSize: "12px" }}>
+                    {errors.collectionId.message}
+                  </span>
+                )}
+              </div>
               <div className="h-full">
                 <Input
                   label="SKU"
@@ -215,7 +294,7 @@ const SecondStep = ({
                   size="lg"
                   startContent={
                     <div className="pointer-events-none flex items-center">
-                      <span className="text-default-400 text-small">€</span>
+                      <span className="text-default-400 text-small">$</span>
                     </div>
                   }
                   {...register("price", {
@@ -229,6 +308,49 @@ const SecondStep = ({
                   </span>
                 )}
               </div>
+              {/* <div>
+                <label className="text-sm font-medium">Color</label>
+                <Select
+                  size="lg"
+                  {...register("color", { required: "Color is required" })}
+                  fullWidth
+                >
+                  <SelectItem key="red" value="red">
+                      Red
+                    </SelectItem>
+                    <SelectItem key="blue" value="blue">
+                      Blue
+                    </SelectItem>
+                    <SelectItem key="green" value="green">
+                      Green
+                    </SelectItem>
+                    <SelectItem key="black" value="black">
+                      Black
+                    </SelectItem>
+                </Select>
+                {errors.color && (
+                  <span style={{ color: "red", fontSize: "12px" }}>
+                    {errors.color.message}
+                  </span>
+                )}
+              </div> */}
+              {/* <div>
+                <label className="text-sm font-medium">Color</label>
+                <Input
+                  type="text"
+                  size="lg"
+                  fullWidth
+                  {...register("color", { required: "Color is required" })}
+                  value={imgColors} 
+                  readOnly
+                  style={{ backgroundColor: imgColors, color: "#fff" }} 
+                />
+                {errors.color && (
+                  <span style={{ color: "red", fontSize: "12px" }}>
+                    {errors.color.message}
+                  </span>
+                )}
+              </div> */}
               <div>
                 <Textarea
                   size="lg"
@@ -297,7 +419,7 @@ const SecondStep = ({
               {(onClose) => (
                 <>
                   <ModalHeader className="flex flex-col gap-1 text-center">
-                    Product Added Successfully 
+                    Product Added Successfully
                     <Input
                       type="text"
                       value={generatedLink}
@@ -316,10 +438,9 @@ const SecondStep = ({
                   </ModalBody>
                   <ModalFooter className="flex justify-center">
                     <Button
-                      color="success"
+                      color="secondary"
                       onPress={handleAddMoreProducts}
                       className="rounded-lg"
-                      style={{color:'white'}}
                     >
                       Yes
                     </Button>

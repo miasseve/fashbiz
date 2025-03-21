@@ -1,4 +1,3 @@
-// models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
@@ -7,6 +6,7 @@ const productSchema = new mongoose.Schema({
   brand: { type: String, required: true },
   category: { type: String, required: true },
   description: { type: String, required: true },
+  // color: { type: String, required: true },
   price: { type: Number, required: true },
   images: [
     {
@@ -23,7 +23,6 @@ const productSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Product =
-  mongoose.models.Product || mongoose.model("Product", productSchema);
+const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
 
 export default Product;

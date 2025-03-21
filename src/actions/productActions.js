@@ -8,11 +8,11 @@ import axios from "axios";
 
 export async function createProduct(formData) {
   try {
-    // Connect to the database
     const session = await auth();
     if (!session) {
       return { status: 400, error: "User is not authenticated" };
     }
+
     const {
       title,
       sku,
@@ -24,82 +24,104 @@ export async function createProduct(formData) {
       lastName,
       email,
       accountId,
+      // color,
+      collectionId, // <-- Receiving the collection ID from frontend
     } = formData;
+
     await dbConnect();
 
     // Construct product data for Wix API
-    // const productData = {
-    //   product: {
-    //     name: title,
-    //     productType: "physical",
-    //     priceData: {
-    //       price: price,
-    //     },
-    //     description: description,
-    //     sku: sku,
-    //     visible: false,
-    //   },
-    // };
+    const productData = {
+      product: {
+        name: title,
+        productType: "physical",
+        priceData: { price: price },
+        description: description,
+        sku: sku,
+        visible: false
+      },
+    };
+
     try {
-      // Make the POST request to Wix API to create the product
-      // const response = await axios.post(
-      //   "https://www.wixapis.com/stores/v1/products",
-      //   productData,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
-      //       "wix-site-id": process.env.WIX_SITE_ID,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
+      // Create product in Wix
+      const response = await axios.post(
+        "https://www.wixapis.com/stores/v1/products",
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-account-id": process.env.WIX_ACCOUNT_ID,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      // const productImages = {
-      //   media: images.map((image) => ({ url: image.url })),
-      // };
-      // const res = await axios.post(
-      //   `https://www.wixapis.com/stores/v1/products/${response.data.product.id}/media`,
-      //   productImages,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
-      //       "wix-site-id": process.env.WIX_SITE_ID,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
+      const productId = response.data.product.id; // Get the created product ID
+      // Add images to product
+      const productImages = {
+        media: images.map((image) => ({ url: image.url })),
+      };
 
-      // Create a new product in your local MongoDB
+      await axios.post(
+        `https://www.wixapis.com/stores/v1/products/${productId}/media`,
+        productImages,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-account-id": process.env.WIX_ACCOUNT_ID,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // ✅ Assign the product to the selected collection
+      if (collectionId) {
+        await axios.post(
+          // https://www.wixapis.com/stores/v1/collections/{id}/productIds
+          `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
+          {
+            productIds: [productId], // Add product to the collection
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+              "wix-account-id": process.env.WIX_ACCOUNT_ID,
+              "wix-site-id": process.env.WIX_SITE_ID,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      // Save product in MongoDB
       const newProduct = new Product({
         sku,
         title,
-        brand:brand,
-        category: "test",
+        brand,
+        category:collectionId,
         description,
         price,
         images,
         userId: session.user.id,
-        consignorName: firstName + lastName,
+        consignorName: `${firstName} ${lastName}`,
         consignorEmail: email,
-        consignorAccount: accountId,
-        // wixProductId: response.data.product.id,
+        consignorAccount: accountId
       });
-
-      // Save the product to MongoDB
       await newProduct.save();
-      // Add the product ID to the user's products array
+
       const user = await User.findById(session.user.id);
       if (user) {
         user.products.push(newProduct._id);
         await user.save();
       }
+
       const link = `https://fash-roan.vercel.app/product/${newProduct._id}`;
 
       return {
         status: 200,
-        message: "Product created successfully",
+        message: "Product created successfully and added to collection",
         data: link,
       };
     } catch (error) {
@@ -107,22 +129,16 @@ export async function createProduct(formData) {
         const { status, data } = error.response;
         if (
           status === 400 &&
-          data?.message == "requirement failed: product.sku is not unique"
+          data?.message === "requirement failed: product.sku is not unique"
         ) {
-          return {
-            status: 400,
-            error: "SKU already exist",
-          };
+          return { status: 400, error: "SKU already exists" };
         } else {
-          return {
-            status: 400,
-            error: data?.message,
-          };
+          return { status: 400, error: data?.message };
         }
       } else {
         return {
           status: 400,
-          error: data?.message,
+          error: "An error occurred while creating the product.",
         };
       }
     }
@@ -130,6 +146,133 @@ export async function createProduct(formData) {
     return { status: 500, error: error.message || "Failed to create product" };
   }
 }
+
+
+
+// export async function createProduct(formData) {
+//   try {
+//     // Connect to the database
+//     const session = await auth();
+//     if (!session) {
+//       return { status: 400, error: "User is not authenticated" };
+//     }
+//     const {
+//       title,
+//       sku,
+//       brand,
+//       description,
+//       price,
+//       images,
+//       firstName,
+//       lastName,
+//       email,
+//       accountId,
+//     } = formData;
+//     await dbConnect();
+
+//     // Construct product data for Wix API
+//     // const productData = {
+//     //   product: {
+//     //     name: title,
+//     //     productType: "physical",
+//     //     priceData: {
+//     //       price: price,
+//     //     },
+//     //     description: description,
+//     //     sku: sku,
+//     //     visible: false,
+//     //   },
+//     // };
+//     try {
+//       // Make the POST request to Wix API to create the product
+//       // const response = await axios.post(
+//       //   "https://www.wixapis.com/stores/v1/products",
+//       //   productData,
+//       //   {
+//       //     headers: {
+//       //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+//       //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+//       //       "wix-site-id": process.env.WIX_SITE_ID,
+//       //       "Content-Type": "application/json",
+//       //     },
+//       //   }
+//       // );
+
+//       // const productImages = {
+//       //   media: images.map((image) => ({ url: image.url })),
+//       // };
+//       // const res = await axios.post(
+//       //   `https://www.wixapis.com/stores/v1/products/${response.data.product.id}/media`,
+//       //   productImages,
+//       //   {
+//       //     headers: {
+//       //       Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+//       //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+//       //       "wix-site-id": process.env.WIX_SITE_ID,
+//       //       "Content-Type": "application/json",
+//       //     },
+//       //   }
+//       // );
+
+//       // Create a new product in your local MongoDB
+//       const newProduct = new Product({
+//         sku,
+//         title,
+//         brand:brand,
+//         category: "test",
+//         description,
+//         price,
+//         images,
+//         userId: session.user.id,
+//         consignorName: firstName + lastName,
+//         consignorEmail: email,
+//         consignorAccount: accountId,
+//         // wixProductId: response.data.product.id,
+//       });
+
+//       // Save the product to MongoDB
+//       await newProduct.save();
+//       // Add the product ID to the user's products array
+//       const user = await User.findById(session.user.id);
+//       if (user) {
+//         user.products.push(newProduct._id);
+//         await user.save();
+//       }
+//       const link = `https://fash-roan.vercel.app/product/${newProduct._id}`;
+
+//       return {
+//         status: 200,
+//         message: "Product created successfully",
+//         data: link,
+//       };
+//     } catch (error) {
+//       if (error.response) {
+//         const { status, data } = error.response;
+//         if (
+//           status === 400 &&
+//           data?.message == "requirement failed: product.sku is not unique"
+//         ) {
+//           return {
+//             status: 400,
+//             error: "SKU already exist",
+//           };
+//         } else {
+//           return {
+//             status: 400,
+//             error: data?.message,
+//           };
+//         }
+//       } else {
+//         return {
+//           status: 400,
+//           error: data?.message,
+//         };
+//       }
+//     }
+//   } catch (error) {
+//     return { status: 500, error: error.message || "Failed to create product" };
+//   }
+// }
 export async function getUserProducts() {
   try {
     // Authenticate and get the session
