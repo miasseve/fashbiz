@@ -20,13 +20,12 @@ const RemoveImage = ({
   );
  
   const handleRemoveImage = async () => {
-    console.log(publicId,'publicId')
+
     try {
       setDeleteImageLoader({ index:viewType, loading: true });
       const response = await axios.delete(
         `/api/upload?publicId=${publicId}&removeBgPublicId=${uploadedImagesWithView[viewType].removePublicId}`
       );
-      console.log(response,'resssssssssssssssss');
       if (response.status == 200) {
         setDeleteImageLoader({ index : viewType, loading: false });
 
@@ -55,7 +54,6 @@ const RemoveImage = ({
       
       }
     } catch (error) {
-      console.log(error.message,'error.mesaageeeeeeeeeee');
       setDeleteImageLoader({ index:viewType, loading: false });
       toast.error("Error deleting image. Please try again.");
     }

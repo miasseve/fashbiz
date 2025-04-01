@@ -24,7 +24,8 @@ import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
-  const [uploadedImages, setUploadedImages] = useState([]);
+  const [selectedView, setSelectedView] = useState("frontView");
+  const topRef = useRef(null);
 
   const [uploadedImagesWithView, setUploadedImagesWithView] = useState({
     frontView: null,
@@ -33,16 +34,15 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     detailView: null,
   });
 
-  const [selectedView, setSelectedView] = useState("frontView");
-  const topRef = useRef(null);
-  //fetch data from redux
   const storedProductImages = useSelector(
     (state) => state.product.uploadedImages
   );
-console.log(storedProductImages,'storedProductImages')
+
   useEffect(() => {
-    const isEmpty = (storedProductImages) => Object.keys(storedProductImages).length === 0;
-    if(!isEmpty){
+    const isEmpty = Object.values(storedProductImages).every(
+      (value) => value === null
+    );
+    if (!isEmpty) {
       setUploadedImagesWithView(storedProductImages);
     }
   }, []);
@@ -60,13 +60,13 @@ console.log(storedProductImages,'storedProductImages')
   const canvasRef = useRef(null);
 
   const handleGalleryClick = (viewType) => {
+    setIsCameraOpen(false);
     setSelectedView(viewType);
     document.getElementById("fileInput");
     fileInput.value = "";
     fileInput.click();
   };
-  // Upload image to Cloudinary
-  console.log(removeBackgroundLoader, "removeBackgroundLoader");
+
   const updateImageTransformationsWithView = (viewType, value, prefix) => {
     setUploadedImagesWithView((prevImages) => {
       const updatedImages = { ...prevImages };
@@ -144,6 +144,15 @@ console.log(storedProductImages,'storedProductImages')
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
     setSelectedView(viewType);
+    setCroppingImage(null);
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 100);
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then((stream) => {
@@ -305,18 +314,10 @@ console.log(storedProductImages,'storedProductImages')
       return;
     }
 
-    if (uploadedImages.length + files.length > 4) {
-      toast.error("You can upload maximum of 4 images for each product.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
     // Scroll to the top of the page after selecting the image
     if (topRef.current) {
       topRef.current.scrollIntoView({ behavior: "smooth" });
     }
-
     setCroppingImage(URL.createObjectURL(files[0]));
     e.target.value = "";
   };
@@ -362,7 +363,6 @@ console.log(storedProductImages,'storedProductImages')
               uploadImageLoader={uploadImageLoader}
               setCroppingImage={setCroppingImage}
               setUploadImageLoader={setUploadImageLoader}
-              // setUploadedImages={setUploadedImages}
               setUploadedImagesWithView={setUploadedImagesWithView}
             />
           </div>
@@ -546,26 +546,14 @@ console.log(storedProductImages,'storedProductImages')
             </Button>
           </div>
           <div className="flex mt-5 items-center">
-            <div className="text-start">
-              <Button
-                isDisabled={
-                  uploadImageLoader ||
-                  Object.keys(removeBackgroundLoader).length > 0 ||
-                  uploadedImagesWithView.length === 4
-                }
-                onPress={handleCameraClick}
-                className="text-[1.2rem] py-6 px-6 text-white rounded-lg"
-                color="success"
-              >
-                Add Product
-              </Button>
-            </div>
             <div className="text-start pl-[1rem]">
               <Button
                 isDisabled={
                   uploadImageLoader ||
                   Object.keys(removeBackgroundLoader).length > 0 ||
-                  uploadedImagesWithView.length === 0
+                  Object.values(uploadedImagesWithView).every(
+                    (value) => value === null
+                  )
                 }
                 onPress={step2Handler}
                 className=" text-[1.2rem] px-6 py-6 rounded-lg"

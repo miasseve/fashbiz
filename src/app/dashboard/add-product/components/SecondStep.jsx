@@ -51,15 +51,15 @@ const SecondStep = ({
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
-  
-console.log(reduxImages,'reduxImages')
 
-const imagesFiltered = Object.values(reduxImages) 
-      .filter((image) => image !== null) 
-      .map((image) => ({
-        url: image.url,
-        publicId: image.publicId,
-      }));
+  console.log(reduxImages, "reduxImages");
+
+  const imagesFiltered = Object.values(reduxImages)
+    .filter((image) => image !== null)
+    .map((image) => ({
+      url: image.url,
+      publicId: image.publicId,
+    }));
 
   const {
     register,
@@ -70,13 +70,13 @@ const imagesFiltered = Object.values(reduxImages)
     mode: "onTouched",
     defaultValues: {
       sku: user.storename + currentYear + (parseInt(productCount) + 1),
-      images: Object.values(reduxImages) 
-      .filter((image) => image !== null) 
-      .map((image) => ({
-        url: image.url,
-        publicId: image.publicId,
-      }),
-  )},
+      images: Object.values(reduxImages)
+        .filter((image) => image !== null)
+        .map((image) => ({
+          url: image.url,
+          publicId: image.publicId,
+        })),
+    },
   });
 
   // useEffect(() => {
@@ -133,46 +133,46 @@ const imagesFiltered = Object.values(reduxImages)
   //   fetchProductDetails();
   // }, []);
 
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.post("/api/google-vision", {
-          imageUrl: imagesFiltered[0]?.url ?? "",
-        });
+  // useEffect(() => {
+  //   const fetchProductDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const response = await axios.post("/api/google-vision", {
+  //         imageUrl: imagesFiltered[0]?.url ?? "",
+  //       });
 
-        if (response.status === 200) {
-          const color = response.data?.colors[0];
+  //       if (response.status === 200) {
+  //         const color = response.data?.colors[0];
 
-          //   if (color) {
-          //     const { red, green, blue } = color;
-          //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
-          //     setImgColors(rgbColor);
-          //   }
+  //         //   if (color) {
+  //         //     const { red, green, blue } = color;
+  //         //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
+  //         //     setImgColors(rgbColor);
+  //         //   }
 
-          const description = response.data?.texts
-            ?.map((text) => text.description)
-            .join(" , ");
-          const garments = response.data?.garmentLabels
-            ?.map((label) => label.description)
-            .join(" , ");
+  //         const description = response.data?.texts
+  //           ?.map((text) => text.description)
+  //           .join(" , ");
+  //         const garments = response.data?.garmentLabels
+  //           ?.map((label) => label.description)
+  //           .join(" , ");
 
-          setValue("title", garments || "");
-          setValue(
-            "brand",
-            response.data?.logos[0]?.description || garments || ""
-          );
-          setValue("description", description || "");
-        }
-      } catch (error) {
-        toast.error("Failed to load product data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  //         setValue("title", garments || "");
+  //         setValue(
+  //           "brand",
+  //           response.data?.logos[0]?.description || garments || ""
+  //         );
+  //         setValue("description", description || "");
+  //       }
+  //     } catch (error) {
+  //       toast.error("Failed to load product data");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchProductDetails();
-  }, []);
+  //   fetchProductDetails();
+  // }, []);
   const onSubmit = async (data) => {
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });

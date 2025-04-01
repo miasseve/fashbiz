@@ -9,10 +9,7 @@ export default function QRCodeScanner() {
   const dispatch = useDispatch();
   const [error, setError] = useState();
 
-  useEffect(() => {
-    dispatch(clearConsignors());
-  }, []);
-  
+
   useEffect(() => {
     const scanner = new Html5QrcodeScanner("reader", {
       fps: 10,
