@@ -4,7 +4,7 @@ const productSchema = new mongoose.Schema({
   sku: { type: String, required: true },
   title: { type: String, required: true },
   brand: { type: String, required: true },
-  category: { type: String, required: true },
+  // category: { type: String, required: true },
   description: { type: String, required: true },
   // color: { type: String, required: true },
   price: { type: Number, required: true },
@@ -19,7 +19,7 @@ const productSchema = new mongoose.Schema({
   consignorEmail: { type: String, required: true },
   consignorAccount: { type: String, required: true },
   sold: { type: Boolean, default: false },
-  wixProductId: { type: String, required: false },
+  // wixProductId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
 });
 

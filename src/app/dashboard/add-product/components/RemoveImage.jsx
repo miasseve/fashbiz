@@ -6,49 +6,62 @@ import { Spinner } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUploadedImagesOfProduct } from "@/features/productSlice";
 const RemoveImage = ({
-  index,
+  viewType,
   publicId,
   disabled,
-  uploadedImages,
+  uploadedImagesWithView,
   setDeleteImageLoader,
-  setUploadedImages,
   deleteImageLoader,
+  setUploadedImagesWithView
 }) => {
   const dispatch = useDispatch();
-    const storedProductImages = useSelector(
-      (state) => state.product.uploadedImages
-    ); 
-    
-  const handleRemoveImage = async (index, publicId) => {
+  const storedProductImages = useSelector(
+    (state) => state.product.uploadedImages
+  );
+ 
+  const handleRemoveImage = async () => {
+    console.log(publicId,'publicId')
     try {
-      setDeleteImageLoader({ index, loading: true });
+      setDeleteImageLoader({ index:viewType, loading: true });
       const response = await axios.delete(
-        `/api/upload?publicId=${publicId}&removeBgPublicId=${uploadedImages[index].removePublicId}`
+        `/api/upload?publicId=${publicId}&removeBgPublicId=${uploadedImagesWithView[viewType].removePublicId}`
       );
+      console.log(response,'resssssssssssssssss');
       if (response.status == 200) {
-        setDeleteImageLoader({ index, loading: false });
-        const latestImages = uploadedImages.filter(
-          (image) => image.publicId !== publicId
-        );
-        
+        setDeleteImageLoader({ index : viewType, loading: false });
+
+
+        // const latestImages = uploadedImages.filter(
+        //   (image) => image.publicId !== publicId
+        // );
+        // const latestImagesWithView = uploadedImagesWithView.filter(
+        //   (image) => image.publicId !== publicId
+        // );
+        // const newImages = Object.values(storedProductImages).filter((image) => {
+        //   console.log("Checking image:", image); // Log each image
+        //   return image.publicId !== publicId;
+        // });
+        // console.log(newImages,'new-images');
+        // dispatch(setUploadedImagesOfProduct(newImages));
+        setUploadedImagesWithView((prevImages) => ({
+          ...prevImages,
+          [viewType]: null
+        }));
+
         toast.success("Image deleted successfully!", {
           position: "top-right",
           autoClose: 2000,
         });
-        const newImages = storedProductImages.filter(
-          (image) => image.publicId !== publicId
-        );
-  
-        dispatch(setUploadedImagesOfProduct(newImages));
-        setUploadedImages(latestImages);
+      
       }
     } catch (error) {
-      setDeleteImageLoader({ index, loading: false });
+      console.log(error.message,'error.mesaageeeeeeeeeee');
+      setDeleteImageLoader({ index:viewType, loading: false });
       toast.error("Error deleting image. Please try again.");
     }
   };
 
-  return deleteImageLoader.index == index &&
+  return deleteImageLoader.index == viewType &&
     deleteImageLoader.loading == true ? (
     <span className="text-[2rem]">
       {" "}
@@ -59,7 +72,7 @@ const RemoveImage = ({
       color="danger"
       isDisabled={disabled}
       className="rounded-lg px-6 py-6"
-      onPress={() => handleRemoveImage(index, publicId)} // Call remove handler
+      onPress={() => handleRemoveImage(viewType , publicId)} 
     >
       Remove
     </Button>

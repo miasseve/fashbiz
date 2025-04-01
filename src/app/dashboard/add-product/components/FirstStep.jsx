@@ -25,11 +25,28 @@ import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
   const [uploadedImages, setUploadedImages] = useState([]);
+
+  const [uploadedImagesWithView, setUploadedImagesWithView] = useState({
+    frontView: null,
+    sideView: null,
+    backView: null,
+    detailView: null,
+  });
+
+  const [selectedView, setSelectedView] = useState("frontView");
   const topRef = useRef(null);
   //fetch data from redux
   const storedProductImages = useSelector(
     (state) => state.product.uploadedImages
   );
+console.log(storedProductImages,'storedProductImages')
+  useEffect(() => {
+    const isEmpty = (storedProductImages) => Object.keys(storedProductImages).length === 0;
+    if(!isEmpty){
+      setUploadedImagesWithView(storedProductImages);
+    }
+  }, []);
+
   const [croppingImage, setCroppingImage] = useState(null);
 
   //loading and error handling
@@ -38,24 +55,24 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const [deleteImageLoader, setDeleteImageLoader] = useState({});
   const [removeBackgroundLoader, setRemoveBackgroundLoader] = useState({});
 
-  useEffect(() => {
-    if (storedProductImages && storedProductImages.length > 0) {
-      setUploadedImages(storedProductImages);
-    }
-  }, [storedProductImages]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  const handleCameraClick = () => {
+  const handleGalleryClick = (viewType) => {
+    setSelectedView(viewType);
     document.getElementById("fileInput");
     fileInput.value = "";
     fileInput.click();
   };
   // Upload image to Cloudinary
-
-  const updateImageTransformations = (index, value, prefix) => {
-    setUploadedImages((prevImages) => {
-      const updatedImages = [...prevImages];
-      const baseUrl = updatedImages[index]?.originalUrl.split("/upload")[0];
-      const remaining = updatedImages[index]?.originalUrl.split("/upload")[1];
+  console.log(removeBackgroundLoader, "removeBackgroundLoader");
+  const updateImageTransformationsWithView = (viewType, value, prefix) => {
+    setUploadedImagesWithView((prevImages) => {
+      const updatedImages = { ...prevImages };
+      const baseUrl = updatedImages[viewType]?.originalUrl.split("/upload")[0];
+      const remaining =
+        updatedImages[viewType]?.originalUrl.split("/upload")[1];
 
       if (!remaining) return prevImages;
 
@@ -78,12 +95,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       }
 
       const newUrl = `${baseUrl}/upload/${transformations.join("/")}`;
-      let removeBgUrl = updatedImages[index]?.removeBgUrl;
-      if (updatedImages[index]?.removeBgUrl) {
+      let removeBgUrl = updatedImages[viewType]?.removeBgUrl;
+      if (updatedImages[viewType]?.removeBgUrl) {
         const removeBaseUrl =
-          updatedImages[index]?.removeBgUrl.split("/upload")[0];
+          updatedImages[viewType]?.removeBgUrl.split("/upload")[0];
         const removeRemaining =
-          updatedImages[index]?.removeBgUrl.split("/upload")[1];
+          updatedImages[viewType]?.removeBgUrl.split("/upload")[1];
 
         if (!removeRemaining) return prevImages;
 
@@ -113,9 +130,9 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           "/"
         )}`;
       }
-      updatedImages[index] = {
-        ...updatedImages[index],
-        url: updatedImages[index].isBgRemovedImage ? removeBgUrl : newUrl,
+      updatedImages[viewType] = {
+        ...updatedImages[viewType],
+        url: updatedImages[viewType].isBgRemovedImage ? removeBgUrl : newUrl,
         originalUrl: newUrl,
         removeBgUrl: removeBgUrl,
       };
@@ -123,40 +140,62 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       return updatedImages;
     });
   };
-  const handleBrightness = (value, index) => {
-    setUploadedImages((prevImages) => {
-      const updatedImages = [...prevImages];
-      updatedImages[index] = {
-        ...updatedImages[index],
-        brightness: value,
-      };
-      return updatedImages;
-    });
-    updateImageTransformations(index, value, "e_brightness:");
+
+  const handleCameraClick = (viewType = "frontView") => {
+    setIsCameraOpen(true);
+    setSelectedView(viewType);
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      })
+      .catch((err) => console.error("Error accessing camera:", err));
   };
 
-  const handleContrast = (value, index) => {
-    setUploadedImages((prevImages) => {
-      const updatedImages = [...prevImages];
-      updatedImages[index] = {
-        ...updatedImages[index],
-        contrast: value,
-      };
-      return updatedImages;
-    });
-    updateImageTransformations(index, value, "e_contrast:");
+  const captureImage = () => {
+    if (canvasRef.current && videoRef.current) {
+      const context = canvasRef.current.getContext("2d");
+      canvasRef.current.width = videoRef.current.videoWidth;
+      canvasRef.current.height = videoRef.current.videoHeight;
+      context.drawImage(videoRef.current, 0, 0);
+      const imageData = canvasRef.current.toDataURL("image/png");
+      setCroppingImage(imageData);
+      setIsCameraOpen(false);
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+    }
   };
 
-  const handleFilter = (value, index) => {
-    setUploadedImages((prevImages) => {
-      const updatedImages = [...prevImages];
-      updatedImages[index] = {
-        ...updatedImages[index],
-        filter: value,
-      };
-      return updatedImages;
-    });
-    updateImageTransformations(index, value, "e_art:");
+  const handleBrightnessWithView = (value, viewType) => {
+    setUploadedImagesWithView((prevImages) => ({
+      ...prevImages,
+      [viewType]: prevImages[viewType]
+        ? { ...prevImages[viewType], brightness: value }
+        : null,
+    }));
+
+    updateImageTransformationsWithView(viewType, value, "e_brightness:");
+  };
+
+  const handleContrastWithView = (value, viewType) => {
+    setUploadedImagesWithView((prevImages) => ({
+      ...prevImages,
+      [viewType]: prevImages[viewType]
+        ? { ...prevImages[viewType], contrast: value }
+        : null,
+    }));
+    updateImageTransformationsWithView(viewType, value, "e_contrast:");
+  };
+
+  const handleFilterWithView = (value, viewType) => {
+    setUploadedImagesWithView((prevImages) => ({
+      ...prevImages,
+      [viewType]: prevImages[viewType]
+        ? { ...prevImages[viewType], filter: value }
+        : null,
+    }));
+    updateImageTransformationsWithView(viewType, value, "e_art:");
   };
 
   const blobToBase64 = (blob) => {
@@ -167,29 +206,33 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       reader.readAsDataURL(blob);
     });
   };
-  const removeBackgroundHandler = async (e, index) => {
+
+  const removeBackgroundHandlerWithView = async (e, viewType) => {
     const isChecked = e.target.checked;
 
     if (isChecked) {
       setRemoveBackgroundLoader((prevState) => ({
         ...prevState,
-        [index]: { loading: true },
+        [viewType]: { loading: true },
       }));
 
-      if (uploadedImages[index].removePublicId) {
+      if (uploadedImagesWithView[viewType].removePublicId) {
         setUploadImageLoader(false);
-        setUploadedImages((prevImages) => {
-          const updatedImages = [...prevImages];
-          updatedImages[index] = {
-            ...updatedImages[index],
-            publicId: uploadedImages[index].removePublicId,
-            url: uploadedImages[index].removeBgUrl,
-            isBgRemovedImage: true,
-          };
-          return updatedImages;
-        });
+        setUploadedImagesWithView((prevImages) => ({
+          ...prevImages,
+          [viewType]: prevImages[viewType]
+            ? {
+                ...prevImages[viewType],
+                publicId: uploadedImagesWithView[viewType].removePublicId,
+                url: uploadedImagesWithView[viewType].removeBgUrl,
+                isBgRemovedImage: true,
+              }
+            : null,
+        }));
       } else {
-        const blob = await removeBackground(uploadedImages[index].url);
+        const blob = await removeBackground(
+          uploadedImagesWithView[viewType].url
+        );
         const processedUrl = URL.createObjectURL(blob);
         const processedBlob = await fetch(processedUrl).then((res) =>
           res.blob()
@@ -199,18 +242,19 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         const base64File = await blobToBase64(processedBlob);
         const res = await updateCloudinaryImage(base64File);
         if (res.status == 200) {
-          setUploadedImages((prevImages) => {
-            const updatedImages = [...prevImages];
-            updatedImages[index] = {
-              ...updatedImages[index],
-              publicId: res.data.public_id,
-              removePublicId: res.data.public_id,
-              removeBgUrl: res.data.secure_url,
-              url: res.data.secure_url,
-              isBgRemovedImage: true,
-            };
-            return updatedImages;
-          });
+          setUploadedImagesWithView((prevImages) => ({
+            ...prevImages,
+            [viewType]: prevImages[viewType]
+              ? {
+                  ...prevImages[viewType],
+                  publicId: res.data.public_id,
+                  removePublicId: res.data.public_id,
+                  removeBgUrl: res.data.secure_url,
+                  url: res.data.secure_url,
+                  isBgRemovedImage: true,
+                }
+              : null,
+          }));
         } else {
           console.log("something went wrong");
         }
@@ -218,28 +262,29 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       }
       setRemoveBackgroundLoader({});
     } else {
-      setUploadedImages((prevImages) => {
-        const updatedImages = [...prevImages];
-        updatedImages[index] = {
-          ...updatedImages[index],
-          publicId: uploadedImages[index].originalPublicId,
-          url: uploadedImages[index].originalUrl,
-          isBgRemovedImage: false,
-        };
-        return updatedImages;
-      });
+      setUploadedImagesWithView((prevImages) => ({
+        ...prevImages,
+        [viewType]: prevImages[viewType]
+          ? {
+              ...prevImages[viewType],
+              publicId: uploadedImagesWithView[viewType].originalPublicId,
+              url: uploadedImagesWithView[viewType].originalUrl,
+              isBgRemovedImage: false,
+            }
+          : null,
+      }));
     }
   };
   const handleImageError = (e, index) => {
     setImageUploadError((prevErrors) => {
       const newErrors = [...prevErrors];
-      newErrors[index] = "Failed To change background.Something went wrong !!"; // Mark the specific index as having an error
+      newErrors[index] = "Failed To change background.Something went wrong !!";
       return newErrors;
     });
   };
   const step2Handler = () => {
-    dispatch(setUploadedImagesOfProduct(uploadedImages));
-    handleSaveUrl(uploadedImages);
+    dispatch(setUploadedImagesOfProduct(uploadedImagesWithView));
+    handleSaveUrl();
   };
   const handleFileSelection = async (e) => {
     const files = Array.from(e.target.files);
@@ -279,13 +324,22 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   return (
     <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem]">
       <div className="text-center">
-        <Button
-          type="button"
-          onPress={handleCameraClick}
-          className="camera-button text-[2rem]"
-        >
-          <IoIosCamera />
-        </Button>
+        {isCameraOpen && (
+          <div className="camera-container">
+            <video
+              ref={videoRef}
+              autoPlay
+              className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
+            />
+            <Button
+              onPress={captureImage}
+              className="mt-4 bg-blue-500 text-white p-2 rounded"
+            >
+              Capture
+            </Button>
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+        )}
 
         <Input
           type="file"
@@ -304,10 +358,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <div className="text-center">
             <CropImage
               cropImage={croppingImage}
+              selectedView={selectedView}
               uploadImageLoader={uploadImageLoader}
               setCroppingImage={setCroppingImage}
               setUploadImageLoader={setUploadImageLoader}
-              setUploadedImages={setUploadedImages}
+              // setUploadedImages={setUploadedImages}
+              setUploadedImagesWithView={setUploadedImagesWithView}
             />
           </div>
         )}
@@ -322,151 +378,160 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
             </div>
           </div>
         )}
-        {uploadedImages.length == 0 && (
-          <>
-            <div className="mt-4 flex lg:flex-row flex-col gap-3">
-              <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                Front View
-              </div>
-              <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                Side View
-              </div>
-            </div>
-
-            <div className="mt-4 flex lg:flex-row flex-col gap-3">
-              <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                Back View
-              </div>
-              <div className="border p-8 rounded mb-4 bg-[#f1f3f1] lg:w-[49%]">
-                Detail View
-              </div>
-            </div>
-          </>
-        )}
-        {uploadedImages.length > 0 && (
-          <div className="flex flex-wrap w-full justify-between lg:flex-row flex-col mt-4">
-            {uploadedImages.map((imageUrl, index) => (
+        <div className="grid lg:grid-cols-2 grid-cols-1  gap-4 mt-4">
+          {Object.entries(uploadedImagesWithView).map(
+            ([viewType, imageData]) => (
               <div
-                key={imageUrl?.publicId || index}
-                className="mt-4 lg:w-[49%] w-full"
+                key={viewType}
+                className="border p-8 rounded mb-4 bg-[#f1f3f1] "
               >
-                <div className="border p-8 rounded mb-4 bg-[#f1f3f1]">
-                  <div className="flex w-full justify-between]">
-                    <div className="w-[40% pr-[2rem]">
-                      {imageUploadError[index] ? (
-                        <div className="text-red-500">
-                          Failed to load image.
+                {imageData != null ? (
+                  // Image is uploaded -> Show Image and Controls
+                  <div className="mt-4 w-full">
+                    <div className="border p-4 rounded bg-white">
+                      <div className="flex justify-between">
+                        <div className="w-[49%] pr-[2rem] h-full">
+                          <Image
+                            src={imageData.url}
+                            alt={`${viewType} Image`}
+                            width="300"
+                            height="300"
+                            layout="intrinsic"
+                            onError={(e) => handleImageError(e, viewType)}
+                            className="rounded"
+                          />
                         </div>
-                      ) : (
-                        <Image
-                          src={imageUrl.url}
-                          alt={`Uploaded Image ${index + 1}`}
-                          width={300}
-                          height={200}
-                          onError={(e) => handleImageError(e, index)} // Handle specific image error
-                          style={{
-                            maxWidth: "300px",
-                            height: "auto",
-                            margin: "auto",
-                          }}
-                          layout="intrinsic"
-                        />
-                      )}
-                    </div>
 
-                    <div className="w-[60%] lg:mt-[10px] mt-0 relative">
-                      <div className="flex justify-between w-full">
-                        <Slider
-                          defaultValue={imageUrl?.brightness || 0}
-                          label="Brightness"
-                          maxValue={99}
-                          minValue={-99}
-                          onChangeEnd={(value) =>
-                            handleBrightness(value, index)
-                          }
-                          step={1}
-                        />
-                      </div>
-                      <div className="flex my-5 justify-between w-full">
-                        <Slider
-                          defaultValue={imageUrl?.contrast || 0}
-                          label="Contrast"
-                          maxValue={99}
-                          minValue={-99}
-                          onChangeEnd={(value) => handleContrast(value, index)}
-                          step={1}
-                        />
-                      </div>
+                        <div className="w-[60%] lg:mt-[10px] mt-0 relative">
+                          <div className="flex justify-between w-full">
+                            <Slider
+                              defaultValue={imageData?.brightness || 0}
+                              label="Brightness"
+                              maxValue={99}
+                              minValue={-99}
+                              onChangeEnd={(value) =>
+                                handleBrightnessWithView(value, viewType)
+                              }
+                              step={1}
+                            />
+                          </div>
 
-                      <div className="custom-select text-start">
-                        <Select
-                          defaultSelectedKeys={[imageUrl?.filter || ""]}
-                          onChange={(e) => handleFilter(e.target.value, index)}
-                          // label="Filters"
-                          placeholder="Select filter option"
-                          className="custom-select"
-                          style={{
-                            background: "#fff",
-                            border: "1px solid #e5e7eb",
-                          }}
-                        >
-                          <SelectItem key="" value="" className="custom-select">
-                            -- Select a filter --
-                          </SelectItem>
-                          {filters.map((filterOption) => (
-                            <SelectItem
-                              key={filterOption.key}
-                              value={filterOption.key}
-                              className="custom-select py-[1rem]"
+                          <div className="flex my-5 justify-between w-full">
+                            <Slider
+                              defaultValue={imageData?.contrast || 0}
+                              label="Contrast"
+                              maxValue={99}
+                              minValue={-99}
+                              onChangeEnd={(value) =>
+                                handleContrastWithView(value, viewType)
+                              }
+                              step={1}
+                            />
+                          </div>
+
+                          <div className="custom-select text-start">
+                            <Select
+                              defaultSelectedKeys={[imageData?.filter || ""]}
+                              onChange={(e) =>
+                                handleFilterWithView(e.target.value, viewType)
+                              }
+                              placeholder="Select filter option"
+                              className="custom-select"
+                              style={{
+                                background: "#fff",
+                                border: "1px solid #e5e7eb",
+                              }}
                             >
-                              {filterOption.label}
-                            </SelectItem>
-                          ))}
-                        </Select>
-                      </div>
+                              <SelectItem key="" value="">
+                                -- Select a filter --
+                              </SelectItem>
+                              {filters.map((filterOption) => (
+                                <SelectItem
+                                  key={filterOption.key}
+                                  value={filterOption.key}
+                                  className="custom-select"
+                                >
+                                  {filterOption.label}
+                                </SelectItem>
+                              ))}
+                            </Select>
+                          </div>
 
-                      <div className="flex my-5">
-                        <div className="text-start">
-                          <Checkbox
-                            size="sm"
-                            defaultSelected={
-                              imageUrl?.isBgRemovedImage || false
-                            }
-                            isDisabled={
-                              Object.keys(removeBackgroundLoader).length > 0 ||
-                              false
-                            }
-                            onChange={(e) => removeBackgroundHandler(e, index)}
-                          >
-                            <span className="pr-[2rem]">Remove Background</span>
-                          </Checkbox>
-                          {removeBackgroundLoader[index]?.loading && (
-                            <Spinner size="sm" color="success" />
-                          )}
+                          <div className="flex my-5">
+                            <div className="text-start">
+                              <Checkbox
+                                size="sm"
+                                defaultSelected={
+                                  imageData?.isBgRemovedImage || false
+                                }
+                                isDisabled={
+                                  Object.keys(removeBackgroundLoader).length > 0
+                                }
+                                onChange={(e) =>
+                                  removeBackgroundHandlerWithView(e, viewType)
+                                }
+                              >
+                                <span className="pr-[2rem]">
+                                  Remove Background
+                                </span>
+                              </Checkbox>
+                              {removeBackgroundLoader[viewType]?.loading && (
+                                <Spinner size="sm" color="success" />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-left">
+                            <RemoveImage
+                              viewType={viewType}
+                              disabled={
+                                Object.keys(removeBackgroundLoader).length >
+                                  0 || false
+                              }
+                              publicId={imageData?.publicId}
+                              setDeleteImageLoader={setDeleteImageLoader}
+                              deleteImageLoader={deleteImageLoader}
+                              uploadedImagesWithView={uploadedImagesWithView}
+                              setUploadedImagesWithView={
+                                setUploadedImagesWithView
+                              }
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-left">
-                        <RemoveImage
-                          index={index}
-                          disabled={
-                            Object.keys(removeBackgroundLoader).length > 0 ||
-                            false
-                          }
-                          publicId={imageUrl?.publicId}
-                          uploadedImages={uploadedImages}
-                          setDeleteImageLoader={setDeleteImageLoader}
-                          deleteImageLoader={deleteImageLoader}
-                          setUploadedImages={setUploadedImages}
-                        />
                       </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  // No Image Uploaded -> Show Upload Button
+                  <div>
+                    <p>
+                      {viewType
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/^./, (str) => str.toUpperCase())}
+                    </p>
+                    <div className="flex  items-center justify-center mt-4  gap-2">
+                      <Button
+                        type="button"
+                        onPress={() => handleCameraClick(viewType)}
+                        className="camera-button text-[2rem] "
+                      >
+                        <IoIosCamera />
+                      </Button>
+                      <span>/</span>
+                      <Button
+                        type="button"
+                        onPress={() => handleGalleryClick(viewType)}
+                        className="camera-button "
+                      >
+                        Upload
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-
+            )
+          )}
+        </div>
         <div className="flex  items-center w-full justify-between lg:pr-[25px] p-0">
           <div className="text-start mt-5 ">
             <Button
@@ -486,7 +551,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 isDisabled={
                   uploadImageLoader ||
                   Object.keys(removeBackgroundLoader).length > 0 ||
-                  uploadedImages.length === 4
+                  uploadedImagesWithView.length === 4
                 }
                 onPress={handleCameraClick}
                 className="text-[1.2rem] py-6 px-6 text-white rounded-lg"
@@ -500,7 +565,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 isDisabled={
                   uploadImageLoader ||
                   Object.keys(removeBackgroundLoader).length > 0 ||
-                  uploadedImages.length === 0
+                  uploadedImagesWithView.length === 0
                 }
                 onPress={step2Handler}
                 className=" text-[1.2rem] px-6 py-6 rounded-lg"

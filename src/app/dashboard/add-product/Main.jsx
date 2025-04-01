@@ -7,7 +7,7 @@ import ConsignorSelect from "./components/ConsignorSelect";
 const Main = ({ user, productCount,stripeResponse }) => {
   const [currentStep, setCurrentStep] = useState(1);
 
-  const handleSaveUrl = (uploadedUrl) => {
+  const handleSaveUrl = () => {
     setCurrentStep(currentStep + 1);
   };
 

@@ -3,7 +3,12 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   consignor: {},
-  uploadedImages: [],
+  uploadedImages: {
+    frontView: null,
+    sideView: null,
+    backView: null,
+    detailView: null,
+  },
   properties: [], 
 };
 
@@ -18,7 +23,7 @@ const productSlice = createSlice({
       state.properties = action.payload;
     },
     clearProductState: (state) => {
-      state.uploadedImages = [];
+      state.uploadedImages = {};
       state.properties = [];
     },
     setConsignors: (state, action) => {

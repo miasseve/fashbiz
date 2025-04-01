@@ -51,6 +51,15 @@ const SecondStep = ({
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
+  
+console.log(reduxImages,'reduxImages')
+
+const imagesFiltered = Object.values(reduxImages) 
+      .filter((image) => image !== null) 
+      .map((image) => ({
+        url: image.url,
+        publicId: image.publicId,
+      }));
 
   const {
     register,
@@ -61,29 +70,30 @@ const SecondStep = ({
     mode: "onTouched",
     defaultValues: {
       sku: user.storename + currentYear + (parseInt(productCount) + 1),
-      images:
-        reduxImages?.map((image) => ({
-          url: image.url,
-          publicId: image.publicId,
-        })) || [],
-    },
+      images: Object.values(reduxImages) 
+      .filter((image) => image !== null) 
+      .map((image) => ({
+        url: image.url,
+        publicId: image.publicId,
+      }),
+  )},
   });
 
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const response = await axios.get("/api/wixCollections");
-        if (response.status !== 200) {
-          setErrorMessage("Failed to fetch categories.Please try again !!");
-        }
-        setCollections(response.data.collections);
-      } catch (error) {
-        setErrorMessage("Failed to fetch categories.Please try again !!");
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCollections = async () => {
+  //     try {
+  //       const response = await axios.get("/api/wixCollections");
+  //       if (response.status !== 200) {
+  //         setErrorMessage("Failed to fetch categories.Please try again !!");
+  //       }
+  //       setCollections(response.data.collections);
+  //     } catch (error) {
+  //       setErrorMessage("Failed to fetch categories.Please try again !!");
+  //     }
+  //   };
 
-    fetchCollections();
-  }, []);
+  //   fetchCollections();
+  // }, []);
 
   // useEffect(() => {
   //   const fetchProductDetails = async () => {
@@ -128,7 +138,7 @@ const SecondStep = ({
       setLoading(true);
       try {
         const response = await axios.post("/api/google-vision", {
-          imageUrl: reduxImages[0]?.url ?? "",
+          imageUrl: imagesFiltered[0]?.url ?? "",
         });
 
         if (response.status === 200) {
@@ -221,7 +231,7 @@ const SecondStep = ({
                 </span>
               )}
 
-              <div>
+              {/* <div>
                 <label className="text-sm font-medium">Category</label>
                 <Select
                   size="lg"
@@ -242,7 +252,7 @@ const SecondStep = ({
                     {errors.collectionId.message}
                   </span>
                 )}
-              </div>
+              </div> */}
               <div className="h-full">
                 <Input
                   label="SKU"

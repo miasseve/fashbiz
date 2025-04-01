@@ -7,8 +7,10 @@ const CropImage = ({
   cropImage,
   setCroppingImage,
   setUploadImageLoader,
-  setUploadedImages,
-  uploadImageLoader
+  selectedView,
+  // setUploadedImages,
+  setUploadedImagesWithView,
+  uploadImageLoader,
 }) => {
   const cropperRef = useRef(null);
   const [error, setError] = useState();
@@ -50,11 +52,12 @@ const CropImage = ({
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }); 
+      });
       setUploadImageLoader(false);
-      setUploadedImages((prevImages) => [
+
+      setUploadedImagesWithView((prevImages) => ({
         ...prevImages,
-        {
+        [selectedView]: {
           isBgRemovedImage: false,
           removeBgUrl: "",
           removePublicId: "",
@@ -63,7 +66,7 @@ const CropImage = ({
           originalUrl: response.data.url,
           originalPublicId: response.data.publicId,
         },
-      ]);
+      }));
     } catch (error) {
       setError(error.message);
     }
@@ -79,11 +82,12 @@ const CropImage = ({
         guides={false}
         ref={cropperRef}
       />
-      <Button 
-         isDisabled={uploadImageLoader}
-         onPress={handleCrop} 
-         color="danger" 
-         className="rounded-[7px]">
+      <Button
+        isDisabled={uploadImageLoader}
+        onPress={handleCrop}
+        color="danger"
+        className="rounded-[7px]"
+      >
         Crop and Upload
       </Button>
       {error && <p className="text-red-500">{error}</p>}

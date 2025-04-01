@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { RiProductHuntFill } from "react-icons/ri";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
+import { persistor } from "@/store";
 const Sidebar = () => {
   const session = useSession();
   const dispatch = useDispatch();
@@ -42,6 +43,7 @@ const Sidebar = () => {
     });
 
     if (result.isConfirmed) {
+      persistor.purge();
       dispatch(clearCart());
       dispatch(clearConsignors());
       dispatch(clearProductState());

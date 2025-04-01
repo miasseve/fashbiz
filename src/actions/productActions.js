@@ -25,89 +25,90 @@ export async function createProduct(formData) {
       email,
       accountId,
       // color,
-      collectionId, // <-- Receiving the collection ID from frontend
+      //collectionId, // <-- Receiving the collection ID from frontend
     } = formData;
 
     await dbConnect();
 
     // Construct product data for Wix API
-    const productData = {
-      product: {
-        name: title,
-        productType: "physical",
-        priceData: { price: price },
-        description: description,
-        sku: sku,
-        visible: false
-      },
-    };
+    // const productData = {
+    //   product: {
+    //     name: title,
+    //     productType: "physical",
+    //     priceData: { price: price },
+    //     description: description,
+    //     sku: sku,
+    //     visible: false
+    //   },
+    // };
 
     try {
       // Create product in Wix
-      const response = await axios.post(
-        "https://www.wixapis.com/stores/v1/products",
-        productData,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-account-id": process.env.WIX_ACCOUNT_ID,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // const response = await axios.post(
+      //   "https://www.wixapis.com/stores/v1/products",
+      //   productData,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+      //       "wix-site-id": process.env.WIX_SITE_ID,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // );
 
-      const productId = response.data.product.id; // Get the created product ID
-      // Add images to product
-      const productImages = {
-        media: images.map((image) => ({ url: image.url })),
-      };
+      // const productId = response.data.product.id; // Get the created product ID
+      // // Add images to product
+      // const productImages = {
+      //   media: images.map((image) => ({ url: image.url })),
+      // };
 
-      await axios.post(
-        `https://www.wixapis.com/stores/v1/products/${productId}/media`,
-        productImages,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-account-id": process.env.WIX_ACCOUNT_ID,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // await axios.post(
+      //   `https://www.wixapis.com/stores/v1/products/${productId}/media`,
+      //   productImages,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+      //       "wix-account-id": process.env.WIX_ACCOUNT_ID,
+      //       "wix-site-id": process.env.WIX_SITE_ID,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // );
 
-      // ✅ Assign the product to the selected collection
-      if (collectionId) {
-        await axios.post(
-          // https://www.wixapis.com/stores/v1/collections/{id}/productIds
-          `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
-          {
-            productIds: [productId], // Add product to the collection
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-              "wix-account-id": process.env.WIX_ACCOUNT_ID,
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
+      // // ✅ Assign the product to the selected collection
+      // if (collectionId) {
+      //   await axios.post(
+      //     // https://www.wixapis.com/stores/v1/collections/{id}/productIds
+      //     `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
+      //     {
+      //       productIds: [productId], // Add product to the collection
+      //     },
+      //     {
+      //       headers: {
+      //         Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+      //         "wix-account-id": process.env.WIX_ACCOUNT_ID,
+      //         "wix-site-id": process.env.WIX_SITE_ID,
+      //         "Content-Type": "application/json",
+      //       },
+      //     }
+      //   );
+      // }
 
       // Save product in MongoDB
       const newProduct = new Product({
         sku,
         title,
         brand,
-        category:collectionId,
+        // category:collectionId,
         description,
         price,
         images,
         userId: session.user.id,
         consignorName: `${firstName} ${lastName}`,
         consignorEmail: email,
-        consignorAccount: accountId
+        consignorAccount: accountId,
+        // wixProductId: productId,
       });
       await newProduct.save();
 

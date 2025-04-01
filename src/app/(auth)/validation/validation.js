@@ -1,4 +1,4 @@
-// utils/validation.js
+// utils/validation.js 
 
 export const validatePassword = (value) => {
     if (!value) {
