@@ -6,7 +6,7 @@ import { transferSuccess } from "@/mails/TransferSuccess";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Replace with your Stripe secret key
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret = process.env.STRIPE_ENDPOINT_SECRET;
+const endpointSecret = 'whsec_6df68ad07c5fc76857088ec698734ad7b9a5b92af228c6e019582a5239f60f4f';
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
@@ -32,6 +32,11 @@ export async function POST(req, res) {
 
   // Handle the event
   switch (event.type) {
+
+    case "balance.available":
+      console.log("🔄 Funds are now available! Proceeding with second transfer...");
+       console.log(event.data.object,'ioioioioioi');
+    break;
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
       const customerId = paymentIntent.customer; 

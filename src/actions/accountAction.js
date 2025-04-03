@@ -176,3 +176,32 @@ export async function storeSuccessResult(accountId) {
     };
   }
 }
+
+export async function getTransactionsForConnectedAccount(accountId) {
+  try {
+
+    const session = await auth();
+    if (!session) {
+       throw new Error("User is not authenticated");
+    }  
+        
+    // Connect to the database
+    await dbConnect();
+
+    const account = await Account.findOne({ userId: session.user.id });
+
+    const transactions = await stripe.balanceTransactions.list(
+      {
+        limit: 100, // Fetch up to 100 transactions at a time
+      },
+      {
+        stripeAccount: account.accountId, // Connected account ID
+      }
+    );
+
+    return transactions.data; // Returns an array of transactions
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return { error: error.message };
+  }
+}

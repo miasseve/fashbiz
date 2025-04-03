@@ -64,6 +64,34 @@ export async function signInUser(data) {
 
     await loginSchema.validate(data, { abortEarly: false });
 
+    const emaicheckUser = await User.findOne({ email });
+
+    if (!emaicheckUser) {
+      return { status: 404, error: "User does not exist" };
+    }
+
+    // Convert Mongoose document to a plain object
+    const userObject = emaicheckUser.toObject();
+
+    // List of required fields
+    const requiredFields = [
+      "firstname",
+      "lastname",
+      "email",
+      "role",
+      "address",
+      "city",
+      "country",
+      "phoneNumber",
+      "state",
+      "zipcode",
+    ];
+
+    // Determine profile status (Complete/Incomplete)
+    const profileStatus = requiredFields.every((field) => userObject[field])
+      ? "complete"
+      : "incomplete";
+
     const result = await signIn("credentials", {
       email: email,
       password: password,
@@ -77,12 +105,13 @@ export async function signInUser(data) {
     return {
       status: 200,
       message: "Logged in successfully",
+      profileStatus: profileStatus,
     };
   } catch (error) {
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
-        error: error.errors.join(", ")
+        error: error.errors.join(", "),
       };
     }
 
@@ -332,7 +361,7 @@ export async function forgotPassword(email) {
       message: "Password reset email sent!",
     };
   } catch (error) {
-    console.log(error,'error');
+    console.log(error, "error");
     return { status: 500, message: error.message };
   }
 }
@@ -347,9 +376,9 @@ export async function verifypasswordToken(token) {
       return { status: 404, error: "Invalid or expired token" };
     }
 
-    const currentTime = Date.now(); 
+    const currentTime = Date.now();
     if (currentTime > user.resetPasswordExpires) {
-      return { status: 400, error: "Token has expired" }; 
+      return { status: 400, error: "Token has expired" };
     }
 
     return { status: 200, message: "Token verified successfully!" };

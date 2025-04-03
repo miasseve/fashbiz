@@ -317,8 +317,8 @@ export async function getProductsByEmail(email) {
     const groupedProducts = await Product.aggregate([
       {
         $match: {
-          consignorEmail: email,
-          sold: false,
+          consignorEmail: email
+          // sold: false,
         },
       },
       {
@@ -351,6 +351,8 @@ export async function getProductsByEmail(email) {
         $sort: { "products.createdAt": -1 },
       },
     ]);
+
+
     return {
       status: 200,
       products: JSON.stringify(groupedProducts),
@@ -366,22 +368,32 @@ export async function getUserProductsSold() {
   try {
     // Authenticate and get the session
     const session = await auth();
-
+   console.log(session,'session')
     if (!session) {
       throw new Error("User is not authenticated");
     }
 
     // Connect to the database
     await dbConnect();
-
+    let userProducts=[];
     // Fetch products for the authenticated user
-    const userProducts = await Product.find({
+    if(session.user.role=='store'){
+     userProducts = await Product.find({
       userId: session.user.id,
       sold: true,
     }).sort({
       createdAt: -1,
     });
-
+  }
+  else
+  {
+    userProducts = await Product.find({
+      consignorEmail: session.user.email,
+      sold: true,
+    }).sort({
+      createdAt: -1,
+    });
+  }
     return {
       status: 200,
       products: JSON.stringify(userProducts),
@@ -393,6 +405,9 @@ export async function getUserProductsSold() {
     };
   }
 }
+
+
+
 
 export async function deleteProductsFromWix(products) {
   try {
@@ -557,3 +572,4 @@ export async function soldProductsByIds(products) {
     };
   }
 }
+

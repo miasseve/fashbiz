@@ -8,6 +8,7 @@ import {
   TableRow,
   TableCell,
 } from "@heroui/table";
+
 const ProductTable = ({ products }) => {
   return (
     <div>

@@ -58,7 +58,7 @@ const CheckoutForm = ({ user }) => {
     // Make a request to the backend to create a payment intent or session
     const res = await fetch("/api/payment-intent", {
       method: "POST",
-      headers: {
+      headers: { 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -79,6 +79,7 @@ const CheckoutForm = ({ user }) => {
       setIsProcessing(false);
     } else {
       setIsProcessing(false);
+      console.log(data,'datatatata')
       // const { error: confirmError, paymentIntent } =
       //         await stripe.confirmCardPayment(data.paymentIntent.client_secret, {
       //           payment_method: paymentMethod.id, // Pass the paymentMethod ID here
@@ -93,8 +94,8 @@ const CheckoutForm = ({ user }) => {
 
       await soldProductsByIds(products);
       // await deleteProductsFromWix(products);
-      dispatch(clearCart());
-      router.push("/thankyou");
+      // dispatch(clearCart());
+      // router.push("/thankyou");
       // }
     }
   };

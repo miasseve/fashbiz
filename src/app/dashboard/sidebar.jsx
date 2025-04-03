@@ -84,6 +84,11 @@ const Sidebar = () => {
       icon: <PiStripeLogoFill />,
     },
     {
+      href: "/dashboard/payment-history",
+      label: "Payment History",
+      icon: <PiStripeLogoFill />,
+    },
+    {
       href: "/dashboard/items-sold",
       label: "Items Sold",
       icon: <MdLocalGroceryStore />,

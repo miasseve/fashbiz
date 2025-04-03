@@ -27,6 +27,7 @@ const ConsignorForm = () => {
     try {
       const payload = {
         ...data,
+        email: data.email.toLowerCase(),
         role: "consignor",
       };
       const result = await registerUser(payload);

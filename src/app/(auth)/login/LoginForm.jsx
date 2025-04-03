@@ -26,9 +26,17 @@ const LoginForm = () => {
 
   const onSubmit = async (data) => {
     setError("");
-    const result = await signInUser(data);
+    const payload = {
+      ...data,
+      email: data.email.toLowerCase(), // Convert email to lowercase before sending
+    };
+    const result = await signInUser(payload);
     if (result.status === 200) {
-      router.push("/dashboard/profile");
+      if (result.profileStatus === "complete") {
+        router.push("/dashboard/add-product");
+      } else {
+        router.push("/dashboard/profile");
+      }
     } else {
       setError(result.error);
     }

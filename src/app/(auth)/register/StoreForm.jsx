@@ -27,6 +27,7 @@ const StoreForm = () => {
     try {
       const payload = {
         ...data,
+        email: data.email.toLowerCase(),
         role: "store",
       };
       const result = await registerUser(payload);

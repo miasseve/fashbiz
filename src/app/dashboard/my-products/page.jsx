@@ -12,7 +12,7 @@ const page = async () => {
   }
 
   const response = await getProductsByEmail(session.user.email);
-
+  console.log(response,'response')
   if (response.status != 200) {
     redirect("/login");
   }
