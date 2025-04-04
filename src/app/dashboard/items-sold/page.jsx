@@ -2,6 +2,7 @@ import { getUserProductsSold } from "@/actions/productActions";
 import React from "react";
 import SoldTable from "./SoldTable";
 
+export const dynamic = "force-dynamic";
 const page = async () => {
   // const products=[];
   const response = await getUserProductsSold();
