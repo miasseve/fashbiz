@@ -29,13 +29,16 @@ export async function middleware(req) {
 
   const userRole = token?.role || null;
 
-
   if (isPublic) {
     return NextResponse.next();
   }
 
   if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
+    if (userRole === "store") {
+      return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
+    } else {
+      return NextResponse.redirect(new URL("/dashboard/storelist", req.url));
+    }
   }
 
   if (isProtected && !token) {
@@ -50,7 +53,10 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 
-  if (userRole === "consignor" && ["/dashboard/store", "/dashboard/add-product"].includes(nextUrl.pathname)) {
+  if (
+    userRole === "consignor" &&
+    ["/dashboard/store", "/dashboard/add-product"].includes(nextUrl.pathname)
+  ) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 

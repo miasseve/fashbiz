@@ -31,10 +31,12 @@ const LoginForm = () => {
       email: data.email.toLowerCase(), // Convert email to lowercase before sending
     };
     const result = await signInUser(payload);
+    
     if (result.status === 200) {
-      if (result.profileStatus === "complete") {
+      if (result.profileStatus) {
         router.push("/dashboard/add-product");
       } else {
+        console.log(result.profileStatus,'qqq');
         router.push("/dashboard/profile");
       }
     } else {

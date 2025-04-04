@@ -70,23 +70,7 @@ export async function signInUser(data) {
       return { status: 404, error: "User does not exist" };
     }
 
-    // Convert Mongoose document to a plain object
-    const userObject = emaicheckUser.toObject();
-
-    // List of required fields
-    const requiredFields = [
-      "address",
-      "city",
-      "country",
-      "phoneNumber",
-      "state",
-      "zipcode",
-    ];
-
-    // Determine profile status (Complete/Incomplete)
-    const profileStatus = requiredFields.every((field) => userObject[field])
-      ? "complete"
-      : "incomplete";
+    
 
     const result = await signIn("credentials", {
       email: email,
@@ -101,7 +85,7 @@ export async function signInUser(data) {
     return {
       status: 200,
       message: "Logged in successfully",
-      profileStatus: profileStatus,
+      profileStatus: emaicheckUser.isProfileComplete,
     };
   } catch (error) {
     if (error instanceof Yup.ValidationError) {
@@ -184,7 +168,7 @@ export async function updateUser(updatedData) {
     // Update the user by ID
     const updatedUser = await User.findByIdAndUpdate(
       session.user.id,
-      updatedData,
+      {...updatedData,isProfileComplete:true},
       {
         new: true, // Return the updated document instead of the original
         runValidators: true, // Ensure validation is run on the updated data

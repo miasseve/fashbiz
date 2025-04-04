@@ -28,6 +28,7 @@ const UserSchema = new mongoose.Schema({
         enum: ["store", "consignor"], 
     },
     emailVerified: Date,
+    isProfileComplete: { type: Boolean,default:false},
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: String, default: null },
 });
