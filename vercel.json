@@ -1,7 +1,7 @@
 {
-  "functions": {
-      "api/auth/[...nextauth]": {
+    "functions": {
+      "app/api/**/*": {
         "maxDuration": 60
       }
     }
-}
+  }
