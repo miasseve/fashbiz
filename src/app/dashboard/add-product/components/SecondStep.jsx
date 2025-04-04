@@ -54,12 +54,6 @@ const SecondStep = ({
 
   console.log(reduxImages, "reduxImages");
 
-  const imagesFiltered = Object.values(reduxImages)
-    .filter((image) => image !== null)
-    .map((image) => ({
-      url: image.url,
-      publicId: image.publicId,
-    }));
 
   const {
     register,
@@ -79,100 +73,72 @@ const SecondStep = ({
     },
   });
 
-  // useEffect(() => {
-  //   const fetchCollections = async () => {
-  //     try {
-  //       const response = await axios.get("/api/wixCollections");
-  //       if (response.status !== 200) {
-  //         setErrorMessage("Failed to fetch categories.Please try again !!");
-  //       }
-  //       setCollections(response.data.collections);
-  //     } catch (error) {
-  //       setErrorMessage("Failed to fetch categories.Please try again !!");
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await axios.get("/api/wixCollections");
+        if (response.status !== 200) {
+          setErrorMessage("Failed to fetch categories.Please try again !!");
+        }
+        setCollections(response.data.collections);
+      } catch (error) {
+        setErrorMessage("Failed to fetch categories.Please try again !!");
+      }
+    };
 
-  //   fetchCollections();
-  // }, []);
+    fetchCollections();
+  }, []);
 
-  // useEffect(() => {
-  //   const fetchProductDetails = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const response = await axios.post("/api/google-vision", {
-  //         imageUrl: reduxImages[0]?.url ?? "",
-  //       });
 
-  //       if (response.status == 200) {
-  //         const color = response.data?.colors[0];
-  //         console.log(color,"colorcolorcolor")
-  //         const { red, green, blue } = color;
-  //         // Update the state with the new array of color objects
-  //         setImgColors(`rgb(${red}, ${green}, ${blue})`);
-  //         const description = response.data?.texts
-  //           ?.map((text) => text.description)
-  //           .join(" , ");
-  //         const garments = response.data?.garmentLabels
-  //           ?.map((label) => label.description)
-  //           .join(" , ");
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      setLoading(true);
+      const imagesFiltered = Object.values(reduxImages)
+      .filter((image) => image !== null)
+      .map((image) => ({
+        url: image.url,
+        publicId: image.publicId,
+      }));
 
-  //         setValue("title", garments || "");
-  //         setValue(
-  //           "brand",
-  //           response.data?.logos[0]?.description || garments || ""
-  //         );
-  //         setValue("description", description || "");
-  //       }
-  //     } catch (error) {
-  //       toast.error("Failed to load product data");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+      if(imagesFiltered.length > 0){
+      try {
+        const response = await axios.post("/api/google-vision", {
+          imageUrl: imagesFiltered[0]?.url ?? "",
+        });
 
-  //   fetchProductDetails();
-  // }, []);
+        if (response.status === 200) {
+          const color = response.data?.colors[0];
 
-  // useEffect(() => {
-  //   const fetchProductDetails = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const response = await axios.post("/api/google-vision", {
-  //         imageUrl: imagesFiltered[0]?.url ?? "",
-  //       });
+          //   if (color) {
+          //     const { red, green, blue } = color;
+          //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
+          //     setImgColors(rgbColor);
+          //   }
 
-  //       if (response.status === 200) {
-  //         const color = response.data?.colors[0];
+          const description = response.data?.texts
+            ?.map((text) => text.description)
+            .join(" , ");
+          const garments = response.data?.garmentLabels
+            ?.map((label) => label.description)
+            .join(" , ");
 
-  //         //   if (color) {
-  //         //     const { red, green, blue } = color;
-  //         //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
-  //         //     setImgColors(rgbColor);
-  //         //   }
+          setValue("title", garments || "");
+          setValue(
+            "brand",
+            response.data?.logos[0]?.description || garments || ""
+          );
+          setValue("description", description || "");
+        }
+      } catch (error) {
+        toast.error("Failed to load product data");
+      } finally {
+        setLoading(false);
+      }
+    }
+    };
 
-  //         const description = response.data?.texts
-  //           ?.map((text) => text.description)
-  //           .join(" , ");
-  //         const garments = response.data?.garmentLabels
-  //           ?.map((label) => label.description)
-  //           .join(" , ");
-
-  //         setValue("title", garments || "");
-  //         setValue(
-  //           "brand",
-  //           response.data?.logos[0]?.description || garments || ""
-  //         );
-  //         setValue("description", description || "");
-  //       }
-  //     } catch (error) {
-  //       toast.error("Failed to load product data");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProductDetails();
-  // }, []);
+    fetchProductDetails();
+  }, []);
   const onSubmit = async (data) => {
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });
@@ -206,6 +172,8 @@ const SecondStep = ({
       alert("Failed to copy link. Please try again.");
     }
   };
+
+
   return (
     <>
       {loading ? (
@@ -231,7 +199,7 @@ const SecondStep = ({
                 </span>
               )}
 
-              {/* <div>
+              <div>
                 <label className="text-sm font-medium">Category</label>
                 <Select
                   size="lg"
@@ -252,7 +220,7 @@ const SecondStep = ({
                     {errors.collectionId.message}
                   </span>
                 )}
-              </div> */}
+              </div>
               <div className="h-full">
                 <Input
                   label="SKU"
@@ -304,7 +272,7 @@ const SecondStep = ({
                   size="lg"
                   startContent={
                     <div className="pointer-events-none flex items-center">
-                      <span className="text-default-400 text-small">$</span>
+                      <span className="text-default-400 text-small">€</span>
                     </div>
                   }
                   {...register("price", {

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Account from "@/models/Account";
 import dbConnect from "@/lib/db";
 import ConsignorSelect from "@/app/dashboard/add-product/components/ConsignorSelect";
+import User from "@/models/User";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -31,6 +32,8 @@ export async function POST(req) {
       payment_method,
       total,
       userId,
+      userName,
+      userEmail,
       products,
       customerName,
       customerEmail,
@@ -85,7 +88,11 @@ export async function POST(req) {
 
     for (let consignorAccount in groupedProducts) {
       const consignorProducts = groupedProducts[consignorAccount];
-
+      const formattedProducts = consignorProducts.map(({ title, brand, price }) => ({
+        title,
+        brand,
+        price,
+      }));
       // Step 3: Calculate the total for the consignor's products
       const consignorTotal = consignorProducts.reduce(
         (sum, product) => sum + product.price,
@@ -93,7 +100,7 @@ export async function POST(req) {
       );
 
       // const transferGroup = `ORDER_${Date.now()}`;
-      let paymentIntent;
+      let paymentIntent; 
       try {
         paymentIntent = await stripe.paymentIntents.create({
           amount: consignorTotal * 100,
@@ -104,6 +111,13 @@ export async function POST(req) {
           automatic_payment_methods: {
             enabled: true,
             allow_redirects: "never",
+          },
+          metadata: {
+            storeOwnerEmail: userEmail,
+            storeOwnerName:userName,
+            consignorName:consignorProducts[0]?.consignorName || "",
+            consignorEmail: consignorProducts[0]?.consignorEmail || "",
+            formattedProducts: JSON.stringify(formattedProducts),
           },
         });
       } catch (error) {

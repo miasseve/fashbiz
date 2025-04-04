@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
 
-export async function paymentSuccess(customerEmail, customerName) {
+export async function transferFailed(
+  name,
+  email,
+  transferAmount,
+  transferCurrency,
+  transferId
+) {
   // Create reset password URL
 
   // Create transporter using SMTP configuration from environment variables
@@ -17,10 +23,13 @@ export async function paymentSuccess(customerEmail, customerName) {
   // Send the email
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: customerEmail, 
-    subject: "Payment Successfull",
+    to: email,
+    subject: `Transfer Failed: ${transferId}`,
     html: `
-     Dear ${customerName},\n\nYour payment was successfully processed. Thank you for your purchase!\n\nBest regards,\nYour Company Name`
-     ,
+    <p>Dear ${name},</p>
+    <p>Transfer is failed in your stripe account.Please contact with us</p>
+    <p>Transfer ID: ${transferId}</p>
+    <p>We appreciate your business!</p>
+    <p>Best Regards,<br>Fashbiz</p>`,
   });
 }

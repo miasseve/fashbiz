@@ -65,6 +65,8 @@ const CheckoutForm = ({ user }) => {
         payment_method: paymentMethod.id,
         total: productTotal,
         userId: user.id,
+        userName: user.name,
+        userEmail:user.email,
         products: products,
         customerName: customerName,
         customerEmail: customerEmail,
@@ -92,7 +94,7 @@ const CheckoutForm = ({ user }) => {
       //       }
       // console.log(paymentIntent,'payment')
 
-      await soldProductsByIds(products);
+      // await soldProductsByIds(products);
       // await deleteProductsFromWix(products);
       // dispatch(clearCart());
       // router.push("/thankyou");

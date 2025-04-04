@@ -35,7 +35,7 @@ export async function middleware(req) {
   }
 
   if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL("/dashboard/profile", req.url));
+    return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
   }
 
   if (isProtected && !token) {
