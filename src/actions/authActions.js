@@ -75,10 +75,6 @@ export async function signInUser(data) {
 
     // List of required fields
     const requiredFields = [
-      "firstname",
-      "lastname",
-      "email",
-      "role",
       "address",
       "city",
       "country",
