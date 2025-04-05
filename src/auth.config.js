@@ -38,4 +38,7 @@ export default {
       },
     }),
   ],
+  session: {
+    strategy: "jwt", // Use JWT for session instead of a database session
+  },
 };

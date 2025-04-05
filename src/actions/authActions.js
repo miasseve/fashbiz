@@ -64,20 +64,12 @@ export async function signInUser(data) {
 
     await loginSchema.validate(data, { abortEarly: false });
 
-    const emaicheckUser = await User.findOne({ email });
-
-    if (!emaicheckUser) {
-      return { status: 404, error: "User does not exist" };
-    }
-
-    
-
     const result = await signIn("credentials", {
       email: email,
-      password: password,
+      password: password, 
       redirect: false,
     });
-
+    console.log(result, "result");
     if (result?.error) {
       return { status: 401, error: "Invalid credentials" };
     }
@@ -85,9 +77,10 @@ export async function signInUser(data) {
     return {
       status: 200,
       message: "Logged in successfully",
-      profileStatus: emaicheckUser.isProfileComplete,
+      profileStatus: true
     };
   } catch (error) {
+    console.log(error.message, "eeeeeeee");
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
@@ -95,7 +88,7 @@ export async function signInUser(data) {
       };
     }
 
-    return { status: 500, error: "Invalid credentials" };
+    return { status: 500, error: error.message };
   }
 }
 
@@ -168,7 +161,7 @@ export async function updateUser(updatedData) {
     // Update the user by ID
     const updatedUser = await User.findByIdAndUpdate(
       session.user.id,
-      {...updatedData,isProfileComplete:true},
+      { ...updatedData, isProfileComplete: true },
       {
         new: true, // Return the updated document instead of the original
         runValidators: true, // Ensure validation is run on the updated data
