@@ -69,7 +69,6 @@ export async function signInUser(data) {
       password: password, 
       redirect: false,
     });
-    console.log(result, "result");
     if (result?.error) {
       return { status: 401, error: "Invalid credentials" };
     }
@@ -82,7 +81,6 @@ export async function signInUser(data) {
       profileStatus: user.isProfileComplete
     };
   } catch (error) {
-    console.log(error.message, "eeeeeeee");
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
@@ -90,7 +88,7 @@ export async function signInUser(data) {
       };
     }
 
-    return { status: 500, error: error.message };
+    return { status: 500, error: 'Invalid Credentials' };
   }
 }
 

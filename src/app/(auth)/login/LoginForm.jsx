@@ -31,7 +31,6 @@ const LoginForm = () => {
       email: data.email.toLowerCase(), // Convert email to lowercase before sending
     };
     const result = await signInUser(payload);
-    console.log(result,'result')
     if (result.status === 200) {
       if (result.profileStatus) {
         router.push("/dashboard/add-product");
