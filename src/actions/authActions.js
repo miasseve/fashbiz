@@ -74,10 +74,12 @@ export async function signInUser(data) {
       return { status: 401, error: "Invalid credentials" };
     }
 
+    const user = await User.findOne({ email: email });
+    
     return {
       status: 200,
       message: "Logged in successfully",
-      profileStatus: true
+      profileStatus: user.isProfileComplete
     };
   } catch (error) {
     console.log(error.message, "eeeeeeee");
