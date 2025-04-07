@@ -33,9 +33,6 @@ async function getCart(id) {
   try {
     //   const responseCart = await cart.getCart(id);
     const response = await myWixClient.cart.getCart(id);
-    //   console.log("Is it a function?", typeof responseCart);
-    //   const res=await responseCart();
-    console.log("Cart response:", response); // Log the response to see what is returned
     return response;
   } catch (error) {
     console.error("Error fetching cart:", error);

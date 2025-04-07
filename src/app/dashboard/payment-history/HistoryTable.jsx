@@ -18,7 +18,6 @@ const HistoryTable = ({ historyData }) => {
     return <p>No transaction history available.</p>;
   }
 
-  console.log(historyData, "historyData");
   return (
     <div className="overflow-x-auto">
       <Table isStriped >

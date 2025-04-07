@@ -4,7 +4,6 @@ import Client from "../../../../vision";
 export async function POST(req) {
   try {
     const { imageUrl } = await req.json();
-    console.log(imageUrl,'imageUrl');
     if (!imageUrl) {
       return NextResponse.json(
         { errorMessage: "No image URL provided" },

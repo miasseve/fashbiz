@@ -35,7 +35,7 @@ const TopNavbar = () => {
             variant="bordered"
             className="text-white"
           >
-            Logout
+            Logoutt
           </Button>
         </>
       </NavbarContent>

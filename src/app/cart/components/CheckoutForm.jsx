@@ -81,7 +81,6 @@ const CheckoutForm = ({ user }) => {
       setIsProcessing(false);
     } else {
       setIsProcessing(false);
-      console.log(data,'datatatata')
       // const { error: confirmError, paymentIntent } =
       //         await stripe.confirmCardPayment(data.paymentIntent.client_secret, {
       //           payment_method: paymentMethod.id, // Pass the paymentMethod ID here

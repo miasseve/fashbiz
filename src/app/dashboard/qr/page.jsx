@@ -10,7 +10,7 @@ const Page = () => {
   const [stripeResponse, setStripeResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  console.log(qrData,'qrData')
+
   useEffect(() => {
     // Fetch data when the component mounts
     const fetchData = async () => {

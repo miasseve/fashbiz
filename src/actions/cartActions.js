@@ -12,9 +12,6 @@ auth: OAuthStrategy({ clientId: WIX_CLIENT_ID }),
 
 export async function getCartData(id) {
   try {
-  
-    console.log("WIX_CLIENT_IDDDDDDD:", WIX_CLIENT_ID); 
-    console.log(myWixClient,'myWixClient')
     const response = await myWixClient.cart.getCart(id);
     return response;
     

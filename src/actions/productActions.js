@@ -365,7 +365,7 @@ export async function getUserProductsSold() {
   try {
     // Authenticate and get the session
     const session = await auth();
-   console.log(session,'session')
+  
     if (!session) {
       throw new Error("User is not authenticated");
     }
@@ -480,6 +480,7 @@ export async function getProductById(productId) {
     const user = await User.findOne({ email: product.consignorEmail },
       'firstname lastname email address phoneNumber city'
     );
+  
     if (!user) {
       throw new Error("User related to the product not found");
     }

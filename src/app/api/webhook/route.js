@@ -44,7 +44,7 @@ export async function POST(req, res) {
       const paymentIntent = event.data.object;
       const customerId = paymentIntent.customer;
       const metaData = paymentIntent.metadata;
-      console.log(metaData, "userdata");
+
       // Retrieve customer details from Stripe
       try {
         const customer = await stripe.customers.retrieve(customerId);
@@ -92,7 +92,6 @@ export async function POST(req, res) {
       break;
     case "transfer.failed":
       const failedTransfer = event.data.object;
-      console.log(`Transfer failed: ${failedTransfer.id}`);
       // Handle failed transfer (e.g., notify the user or retry the transfer)
       break;
     case "transfer.paid":

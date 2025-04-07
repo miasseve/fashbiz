@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 const page = async () => {
   // const products=[];
   const response = await getUserProductsSold();
-  console.log(response,'respon')
+
   if (response.status != 200) {
     throw new Error(response.error || "Failed to fetch products");
   }

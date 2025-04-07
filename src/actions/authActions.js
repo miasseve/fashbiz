@@ -334,7 +334,6 @@ export async function forgotPassword(email) {
       message: "Password reset email sent!",
     };
   } catch (error) {
-    console.log(error, "error");
     return { status: 500, message: error.message };
   }
 }

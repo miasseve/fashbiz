@@ -58,7 +58,6 @@ export async function getAccountId() {
 }
 
 export async function storePercentage(data) {
-  console.log(data);
   const session = await auth();
   if (!session) {
     return { status: 400, error: "Invalid User" };

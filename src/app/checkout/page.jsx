@@ -16,9 +16,6 @@ const Page = () => {
       try {
         // Send the GET request to /api/checkout
         const response = await axios.get("/api/checkout");
-        console.log("response", response);
-        // Handle the response data
-        console.log("Checkout data:", response.data.products);
         setTotal(response.data.total.formattedAmount);
         setSubTotal(response.data.subtotal.formattedAmount);
         setDiscount(response.data.discount.formattedAmount);

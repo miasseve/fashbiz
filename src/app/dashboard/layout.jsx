@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shadowClass, setShadowClass] = useState("");
 
-   const toggleSidebar = () => {
+  const toggleSidebar = () => {
     if (shadowClass == "") {
       setShadowClass("sidebarOverlay");
     } else {
@@ -44,9 +44,9 @@ const Layout = ({ children }) => {
                 <GiHamburgerMenu size={25} />
               )}
             </button>
-            <div className="cursor-pointer">
+            {/* <div className="cursor-pointer">
               <img className="w-[18px]" src="/visualization.png" alt="Logo" />
-            </div>
+            </div> */}
           </Card>
           <div className="max-w-[100%] mx-auto lg:p-5 p-1">{children}</div>
         </div>
