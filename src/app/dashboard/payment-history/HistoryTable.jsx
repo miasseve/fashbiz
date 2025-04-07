@@ -14,6 +14,7 @@ const formatTimestamp = (timestamp) => {
 };
 
 const HistoryTable = ({ historyData }) => {
+  console.log(historyData)
   if (!historyData || historyData.length === 0) {
     return <p>No transaction history available.</p>;
   }

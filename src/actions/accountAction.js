@@ -178,12 +178,11 @@ export async function storeSuccessResult(accountId) {
 
 export async function getTransactionsForConnectedAccount(accountId) {
   try {
-
     const session = await auth();
     if (!session) {
-       throw new Error("User is not authenticated");
-    }  
-        
+      throw new Error("User is not authenticated");
+    }
+
     // Connect to the database
     await dbConnect();
 
@@ -197,10 +196,15 @@ export async function getTransactionsForConnectedAccount(accountId) {
         stripeAccount: account.accountId, // Connected account ID
       }
     );
-
-    return transactions.data; // Returns an array of transactions
+    console.log(transactions,'transactions')
+    return {
+      status: 200,
+      transactions: transactions.data,
+    };
   } catch (error) {
-    console.error("Error fetching transactions:", error);
-    return { error: error.message };
+    return {
+      status: 500,
+      error: "Something went wrong",
+    };
   }
 }
