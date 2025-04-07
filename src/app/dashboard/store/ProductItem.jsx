@@ -48,7 +48,7 @@ const ProductItem = ({ product, isGrid }) => {
         </>
       ) : (
         // Line (List) view layout
-        <div className="flex items-center bg-[aliceblue] p-[10px] rounded-[8px] items-start mb-6 ">
+        <div className="flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 ">
           {product.images.length > 0 && (
             <img
               src={product.images[0].url}
