@@ -98,7 +98,7 @@ export async function POST(req) {
         (sum, product) => sum + product.price,
         0
       );
-
+      console.log(account.accountId,consignorAccount,'yyyyyyyyyyyyyyyyyyyyyyy');
       // const transferGroup = `ORDER_${Date.now()}`;
       let paymentIntent; 
       try {
@@ -128,7 +128,7 @@ export async function POST(req) {
       }
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(
           paymentIntent.id
