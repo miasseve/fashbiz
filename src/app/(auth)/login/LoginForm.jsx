@@ -33,7 +33,13 @@ const LoginForm = () => {
     const result = await signInUser(payload);
     if (result.status === 200) {
       if (result.profileStatus) {
-        router.push("/dashboard/add-product");
+         if(result.role=='store')
+         {
+          router.push("/dashboard/add-product");
+         }else
+         {
+          router.push("/dashboard/storelist");
+         }
       } else {
         router.push("/dashboard/profile");
       }

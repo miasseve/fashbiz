@@ -78,7 +78,8 @@ export async function signInUser(data) {
     return {
       status: 200,
       message: "Logged in successfully",
-      profileStatus: user.isProfileComplete
+      profileStatus: user.isProfileComplete,
+      role:user.role
     };
   } catch (error) {
     if (error instanceof Yup.ValidationError) {
