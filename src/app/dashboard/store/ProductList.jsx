@@ -24,7 +24,7 @@ const ProductList = ({ products }) => {
       {/* Product List */}
       <div
         className={`${
-          isGrid ? "flex flex-wrap gap-[30px] " : ""
+          isGrid ? "grid lg:grid-cols-3 grid-cols-1 p-[55px] gap-[30px] lg:p-[10px]" : ""
         }`}
       >
         {products.map((product) => (

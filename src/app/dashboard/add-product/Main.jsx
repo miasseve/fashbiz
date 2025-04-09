@@ -6,6 +6,7 @@ import ConsignorSelect from "./components/ConsignorSelect";
 
 const Main = ({ user, productCount,stripeResponse }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [count, setCount] = useState(productCount||0);
 
   const handleSaveUrl = () => {
     setCurrentStep(currentStep + 1);
@@ -16,6 +17,7 @@ const Main = ({ user, productCount,stripeResponse }) => {
   };
 
   const handleAddMoreProducts = () => {
+    setCount(count+1);
     setCurrentStep(2);
   };
 
@@ -38,7 +40,7 @@ const Main = ({ user, productCount,stripeResponse }) => {
         <SecondStep
           handleBackStep={handleBackStep}
           user={user}
-          productCount={productCount}
+          productCount={count}
           handleAddMoreProducts={handleAddMoreProducts}
         />
       )}

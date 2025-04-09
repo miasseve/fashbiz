@@ -15,29 +15,29 @@ const ProductItem = ({ product, isGrid }) => {
         <>
         <Card className={`p-[10px] h-full}`}>
           <CardHeader>
-            <h2 className="text-xl font-semibold">{product.title}</h2>
+            <h2 className="text-2xl lg:text-xl font-semibold">{product.title}</h2>
           </CardHeader>
 
-          <CardBody>
+          {/* <CardBody> */}
             {product.images.length > 0 && (
               <img
                 src={product.images[0].url}
                 alt={product.title}
-                className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4"
+                className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 "
               />
             )}
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-2xl lg:text-md">
               {product.description.length > 30
                 ? product.description.slice(0, 30) + "..."
                 : product.description}
             </p>
-            <p className="font-bold mt-2 text-lg">€{product.price.toFixed(2)}</p>
-          </CardBody>
+            <p className="font-bold mt-2 text-2xl lg:text-md">€{product.price.toFixed(2)}</p>
+          {/* </CardBody> */}
 
           <CardFooter>
             <Button
               onPress={handleClick}
-              className="text-[1.2rem] px-6 py-6 text-white rounded-lg"
+              className="text-[1.2rem] lg:px-6 lg:py-6 px-10 py-8 text-white rounded-lg"
               color="success"
               size="md"
             >

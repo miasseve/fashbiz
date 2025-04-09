@@ -94,7 +94,7 @@ const CheckoutForm = ({ user }) => {
       // console.log(paymentIntent,'payment')
 
       await soldProductsByIds(products);
-      // await deleteProductsFromWix(products);
+      await deleteProductsFromWix(products);
       // dispatch(clearCart());
       router.push("/thankyou");
       // }

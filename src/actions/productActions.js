@@ -421,7 +421,6 @@ export async function deleteProductsFromWix(products) {
         {
           headers: {
             Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-            "wix-account-id": process.env.WIX_ACCOUNT_ID,
             "wix-site-id": process.env.WIX_SITE_ID,
             "Content-Type": "application/json",
           },

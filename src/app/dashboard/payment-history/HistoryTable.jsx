@@ -26,20 +26,25 @@ const HistoryTable = ({ historyData }) => {
           <TableColumn>ID</TableColumn>
           <TableColumn>Amount</TableColumn>
           <TableColumn>Currency</TableColumn>
+          <TableColumn>Type</TableColumn>
           <TableColumn>Created</TableColumn>
           <TableColumn>Available On</TableColumn>
           <TableColumn>Status</TableColumn>
         </TableHeader>
         <TableBody>
           {historyData.map((transaction) => (
-            <TableRow key={transaction.id}>
-              <TableCell>{transaction.id}</TableCell>
-              <TableCell>{(transaction.amount / 100).toFixed(2)}</TableCell>
-              <TableCell>{transaction.currency.toUpperCase()}</TableCell>
-              <TableCell>{formatTimestamp(transaction.created)}</TableCell>
-              <TableCell>{formatTimestamp(transaction.available_on)}</TableCell>
-              <TableCell>{transaction.status}</TableCell>
-            </TableRow>
+           <TableRow
+           key={transaction.id}
+           className={transaction.type === "payout" ? "bg-yellow-100" : ""}
+         >
+           <TableCell>{transaction.id}</TableCell>
+           <TableCell>{(transaction.amount / 100).toFixed(2)}</TableCell>
+           <TableCell>{transaction.currency.toUpperCase()}</TableCell>
+           <TableCell>{transaction.type}</TableCell>
+           <TableCell>{formatTimestamp(transaction.created)}</TableCell>
+           <TableCell>{formatTimestamp(transaction.available_on)}</TableCell>
+           <TableCell>{transaction.status}</TableCell>
+         </TableRow>
           ))}
         </TableBody>
       </Table>

@@ -14,6 +14,7 @@ import { useSession } from "next-auth/react";
 import { Spinner } from "@heroui/react";
 import { useDispatch } from "react-redux";
 import { RiProductHuntFill } from "react-icons/ri";
+import { FaHistory } from "react-icons/fa";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
 import { persistor } from "@/store";
@@ -86,7 +87,7 @@ const Sidebar = () => {
     {
       href: "/dashboard/payment-history",
       label: "Payment History",
-      icon: <PiStripeLogoFill />,
+      icon: <FaHistory />,
     },
     {
       href: "/dashboard/items-sold",

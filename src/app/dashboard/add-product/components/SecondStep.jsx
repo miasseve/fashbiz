@@ -52,7 +52,7 @@ const SecondStep = ({
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
 
-
+  console.log(productCount,'productCount')
 
   const {
     register,
