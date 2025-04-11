@@ -2,15 +2,13 @@
 import React, { useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { useRouter } from "next/navigation";
-import {  useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Button } from "@heroui/button";
 import {
   deleteProductsFromWix,
   soldProductsByIds,
 } from "@/actions/productActions";
-import {
-  removeMultipleProductsFromCart,
-} from "@/features/cartSlice";
+import { removeMultipleProductsFromCart } from "@/features/cartSlice";
 import { toast } from "react-toastify";
 
 const CheckoutForm = ({ user, consignorProducts }) => {
@@ -72,6 +70,7 @@ const CheckoutForm = ({ user, consignorProducts }) => {
           (product) => product._id
         );
         await deleteProductsFromWix(consignorProducts.products);
+        await soldProductsByIds(productIds);
         toast.success("Payment succeeded!");
         dispatch(removeMultipleProductsFromCart(productIds));
         // router.push("/thankyou");
@@ -81,6 +80,7 @@ const CheckoutForm = ({ user, consignorProducts }) => {
         (product) => product._id
       );
       await deleteProductsFromWix(consignorProducts.products);
+      await soldProductsByIds(productIds);
       toast.success("Payment succeeded!");
       dispatch(removeMultipleProductsFromCart(productIds));
     }

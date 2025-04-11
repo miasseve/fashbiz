@@ -405,17 +405,21 @@ export async function deleteProductsFromWix(products) {
 
   // Loop through the products array and delete each product using its wixProductId
   for (const product of products) {
-    const { wixProductId } = product; 
-    const getResponse = await axios.get(
-      `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-          "wix-site-id": process.env.WIX_SITE_ID,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const { wixProductId } = product;
+    try {
+      const getResponse = await axios.get(
+        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } catch (error) {
+      return true;
+    }
     if (getResponse.status === 200) {
       try {
         const response = await axios.delete(
@@ -528,7 +532,7 @@ export async function deleteProductById(productId) {
   }
 }
 
-export async function soldProductsByIds(products) {
+export async function soldProductsByIds(productIds) {
   try {
     const session = await auth();
     if (!session) {
@@ -538,14 +542,14 @@ export async function soldProductsByIds(products) {
     await dbConnect();
 
     // Ensure the array is not empty
-    if (!Array.isArray(products) || products.length === 0) {
+    if (!Array.isArray(productIds) || productIds.length === 0) {
       return {
         status: 400,
         message: "Products not exist",
       };
     }
 
-    const productIds = products.map((product) => product._id);
+    // const productIds = products.map((product) => product._id);
 
     // Delete the products with the given IDs
     const result = await Product.updateMany(

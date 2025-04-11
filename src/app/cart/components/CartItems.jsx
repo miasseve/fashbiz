@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { removeProductFromCart } from "@/features/cartSlice";
 import BuyNow from "./BuyNow";
+import Link from "next/link";
 import { Button } from "@heroui/button";
 
 const CartItems = ({ user }) => {
@@ -115,7 +116,21 @@ const CartItems = ({ user }) => {
             })}
           </>
         ) : (
-          <p className="text-gray-600 text-center">Your cart is empty.</p>
+          <>
+            <div className="flex flex-col items-center justify-center">
+              <p className="text-gray-600 text-center mb-4">
+                Your cart is empty.
+              </p>
+              <Link href="/dashboard/store">
+                <Button
+                  color="primary"
+                  className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg"
+                >
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </div>
