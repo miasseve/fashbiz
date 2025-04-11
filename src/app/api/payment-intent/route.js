@@ -30,23 +30,14 @@ export async function POST(req) {
     await dbConnect();
     const {
       payment_method,
-      total,
       userId,
       userName,
       userEmail,
-      products,
-      customerName,
-      customerEmail,
+      groupedProducts,
     } = await req.json();
 
     // Validate required fields
-    if (
-      !payment_method ||
-      !userId ||
-      !products?.length ||
-      !customerName ||
-      !customerEmail
-    ) {
+    if (!payment_method || !userId ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -58,55 +49,22 @@ export async function POST(req) {
     if (!account) {
       return NextResponse.json({ error: "Account not exist" }, { status: 400 });
     }
-
-    // Create Stripe customer
-    let customer;
-    try {
-      customer = await stripe.customers.create({
-        name: customerName,
-        email: customerEmail,
-        payment_method: payment_method,
-        invoice_settings: { default_payment_method: payment_method },
-      });
-    } catch (error) {
-      return NextResponse.json(
-        { error: `Customer creation failed: ${error.message}` },
-        { status: 500 }
+      const { products: consignorProducts, total: consignorTotal,consignorAccount } =
+        groupedProducts;
+      const formattedProducts = consignorProducts.map(
+        ({ title, brand, price }) => ({
+          title,
+          brand,
+          price,
+        })
       );
-    }
 
-    // Group products by consignor account
-    const groupedProducts = products.reduce((acc, product) => {
-      const { consignorAccount } = product;
-      if (!consignorAccount) return acc; // Skip if no account
-      acc[consignorAccount] = acc[consignorAccount] || [];
-      acc[consignorAccount].push(product);
-      return acc;
-    }, {});
-
-    const paymentResults = [];
-
-    for (let consignorAccount in groupedProducts) {
-      const consignorProducts = groupedProducts[consignorAccount];
-      const formattedProducts = consignorProducts.map(({ title, brand, price }) => ({
-        title,
-        brand,
-        price,
-      }));
-      // Step 3: Calculate the total for the consignor's products
-      const consignorTotal = consignorProducts.reduce(
-        (sum, product) => sum + product.price,
-        0
-      );
-      console.log(account.accountId,consignorAccount,'yyyyyyyyyyyyyyyyyyyyyyy');
-      // const transferGroup = `ORDER_${Date.now()}`;
-      let paymentIntent; 
+      let paymentIntent;
       try {
         paymentIntent = await stripe.paymentIntents.create({
           amount: consignorTotal * 100,
           currency: "eur",
           payment_method: payment_method,
-          customer: customer.id,
           confirm: true,
           automatic_payment_methods: {
             enabled: true,
@@ -114,83 +72,55 @@ export async function POST(req) {
           },
           metadata: {
             storeOwnerEmail: userEmail,
-            storeOwnerName:userName,
-            consignorName:consignorProducts[0]?.consignorName || "",
+            storeOwnerName: userName,
+            storeOwnerAccountId: account.accountId,
+            consignorAccountId: consignorAccount,
+            storeOwnerPercentage: account.percentage,
+            consignorName: consignorProducts[0]?.consignorName || "",
             consignorEmail: consignorProducts[0]?.consignorEmail || "",
             formattedProducts: JSON.stringify(formattedProducts),
           },
         });
+
+        if (
+          paymentIntent.status === "requires_action" &&
+          paymentIntent.next_action.type === "use_stripe_sdk"
+        ) {
+          return NextResponse.json(
+            {
+              requires_action: true,
+              client_secret: paymentIntent.client_secret,
+            },
+            { status: 200 }
+          );
+        }
+
+        // Payment succeeded
+        if (paymentIntent.status === "succeeded") {
+          return NextResponse.json(
+            {
+              success: true,
+            },
+            { status: 200 }
+          );
+        }
+        return NextResponse.json(
+          {
+            error: "Unexpected payment status",
+          },
+          { status: 400 }
+        );
+        // Catch-all for unexpected status
       } catch (error) {
         return NextResponse.json(
           { error: `Payment failed: ${error.message}` },
           { status: 500 }
         );
       }
-
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(
-          paymentIntent.id
-        );
-        if (!paymentIntentRetrieved.latest_charge) {
-          return NextResponse.json(
-            { error: "Charge not found" },
-            { status: 500 }
-          );
-        }
-
-        const charge = await stripe.charges.retrieve(
-          paymentIntentRetrieved.latest_charge
-        );
-
-        const balanceTransaction = await stripe.balanceTransactions.retrieve(
-          charge.balance_transaction
-        );
-
-        const netAmount = balanceTransaction.net;
-        const storeOwnerAmount =(Math.floor(netAmount / 100) * account.percentage) / 100;
-        const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
-
-        const transfers = [
-          stripe.transfers.create({
-            amount: storeOwnerAmount * 100,
-            currency: "eur",
-            destination: account.accountId,
-            source_transaction: paymentIntentRetrieved.latest_charge,
-            transfer_group: `ORDER_${paymentIntent.id}`,
-          }),
-          stripe.transfers.create({
-            amount: consignorAmount * 100,
-            currency: "eur",
-            destination: consignorAccount,
-            source_transaction: paymentIntentRetrieved.latest_charge,
-            transfer_group: `ORDER_${paymentIntent.id}`,
-          }),
-        ];
-        await Promise.all(transfers);
-        paymentResults.push({
-          success: true,
-          consignorAccount,
-          paymentIntentId: paymentIntent.id,
-          storeOwnerAmount: storeOwnerAmount.toFixed(2),
-          consignorAmount: consignorAmount.toFixed(2), 
-        });
-      } catch (error) {
-        return NextResponse.json(
-          { error: `Transfer failed: ${error.message}` },
-          { status: 500 }
-        );
-      }
-    }
-    return NextResponse.json(
-      { success: true, payments: paymentResults },
-      { status: 200 }
-    );
+    // }
   } catch (error) {
-    console.error("Unexpected error:", error);
     return NextResponse.json(
-      { error: "Server error. Please try again." },
+      { error: `Server error. ${error.message}` },
       { status: 500 }
     );
   }

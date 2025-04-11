@@ -26,6 +26,31 @@ const cartSlice = createSlice({
       state.total = 0;
       state.products = [];
     },
+    removeMultipleProductsFromCart: (state, action) => {
+      const idsToRemove = action.payload;
+    
+      // Filter out the products that are NOT in the list of IDs to remove
+      const filteredProducts = state.products.filter(
+        (product) => !idsToRemove.includes(product._id)
+      );
+    
+      // Calculate the new total
+      const removedProducts = state.products.filter((product) =>
+        idsToRemove.includes(product._id)
+      );
+    
+      const removedTotal = removedProducts.reduce(
+        (sum, product) => sum + product.price,
+        0
+      );
+    
+      state.products = filteredProducts;
+      state.total -= removedTotal;
+    
+      if (state.total < 0) {
+        state.total = 0;
+      }
+    },
     removeProductFromCart: (state, action) => {
       state.products = state.products.filter(
         (product) => product._id !== action.payload._id
@@ -39,7 +64,7 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addProductToCart, removeProductFromCart, setTotal, clearCart } =
+export const { addProductToCart, removeProductFromCart, setTotal, clearCart,removeMultipleProductsFromCart} =
   cartSlice.actions;
 
 export default cartSlice.reducer;

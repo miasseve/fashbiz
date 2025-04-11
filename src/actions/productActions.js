@@ -38,7 +38,7 @@ export async function createProduct(formData) {
         priceData: { price: price },
         description: description,
         sku: sku,
-        visible: false
+        visible: false,
       },
     };
 
@@ -68,7 +68,7 @@ export async function createProduct(formData) {
         {
           headers: {
             Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-           "wix-site-id": process.env.WIX_SITE_ID,
+            "wix-site-id": process.env.WIX_SITE_ID,
             "Content-Type": "application/json",
           },
         }
@@ -85,7 +85,7 @@ export async function createProduct(formData) {
           {
             headers: {
               Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
+              "wix-site-id": process.env.WIX_SITE_ID,
               "Content-Type": "application/json",
             },
           }
@@ -97,7 +97,7 @@ export async function createProduct(formData) {
         sku,
         title,
         brand,
-        category:collectionId,
+        category: collectionId,
         description,
         price,
         images,
@@ -144,8 +144,6 @@ export async function createProduct(formData) {
     return { status: 500, error: error.message || "Failed to create product" };
   }
 }
-
-
 
 // export async function createProduct(formData) {
 //   try {
@@ -314,7 +312,7 @@ export async function getProductsByEmail(email) {
     const groupedProducts = await Product.aggregate([
       {
         $match: {
-          consignorEmail: email
+          consignorEmail: email,
           // sold: false,
         },
       },
@@ -349,7 +347,6 @@ export async function getProductsByEmail(email) {
       },
     ]);
 
-
     return {
       status: 200,
       products: JSON.stringify(groupedProducts),
@@ -365,32 +362,30 @@ export async function getUserProductsSold() {
   try {
     // Authenticate and get the session
     const session = await auth();
-  
+
     if (!session) {
       throw new Error("User is not authenticated");
     }
 
     // Connect to the database
     await dbConnect();
-    let userProducts=[];
+    let userProducts = [];
     // Fetch products for the authenticated user
-    if(session.user.role=='store'){
-     userProducts = await Product.find({
-      userId: session.user.id,
-      sold: true,
-    }).sort({
-      createdAt: -1,
-    });
-  }
-  else
-  {
-    userProducts = await Product.find({
-      consignorEmail: session.user.email,
-      sold: true,
-    }).sort({
-      createdAt: -1,
-    });
-  }
+    if (session.user.role == "store") {
+      userProducts = await Product.find({
+        userId: session.user.id,
+        sold: true,
+      }).sort({
+        createdAt: -1,
+      });
+    } else {
+      userProducts = await Product.find({
+        consignorEmail: session.user.email,
+        sold: true,
+      }).sort({
+        createdAt: -1,
+      });
+    }
     return {
       status: 200,
       products: JSON.stringify(userProducts),
@@ -403,34 +398,40 @@ export async function getUserProductsSold() {
   }
 }
 
-
-
-
 export async function deleteProductsFromWix(products) {
-  try {
-    if (!Array.isArray(products) || products.length === 0) {
-      return;
-    }
+  if (!Array.isArray(products) || products.length === 0) {
+    return;
+  }
 
-    // Loop through the products array and delete each product using its wixProductId
-    for (const product of products) {
-      const { wixProductId } = product; // Get the wixProductId for each product
-      // Make a DELETE request to Wix API to delete the product
-      const response = await axios.delete(
-        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-   
+  // Loop through the products array and delete each product using its wixProductId
+  for (const product of products) {
+    const { wixProductId } = product; 
+    const getResponse = await axios.get(
+      `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+          "wix-site-id": process.env.WIX_SITE_ID,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (getResponse.status === 200) {
+      try {
+        const response = await axios.delete(
+          `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+              "wix-site-id": process.env.WIX_SITE_ID,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error deleting product:", error);
+      }
     }
-  } catch (error) {
-    console.error("Error deleting product:", error);
   }
 }
 
@@ -452,7 +453,6 @@ export async function getUserProductCount() {
     return { status: 500, error: "Failed to fetch count" };
   }
 }
-
 
 export async function getProductById(productId) {
   try {
@@ -476,10 +476,11 @@ export async function getProductById(productId) {
       throw new Error("You are not authorized to view this product");
     }
 
-    const user = await User.findOne({ email: product.consignorEmail },
-      'firstname lastname email address phoneNumber city'
+    const user = await User.findOne(
+      { email: product.consignorEmail },
+      "firstname lastname email address phoneNumber city"
     );
-  
+
     if (!user) {
       throw new Error("User related to the product not found");
     }
@@ -569,4 +570,3 @@ export async function soldProductsByIds(products) {
     };
   }
 }
-

@@ -42,42 +42,76 @@ export async function POST(req, res) {
       break;
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
-      const customerId = paymentIntent.customer;
+      // const customerId = paymentIntent.customer;
       const metaData = paymentIntent.metadata;
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
+      const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+  
+      const balanceTransaction = await stripe.balanceTransactions.retrieve(
+        charge.balance_transaction
+      );
+
+      const netAmount = balanceTransaction.net;
+      const storeOwnerPercentage = metaData.storeOwnerPercentage;
+      const storeOwnerAmount =
+        (Math.floor(netAmount / 100) * storeOwnerPercentage) / 100;
+      const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
+
+      const transfers = [
+        stripe.transfers.create({
+          amount: storeOwnerAmount * 100,
+          currency: "eur",
+          destination: metaData.storeOwnerAccountId,
+          source_transaction: paymentIntent.latest_charge,
+          transfer_group: `ORDER_${paymentIntent.id}`,
+        }),
+        stripe.transfers.create({
+          amount: consignorAmount * 100,
+          currency: "eur",
+          destination: metaData.consignorAccountId,
+          source_transaction: paymentIntent.latest_charge,
+          transfer_group: `ORDER_${paymentIntent.id}`,
+        }),
+      ];
+      await Promise.all(transfers);
+
+      // return NextResponse.json({
+      //   success: "PaymentIntent processed successfully",
+      // });
       // Retrieve customer details from Stripe
-      try {
-        const customer = await stripe.customers.retrieve(customerId);
-        const customerName = customer.name;
-        const customerEmail = customer.email;
+      // try {
+      //   const customer = await stripe.customers.retrieve(customerId);
+      //   const customerName = customer.name;
+      //   const customerEmail = customer.email;
 
-        // Send email to the customer
-        //await paymentSuccess(customerEmail, "testerr");
-        // await productPurchased(
-        //   "storeowner@yopmail.com",
-        //   "store owner",
-        //   metaData.consignorEmail,
-        //   metaData.consignorName,
-        //   JSON.parse(metaData.formattedProducts)
-        // );
-        // await consignorUpdate(
-        //   "storeowner@yopmail.com",
-        //   "consignor",
-        //   "consignor@yopmail.com",
-        //   metaData.consignorName,
-        //   JSON.parse(metaData.formattedProducts)
-        // );
+      //   // Send email to the customer
+      //   //await paymentSuccess(customerEmail, "testerr");
+      //   // await productPurchased(
+      //   //   "storeowner@yopmail.com",
+      //   //   "store owner",
+      //   //   metaData.consignorEmail,
+      //   //   metaData.consignorName,
+      //   //   JSON.parse(metaData.formattedProducts)
+      //   // );
+      //   // await consignorUpdate(
+      //   //   "storeowner@yopmail.com",
+      //   //   "consignor",
+      //   //   "consignor@yopmail.com",
+      //   //   metaData.consignorName,
+      //   //   JSON.parse(metaData.formattedProducts)
+      //   // );
 
-        //await paymentSuccess(metaData.customerEmail, "testerr");
+      //   //await paymentSuccess(metaData.customerEmail, "testerr");
 
-        // Respond to the webhook
-        return NextResponse.json({
-          success: "PaymentIntent processed successfully",
-        });
-      } catch (err) {
-        console.error("Error retrieving customer:", err);
-        // return NextResponse.json({ error: 'Failed to retrieve customer details' }, { status: 500 });
-      }
+      //   // Respond to the webhook
+      //   return NextResponse.json({
+      //     success: "PaymentIntent processed successfully",
+      //   });
+      // } catch (err) {
+      //   console.error("Error retrieving customer:", err);
+      //   // return NextResponse.json({ error: 'Failed to retrieve customer details' }, { status: 500 });
+      // }
       break;
     case "transfer.created":
       const transfer = event.data.object;
@@ -95,7 +129,6 @@ export async function POST(req, res) {
       // Handle failed transfer (e.g., notify the user or retry the transfer)
       break;
     case "transfer.paid":
-    
       break;
     // You can handle other event types here if needed
     default:

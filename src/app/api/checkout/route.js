@@ -35,8 +35,7 @@ async function getCart(id) {
     const response = await myWixClient.cart.getCart(id);
     return response;
   } catch (error) {
-    console.error("Error fetching cart:", error);
-    return { error: "Failed to fetch cart" }; // Return an error if the fetch fails
+    return { error: "Failed to fetch cart" }; 
   }
 }
 
@@ -63,8 +62,9 @@ export async function GET(req, { params }) {
       products.push(product);
     }
   }
+
   const subTotal = response.subtotal.formattedAmount;
-  const total = response.subtotalAfterDiscounts.formattedAmount;
+  const total    = response.subtotalAfterDiscounts.formattedAmount;
   const discount = response.discount.formattedAmount;
 
   return NextResponse.json(
