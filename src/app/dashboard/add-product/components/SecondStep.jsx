@@ -128,7 +128,8 @@ const SecondStep = ({
           setValue("description", description || "");
         }
       } catch (error) {
-        toast.error("Failed to load product data");
+        // console.log(error.message)
+        // toast.error("Failed to load product data");
       } finally {
         setLoading(false);
       }

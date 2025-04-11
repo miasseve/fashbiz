@@ -417,25 +417,26 @@ export async function deleteProductsFromWix(products) {
           },
         }
       );
+      if (getResponse.status === 200) {
+        try {
+          const response = await axios.delete(
+            `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+                "wix-site-id": process.env.WIX_SITE_ID,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } catch (error) {
+          console.error("Error deleting product:", error);
+        }
+      }
     } catch (error) {
       return true;
     }
-    if (getResponse.status === 200) {
-      try {
-        const response = await axios.delete(
-          `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error deleting product:", error);
-      }
-    }
+   
   }
 }
 
