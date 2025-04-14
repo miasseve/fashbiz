@@ -40,6 +40,7 @@ export async function GET(req) {
     
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete=isAccountComplete;
+      existingAccount.percentage=existingAccount.percentage;
     
       await existingAccount.save(); 
 
