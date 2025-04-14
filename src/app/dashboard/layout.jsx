@@ -48,7 +48,7 @@ const Layout = ({ children }) => {
               <img className="w-[18px]" src="/visualization.png" alt="Logo" />
             </div> */}
           </Card>
-          <div className="max-w-[100%] mx-auto lg:p-5 p-1">{children}</div>
+          <div className="max-w-[100%] mx-auto lg:p-5 p-1 sm:mt-[0px] mt-[50px]">{children}</div>
         </div>
       </div>
     </SessionProvider>
