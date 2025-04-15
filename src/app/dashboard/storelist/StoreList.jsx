@@ -24,10 +24,7 @@ const StoreList = ({ stores }) => {
               >
                 <div className="w-[130px] h-[130px] flex-shrink-0">
                   <img
-                    src={
-                      store.profileImage?.url ||
-                      `${process.env.NEXT_PUBLIC_FRONTEND_URL}/images/default.jpg`
-                    }
+                    src={store.profileImage?.url || `/images/default.jpg`}
                     alt={`${store.storename} Profile`}
                     className="w-full h-full rounded-full object-cover border"
                   />

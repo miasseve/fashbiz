@@ -35,26 +35,30 @@ export async function GET(req) {
       !eventuallyDueRequirements;
     // Check if the account document exists for the user
     const existingAccount = await Account.findOne({ userId: session.user.id });
-     
-    if (existingAccount) {
-    
-      existingAccount.accountId = accountId;
-      existingAccount.isAccountComplete=isAccountComplete;
-      existingAccount.percentage=existingAccount.percentage;
-    
-      await existingAccount.save(); 
 
-      return NextResponse.json({message:'Account updated successfully'},{ status: 200 });
+    if (existingAccount) {
+      existingAccount.accountId = accountId;
+      existingAccount.isAccountComplete = isAccountComplete;
+      existingAccount.percentage = existingAccount.percentage;
+
+      await existingAccount.save();
+
+      return NextResponse.json(
+        { message: "Account updated successfully" },
+        { status: 200 }
+      );
     } else {
       const newAccount = new Account({
         userId: session.user.id,
         accountId: accountId,
-        isAccountComplete:isAccountComplete
+        isAccountComplete: isAccountComplete,
       });
       await newAccount.save();
-      return NextResponse.json({message:'Account created successfully'},{ status: 200 });
+      return NextResponse.json(
+        { message: "Account created successfully" },
+        { status: 200 }
+      );
     }
-
   } catch (error) {
     return NextResponse.json(
       { message: "An error occurred while refreshing the onboarding process." },

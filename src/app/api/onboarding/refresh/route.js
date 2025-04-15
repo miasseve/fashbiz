@@ -24,11 +24,11 @@ export async function GET(req) {
         refresh_url:
           process.env.NODE_ENV === "development"
             ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/onboarding/refresh?accountId=${account.id}`
-            : `https://fash-roan.vercel.app/api/onboarding/refresh?accountId=${account.id}`,
+            : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/api/onboarding/refresh?accountId=${account.id}`,
         return_url:
           process.env.NODE_ENV === "development"
             ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard/onboarding/success/${account.id}`
-            : `https://fash-roan.vercel.app/dashboard/onboarding/success/${account.id}`,
+            : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/dashboard/onboarding/success/${account.id}`,
         type: "account_onboarding",
       });
 

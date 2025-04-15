@@ -115,7 +115,8 @@ export async function createProduct(formData) {
         await user.save();
       }
 
-      const link = `https://fash-roan.vercel.app/product/${newProduct._id}`;
+
+      const link = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
       return {
         status: 200,

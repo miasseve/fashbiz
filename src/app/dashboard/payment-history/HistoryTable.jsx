@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React from "react";
 import {
   Table,
@@ -14,14 +14,13 @@ const formatTimestamp = (timestamp) => {
 };
 
 const HistoryTable = ({ historyData }) => {
-  console.log(historyData)
   if (!historyData || historyData.length === 0) {
     return <p>No transaction history available.</p>;
   }
 
   return (
     <div className="overflow-x-auto">
-      <Table isStriped >
+      <Table isStriped>
         <TableHeader>
           <TableColumn>ID</TableColumn>
           <TableColumn>Amount</TableColumn>
@@ -33,18 +32,18 @@ const HistoryTable = ({ historyData }) => {
         </TableHeader>
         <TableBody>
           {historyData.map((transaction) => (
-           <TableRow
-           key={transaction.id}
-           className={transaction.type === "payout" ? "bg-yellow-100" : ""}
-         >
-           <TableCell>{transaction.id}</TableCell>
-           <TableCell>{(transaction.amount / 100).toFixed(2)}</TableCell>
-           <TableCell>{transaction.currency.toUpperCase()}</TableCell>
-           <TableCell>{transaction.type}</TableCell>
-           <TableCell>{formatTimestamp(transaction.created)}</TableCell>
-           <TableCell>{formatTimestamp(transaction.available_on)}</TableCell>
-           <TableCell>{transaction.status}</TableCell>
-         </TableRow>
+            <TableRow
+              key={transaction.id}
+              className={transaction.type === "payout" ? "bg-yellow-100" : ""}
+            >
+              <TableCell>{transaction.id}</TableCell>
+              <TableCell>{(transaction.amount / 100).toFixed(2)}</TableCell>
+              <TableCell>{transaction.currency.toUpperCase()}</TableCell>
+              <TableCell>{transaction.type}</TableCell>
+              <TableCell>{formatTimestamp(transaction.created)}</TableCell>
+              <TableCell>{formatTimestamp(transaction.available_on)}</TableCell>
+              <TableCell>{transaction.status}</TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>

@@ -63,7 +63,7 @@ export async function signInUser(data) {
     const { email, password } = data;
 
     await loginSchema.validate(data, { abortEarly: false });
-
+ 
     const result = await signIn("credentials", {
       email: email,
       password: password, 

@@ -4,7 +4,7 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function GET(req) {
-  try {
+  try { 
     
     const account = await stripe.accounts.create({
       type: "express",
@@ -21,12 +21,12 @@ export async function GET(req) {
       refresh_url: `${
         process.env.NODE_ENV == "development"
           ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/onboarding/refresh?accountId=${account.id}`
-          : `https://fash-roan.vercel.app/api/onboarding/refresh?accountId=${account.id}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/api/onboarding/refresh?accountId=${account.id}`
       }`,
       return_url: `${
         process.env.NODE_ENV == "development"
           ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard/onboarding/success/${account.id}`
-          : `https://fash-roan.vercel.app/dashboard/onboarding/success/${account.id}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/dashboard/onboarding/success/${account.id}`
       }`,
       type: "account_onboarding",
     });
@@ -49,12 +49,12 @@ export async function POST(req) {
       refresh_url: `${
         process.env.NODE_ENV == "development"
           ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/onboarding/refresh?accountId=${accountId}`
-          : `https://fash-roan.vercel.app/api/onboarding/refresh?accountId=${accountId}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/api/onboarding/refresh?accountId=${accountId}`
       }`,
       return_url: `${
         process.env.NODE_ENV == "development"
           ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/dashboard/onboarding/success/${accountId}`
-          : `https://fash-roan.vercel.app/dashboard/onboarding/success/${accountId}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/dashboard/onboarding/success/${accountId}`
       }`,
       type: "account_onboarding",
     });
