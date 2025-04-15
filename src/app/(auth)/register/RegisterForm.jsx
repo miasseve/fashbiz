@@ -14,13 +14,13 @@ const RegisterForm = () => {
   }, [selectedTab]);
 
   return (
-    <section className="min-h-screen md:pt-[10rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
+    <section className="min-h-screen md:pt-[8rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
       <div className="md:max-w-[100%] md:px-[20px] 2xl:max-w-[1100px] mx-auto px-[15px] 2xl:px-20">
-        <div className="lg:flex w-full gap-5 justify-between">
+        <div className="w-full gap-5 justify-between relative">
           <div className="lg:w-[60%] w-[100%]  flex flex-col justify-between">
             <div className="w-full lg:w-[20%] h-30 text-center">
               <div className="icon-text text-black relative">
-                <h1 className="text-[4.25rem] pl-[0rem] mb-8 lg:lg-0">
+                <h1 className="text-[4.25rem] pl-[0rem] mb-4 lg:lg-0">
                   <img
                     src="/fashlogo.svg"
                     className="w-[120px] md:[200px] lg:m-0 m-auto"
@@ -46,16 +46,16 @@ const RegisterForm = () => {
             </div>
           </div>
 
-          <div
-            className="h-full lg:w-[40%] w-[100%] m-auto rounded-[8px]"
-            style={{
-              backgroundImage: "url('/bg-img.png')",
-              backgroundSize: "cover", // Ensures the image covers the container
-              backgroundPosition: "center", // Centers the image
-            }}
-          >
-            <div className="p-[1rem] 2xl:p-[2rem] gap-[27px] text-center m-auto max-w-[300px]">
-              <div className="text-[1rem] font-bold text-white mb-[4rem]">
+          <div className="lg:w-[400px] w-[100%]  lg:absolute  right-0 top-0">
+            <div
+              className="text-center m-auto w-[300px] rounded-[8px] p-4"
+              style={{
+                backgroundImage: "url('/bg-img.png')",
+                backgroundSize: "cover", // Ensures the image covers the container
+                backgroundPosition: "center", // Centers the image
+              }}
+            >
+              <div className="text-[1.5rem] font-bold text-white mb-[4rem]">
                 Hi Welcome
               </div>
               <div className="text-[3.25rem] font-bold text-white leading-[4.2rem] mb-[2rem]">

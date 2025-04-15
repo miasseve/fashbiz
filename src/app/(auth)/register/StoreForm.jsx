@@ -46,14 +46,11 @@ const StoreForm = () => {
   };
   return (
     <div>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={handleSubmit(storeSubmit)}
-      >
+      <form className="flex flex-col" onSubmit={handleSubmit(storeSubmit)}>
         {error && (
-          <span className="text-red-500 left-0 text-[12px]">{error}</span>
+          <span className="text-red-500 right-0 text-[10px]">{error}</span>
         )}
-        <div className="relative mb-5">
+        <div className="relative mb-8">
           <Input
             placeholder="First Name"
             {...register("firstname", {
@@ -61,13 +58,13 @@ const StoreForm = () => {
             })}
           />
           {errors.firstname && (
-            <span className="text-red-500 absolute left-0 text-[12px]">
+            <span className="text-red-500 absolute right-0 text-[10px]">
               {errors.firstname.message}
             </span>
           )}
         </div>
 
-        <div className="relative mb-5">
+        <div className="relative mb-8">
           <Input
             placeholder="Last Name"
             {...register("lastname", {
@@ -75,17 +72,27 @@ const StoreForm = () => {
             })}
           />
           {errors.lastname && (
-            <span className="text-red-500 absolute left-0 text-[12px]">
+            <span className="text-red-500 absolute right-0 text-[10px]">
               {errors.lastname.message}
             </span>
           )}
         </div>
 
-        <div className="relative mb-5">
-          <Input placeholder="Store Name" {...register("storename")} />
+        <div className="relative mb-8">
+          <Input
+            placeholder="Store Name"
+            {...register("storename", {
+              required: "Store Name is required",
+            })}
+          />
+          {errors.storename && (
+            <span className="text-red-500 absolute right-0 text-[10px]">
+              {errors.storename.message}
+            </span>
+          )}
         </div>
 
-        <div className="relative mb-5">
+        <div className="relative mb-8">
           <Input
             placeholder="Email"
             {...register("email", {
@@ -93,13 +100,13 @@ const StoreForm = () => {
             })}
           />
           {errors.email && (
-            <span className="text-red-500 absolute left-0 text-[12px]">
+            <span className="text-red-500 absolute right-0 text-[10px]">
               {errors.email.message}
             </span>
           )}
         </div>
 
-        <div className="relative mb-5">
+        <div className="relative mb-8">
           <Input
             endContent={
               <button type="button" onClick={toggleVisibility}>
@@ -113,7 +120,7 @@ const StoreForm = () => {
             })}
           />
           {errors.password && (
-            <span className="text-red-500 absolute left-0 text-[12px]">
+            <span className="text-red-500 absolute right-0 text-[10px]">
               {errors.password.message}
             </span>
           )}
@@ -123,8 +130,7 @@ const StoreForm = () => {
           isLoading={isSubmitting}
           type="submit"
           color="primary"
-          fullWidth
-          className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg"
+          className="bg-[#0c0907] flex m-auto w-fit-content text-white py-6 px-6 rounded-lg text-lg"
         >
           Register
         </Button>

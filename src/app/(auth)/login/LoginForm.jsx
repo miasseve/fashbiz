@@ -33,13 +33,11 @@ const LoginForm = () => {
     const result = await signInUser(payload);
     if (result.status === 200) {
       if (result.profileStatus) {
-         if(result.role=='store')
-         {
+        if (result.role == "store") {
           router.push("/dashboard/add-product");
-         }else
-         {
+        } else {
           router.push("/dashboard/storelist");
-         }
+        }
       } else {
         router.push("/dashboard/profile");
       }
@@ -51,7 +49,7 @@ const LoginForm = () => {
   return (
     <section className="min-h-screen md:pt-[10rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
       <div className="md:max-w-[100%] md:px-[20px] 2xl:max-w-[1100px] mx-auto px-[15px] 2xl:px-20">
-        <div className="lg:flex w-full gap-5 justify-between">
+        <div className="lg:flex w-full gap-5 justify-between relative">
           <div className="lg:w-[60%] w-[100%] flex flex-col justify-between">
             <div className="w-full lg:w-[20%] h-30 text-center">
               <div className="icon-text text-black relative">
@@ -81,17 +79,17 @@ const LoginForm = () => {
             </div>
           </div>
 
-          <div
-            className="h-full lg:w-[40%] w-[100%] m-auto rounded-[8px]"
-            style={{
-              backgroundImage: "url('/bg-img.png')",
-              backgroundSize: "cover", // Ensures the image covers the container
-              backgroundPosition: "center", // Centers the image
-            }}
-          >
-            <div className="p-[1rem] 2xl:p-[2rem] gap-[27px] text-center m-auto max-w-[300px]">
-              <div className="text-[1rem] font-bold text-white mb-[4rem]">
-                Hi Welcome
+          <div className="lg:w-[400px] w-[100%]  lg:absolute  right-0 top-0">
+            <div
+              className="text-center m-auto w-[300px] rounded-[8px] p-4"
+              style={{
+                backgroundImage: "url('/bg-img.png')",
+                backgroundSize: "cover", // Ensures the image covers the container
+                backgroundPosition: "center", // Centers the image
+              }}
+            >
+              <div className="text-[1.5rem] font-bold text-white mb-[4rem]">
+               Hi Welcome
               </div>
               <div className="text-[3.25rem] font-bold text-white leading-[4.2rem] mb-[2rem]">
                 Login
@@ -99,10 +97,12 @@ const LoginForm = () => {
               <div className=" text-white mb-6 text-[1rem] font-bold">
                 Sign in to continue
               </div>
-              <Card className="p-6 bg-white shadow-lg rounded-lg">
+              <Card className="p-8 bg-white shadow-lg rounded-[14px]">
                 <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
                   {error && (
-                    <span className="text-red-500 left-0 text-[12px]">{error}</span>
+                    <span className="text-red-500 right-0 text-[10px]">
+                      {error}
+                    </span>
                   )}
                   <div className="mb-8 relative">
                     <Input
@@ -119,16 +119,13 @@ const LoginForm = () => {
                       })}
                     />
                     {errors.email && (
-                      <span
-                        className="absolute left-0 py-2"
-                        style={{ color: "red", fontSize: "12px" }}
-                      >
+                      <span className="text-red-500 absolute right-0 text-[10px]">
                         {errors.email.message}
                       </span>
                     )}
                   </div>
 
-                  <div className="mb-8 relative pt-3">
+                  <div className="mb-8 relative">
                     <Input
                       endContent={
                         <button
@@ -152,24 +149,20 @@ const LoginForm = () => {
                       })}
                     />
                     {errors.password && (
-                      <span
-                        className="absolute left-0 py-2"
-                        style={{ color: "red", fontSize: "12px" }}
-                      >
+                      <span className="text-red-500 absolute right-0 text-[10px]">
                         {errors.password.message}
                       </span>
                     )}
                   </div>
-                  <div className="bg">
-                    <Button
-                      isLoading={isSubmitting}
-                      color="primary"
-                      type="submit"
-                      className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-[20px]"
-                    >
-                      Login
-                    </Button>
-                  </div>
+
+                  <Button
+                    isLoading={isSubmitting}
+                    color="primary"
+                    type="submit"
+                    className="bg-[#0c0907] flex m-auto w-fit-content text-white py-6 px-6 rounded-lg text-lg"
+                  >
+                    Login
+                  </Button>
                 </form>
 
                 <div className="text-center mt-2">
