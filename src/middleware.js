@@ -15,12 +15,17 @@ export async function middleware(req) {
   const authRoutes = ["/login", "/register"];
   const protectedRoutes = [
     "/dashboard",
+    "/dashboard/qr",
     "/dashboard/add-product",
     "/dashboard/profile",
     "/dashboard/store",
     "/dashboard/consignors",
     "/dashboard/settings",
+    "/dashboard/my-products",
     "/dashboard/storelist",
+    "/dashboard/stripe-connect",
+    "/dashboard/payment-history",
+    "/dashboard/items-sold",
   ];
 
   const isPublic = publicRoutes.includes(nextUrl.pathname);
@@ -48,7 +53,7 @@ export async function middleware(req) {
   // Restrict "store" role from accessing "consignors" and "storelist"
   if (
     userRole === "store" &&
-    ["/dashboard/consignors", "/dashboard/storelist"].includes(nextUrl.pathname)
+    ["/dashboard/consignors", "/dashboard/storelist", "/dashboard/qr", "/dashboard/my-products"].includes(nextUrl.pathname)
   ) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }

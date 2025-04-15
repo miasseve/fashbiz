@@ -4,6 +4,11 @@ import ImageCarousel from "@/app/product/components/ImageCarousel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+export const metadata = {
+  title: 'Product',
+}
+
+
 const Page = async ({ params }) => {
   const { productId } = await params;
   const response = await getProductById(productId);

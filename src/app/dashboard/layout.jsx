@@ -8,6 +8,8 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { SessionProvider } from "next-auth/react";
 
+
+
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shadowClass, setShadowClass] = useState("");

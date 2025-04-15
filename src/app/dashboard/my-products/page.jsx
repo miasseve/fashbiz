@@ -4,6 +4,10 @@ import React from "react";
 import { redirect } from "next/navigation";
 import ProductTable from "./ProductTable";
 
+export const metadata = {
+  title: 'My Products',
+}
+
 const page = async () => {
   const session = await auth();
 

@@ -169,24 +169,22 @@ const Profile = ({ user, stripeResponse }) => {
   const handleRemoveImage = async () => {
     setLoading(true);
 
-  
-      const response = await removeProfile();
-      setLoading(false);
-      if (response.status === 200) {
-        setValue("profileImage", {});
-        setPreviewUrl("");
-        toast.success("Image deleted successfully!", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      } else {
-        setValue("profileImage", {});
-        toast.error("Something went wrong!", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      }
-    
+    const response = await removeProfile();
+    setLoading(false);
+    if (response.status === 200) {
+      setValue("profileImage", {});
+      setPreviewUrl("");
+      toast.success("Image deleted successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } else {
+      setValue("profileImage", {});
+      toast.error("Something went wrong!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
   };
 
   const handleImageClick = () => {
@@ -265,9 +263,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input {...register("firstname")} className="mt-2 w-full" />
             {errors.firstname && (
-              <span className="text-red-500">
-                {errors.firstname.message}
-              </span>
+              <span className="text-red-500">{errors.firstname.message}</span>
             )}
           </div>
           <div>
@@ -276,9 +272,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input {...register("lastname")} className="mt-2 w-full" />
             {errors.lastname && (
-              <span className="text-red-500">
-                {errors.lastname.message}
-              </span>
+              <span className="text-red-500">{errors.lastname.message}</span>
             )}
           </div>
         </div>
@@ -336,9 +330,7 @@ const Profile = ({ user, stripeResponse }) => {
           </label>
           <Input type="text" {...register("address")} className="mt-2 w-full" />
           {errors.address && (
-            <span className="text-red-500">
-              {errors.address.message}
-            </span>
+            <span className="text-red-500">{errors.address.message}</span>
           )}
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -348,9 +340,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input type="text" {...register("city")} />
             {errors.city && (
-              <span className="text-red-500">
-                {errors.city.message}
-              </span>
+              <span className="text-red-500">{errors.city.message}</span>
             )}
           </div>
           <div>
@@ -359,9 +349,7 @@ const Profile = ({ user, stripeResponse }) => {
             </label>
             <Input type="text" {...register("zipcode")} />
             {errors.zipcode && (
-              <span className="text-red-500">
-                {errors.zipcode.message}
-              </span>
+              <span className="text-red-500">{errors.zipcode.message}</span>
             )}
           </div>
         </div>
@@ -383,9 +371,7 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select>
             {errors.state && (
-              <span className="text-red-500">
-                {errors.state.message}
-              </span>
+              <span className="text-red-500">{errors.state.message}</span>
             )}
           </div>
           <div>
@@ -405,9 +391,7 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select>
             {errors.country && (
-              <span className="text-red-500">
-                {errors.country.message}
-              </span>
+              <span className="text-red-500">{errors.country.message}</span>
             )}
           </div>
         </div>

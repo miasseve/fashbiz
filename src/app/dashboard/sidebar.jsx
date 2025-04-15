@@ -103,12 +103,12 @@ const Sidebar = () => {
           <img src="/fashlogo.svg" className="w-[147px] mx-auto" />
         </Link>
       </div>
-      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar">
+      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
         {menuItems.map(({ href, label, icon }) => (
           <Link
             key={href}
             href={href}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] border-b border-[#eaeaea] w-[80%] ${
               pathname === href
                 ? "bg-[#e6e6e6] text-black"
                 : "hover:bg-[#f1f3f1] hover:text-black"

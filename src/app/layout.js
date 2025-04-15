@@ -7,8 +7,8 @@ import Providers from "@/components/Providers";
 
 export const metadata = {
   title: {
-    template: "%s | Fashion App",
-    default: "Fashion App",
+    template: "%s | Fashbiz",
+    default: "Fashbiz",
   },
   description: "A modern ecommerce platform",
 };

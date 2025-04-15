@@ -5,6 +5,10 @@ import PercentForm from "./PercentForm";
 import StripeButton from "./StripeButton";
 import { Card, CardBody } from "@heroui/card";
 
+export const metadata = {
+  title: 'Stripe Connect',
+}
+
 const page = async () => {
   let accountId = "";
   let isAccountComplete = "";

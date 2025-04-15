@@ -24,6 +24,7 @@ export async function registerUser(data) {
     await registerSchema.validate(data, { abortEarly: false });
 
     const existingUser = await User.findOne({ email });
+    console.log(existingUser,'checking')
     if (existingUser) {
       return { status: 400, error: "User already exists" };
     }

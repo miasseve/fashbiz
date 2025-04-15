@@ -3,6 +3,12 @@ import React from "react";
 import SoldTable from "./SoldTable";
 
 export const dynamic = "force-dynamic";
+
+
+export const metadata = {
+  title: 'Items Sold',
+}
+
 const page = async () => {
   // const products=[];
   const response = await getUserProductsSold();

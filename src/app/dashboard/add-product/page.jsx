@@ -3,6 +3,10 @@ import Main from "./Main";
 import { auth } from "@/auth";
 import { getUserProductCount } from "@/actions/productActions";
 import { checkStripeIsConnected } from "@/actions/authActions";
+
+export const metadata = {
+  title: 'Add Product',
+}
 const page = async () => {
   const session = await auth();
   const response = await getUserProductCount();
