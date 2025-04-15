@@ -26,6 +26,7 @@ export async function middleware(req) {
     "/dashboard/stripe-connect",
     "/dashboard/payment-history",
     "/dashboard/items-sold",
+    "/dashboard/my-sold-products",
   ];
 
   const isPublic = publicRoutes.includes(nextUrl.pathname);
@@ -53,14 +54,14 @@ export async function middleware(req) {
   // Restrict "store" role from accessing "consignors" and "storelist"
   if (
     userRole === "store" &&
-    ["/dashboard/consignors", "/dashboard/storelist", "/dashboard/qr", "/dashboard/my-products"].includes(nextUrl.pathname)
+    ["/dashboard/consignors", "/dashboard/storelist","/dashboard/my-sold-products", "/dashboard/qr", "/dashboard/my-products"].includes(nextUrl.pathname)
   ) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 
   if (
     userRole === "consignor" &&
-    ["/dashboard/store", "/dashboard/add-product"].includes(nextUrl.pathname)
+    ["/dashboard/store", "/dashboard/add-product", "/dashboard/items-sold"].includes(nextUrl.pathname)
   ) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }

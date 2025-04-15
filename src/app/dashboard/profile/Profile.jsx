@@ -77,7 +77,7 @@ const Profile = ({ user, stripeResponse }) => {
       city: user?.city || "",
       zipcode: user?.zipcode || "",
       state: user?.state || "",
-      country: user?.country || "",
+      country: user?.country || "DK",
     },
   });
   const [error, setError] = useState("");

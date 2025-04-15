@@ -196,7 +196,7 @@ export async function getTransactionsForConnectedAccount(accountId) {
         stripeAccount: account.accountId, // Connected account ID
       }
     );
-    console.log(transactions,'transactions')
+    
     return {
       status: 200,
       transactions: transactions.data,

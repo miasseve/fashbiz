@@ -521,7 +521,7 @@ export async function deleteProductById(productId) {
     if (!product) {
       throw new Error("Product not found.");
     }
-
+    
     if (product.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }

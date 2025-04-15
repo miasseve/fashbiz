@@ -89,9 +89,14 @@ const Sidebar = () => {
       label: "Payment History",
       icon: <FaHistory />,
     },
-    {
+    session.data?.user?.role === "store" && {
       href: "/dashboard/items-sold",
       label: "Items Sold",
+      icon: <MdLocalGroceryStore />,
+    },
+    session.data?.user?.role === "consignor" && {
+      href: "/dashboard/my-sold-products",
+      label: "My Sold Products",
       icon: <MdLocalGroceryStore />,
     },
   ].filter(Boolean);
