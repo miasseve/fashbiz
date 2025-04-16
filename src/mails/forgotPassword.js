@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 export async function sendResetPasswordEmail(user, resetToken) {
   // Create reset password URL
   const resetURL = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/reset-password?token=${resetToken}`;
-
+  const logoURL = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/images/fash.png`;
   // Create transporter using SMTP configuration from environment variables
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -22,9 +22,8 @@ export async function sendResetPasswordEmail(user, resetToken) {
     subject: "Password Reset Request",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-        <!-- Logo -->
         <div style="text-align: center; margin-bottom: 20px;">
-          <img src="public/images/fashlogo.svg" alt="Company Logo" style="max-width: 150px; height: auto;">
+          <img src="${logoURL}" alt="Company Logo" style="max-width: 150px; height: auto;">
         </div>  
         <h2 style="color: #333; text-align: center;">Password Reset Request</h2>
         <p style="font-size: 16px; color: #555;">

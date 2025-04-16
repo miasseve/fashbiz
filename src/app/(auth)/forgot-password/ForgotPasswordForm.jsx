@@ -71,8 +71,8 @@ const ForgotPasswordForm = () => {
             <div className="text-center">
               <Button
                 type="submit"
-                color="success"
-                className="text-white text-xl py-4 rounded-lg mt-4"
+                color="primary"
+                className="bg-[#0c0907] flex m-auto w-fit-content text-white py-6 px-6 rounded-lg text-lg"
                 isLoading={loading}
               >
                 {loading ? "Sending" : "Send Reset Link"}
@@ -81,11 +81,12 @@ const ForgotPasswordForm = () => {
           </form>
         </CardBody>
         <CardFooter className="text-center text-xl text-gray-600  block">
-          <div className="text-center ">
+          <div className="text-center "> 
             Remembered your password?
             <Link href="/login" className="font-semibold ml-1 underline">
               Login
             </Link>
+            
           </div>
         </CardFooter>
       </Card>
