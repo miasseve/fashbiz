@@ -52,8 +52,8 @@ const Page = async ({ params }) => {
             <p className="text-gray-700 italic">Name : {parsedUser.firstname} {parsedUser.lastname}</p>
             <p className="text-gray-700 italic">Email : {parsedUser.email}</p>
             <p className="text-gray-700 italic">Address : {parsedUser.address}</p>
-            <p className="text-gray-700 italic">Phone Number: {parsedUser.phoneNumber}</p>            
-            <p className="text-gray-700 italic">City :{parsedUser.city}</p>
+            <p className="text-gray-700 italic">Phone Number : {parsedUser.phoneNumber}</p>            
+            <p className="text-gray-700 italic">City : {parsedUser.city}</p>
             
           </div>
         </div>
