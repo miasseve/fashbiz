@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import FirstStep from "./components/FirstStep";
 import SecondStep from "./components/SecondStep";
+import Link from "next/link";
+import { Button } from "@heroui/react";
 import ConsignorSelect from "./components/ConsignorSelect";
 
 const Main = ({ user, productCount, stripeResponse }) => {
@@ -24,9 +26,17 @@ const Main = ({ user, productCount, stripeResponse }) => {
   return (
     <div>
       {stripeResponse.status !== 200 ? (
-        <p className="text-red-500 text-center italic font-bold">
-          *{stripeResponse.error}
-        </p>
+        <div className="flex flex-col justify-center items-center my-[20rem] mx-auto gap-[17px]">
+          <p className="text-red-500 text-center italic font-bold">
+            *{stripeResponse.error}
+          </p>
+          <Link
+            href="/dashboard/stripe-connect"
+            className="bg-[#0c0907] text-white py-1 px-3 rounded-lg"
+          >
+            Go to Stripe Connect
+          </Link>
+        </div>
       ) : (
         <>
           {currentStep === 1 && (

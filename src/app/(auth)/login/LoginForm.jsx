@@ -31,6 +31,7 @@ const LoginForm = () => {
       email: data.email.toLowerCase(), // Convert email to lowercase before sending
     };
     const result = await signInUser(payload);
+    console.log(result,'rrrrrrrrrrrrrrrrr')
     if (result.status === 200) {
       if (result.profileStatus) {
         if (result.role == "store") {

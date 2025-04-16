@@ -43,30 +43,37 @@ export const profileSchema = Yup.object({
   phoneNumber: Yup.string().required("Phone number is required"),
   address: Yup.string().trim().required("Address is required"),
   city: Yup.string().trim().required("City is required"),
-  zipcode: Yup.string()
-    .matches(/^\d{5}(-\d{4})?$/, "Invalid zipcode format")
-    .required("Zipcode is required"),
+  zipcode: Yup.string().when("country", {
+    is: "DK",
+    then: () =>
+      Yup.string()
+        .matches(/^\d{4}$/, "Zipcode must be 4 digits")
+        .required("Zipcode is required"),
+    otherwise: () =>
+      Yup.string()
+        .matches(/^[a-zA-Z0-9\s\-]{3,10}$/, "Enter a valid postal/zip code")
+        .required("Zipcode is required"),
+  }),
   state: Yup.string().trim().required("State is required"),
   country: Yup.string().trim().required("Country is required"),
 });
 
-
 export const resetPasswordSchema = Yup.object().shape({
   password: Yup.string()
-  .required("Password is required")
-  .min(8, "Password must be at least 8 characters long")
-  .max(50, "Password can be at most 50 characters")
-  .test(
-    "password-strength",
-    "Password must contain at least one digit, one lowercase letter, one uppercase letter, and one special character.",
-    (value) => {
-      const hasDigit = /\d/.test(value);
-      const hasLowercase = /[a-z]/.test(value);
-      const hasUppercase = /[A-Z]/.test(value);
-      const hasSpecialChar = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(value);
-      return hasDigit && hasLowercase && hasUppercase && hasSpecialChar;
-    }
-  ),
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters long")
+    .max(50, "Password can be at most 50 characters")
+    .test(
+      "password-strength",
+      "Password must contain at least one digit, one lowercase letter, one uppercase letter, and one special character.",
+      (value) => {
+        const hasDigit = /\d/.test(value);
+        const hasLowercase = /[a-z]/.test(value);
+        const hasUppercase = /[A-Z]/.test(value);
+        const hasSpecialChar = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(value);
+        return hasDigit && hasLowercase && hasUppercase && hasSpecialChar;
+      }
+    ),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords do not match")
     .required("Confirm Password is required"),

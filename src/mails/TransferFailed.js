@@ -26,10 +26,24 @@ export async function transferFailed(
     to: email,
     subject: `Transfer Failed: ${transferId}`,
     html: `
-    <p>Dear ${name},</p>
-    <p>Transfer is failed in your stripe account.Please contact with us</p>
-    <p>Transfer ID: ${transferId}</p>
-    <p>We appreciate your business!</p>
-    <p>Best Regards,<br>Fashbiz</p>`,
+   <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+      <p>Hi ${name},</p>
+
+      <p>We encountered an issue while processing a transfer to your Stripe account.</p>
+
+      <p><strong>Transfer Details:</strong></p>
+      <ul>
+        <li><strong>Amount:</strong> ${transferAmount} ${transferCurrency.toUpperCase()}</li>
+        <li><strong>Transfer ID:</strong> ${transferId}</li>
+      </ul>
+
+      <p>This failure may be due to incorrect account information or issues with the connected Stripe account. Please check your Stripe dashboard or reach out to us for assistance.</p>
+
+      <p>If you believe this was a mistake or need support resolving it, feel free to contact our support team.</p>
+
+      <p>Thank you for using Fashbiz.</p>
+
+      <p>Best regards,<br/>Fashbiz Team</p>
+    </div>`,
   });
 }

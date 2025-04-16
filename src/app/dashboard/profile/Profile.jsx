@@ -49,9 +49,17 @@ const Profile = ({ user, stripeResponse }) => {
       }),
     address: Yup.string().trim().required("Address is required"),
     city: Yup.string().trim().required("City is required"),
-    zipcode: Yup.string()
-      .matches(/^\d{5}(-\d{4})?$/, "Invalid zipcode format")
-      .required("Zipcode is required"),
+    zipcode: Yup.string().when("country", {
+      is: "DK",
+      then: () =>
+        Yup.string()
+          .matches(/^\d{4}$/, "Zipcode must be 4 digits")
+          .required("Zipcode is required"),
+      otherwise: () =>
+        Yup.string()
+          .matches(/^[a-zA-Z0-9\s\-]{3,10}$/, "Enter a valid postal/zip code")
+          .required("Zipcode is required"),
+    }),
     state: Yup.string().trim().required("State is required"),
     country: Yup.string().trim().required("Country is required"),
   });

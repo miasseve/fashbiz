@@ -2,14 +2,14 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { productPurchased } from "@/mails/ProductPurchased";
 import { transferSuccess } from "@/mails/TransferSuccess";
+import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Replace with your Stripe secret key
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret =
-  "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
+const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
@@ -47,7 +47,7 @@ export async function POST(req, res) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
       const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
-  
+
       const balanceTransaction = await stripe.balanceTransactions.retrieve(
         charge.balance_transaction
       );
@@ -58,74 +58,75 @@ export async function POST(req, res) {
         (Math.floor(netAmount / 100) * storeOwnerPercentage) / 100;
       const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
 
-      const transfers = [
-        stripe.transfers.create({
+      try {
+        const storeOwnerTransfer = await stripe.transfers.create({
           amount: storeOwnerAmount * 100,
           currency: "eur",
           destination: metaData.storeOwnerAccountId,
           source_transaction: paymentIntent.latest_charge,
           transfer_group: `ORDER_${paymentIntent.id}`,
-        }),
-        stripe.transfers.create({
+          metadata: {
+            name: metaData.storeOwnerName,
+            email: metaData.storeOwnerEmail,
+          },
+        });
+      } catch (error) {
+        await transferFailed(
+          metaData.storeOwnerName,
+          metaData.storeOwnerEmail,
+          storeOwnerAmount,
+          "eur",
+          `FAILED Payment`
+        );
+        console.error("Transfer failed:", error.message);
+      }
+
+      try {
+        const consignorTransfer = await stripe.transfers.create({
           amount: consignorAmount * 100,
           currency: "eur",
           destination: metaData.consignorAccountId,
           source_transaction: paymentIntent.latest_charge,
           transfer_group: `ORDER_${paymentIntent.id}`,
-        }),
-      ];
-      await Promise.all(transfers);
+          metadata: {
+            name: metaData.consignorName,
+            email: metaData.consignorEmail,
+          },
+        });
+      } catch (error) {
+        await transferFailed(
+          metaData.consignorName,
+          metaData.consignorEmail,
+          consignorAmount,
+          "eur",
+          `FAILED Payment`
+        );
+      }
 
       // return NextResponse.json({
       //   success: "PaymentIntent processed successfully",
       // });
-      // Retrieve customer details from Stripe
-      // try {
-      //   const customer = await stripe.customers.retrieve(customerId);
-      //   const customerName = customer.name;
-      //   const customerEmail = customer.email;
 
-      //   // Send email to the customer
-      //   //await paymentSuccess(customerEmail, "testerr");
-      //   // await productPurchased(
-      //   //   "storeowner@yopmail.com",
-      //   //   "store owner",
-      //   //   metaData.consignorEmail,
-      //   //   metaData.consignorName,
-      //   //   JSON.parse(metaData.formattedProducts)
-      //   // );
-      //   // await consignorUpdate(
-      //   //   "storeowner@yopmail.com",
-      //   //   "consignor",
-      //   //   "consignor@yopmail.com",
-      //   //   metaData.consignorName,
-      //   //   JSON.parse(metaData.formattedProducts)
-      //   // );
-
-      //   //await paymentSuccess(metaData.customerEmail, "testerr");
-
-      //   // Respond to the webhook
-      //   return NextResponse.json({
-      //     success: "PaymentIntent processed successfully",
-      //   });
-      // } catch (err) {
-      //   console.error("Error retrieving customer:", err);
-      //   // return NextResponse.json({ error: 'Failed to retrieve customer details' }, { status: 500 });
-      // }
       break;
     case "transfer.created":
       const transfer = event.data.object;
-      // await transferCreated(
-      //   "storeOwner",
-      //   "storeowner@yopmail.com",
-      //   transfer.amount / 100,
-      //   transfer.currency,
-      //   transfer.id
-      // );
+      await transferCreated(
+        transfer.metadata.name,
+        transfer.metadata.email,
+        transfer.amount / 100,
+        transfer.currency,
+        transfer.id
+      );
       // Handle transfer creation (e.g., record the transfer in your database)
       break;
     case "transfer.failed":
-      const failedTransfer = event.data.object;
+      await transferFailed(
+        transfer.metadata.name,
+        transfer.metadata.email,
+        transfer.amount / 100,
+        transfer.currency,
+        transfer.id
+      );
       // Handle failed transfer (e.g., notify the user or retry the transfer)
       break;
     case "transfer.paid":

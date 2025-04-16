@@ -26,10 +26,22 @@ export async function transferCreated(
     to: email,
     subject: `Transfer Created: ${transferId}`,
     html: `
-    <p>Dear ${name},</p>
-    <p>A transfer of ${transferAmount} ${transferCurrency} was successfully created in your stripe account.</p>
-    <p>Transfer ID: ${transferId}</p>
-    <p>We appreciate your business!</p>
-    <p>Best Regards,<br>Fashbiz</p>`,
+   <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+      <p>Hi ${name},</p>
+
+      <p>We're happy to let you know that a transfer has been successfully created to your Stripe account.</p>
+
+      <p><strong>Transfer Details:</strong></p>
+      <ul>
+        <li><strong>Amount:</strong> ${transferAmount} ${transferCurrency.toUpperCase()}</li>
+        <li><strong>Transfer ID:</strong> ${transferId}</li>
+      </ul>
+
+      <p>You can expect to see this amount reflected in your connected Stripe account shortly. If you have any questions or concerns, feel free to reach out to our support team.</p>
+
+      <p>Thank you for being part of Fashbiz!</p>
+
+      <p>Best regards,<br/>Fashbiz Team</p>
+    </div>`,
   });
 }

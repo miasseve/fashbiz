@@ -74,6 +74,8 @@ export async function signInUser(data) {
       return { status: 401, error: "Invalid credentials" };
     }
 
+    console.log(result,'result');
+
     const user = await User.findOne({ email: email });
     
     return {
@@ -83,6 +85,7 @@ export async function signInUser(data) {
       role:user.role
     };
   } catch (error) {
+    console.log(error.message,'error');
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,

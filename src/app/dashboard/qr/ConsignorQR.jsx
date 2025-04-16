@@ -2,6 +2,7 @@
 import React, { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@heroui/button";
+import Link from "next/link";
 
 const ConsignorQR = ({ qrData, stripeResponse }) => {
   const qrRef = useRef(null);
@@ -22,12 +23,20 @@ const ConsignorQR = ({ qrData, stripeResponse }) => {
   return (
     <div className="flex flex-col bg-white p-[100px] gap-10 mt-10 lg:w-[50%] h-[100%] items-center m-auto justify-center p-4 border rounded-lg shadow-md">
       {stripeResponse.status != 200 && (
+        <>
         <p className="text-red-500 italic font-bold">*{stripeResponse.error}</p>
+        <Link
+        href="/dashboard/stripe-connect"
+        className="bg-[#0c0907] text-white py-1 px-3 rounded-lg"
+      >
+        Go to Stripe Connect
+      </Link>
+      </>
       )}
       {stripeResponse.status == 200 && (
         <>
           <div className="mt-4" ref={qrRef}>
-            <QRCodeCanvas value={JSON.stringify(qrData)} size={130} />
+            <QRCodeCanvas value={JSON.stringify(qrData)} size={110} />
           </div>
           <Button
             color="success"
