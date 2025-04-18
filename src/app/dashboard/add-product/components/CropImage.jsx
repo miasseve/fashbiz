@@ -85,8 +85,7 @@ const CropImage = ({
       <Button
         isDisabled={uploadImageLoader}
         onPress={handleCrop}
-        color="danger"
-        className="rounded-[7px]"
+        className="danger-btn m-auto"
       >
         Crop and Upload
       </Button>

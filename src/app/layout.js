@@ -1,5 +1,7 @@
 // changes in this file
-import { Inria_Sans } from "next/font/google";
+// import { Inria_Sans } from "next/font/google";
+import { Montserrat } from "next/font/google";
+
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,15 +15,17 @@ export const metadata = {
   description: "A modern ecommerce platform",
 };
 
-const inriaSans = Inria_Sans({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
+
+
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={inriaSans.className}>
-      <body className="bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
+    <html lang="en" className={montserrat.className}>
+      <body >
         <Providers>{children}</Providers>
         <ToastContainer />
       </body>

@@ -5,9 +5,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: 'Product',
-}
-
+  title: "Product",
+};
 
 const Page = async ({ params }) => {
   const { productId } = await params;
@@ -16,45 +15,55 @@ const Page = async ({ params }) => {
   if (response.status !== 200) {
     redirect("/");
   }
-  const {product,user}=response.data;
+  const { product, user } = response.data;
 
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
 
   return (
     <div className="container mx-auto p-0 lg:p-12">
-      <div className="flex flex-col lg:flex-row gap-12 lg:bg-white lg:shadow-lg rounded-lg p-6 lg:p-10">
-        <div className="w-full lg:w-1/2 flex justify-center">
+      <div className="flex flex-col sm:flex-row gap-0  lg:shadow-lg bg-[#fff] p-[20px] rounded-lg p-6 lg:p-10">
+        <div className="w-full sm:w-1/2 flex justify-center">
           <ImageCarousel images={parsedProduct.images} />
         </div>
 
-        <div className="w-full lg:w-1/2 flex flex-col gap-6 bg-white  lg:shadow-none shadow-lg p-[10px] lg:p-0">
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">{parsedProduct.title}</h1>
+        <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg  p-[20px] bg-[#f6f6f6]">
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+            {parsedProduct.title}
+          </h1>
           <ul className="space-y-2 text-gray-700">
             <li>
-              <strong>Brand:</strong> {parsedProduct.brand}
+              <span className="font-semibold">Brand :</span> {parsedProduct.brand}
             </li>
             <li>
-              <strong>Price:</strong> <span >€{parsedProduct.price}</span>
+              <span className="font-semibold">Price :</span> <span className="font-semibold">€{parsedProduct.price}</span>
+            </li>
+            <li>
+            <span className="font-semibold">Description :</span> {parsedProduct.description}
             </li>
           </ul>
-          <p className="text-gray-600 leading-relaxed"><strong>Description:</strong> {parsedProduct.description}</p>
+       
           <Link
             href={`/product/${parsedProduct._id}`}
             target="_blank"
-            className="hover:text-grey-800 font-semibold border-b-2 hover:border-grey-800 transition duration-200 lg:w-[35%] w-[70%]"
+            className="success-btn max-w-max"
           >
             View Product Details
           </Link>
 
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg shadow-sm">
-            <p className="text-gray-800 font-semibold">Consignor Details</p>
-            <p className="text-gray-700 italic">Name : {parsedUser.firstname} {parsedUser.lastname}</p>
-            <p className="text-gray-700 italic">Email : {parsedUser.email}</p>
-            <p className="text-gray-700 italic">Address : {parsedUser.address}</p>
-            <p className="text-gray-700 italic">Phone Number : {parsedUser.phoneNumber}</p>            
-            <p className="text-gray-700 italic">City : {parsedUser.city}</p>
-            
+          <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
+            <p className="text-gray-800 italic font-semibold">Consignor Details</p>
+            <p className="text-gray-700 italic">
+             <span className="font-semibold"> Name :</span> {parsedUser.firstname} {parsedUser.lastname}
+            </p>
+            <p className="text-gray-700 italic"> <span className="font-semibold">Email : </span>{parsedUser.email}</p>
+            <p className="text-gray-700 italic">
+            <span className="font-semibold">Address : </span>{parsedUser.address}
+            </p>
+            <p className="text-gray-700 italic">
+            <span className="font-semibold">Phone Number : </span>{parsedUser.phoneNumber}
+            </p>
+            <p className="text-gray-700 italic"><span className="font-semibold">City : </span>{parsedUser.city}</p>
           </div>
         </div>
       </div>

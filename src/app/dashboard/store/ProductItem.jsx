@@ -10,15 +10,12 @@ const ProductItem = ({ product, isGrid }) => {
   };
 
   return (
-  <>
+    <>
       {isGrid ? (
         <>
-        <Card className={`p-[10px] h-full}`}>
-          <CardHeader>
-            <h2 className="text-2xl lg:text-xl font-semibold">{product.title}</h2>
-          </CardHeader>
-
-          {/* <CardBody> */}
+          <Card
+            className={`p-[10px] h-full border-none rounded-none shadow-[0_1px_2px_rgba(0,0,0,0.2)]} p-0`}
+          >
             {product.images.length > 0 && (
               <img
                 src={product.images[0].url}
@@ -26,24 +23,26 @@ const ProductItem = ({ product, isGrid }) => {
                 className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 "
               />
             )}
-            <p className="text-gray-600 text-2xl lg:text-md">
-              {product.description.length > 30
-                ? product.description.slice(0, 30) + "..."
-                : product.description}
-            </p>
-            <p className="font-bold mt-2 text-2xl lg:text-md">€{product.price.toFixed(2)}</p>
-          {/* </CardBody> */}
 
-          <CardFooter>
-            <Button
-              onPress={handleClick}
-              className="text-[1.2rem] lg:px-6 lg:py-6 px-10 py-8 text-white rounded-lg"
-              color="success"
-              size="md"
-            >
-              View Details
-            </Button>
-          </CardFooter>
+            <div className="p-8">
+              <h2 className="text-[15px] font-semibold uppercase mb-[10px]">
+                {product.title}
+              </h2>
+              <p className="text-gray-600 text-2xl lg:text-md mb-[15px]">
+                {product.description.length > 30
+                  ? product.description.slice(0, 90) + "..."
+                  : product.description}
+              </p>
+              <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center justify-between">
+                <span className="font-regular">Price : </span>
+                <span> €{product.price.toFixed(2)}</span>
+              </p>
+              {/* </CardBody> */}
+
+              <Button onPress={handleClick} className="success-btn ">
+                View Details
+              </Button>
+            </div>
           </Card>
         </>
       ) : (
@@ -57,28 +56,29 @@ const ProductItem = ({ product, isGrid }) => {
             />
           )}
           <div className="flex gap-[15px] flex-col">
-          <div className="flex-1 gap-3">
-            <h2 className="text-[20px] font-semibold">{product.title}</h2>
-            <p className="text-gray-600">
-              {product.description.length > 60
-                ? product.description.slice(0, 60) + "..."
-                : product.description}
-            </p>
-            <p className="font-bold text-md mt-1">€{product.price.toFixed(2)}</p>
+            <div className="flex-1 gap-3">
+              <h2 className="text-[20px] font-semibold">{product.title}</h2>
+              <p className="text-gray-600">
+                {product.description.length > 60
+                  ? product.description.slice(0, 60) + "..."
+                  : product.description}
+              </p>
+              <p className="font-bold text-md mt-1">
+                €{product.price.toFixed(2)}
+              </p>
+            </div>
+            <Button
+              onPress={handleClick}
+              className="text-[12px] px-[3rem] py-[1rem] text-white rounded-lg w-min"
+              color="success"
+              size="md"
+            >
+              View
+            </Button>
           </div>
-          <Button
-            onPress={handleClick}
-            className="text-[12px] px-[3rem] py-[1rem] text-white rounded-lg w-min"
-            color="success"
-            size="md"
-          >
-            View
-          </Button>
-          </div>
-        
         </div>
       )}
-  </>
+    </>
   );
 };
 

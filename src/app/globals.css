@@ -14,6 +14,25 @@
   }
 }
 
+.login-btn {
+  @apply bg-white py-4 px-5 rounded-lg text-center font-medium text-[16px] px-[20px] py-[10px] inline-block bg-[#000] text-white;
+}
+
+.auth-btn {
+  @apply bg-[#0c0907] flex text-white py-6 px-6  font-medium  text-base sm:text-xl  rounded-lg text-lg;
+}
+
+.dark-btn {
+  @apply flex bg-[#969696] text-white py-6 px-6  font-medium  text-base sm:text-xl  rounded-lg text-lg;
+}
+
+.success-btn {
+  @apply bg-[#17c964] flex text-white py-6 px-6  font-medium  text-base sm:text-xl  rounded-lg text-lg;
+}
+
+.danger-btn {
+  @apply bg-red-600 hover:bg-red-700 flex text-white py-6 px-6  font-medium  text-base sm:text-xl  rounded-lg text-lg;
+}
 html {
   font-size: 62.5%;
 }
@@ -22,7 +41,22 @@ body {
   /* color: var(--foreground); */
   background: var(--background);
   font-size: 1.6rem;
-
+}
+input{
+  cursor: text;
+    border: 1px solid #ccc;
+    padding: 6px 10px !important;
+    height: 40px;
+    border-radius: 6px;
+    background: #fff !important;
+    width:100%;
+}
+textarea{
+  font-size:16px;
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width:100%;
 }
 
 label {
@@ -30,15 +64,18 @@ label {
   padding-bottom: 5px;
 }
 
-.container{max-width: 1600px;padding: 0 20px;}
+.container {
+  max-width: 1200px;
+  padding: 0 20px;
+}
 
 .swal2-confirm.btn-danger {
-  background-color: #dc3545; 
+  background-color: #dc3545;
   border-color: #dc3545;
 }
 
 .swal2-confirm.btn-danger:hover {
-  background-color: #c82333; 
+  background-color: #c82333;
   border-color: #c82333;
 }
 
@@ -51,7 +88,7 @@ label {
   height: 100%;
   z-index: 0;
 }
-#reader__scan_region>img{
+#reader__scan_region > img {
   display: flex;
   margin: auto;
   justify-content: center;
@@ -59,48 +96,91 @@ label {
   width: 28%;
 }
 
-.text-tiny{font-size: 14px;}
-.text-medium{font-size: 14px;}
-.text-small{font-size: 14px;}
-.custom-select{height: 35px;}
-
-.custom-bg>div{background: rgba(255, 255, 255,0.5) !important; border-radius: 100px;}
-.sidebarOverlay:after{
-    width: 100%;
-    content: "";
-    background: rgba(0, 0, 0, 0.3);
-    height: 100vh;
-    position: absolute;
-    left: 0px;
-    z-index: 9;
-    top:0
+.text-tiny {
+  font-size: 14px;
 }
-.ElementsApp{height: 40px;}
+.text-medium {
+  font-size: 14px;
+}
+.text-small {
+  font-size: 14px;
+}
+.custom-select {
+  height: 35px;
+}
+
+.custom-bg > div {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-radius: 100px;
+}
+.sidebarOverlay:after {
+  width: 100%;
+  content: "";
+  background: rgba(0, 0, 0, 0.3);
+  height: 100vh;
+  position: absolute;
+  left: 0px;
+  z-index: 9;
+  top: 0;
+}
+.ElementsApp {
+  height: 40px;
+}
+
+.bg-fash-gradient {
+  background: linear-gradient(180.65deg, #F4B5B5 -20.23%, #D17273 99.41%);
+}
+.tabbutton div>button {
+  height: 40px;
+  border-radius: 0px !important;
+  font-weight: bold;
+  text-transform: uppercase;
+} 
+.tabbutton button span {
+  background: #ccc;
+}
+.tabbutton form{margin-top: 10px;}
+select {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 40px;
+}
+.box-shadow-none{box-shadow: none; background: #fff; border-bottom: 1px solid #dedede} 
+.carousel .thumb.selected, .carousel .thumb:hover {
+  border: 1px solid #c1c1c1;
+}
+@media screen and (max-width: 767px) {
+.lftlogin{
+  padding-left: 4px !important;
+  width: 100% !important;
+}
+}
 
 @media screen and (max-width: 480px) {
-.sidetoggle {
-  right: -100%;
-  background: #fff;
-  height: 100vh;
-  width: 80%;
-}
-.sidetoggle.showSidebar {
-  left: 0;
-}
-.overlay {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  position: fixed;
-  height: 100vh;
-}
-#reader__scan_region>img{
-  display: flex;
-  margin: auto;
-  justify-content: center;
-  align-items: center;
-  width: 28%;
-}
-form>label{
-padding-bottom: 6px;
-}
+  .sidetoggle {
+    right: -100%;
+    background: #fff;
+    height: 100vh;
+    width: 80%;
+  }
+  .sidetoggle.showSidebar {
+    left: 0;
+  }
+  .overlay {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    height: 100vh;
+  }
+  #reader__scan_region > img {
+    display: flex;
+    margin: auto;
+    justify-content: center;
+    align-items: center;
+    width: 28%;
+  }
+  form > label {
+    padding-bottom: 6px;
+  }
 }

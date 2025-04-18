@@ -25,7 +25,7 @@ const StripeButton = ({ accountId }) => {
         Your account is connected with Stripe, but some details are still
         pending. Please complete them to enable payouts and accept payments.
       </p>
-      <Button onPress={handleButton} color="danger" className="lg:w-[45%]">
+      <Button onPress={handleButton}  className="danger-btn w-auto max-w-max">
         Complete your Stripe details to enable payouts
       </Button>
     </div>

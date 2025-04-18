@@ -57,7 +57,7 @@ const ForgotPasswordForm = () => {
         <CardBody className="mt-6">
           <form onSubmit={handleForgotPassword} className="">
             <div className="mb-6">
-              <Input
+              <input 
                 type="text"
                 placeholder="Enter your email"
                 className="text-xl"
@@ -65,14 +65,14 @@ const ForgotPasswordForm = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
               {error && (
-                <span style={{ color: "red", fontSize: "12px" }}>{error}</span>
+                <span className="text-red-500 font-bold text-[12px]">{error}</span>
               )}
             </div>
             <div className="text-center">
               <Button
                 type="submit"
                 color="primary"
-                className="bg-[#0c0907] flex m-auto w-fit-content text-white py-6 px-6 rounded-lg text-lg"
+                className="auth-btn bg-[#06cb03]"
                 isLoading={loading}
               >
                 {loading ? "Sending" : "Send Reset Link"}

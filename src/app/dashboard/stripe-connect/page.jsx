@@ -28,7 +28,7 @@ const page = async () => {
   }
 
   return (
-    <div className="flex flex-col gap-[12px] lg:w-[86%]">
+    <div className="flex flex-col gap-[12px] lg:w-[86%] h-screen">
       {result?.accountId && (
         <>
           <Card className="p-12 border border-green-500">

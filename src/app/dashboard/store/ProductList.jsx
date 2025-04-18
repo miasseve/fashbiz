@@ -10,11 +10,11 @@ const ProductList = ({ products }) => {
   return (
     <div className="w-full">
       {/* View Toggle Button */}
-      <div className="flex justify-end mb-4 mt-5">
+      <div className="flex justify-end mb-4 lg:mt-5 mx-[15px] ">
         <Button
           onPress={() => setIsGrid(!isGrid)}
           variant="ghost"
-          className="font-semibold p-7"
+          className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-[#06cb03]"
         >
           {isGrid ? <ListIcon size={20} /> : <GridIcon size={20} />}
           {isGrid ? "List View" : "Grid View"}
@@ -24,7 +24,7 @@ const ProductList = ({ products }) => {
       {/* Product List */}
       <div
         className={`${
-          isGrid ? "grid lg:grid-cols-3 grid-cols-1 px-[35px] gap-[30px] lg:p-[10px]" : ""
+          isGrid ? "grid sm:grid-cols-3 grid-cols-1 px-[15px]  gap-[15px] lg:p-[10px]" : ""
         }`}
       >
         {products.map((product) => (

@@ -88,12 +88,11 @@ const CheckoutForm = ({ user, consignorProducts }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="text-right mt-[30px]">
+      <form onSubmit={handleSubmit} className="text-right mt-[30px] mt-[20px]">
         <CardElement />
         <Button
-          color="primary"
           type="submit"
-          className="bg-[#0c0907] text-white py-6 px-6 rounded-lg text-lg mt-4"
+          className="auth-btn ml-auto mt-8"
           disabled={isProcessing}
         >
           {isProcessing ? "Processing..." : "Pay Now"}

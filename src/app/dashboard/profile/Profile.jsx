@@ -14,6 +14,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { State } from "country-state-city";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
+import { FaUserEdit } from "react-icons/fa";
+import { RiDeleteBinFill } from "react-icons/ri";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
@@ -203,19 +205,18 @@ const Profile = ({ user, stripeResponse }) => {
 
   return (
     <motion.div
-      className="max-w-3xl mx-auto lg:my-[50px] p-6 bg-white rounded-xl shadow-lg dark:bg-gray-900 transition-all"
+      className="mx-auto lg:my-[10px]  bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+   
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-[30px]">
         <div className="flex flex-col items-center text-center">
-          <h1 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-            Profile Picture
-          </h1>
-          <div className="relative mt-4">
+          
+          <div className="relative w-[100%] flex justify-between p-0 ">
             <motion.div
               whileHover={{ scale: 1.1 }}
-              className="cursor-pointer border m-auto w-[150px] h-[150px] flex items-center justify-center rounded-full overflow-hidden shadow-md bg-gray-200 dark:bg-gray-700"
+              className="cursor-pointer border transform-none w-[100px] h-[100px] flex items-center justify-center rounded-full overflow-hidden  bg-gray-200 dark:bg-gray-700"
               onClick={handleImageClick}
             >
               {previewUrl ? (
@@ -237,19 +238,21 @@ const Profile = ({ user, stripeResponse }) => {
               </div>
             )}
             {previewUrl && (
-              <div className="flex gap-4 mt-5">
+              <div className="flex gap-4">
                 <Button
-                  className="px-4 py-2 rounded-md text-white hover:bg-blue-700"
+                  // className="px-4 py-2 rounded-md text-white hover:bg-blue-700"
+                  className="success-btn"
                   onPress={handleImageClick}
                   color="success"
                 >
-                  Edit Image
+                  <FaUserEdit/>
                 </Button>
                 <Button
-                  className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+                  // className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+                  className="danger-btn"
                   onPress={handleRemoveImage}
                 >
-                  Remove Image
+                 <RiDeleteBinFill/>
                 </Button>
               </div>
             )}
@@ -269,18 +272,22 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               First Name
             </label>
-            <Input {...register("firstname")} className="mt-2 w-full" />
+            <input 
+            {...register("firstname")} className="mt-2 w-full" 
+            />
+            {/* <Input {...register("firstname")} className="mt-2 w-full" /> */}
             {errors.firstname && (
-              <span className="text-red-500">{errors.firstname.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.firstname.message}</span>
             )}
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Last Name
             </label>
-            <Input {...register("lastname")} className="mt-2 w-full" />
+            <input {...register("lastname")} className="mt-2 w-full" />
+            {/* <Input {...register("lastname")} className="mt-2 w-full" /> */}
             {errors.lastname && (
-              <span className="text-red-500">{errors.lastname.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.lastname.message}</span>
             )}
           </div>
         </div>
@@ -290,11 +297,16 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700">
               Store Name
             </label>
-            <Input
+            <input
+                disabled
+                {...register("storename")}
+                className="mt-2 w-full" 
+            />
+            {/* <Input
               disabled
               {...register("storename")}
               className="mt-2 w-full"
-            />
+            /> */}
           </div>
         )}
         <div className="grid grid-cols-2 gap-4">
@@ -310,35 +322,43 @@ const Profile = ({ user, stripeResponse }) => {
                 <PhoneInput
                   {...field}
                   international
-                  defaultCountry="US"
+                  defaultCountry="DK"
                   className="mt-2 w-full"
                   placeholder="Enter phone number"
                 />
               )}
             />
             {errors.phoneNumber && (
-              <span className="text-red-500 ">
+              <span className="text-red-500 font-bold text-[12px]">
                 {errors.phoneNumber.message}
               </span>
             )}
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700">Email</label>
-            <Input
+            <input 
+             type="email"
+             disabled
+             defaultValue={user?.email || "mailto:user@example.com"}
+             className="mt-2 w-full"
+            />
+            {/* <Input
               type="email"
               disabled
               defaultValue={user?.email || "mailto:user@example.com"}
               className="mt-2 w-full"
-            />
+            /> */}
           </div>
         </div>
         <div>
           <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Address
           </label>
-          <Input type="text" {...register("address")} className="mt-2 w-full" />
+          <input type="text" {...register("address")} className="mt-2 w-full"
+          />
+          {/* <Input type="text" {...register("address")} className="mt-2 w-full" /> */}
           {errors.address && (
-            <span className="text-red-500">{errors.address.message}</span>
+            <span className="text-red-500 font-bold text-[12px]">{errors.address.message}</span>
           )}
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -346,18 +366,20 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               City
             </label>
-            <Input type="text" {...register("city")} />
+            <input type="text" {...register("city")}  />
+            {/* <Input type="text" {...register("city")} /> */}
             {errors.city && (
-              <span className="text-red-500">{errors.city.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.city.message}</span>
             )}
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Zipcode
             </label>
-            <Input type="text" {...register("zipcode")} />
+            <input type="text" {...register("zipcode")} />
+            {/* <Input type="text" {...register("zipcode")} /> */}
             {errors.zipcode && (
-              <span className="text-red-500">{errors.zipcode.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.zipcode.message}</span>
             )}
           </div>
         </div>
@@ -366,7 +388,20 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               State
             </label>
-            <Select
+            <select
+                {...register("state")}
+                className="max-w-xs border border-gray-300 rounded px-3 py-2"
+                onChange={handleStateChange}
+                defaultValue=""
+              >
+                <option value="" disabled>Select state</option>
+                {stateOptions.map((state) => (
+                  <option key={state.value} value={state.value}>
+                    {state.label}
+                  </option>
+                ))}
+              </select>
+            {/* <Select
               {...register("state")}
               className="max-w-xs"
               placeholder="Select state"
@@ -377,16 +412,29 @@ const Profile = ({ user, stripeResponse }) => {
                   {state.label}
                 </SelectItem>
               ))}
-            </Select>
+            </Select> */}
             {errors.state && (
-              <span className="text-red-500">{errors.state.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.state.message}</span>
             )}
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Country
             </label>
-            <Select
+            <select
+              {...register("country")}
+              className="max-w-xs border border-gray-300 rounded px-3 py-2"
+              onChange={handleCountryChange}
+              defaultValue=""
+            >
+              <option value="" disabled>Select country</option>
+              {countryOptions.map((country) => (
+                <option key={country.value} value={country.value}>
+                  {country.label}
+                </option>
+              ))}
+            </select>
+            {/* <Select
               {...register("country")}
               className="max-w-xs"
               placeholder="Select country"
@@ -397,9 +445,9 @@ const Profile = ({ user, stripeResponse }) => {
                   {country.label}
                 </SelectItem>
               ))}
-            </Select>
+            </Select> */}
             {errors.country && (
-              <span className="text-red-500">{errors.country.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">{errors.country.message}</span>
             )}
           </div>
         </div>
@@ -408,7 +456,7 @@ const Profile = ({ user, stripeResponse }) => {
             isLoading={isSubmitting}
             type="submit"
             color="success"
-            className="text-lg px-6 py-3 text-white rounded-lg hover:bg-green-500"
+            className="success-btn"
           >
             Save
           </Button>

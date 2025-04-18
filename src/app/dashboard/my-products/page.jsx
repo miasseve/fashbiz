@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import ProductTable from "./ProductTable";
 
 export const metadata = {
-  title: 'My Products',
-}
+  title: "My Products",
+};
 
 const page = async () => {
   const session = await auth();
@@ -21,9 +21,8 @@ const page = async () => {
   }
 
   const products = JSON.parse(response.products);
-  if(products.length==0)
-  {
-    return <div>No products found</div>
+  if (products.length == 0) {
+    return <div>No products found</div>;
   }
   return (
     <div>

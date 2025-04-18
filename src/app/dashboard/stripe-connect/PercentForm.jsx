@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { storePercentage } from "@/actions/accountAction";
-import { Select, SelectItem, Button, Card,CardBody } from "@heroui/react";
+import { Select, SelectItem, Button, Card, CardBody } from "@heroui/react";
 import { toast } from "react-toastify";
 const PercentForm = ({ percentage }) => {
   const [loading, setLoading] = useState(false);
@@ -13,7 +13,7 @@ const PercentForm = ({ percentage }) => {
     { label: "30%", key: "30" },
     { label: "40%", key: "40" },
     { label: "50%", key: "50" },
-    { label: "60%", key: "60" }
+    { label: "60%", key: "60" },
   ];
 
   const handleChange = (e) => {
@@ -43,33 +43,32 @@ const PercentForm = ({ percentage }) => {
       setLoading(false);
     }
   };
-
+  console.log(percentOptions);
   return (
     <Card className="p-12 border border-green-500">
       <CardBody>
-        <form onSubmit={handleSubmit} >
-            <label>Select Percentage on Products</label>
-            <div className="flex  gap-3 items-center">
-            <Select
-            className="max-w-xs mt-3"
-            placeholder="Select percantage"
-            onChange={handleChange}
-            defaultSelectedKeys={[percentage]}
-          >
-            {percentOptions.map((percent) => (
-              <SelectItem key={percent.key}>{percent.label}</SelectItem>
-            ))}
-          </Select>
-          <Button
-            isLoading={loading}
-            type="submit"
-            color="success"
-            className="text-lg px-6 py-3 text-white rounded-full hover:bg-green-500 mt-2"
-          >
-            Save
-          </Button>
-            </div>
-       
+        <form onSubmit={handleSubmit}>
+          <label>Select Percentage on Products</label>
+          <div className="flex  gap-3 items-center">
+            <select
+              onChange={handleChange}
+              className="!max-w-[40%] border border-gray-300 rounded px-3 py-2"
+              defaultValue={`${percentage}`}
+            >
+              <option value="" disabled>
+                Select Percentage
+              </option>
+              {percentOptions.map((percent) => (
+                <option key={percent.key} value={percent.key}>
+                  {percent.label}
+                </option>
+              ))}
+            </select>
+
+            <Button isLoading={loading} type="submit" className="success-btn">
+              Save
+            </Button>
+          </div>
         </form>
       </CardBody>
     </Card>

@@ -32,11 +32,10 @@ const StripeConnect = () => {
         </p>
         <Button
           onPress={handleStripeOnboarding}
-          color="success"
           disabled={loading}
-          className="text-white lg:w-[25%]"
+          className="success-btn w-auto max-w-max"
         >
-          {loading ? "Loading..." : "Connect with Stripe"}
+          {loading ? "Loading" : "Connect with Stripe"}
         </Button>
         {error && <p className="text-red-500">{error}</p>}
       </div>

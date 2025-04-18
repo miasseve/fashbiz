@@ -19,7 +19,7 @@ const HistoryTable = ({ historyData }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto ">
       <Table isStriped>
         <TableHeader>
           <TableColumn>ID</TableColumn>

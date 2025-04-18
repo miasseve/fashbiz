@@ -67,9 +67,8 @@ const RemoveImage = ({
     </span>
   ) : (
     <Button
-      color="danger"
       isDisabled={disabled}
-      className="rounded-lg px-6 py-6"
+      className="danger-btn !m-0"
       onPress={() => handleRemoveImage(viewType , publicId)} 
     >
       Remove

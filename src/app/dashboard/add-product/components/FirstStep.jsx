@@ -481,7 +481,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                             </div>
                           </div>
 
-                          <div className="text-left">
+                          <div className="text-start">
                             <RemoveImage
                               viewType={viewType}
                               disabled={
@@ -513,7 +513,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                       <Button
                         type="button"
                         onPress={() => handleCameraClick(viewType)}
-                        className="camera-button text-[2rem] "
+                        className="dark-btn"
                       >
                         <IoIosCamera />
                       </Button>
@@ -521,7 +521,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                       <Button
                         type="button"
                         onPress={() => handleGalleryClick(viewType)}
-                        className="camera-button "
+                        className="dark-btn"
                       >
                         Upload
                       </Button>
@@ -540,7 +540,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 Object.keys(removeBackgroundLoader).length > 0
               }
               onPress={handleBackStep}
-              className="text-[1.2rem] py-6 px-6 bg-[#333] text-white rounded-lg"
+              className="auth-btn"
             >
               Back
             </Button>
@@ -556,8 +556,8 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                   )
                 }
                 onPress={step2Handler}
-                className=" text-[1.2rem] px-6 py-6 rounded-lg"
-                color="danger"
+                className="danger-btn"
+              
               >
                 Next
               </Button>

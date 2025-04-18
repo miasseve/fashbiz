@@ -30,8 +30,8 @@ const LoginForm = () => {
       ...data,
       email: data.email.toLowerCase(), // Convert email to lowercase before sending
     };
+
     const result = await signInUser(payload);
-    console.log(result,'rrrrrrrrrrrrrrrrr')
     if (result.status === 200) {
       if (result.profileStatus) {
         if (result.role == "store") {
@@ -48,68 +48,65 @@ const LoginForm = () => {
   };
 
   return (
-    <section className="min-h-screen md:pt-[10rem] pt-[5rem] pb-[5rem] bg-gradient-to-b from-[#FFF0F0] to-[#DD8081]">
-      <div className="md:max-w-[100%] md:px-[20px] 2xl:max-w-[1100px] mx-auto px-[15px] 2xl:px-20">
-        <div className="lg:flex w-full gap-5 justify-between relative">
-          <div className="lg:w-[60%] w-[100%] flex flex-col justify-between">
-            <div className="w-full lg:w-[20%] h-30 text-center">
-              <div className="icon-text text-black relative">
-                <h1 className="text-[4.25rem] pl-[0rem] mb-8 lg:lg-0">
-                  <img
-                    src="/fashlogo.svg"
-                    className="w-[120px] md:[200px] lg:m-0 m-auto"
-                  />
-                </h1>
-              </div>
-            </div>
-
-            <div className="lg:pb-[5rem] pb-[5rem]">
-              <div className="lg:pl-[5rem]">
-                <div className="2xl:text-[6rem] lg:text-[5rem] md:text-[4rem] text-[4rem] text-center lg:text-left text-white 2xl:leading-[5rem] leading-[4rem] font-normal mb-[4rem] max-w-[100%]">
-                  Sell <br></br> instantly
+    <section className="min-h-screen bg-fash-gradient">
+      <div className="md:max-w-[100%] mx-auto min-h-screen">
+        <div className="sm:flex w-full gap-5 justify-between relative h-full min-h-screen">
+          <div className="bg-[#fff] sm:flex justify-end items-center  sm:p-4 lg:p-0  p-8 sm:p-0 sm:min-h-screen w-full sm:w-[50%]">
+            <div className="w-100% md:w-[430px] sm:pr-[2rem] lftlogin">
+              <div className="w-full text-center">
+                <div className="icon-text text-black relative">
+                  <Link href="/">
+                    <img src="/fashlogo.svg" className="w-[37%] mb-[53px]" />
+                  </Link>
                 </div>
               </div>
-              <div className="text-center lg:text-right pr-[0] lg:pr-[8rem]">
-                <Link
-                  href="/register"
-                  className="bg-white py-2 px-8 rounded-lg  hover:bg-[#53f84b] transition duration-300 text-[1.2rem] text-left py-4 inline-block leading-[1.5rem]"
-                >
-                  CREATE ACCOUNT
-                </Link>
+
+              <div className="lg:pb-[5rem] sm:pb-[5rem]">
+                <div className="">
+                  <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
+                    Sell instantly
+                  </div>
+                  <p className="text-[18px] font-normal text-black m-0">
+                    Your trusted marketplace to sell with ease.
+                  </p>
+                  <p className="text-[18px] font-normal text-black m-0 mb-[40px]">
+                    Trouble logging in?{" "}
+                    <Link href="/contact-support" className="underline">
+                      Contact support
+                    </Link>
+                  </p>
+                </div>
+                <div className="md:w-1/2">
+                  <Link href="/register" className="login-btn text-base">
+                    CREATE ACCOUNT
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="lg:w-[400px] w-[100%]  lg:absolute  right-0 top-0">
-            <div
-              className="text-center m-auto w-[300px] rounded-[8px] p-4"
-              style={{
-                backgroundImage: "url('/bg-img.png')",
-                backgroundSize: "cover", // Ensures the image covers the container
-                backgroundPosition: "center", // Centers the image
-              }}
-            >
-              <div className="text-[1.5rem] font-bold text-white mb-[4rem]">
-               Hi Welcome
-              </div>
-              <div className="text-[3.25rem] font-bold text-white leading-[4.2rem] mb-[2rem]">
-                Login
-              </div>
-              <div className=" text-white mb-6 text-[1rem] font-bold">
-                Sign in to continue
-              </div>
+          <div className="sm:w-[50%] flex justify-center items-center pt-8 sm:pt-0">
+            <div className="text-center m-auto md:w-[80%] w-[100%] rounded-[8px] p-4">
               <Card className="p-8 bg-white shadow-lg rounded-[14px]">
-                <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
+                {/* <div className="text-[1.5rem] font-bold">Hi Welcome</div> */}
+                <div className="text-[24px] font-bold  leading-[4.2rem] mb-[2rem]">
+                  Sign In
+                </div>
+                <form
+                  className="w-full text-start"
+                  onSubmit={handleSubmit(onSubmit)}
+                >
                   {error && (
                     <span className="text-red-500 right-0 text-[10px]">
                       {error}
                     </span>
                   )}
                   <div className="mb-8 relative">
-                    <Input
+                    <input
                       placeholder="Enter Your Email"
                       type="text"
                       size="lg"
+                      radius="full"
                       {...register("email", {
                         required: "Email is required",
                         pattern: {
@@ -120,28 +117,14 @@ const LoginForm = () => {
                       })}
                     />
                     {errors.email && (
-                      <span className="text-red-500 absolute right-0 text-[10px]">
+                      <span className="text-red-500 font-bold text-[12px]">
                         {errors.email.message}
                       </span>
                     )}
                   </div>
 
                   <div className="mb-8 relative">
-                    <Input
-                      endContent={
-                        <button
-                          aria-label="toggle password visibility"
-                          className="focus:outline-none"
-                          type="button"
-                          onClick={toggleVisibility}
-                        >
-                          {isVisible ? (
-                            <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                          ) : (
-                            <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                          )}
-                        </button>
-                      }
+                    <input
                       type={isVisible ? "text" : "password"}
                       size="lg"
                       placeholder="Enter Your Password"
@@ -149,8 +132,20 @@ const LoginForm = () => {
                         required: "Password is required",
                       })}
                     />
+                    <button
+                      aria-label="toggle password visibility"
+                      type="button"
+                      onClick={toggleVisibility}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {isVisible ? (
+                        <EyeSlashFilledIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeFilledIcon className="h-5 w-5" />
+                      )}
+                    </button>
                     {errors.password && (
-                      <span className="text-red-500 absolute right-0 text-[10px]">
+                      <span className="text-red-500 font-bold text-[12px]">
                         {errors.password.message}
                       </span>
                     )}
@@ -160,9 +155,9 @@ const LoginForm = () => {
                     isLoading={isSubmitting}
                     color="primary"
                     type="submit"
-                    className="bg-[#0c0907] flex m-auto w-fit-content text-white py-6 px-6 rounded-lg text-lg"
+                    className="auth-btn m-auto"
                   >
-                    Login
+                    LOGIN
                   </Button>
                 </form>
 

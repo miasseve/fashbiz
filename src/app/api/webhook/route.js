@@ -59,7 +59,7 @@ export async function POST(req, res) {
       const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
 
       try {
-        const storeOwnerTransfer = await stripe.transfers.create({
+        await stripe.transfers.create({
           amount: storeOwnerAmount * 100,
           currency: "eur",
           destination: metaData.storeOwnerAccountId,
@@ -76,13 +76,13 @@ export async function POST(req, res) {
           metaData.storeOwnerEmail,
           storeOwnerAmount,
           "eur",
-          `FAILED Payment`
+          `Failed Payment`
         );
         console.error("Transfer failed:", error.message);
       }
 
       try {
-        const consignorTransfer = await stripe.transfers.create({
+        await stripe.transfers.create({
           amount: consignorAmount * 100,
           currency: "eur",
           destination: metaData.consignorAccountId,
@@ -99,7 +99,7 @@ export async function POST(req, res) {
           metaData.consignorEmail,
           consignorAmount,
           "eur",
-          `FAILED Payment`
+          `Failed Payment`
         );
       }
 

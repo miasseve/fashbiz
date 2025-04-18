@@ -52,7 +52,6 @@ const SecondStep = ({
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear();
 
-
   const {
     register,
     handleSubmit,
@@ -87,53 +86,52 @@ const SecondStep = ({
     fetchCollections();
   }, []);
 
-
   useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
       const imagesFiltered = Object.values(reduxImages)
-      .filter((image) => image !== null)
-      .map((image) => ({
-        url: image.url,
-        publicId: image.publicId,
-      }));
+        .filter((image) => image !== null)
+        .map((image) => ({
+          url: image.url,
+          publicId: image.publicId,
+        }));
 
-      if(imagesFiltered.length > 0){
-      try {
-        const response = await axios.post("/api/google-vision", {
-          imageUrl: imagesFiltered[0]?.url ?? "",
-        });
+      if (imagesFiltered.length > 0) {
+        try {
+          const response = await axios.post("/api/google-vision", {
+            imageUrl: imagesFiltered[0]?.url ?? "",
+          });
 
-        if (response.status === 200) {
-          const color = response.data?.colors[0];
+          if (response.status === 200) {
+            const color = response.data?.colors[0];
 
-          //   if (color) {
-          //     const { red, green, blue } = color;
-          //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
-          //     setImgColors(rgbColor);
-          //   }
+            //   if (color) {
+            //     const { red, green, blue } = color;
+            //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
+            //     setImgColors(rgbColor);
+            //   }
 
-          const description = response.data?.texts
-            ?.map((text) => text.description)
-            .join(" , ");
-          const garments = response.data?.garmentLabels
-            ?.map((label) => label.description)
-            .join(" , ");
+            const description = response.data?.texts
+              ?.map((text) => text.description)
+              .join(" , ");
+            const garments = response.data?.garmentLabels
+              ?.map((label) => label.description)
+              .join(" , ");
 
-          setValue("title", garments || "");
-          setValue(
-            "brand",
-            response.data?.logos[0]?.description || garments || ""
-          );
-          setValue("description", description || "");
+            setValue("title", garments || "");
+            setValue(
+              "brand",
+              response.data?.logos[0]?.description || garments || ""
+            );
+            setValue("description", description || "");
+          }
+        } catch (error) {
+          // console.log(error.message)
+          // toast.error("Failed to load product data");
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        // console.log(error.message)
-        // toast.error("Failed to load product data");
-      } finally {
-        setLoading(false);
       }
-    }
     };
 
     fetchProductDetails();
@@ -172,7 +170,6 @@ const SecondStep = ({
     }
   };
 
-
   return (
     <>
       {loading ? (
@@ -186,196 +183,118 @@ const SecondStep = ({
             className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]"
           >
             <CardHeader>
-              <Button onPress={handleBackStep}>
+              <Button onPress={handleBackStep} className="dark-btn">
                 <IoArrowBack />
               </Button>
               <h2 className="lg:ml-[10%] ml-[1%]">Enter Product Info</h2>
             </CardHeader>
             <CardBody className="gap-[15px]">
               {errorMessage && (
-                <span style={{ color: "red", fontSize: "12px" }}>
+                <span className="text-red-500 font-bold text-[12px]">
                   {errorMessage}
                 </span>
               )}
 
               <div>
                 <label className="text-sm font-medium">Category</label>
-                <Select
-                  size="lg"
+                <select
                   {...register("collectionId", {
                     required: "Category is required",
                   })}
+                  className="max-w-xs border border-gray-300 rounded px-3 py-2"
                   placeholder="Select Category"
-                  fullWidth
                 >
+                  <option value="" disabled>
+                    Select Category
+                  </option>
                   {collections.map((collection) => (
-                    <SelectItem key={collection.id} value={collection.id}>
+                    <option key={collection.id} value={collection.id}>
                       {collection.name}
-                    </SelectItem>
+                    </option>
                   ))}
-                </Select>
+                </select>
                 {errors.collectionId && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.collectionId.message}
                   </span>
                 )}
               </div>
               <div className="h-full">
-                <Input
-                  label="SKU"
-                  size="lg"
+                <input
+                  placeholder="Enter SKU"
                   {...register("sku", {
                     required: "SKU is required",
                   })}
-                  fullWidth
                 />
                 {errors.sku && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.sku.message}
                   </span>
                 )}
               </div>
               <div>
-                <Input
-                  label="Title"
-                  size="lg"
+                <input
+                  placeholder="Title"
                   {...register("title", {
                     required: "Title is required",
                   })}
-                  fullWidth
                 />
                 {errors.title && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.title.message}
                   </span>
                 )}
               </div>
               <div>
-                <Input
-                  size="lg"
-                  label="Brand"
+                <input
+                  placeholder="Brand"
                   {...register("brand", {
                     required: "Brand is required",
                   })}
-                  fullWidth
                 />
                 {errors.brand && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.brand.message}
                   </span>
                 )}
               </div>
               <div>
-                <Input
-                  label="Price"
-                  size="lg"
-                  startContent={
-                    <div className="pointer-events-none flex items-center">
-                      <span className="text-default-400 text-small">€</span>
-                    </div>
-                  }
-                  {...register("price", {
-                    required: "Price is required",
-                  })}
-                  type="number"
-                />
+                  <input
+                    {...register("price", {
+                      required: "Price is required",
+                    })}
+                    type="number"
+                    placeholder="Price in €"
+                  />
                 {errors.price && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.price.message}
                   </span>
                 )}
               </div>
-              {/* <div>
-                <label className="text-sm font-medium">Color</label>
-                <Select
-                  size="lg"
-                  {...register("color", { required: "Color is required" })}
-                  fullWidth
-                >
-                  <SelectItem key="red" value="red">
-                      Red
-                    </SelectItem>
-                    <SelectItem key="blue" value="blue">
-                      Blue
-                    </SelectItem>
-                    <SelectItem key="green" value="green">
-                      Green
-                    </SelectItem>
-                    <SelectItem key="black" value="black">
-                      Black
-                    </SelectItem>
-                </Select>
-                {errors.color && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
-                    {errors.color.message}
-                  </span>
-                )}
-              </div> */}
-              {/* <div>
-                <label className="text-sm font-medium">Color</label>
-                <Input
-                  type="text"
-                  size="lg"
-                  fullWidth
-                  {...register("color", { required: "Color is required" })}
-                  value={imgColors} 
-                  readOnly
-                  style={{ backgroundColor: imgColors, color: "#fff" }} 
-                />
-                {errors.color && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
-                    {errors.color.message}
-                  </span>
-                )}
-              </div> */}
               <div>
-                <Textarea
-                  size="lg"
-                  label="Description"
+                <textarea
+                  id="description"
+                  name="description"
+                  rows="4"
+                  placeholder="Enter description"
                   {...register("description", {
                     required: "Description is required",
                   })}
-                  fullWidth
-                  rows={4}
                 />
                 {errors.description && (
-                  <span style={{ color: "red", fontSize: "12px" }}>
+                  <span className="text-red-500 font-bold text-[12px]">
                     {errors.description.message}
                   </span>
                 )}
               </div>
-              {/* <div>
-              <h6>Color</h6>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "nowrap",
-                  alignItems: "center", // Align items vertically centered if the height differs
-                }}
-              >
-                <div
-                    style={{
-                      backgroundColor: imgColors,
-                      color: "#fff",
-                      width: "20px", // Set the width of each circle
-                      height: "20px", // Set the height to match the width for a perfect circle
-                      borderRadius: "50%", // Make it round
-                      textAlign: "center",
-                      display: "flex",
-                      justifyContent: "center", // Center text horizontally
-                      alignItems: "center", // Center text vertically
-                    }}
-                  ></div>
-              </div>
-            </div> */}
             </CardBody>
             <CardFooter>
               <Button
                 type="submit"
                 isLoading={isSubmitting}
-                className="text-[1.2rem] px-6 py-6 text-white rounded-lg flex m-auto"
-                color="success"
+                className="success-btn m-auto"
+            
               >
                 Submit Product Info
               </Button>
@@ -397,15 +316,14 @@ const SecondStep = ({
                 <>
                   <ModalHeader className="flex flex-col gap-1 text-center">
                     Product Added Successfully
-                    <Input
-                      type="text"
-                      value={generatedLink}
-                      readOnly
-                      className="w-full p-2 mt-2 border rounded"
+                    <input
+                       type="text"
+                       value={generatedLink}
+                       readOnly
                     />
                     <Button
                       onPress={handleCopyLink}
-                      className="mt-2 px-6 py-6 rounded"
+                      className="dark-btn"
                     >
                       Copy Link
                     </Button>
@@ -415,16 +333,14 @@ const SecondStep = ({
                   </ModalBody>
                   <ModalFooter className="flex justify-center">
                     <Button
-                      color="secondary"
                       onPress={handleAddMoreProducts}
-                      className="rounded-lg"
+                      className="success-btn m-auto"
                     >
                       Yes
                     </Button>
                     <Button
-                      color="danger"
                       onPress={handleGoToDashboard}
-                      className="rounded-lg"
+                      className="danger-btn m-auto"
                     >
                       No
                     </Button>

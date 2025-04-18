@@ -24,7 +24,7 @@ const page = async () => {
   }
 
   return (
-    <div>
+    <div className="h-screen">
       <SoldTable products={products} />
     </div>
   );

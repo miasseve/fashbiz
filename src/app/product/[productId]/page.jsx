@@ -21,12 +21,14 @@ const ProductPage = async ({ params }) => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-16  p-6 lg:p-12 m-auto w-[80%] item-center">
-      <div className="w-full lg:w-1/2 flex flex-col items-center">
+    
+    <div className="flex sm:flex-col lg:flex-row gap-8  bg-[#FEEBEB] w-full lg:gap-16 p-6 lg:p-12 m-auto item-center">
+      <div className="w-full sm:w-[80%] m-auto sm:flex h-screen ">
+      <div className="lg:w-1/2 flex flex-col items-center border border-[#ccc] p-4 max-h-max">
         <ImageCarousel images={parsedProduct.images} />
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col gap-4">
+      <div className="w-full lg:w-1/2 flex flex-col gap-4 sm:pl-10 mt-6 sm:mt-0">
         <h1 className="text-3xl font-bold">{parsedProduct.title}</h1>
         <ul className="space-y-2 text-gray-600">
           <li>
@@ -39,6 +41,7 @@ const ProductPage = async ({ params }) => {
         <p className="text-gray-700">{parsedProduct.description}</p>
         <AddToCart product={parsedProduct} />
       </div>
+    </div>
     </div>
   );
 };

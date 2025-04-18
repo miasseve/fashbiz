@@ -32,7 +32,7 @@ const Main = ({ user, productCount, stripeResponse }) => {
           </p>
           <Link
             href="/dashboard/stripe-connect"
-            className="bg-[#0c0907] text-white py-1 px-3 rounded-lg"
+            className="success-btn"
           >
             Go to Stripe Connect
           </Link>

@@ -53,8 +53,8 @@ const CartItems = ({ user }) => {
   };
 
   return (
-    <div className="mx-auto p-4 max-w-[100%] sm:max-w-[80%] min-h-screen">
-      <div className="bg-white rounded-lg  p-10">
+    <div className="mx-auto p-4 max-w-[100%]  bg-[#FEEBEB] min-h-screen">
+      <div className="bg-white rounded-lg p-4 sm:p-10 sm:max-w-[80%] m-auto">
         <h2 className="text-[30px] font-semibold mb-4 text-center">
           Shopping Cart
         </h2>
@@ -75,7 +75,7 @@ const CartItems = ({ user }) => {
                     {consignorProducts.map((product, index) => (
                       <li
                         key={index}
-                        className="flex border border-gray-300 p-4 mb-4 rounded-lg bg-[#f4f4f4] items-center justify-between"
+                        className="flex items-center border border-gray-300 p-4 mb-4 rounded-lg bg-[#f4f4f4] items-center justify-between"
                       >
                         <div className="flex-shrink-0 mr-4 flex items-center w-[50%] sm:w-[30%]">
                           <img
@@ -90,11 +90,10 @@ const CartItems = ({ user }) => {
 
                         <span className="w-[30%]">€{product.price}</span>
 
-                        <div className="mt-4">
+                        <div className="sm:mt-4">
                           <Button
                             onPress={() => handleRemove(product)}
-                            color="danger"
-                            className="text-white px-4 py-2 rounded-md focus:outline-none"
+                            className="danger-btn"
                           >
                             Remove
                           </Button>

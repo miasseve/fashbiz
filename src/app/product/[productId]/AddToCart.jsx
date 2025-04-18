@@ -14,9 +14,8 @@ const AddToCart = ({ product }) => {
 
   return (
     <Button
-      color="danger"
       type="submit"
-      className="text-white py-6 px-6 rounded-lg text-lg mt-4 w-[30%]"
+      className="danger-btn max-w-max"
       onPress={handleAddToCart}
     >
       Add To Cart
