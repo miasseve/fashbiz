@@ -12,7 +12,7 @@ const ConsignorSelect = ({ step2Handler }) => {
         <QRScanner />
           {Object.keys(consignor).length > 0 && (
             <>
-             <div className="text-center mb-10 bg-[#f6f6f6] py-[15px] w-[498px] mx-auto border border-[silver] mb-[20px]">
+             <div className="text-center mb-10 bg-[#f6f6f6] py-[15px] px-4 sm:px-0 sm:w-[498px] mx-auto border border-[silver] mb-[20px]">
        
               <h3 className="font-semibold text-lg">Scanned Data:</h3>
               <pre className="whitespace-pre-wrap">
