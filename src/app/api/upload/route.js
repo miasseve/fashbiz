@@ -1,6 +1,11 @@
 import cloudinary from "@/lib/cloudinary";
 import { NextResponse } from "next/server";
 import User from "@/models/User";
+
+export const config = {
+  runtime: "nodejs",
+};
+
 export async function POST(req) {
   try {
     const formData = await req.formData();

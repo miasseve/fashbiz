@@ -211,7 +211,8 @@ export async function removeProfile() {
     }
 
     const publicId = user.profileImage.publicId;
-
+    // const resource = await cloudinary.api.resource(publicId);
+    // console.log(resource,'resource');
     const deleteResponse = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
     });
