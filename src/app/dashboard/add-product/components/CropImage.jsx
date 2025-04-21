@@ -8,7 +8,6 @@ const CropImage = ({
   setCroppingImage,
   setUploadImageLoader,
   selectedView,
-  // setUploadedImages,
   setUploadedImagesWithView,
   uploadImageLoader,
 }) => {

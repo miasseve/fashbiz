@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import FirstStep from "./components/FirstStep";
 import SecondStep from "./components/SecondStep";
 import Link from "next/link";
-import { Button } from "@heroui/react";
 import ConsignorSelect from "./components/ConsignorSelect";
 
 const Main = ({ user, productCount, stripeResponse }) => {
@@ -30,10 +29,7 @@ const Main = ({ user, productCount, stripeResponse }) => {
           <p className="text-red-500 text-center italic font-bold">
             *{stripeResponse.error}
           </p>
-          <Link
-            href="/dashboard/stripe-connect"
-            className="success-btn"
-          >
+          <Link href="/dashboard/stripe-connect" className="success-btn">
             Go to Stripe Connect
           </Link>
         </div>

@@ -4,6 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { resetPassword, verifypasswordToken } from "@/actions/authActions";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/react";
+import { EyeFilledIcon } from "../icons/EyeFilledIcon ";
+import { EyeSlashFilledIcon } from "../icons/EyeSlashFilledIcon ";
 import { Input, Button } from "@heroui/react";
 
 const ResetPasswordForm = () => {
@@ -14,6 +16,10 @@ const ResetPasswordForm = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setErrors] = useState([]);
+  const [isVisible, setIsVisible] = useState(false);
+  const toggleVisibility = () => setIsVisible(!isVisible);
+  const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
+  const toggleVisibilityConfirm = () => setIsVisibleConfirm(!isVisibleConfirm);
 
   useEffect(() => {
     if (!token) {
@@ -82,23 +88,45 @@ const ResetPasswordForm = () => {
           <CardBody className="mt-6">
             <div className="mb-8 relative">
               <input
-                type="password"
+                type={isVisible ? "text" : "password"}
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                onClick={toggleVisibility}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >
+                {isVisible ? (
+                  <EyeSlashFilledIcon className="h-5 w-5" />
+                ) : (
+                  <EyeFilledIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
             <div className="mb-8 relative">
               <input
-                type="password"
+                type={isVisibleConfirm ? "text" : "password"}
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+                <button
+                type="button"
+                onClick={toggleVisibilityConfirm}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >
+                {isVisibleConfirm ? (
+                  <EyeSlashFilledIcon className="h-5 w-5" />
+                ) : (
+                  <EyeFilledIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             {error && error.length > 0 && (
-              <div style={{ color: "red", fontSize: "12px" }}>
+              <div className="text-red-500 font-bold text-[12px]">
                 <ul style={{ listStyleType: "disc", paddingLeft: "20px" }}>
                   {error.map((err, index) => (
                     <li key={index}>{err}</li>

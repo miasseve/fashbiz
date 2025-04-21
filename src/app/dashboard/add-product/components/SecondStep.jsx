@@ -8,11 +8,7 @@ import {
   CardHeader,
   CardBody,
   CardFooter,
-  Input,
-  Textarea,
   Button,
-  Select,
-  SelectItem,
 } from "@heroui/react";
 import {
   Modal,
@@ -21,10 +17,8 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  useDraggable,
 } from "@heroui/react";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { clearProductState, clearConsignors } from "@/features/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct } from "@/actions/productActions";
@@ -44,7 +38,6 @@ const SecondStep = ({
   const [generatedLink, setGeneratedLink] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  //   const [imgColors, setImgColors] = useState("");
   const targetRef = React.useRef(null);
 
   const [collections, setCollections] = useState([]);
@@ -104,13 +97,6 @@ const SecondStep = ({
 
           if (response.status === 200) {
             const color = response.data?.colors[0];
-
-            //   if (color) {
-            //     const { red, green, blue } = color;
-            //     const rgbColor = `rgb(${red}, ${green}, ${blue})`;
-            //     setImgColors(rgbColor);
-            //   }
-
             const description = response.data?.texts
               ?.map((text) => text.description)
               .join(" , ");
@@ -126,8 +112,7 @@ const SecondStep = ({
             setValue("description", description || "");
           }
         } catch (error) {
-          // console.log(error.message)
-          // toast.error("Failed to load product data");
+           console.log(error.message)
         } finally {
           setLoading(false);
         }
@@ -140,7 +125,6 @@ const SecondStep = ({
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });
     if (response.status == 200) {
-      // const parsedData = JSON.parse(response.data);
       setGeneratedLink(response.data);
       dispatch(clearProductState());
       setShowConfirmation(true);
@@ -259,13 +243,13 @@ const SecondStep = ({
                 )}
               </div>
               <div>
-                  <input
-                    {...register("price", {
-                      required: "Price is required",
-                    })}
-                    type="number"
-                    placeholder="Price in €"
-                  />
+                <input
+                  {...register("price", {
+                    required: "Price is required",
+                  })}
+                  type="number"
+                  placeholder="Price in €"
+                />
                 {errors.price && (
                   <span className="text-red-500 font-bold text-[12px]">
                     {errors.price.message}
@@ -294,7 +278,6 @@ const SecondStep = ({
                 type="submit"
                 isLoading={isSubmitting}
                 className="success-btn m-auto"
-            
               >
                 Submit Product Info
               </Button>
@@ -316,15 +299,8 @@ const SecondStep = ({
                 <>
                   <ModalHeader className="flex flex-col gap-1 text-center">
                     Product Added Successfully
-                    <input
-                       type="text"
-                       value={generatedLink}
-                       readOnly
-                    />
-                    <Button
-                      onPress={handleCopyLink}
-                      className="dark-btn"
-                    >
+                    <input type="text" value={generatedLink} readOnly />
+                    <Button onPress={handleCopyLink} className="dark-btn">
                       Copy Link
                     </Button>
                   </ModalHeader>

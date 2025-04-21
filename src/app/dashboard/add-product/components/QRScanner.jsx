@@ -2,13 +2,12 @@
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { setConsignors, clearConsignors } from "@/features/productSlice";
+import { setConsignors } from "@/features/productSlice";
 
 export default function QRCodeScanner() {
   // State to store QR code data
   const dispatch = useDispatch();
   const [error, setError] = useState();
-
 
   useEffect(() => {
     const scanner = new Html5QrcodeScanner("reader", {

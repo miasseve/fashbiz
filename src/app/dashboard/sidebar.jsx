@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Swal from "sweetalert2";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BiLogoProductHunt } from "react-icons/bi";
@@ -9,16 +8,15 @@ import { FaStore, FaUser, FaUsers } from "react-icons/fa";
 import { MdLocalGroceryStore } from "react-icons/md";
 import { PiStripeLogoFill } from "react-icons/pi";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
-
 import { RiProductHuntFill } from "react-icons/ri";
 import { FaHistory } from "react-icons/fa";
 
-
-const Sidebar = () => {
+const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
-
   const pathname = usePathname();
+  const router = useRouter();
 
   if (session.status == "loading") {
     return (
@@ -72,6 +70,13 @@ const Sidebar = () => {
     },
   ].filter(Boolean);
 
+  const handleLinkClick = (href) => {
+    if (isSidebarOpen) {
+      toggleSidebar();
+    }
+    router.push(href);
+  };
+
   return (
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
@@ -81,17 +86,18 @@ const Sidebar = () => {
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
         {menuItems.map(({ href, label, icon }) => (
-          <Link
+          <div
             key={href}
-            href={href}
+            onClick={() => handleLinkClick(href)}
+            // href={href}
             className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${
               pathname === href
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
-            }`}
+            } cursor-pointer`}
           >
             {icon} <span className="ml-2">{label}</span>
-          </Link>
+          </div>
         ))}
       </nav>
     </div>

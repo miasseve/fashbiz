@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button, Input, Spinner } from "@heroui/react";
+import { Button,Spinner } from "@heroui/react";
 import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { removeProfile, updateUser } from "@/actions/authActions";
@@ -23,14 +23,14 @@ import PhoneInput from "react-phone-number-input";
 const Profile = ({ user, stripeResponse }) => {
   let sOptions = [];
   const router = useRouter();
+
   if (user?.country) {
     sOptions = State.getStatesOfCountry(user.country).map((state) => ({
       value: state.isoCode,
       label: state.name,
     }));
-  }else
-  {
-    sOptions = State.getStatesOfCountry('DK').map((state) => ({
+  } else {
+    sOptions = State.getStatesOfCountry("DK").map((state) => ({
       value: state.isoCode,
       label: state.name,
     }));
@@ -215,10 +215,8 @@ const Profile = ({ user, stripeResponse }) => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
     >
-   
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-[30px]">
         <div className="flex flex-col items-center text-center">
-          
           <div className="relative w-[100%] flex justify-between p-0 ">
             <motion.div
               whileHover={{ scale: 1.1 }}
@@ -251,14 +249,14 @@ const Profile = ({ user, stripeResponse }) => {
                   onPress={handleImageClick}
                   color="success"
                 >
-                  <FaUserEdit/>
+                  <FaUserEdit />
                 </Button>
                 <Button
                   // className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
                   className="danger-btn"
                   onPress={handleRemoveImage}
                 >
-                 <RiDeleteBinFill/>
+                  <RiDeleteBinFill />
                 </Button>
               </div>
             )}
@@ -278,12 +276,11 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               First Name
             </label>
-            <input 
-            {...register("firstname")} className="mt-2 w-full" 
-            />
-            {/* <Input {...register("firstname")} className="mt-2 w-full" /> */}
+            <input {...register("firstname")} className="mt-2 w-full" />
             {errors.firstname && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.firstname.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.firstname.message}
+              </span>
             )}
           </div>
           <div>
@@ -291,9 +288,10 @@ const Profile = ({ user, stripeResponse }) => {
               Last Name
             </label>
             <input {...register("lastname")} className="mt-2 w-full" />
-            {/* <Input {...register("lastname")} className="mt-2 w-full" /> */}
             {errors.lastname && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.lastname.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.lastname.message}
+              </span>
             )}
           </div>
         </div>
@@ -304,15 +302,10 @@ const Profile = ({ user, stripeResponse }) => {
               Store Name
             </label>
             <input
-                disabled
-                {...register("storename")}
-                className="mt-2 w-full" 
-            />
-            {/* <Input
               disabled
               {...register("storename")}
               className="mt-2 w-full"
-            /> */}
+            />
           </div>
         )}
         <div className="grid grid-cols-2 gap-4">
@@ -342,29 +335,23 @@ const Profile = ({ user, stripeResponse }) => {
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700">Email</label>
-            <input 
-             type="email"
-             disabled
-             defaultValue={user?.email || "mailto:user@example.com"}
-             className="mt-2 w-full"
-            />
-            {/* <Input
+            <input
               type="email"
               disabled
               defaultValue={user?.email || "mailto:user@example.com"}
               className="mt-2 w-full"
-            /> */}
+            />
           </div>
         </div>
         <div>
           <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Address
           </label>
-          <input type="text" {...register("address")} className="mt-2 w-full"
-          />
-          {/* <Input type="text" {...register("address")} className="mt-2 w-full" /> */}
+          <input type="text" {...register("address")} className="mt-2 w-full" />
           {errors.address && (
-            <span className="text-red-500 font-bold text-[12px]">{errors.address.message}</span>
+            <span className="text-red-500 font-bold text-[12px]">
+              {errors.address.message}
+            </span>
           )}
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -372,10 +359,11 @@ const Profile = ({ user, stripeResponse }) => {
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               City
             </label>
-            <input type="text" {...register("city")}  />
-            {/* <Input type="text" {...register("city")} /> */}
+            <input type="text" {...register("city")} />
             {errors.city && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.city.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.city.message}
+              </span>
             )}
           </div>
           <div>
@@ -383,9 +371,10 @@ const Profile = ({ user, stripeResponse }) => {
               Zipcode
             </label>
             <input type="text" {...register("zipcode")} />
-            {/* <Input type="text" {...register("zipcode")} /> */}
             {errors.zipcode && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.zipcode.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.zipcode.message}
+              </span>
             )}
           </div>
         </div>
@@ -395,18 +384,20 @@ const Profile = ({ user, stripeResponse }) => {
               State
             </label>
             <select
-                {...register("state")}
-                className="max-w-xs border border-gray-300 rounded px-3 py-2"
-                onChange={handleStateChange}
-                defaultValue=""
-              >
-                <option value="" disabled>Select state</option>
-                {stateOptions.map((state) => (
-                  <option key={state.value} value={state.value}>
-                    {state.label}
-                  </option>
-                ))}
-              </select>
+              {...register("state")}
+              className="max-w-xs border border-gray-300 rounded px-3 py-2"
+              onChange={handleStateChange}
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Select state
+              </option>
+              {stateOptions.map((state) => (
+                <option key={state.value} value={state.value}>
+                  {state.label}
+                </option>
+              ))}
+            </select>
             {/* <Select
               {...register("state")}
               className="max-w-xs"
@@ -420,7 +411,9 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select> */}
             {errors.state && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.state.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.state.message}
+              </span>
             )}
           </div>
           <div>
@@ -433,7 +426,9 @@ const Profile = ({ user, stripeResponse }) => {
               onChange={handleCountryChange}
               defaultValue=""
             >
-              <option value="" disabled>Select country</option>
+              <option value="" disabled>
+                Select country
+              </option>
               {countryOptions.map((country) => (
                 <option key={country.value} value={country.value}>
                   {country.label}
@@ -453,7 +448,9 @@ const Profile = ({ user, stripeResponse }) => {
               ))}
             </Select> */}
             {errors.country && (
-              <span className="text-red-500 font-bold text-[12px]">{errors.country.message}</span>
+              <span className="text-red-500 font-bold text-[12px]">
+                {errors.country.message}
+              </span>
             )}
           </div>
         </div>

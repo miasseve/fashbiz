@@ -115,7 +115,7 @@ const ConsignorForm = () => {
             {...register("password", {
               validate: validatePassword,
             })}
-          />
+          /> 
           <button
             type="button"
             onClick={toggleVisibility}
@@ -137,8 +137,8 @@ const ConsignorForm = () => {
         <Button
           isLoading={isSubmitting}
           type="submit"
-          color="primary"
-          className="auth-btn bg-[#06cb03]"
+          color="primary" 
+          className="auth-btn m-auto"
         >
           REGISTER
         </Button>

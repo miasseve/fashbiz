@@ -1,16 +1,16 @@
-'use client';
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
   TableBody,
   TableColumn,
   TableRow,
-  TableCell
+  TableCell,
 } from "@heroui/table";
-import { Button } from '@heroui/button';
-import { deleteProductById } from '@/actions/productActions';
-import { toast } from 'react-toastify';
+import { Button } from "@heroui/button";
+import { deleteProductById } from "@/actions/productActions";
+import { toast } from "react-toastify";
 
 const SoldTable = ({ products }) => {
   const [localProducts, setLocalProducts] = useState(products);
@@ -30,9 +30,8 @@ const SoldTable = ({ products }) => {
       const response = await deleteProductById(productId);
       setLoading(false);
       if (response.status === 200) {
-  
         toast.success("Product deleted successfully");
-        setLocalProducts((prev) => prev.filter(pre => pre._id !== productId));
+        setLocalProducts((prev) => prev.filter((pre) => pre._id !== productId));
       } else {
         toast.error(response.error);
       }
@@ -61,7 +60,13 @@ const SoldTable = ({ products }) => {
               <TableCell>{product.consignorName}</TableCell>
               <TableCell>{product.consignorEmail}</TableCell>
               <TableCell>
-                <Button isDisabled={loading} onPress={() => handleDelete(product._id)} color="danger">Delete</Button>
+                <Button
+                  isDisabled={loading}
+                  onPress={() => handleDelete(product._id)}
+                  className="danger-btn"
+                >
+                  Delete
+                </Button>
               </TableCell>
             </TableRow>
           ))}

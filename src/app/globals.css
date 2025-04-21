@@ -16,6 +16,7 @@
 
 .login-btn {
   @apply bg-white py-4 px-5 rounded-lg text-center font-medium text-[16px] px-[20px] py-[10px] inline-block bg-[#000] text-white;
+  @apply hover:bg-[#262323];
 }
 
 .auth-btn {
@@ -42,21 +43,21 @@ body {
   background: var(--background);
   font-size: 1.6rem;
 }
-input{
+input {
   cursor: text;
-    border: 1px solid #ccc;
-    padding: 6px 10px !important;
-    height: 40px;
-    border-radius: 6px;
-    background: #fff !important;
-    width:100%;
+  border: 1px solid #ccc;
+  padding: 6px 10px !important;
+  height: 40px;
+  border-radius: 6px;
+  background: #fff !important;
+  width: 100%;
 }
-textarea{
-  font-size:16px;
+textarea {
+  font-size: 16px;
   padding: 6px 10px !important;
   border-radius: 6px;
   border: 1px solid #ccc;
-  width:100%;
+  width: 100%;
 }
 
 label {
@@ -128,33 +129,40 @@ label {
 }
 
 .bg-fash-gradient {
-  background: linear-gradient(180.65deg, #F4B5B5 -20.23%, #D17273 99.41%);
+  background: linear-gradient(180.65deg, #f4b5b5 -20.23%, #d17273 99.41%);
 }
-.tabbutton div>button {
+.tabbutton div > button {
   height: 40px;
   border-radius: 0px !important;
   font-weight: bold;
   text-transform: uppercase;
-} 
+}
 .tabbutton button span {
   background: #ccc;
 }
-.tabbutton form{margin-top: 10px;}
+.tabbutton form {
+  margin-top: 10px;
+}
 select {
   display: block;
   width: 100% !important;
   max-width: 100% !important;
   height: 40px;
 }
-.box-shadow-none{box-shadow: none; background: #fff; border-bottom: 1px solid #dedede} 
-.carousel .thumb.selected, .carousel .thumb:hover {
+.box-shadow-none {
+  box-shadow: none;
+  background: #fff;
+  border-bottom: 1px solid #dedede;
+}
+.carousel .thumb.selected,
+.carousel .thumb:hover {
   border: 1px solid #c1c1c1;
 }
 @media screen and (max-width: 767px) {
-.lftlogin{
-  padding-left: 4px !important;
-  width: 100% !important;
-}
+  .lftlogin {
+    padding-left: 4px !important;
+    width: 100% !important;
+  }
 }
 
 @media screen and (max-width: 480px) {

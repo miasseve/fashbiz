@@ -557,7 +557,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 }
                 onPress={step2Handler}
                 className="danger-btn"
-              
               >
                 Next
               </Button>

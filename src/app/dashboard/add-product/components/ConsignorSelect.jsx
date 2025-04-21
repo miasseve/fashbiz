@@ -9,7 +9,6 @@ const ConsignorSelect = ({ step2Handler }) => {
 
   return (
     <Card className="mx-auto lg:my-[10px]  bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all">
-      {/* <div className="text-center "> */}
         <QRScanner />
           {Object.keys(consignor).length > 0 && (
             <>
@@ -30,11 +29,8 @@ const ConsignorSelect = ({ step2Handler }) => {
                 Account : <span>{consignor?.accountId} </span>{" "}
               </pre>
               </div>
-            </>
-          
+            </>      
           )}
-    
-
         <Button
           onPress={step2Handler}
           isDisabled={Object.keys(consignor).length === 0}
@@ -42,7 +38,6 @@ const ConsignorSelect = ({ step2Handler }) => {
         >
           Next
         </Button>
-      {/* </div> */}
     </Card>
   );
 };

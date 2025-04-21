@@ -136,7 +136,7 @@ const StoreForm = () => {
           isLoading={isSubmitting}
           type="submit"
           color="primary"
-          className="auth-btn bg-[#06cb03]"
+          className="auth-btn m-auto"
         >
           REGISTER
         </Button>
