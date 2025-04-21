@@ -18,6 +18,7 @@ import { FaUserEdit } from "react-icons/fa";
 import { RiDeleteBinFill } from "react-icons/ri";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import { storeProfileImage } from "@/actions/cloudinaryActions";
 import PhoneInput from "react-phone-number-input";
 
 const Profile = ({ user, stripeResponse }) => {
@@ -137,15 +138,18 @@ const Profile = ({ user, stripeResponse }) => {
       formData.append("file", file);
       formData.append("userId", user._id);
       formData.append("isProfileImage", true);
-      // await storeProfileImage(formData);
-      const response = await axios.post("/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await storeProfileImage(formData);
+      // const response = await axios.post("/api/upload", formData, {
+      //   headers: { "Content-Type": "multipart/form-data" },
+      // });
+      console.log(res,'res')
 
-      const { publicId, url } = response.data;
+     if(res.status==200){
+      const { publicId, url } = res.data;
       setValue("profileImage", { publicId, url });
       setPreviewUrl(url);
       setLoading(false);
+     }
     }
   };
 
