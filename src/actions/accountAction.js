@@ -43,6 +43,22 @@ export async function getAccountId() {
     await dbConnect();
     const account = await Account.findOne({ userId: session.user.id });
     const user = await User.findById(session.user.id);
+
+    let stripeAccount = null;
+    try {
+      stripeAccount = await stripe.accounts.retrieve(account.accountId);
+    } catch (err) {
+      if (err.code == "account_invalid") {
+        await Account.deleteOne({ _id: account._id });
+        return {
+          status: 200,
+          accountId: "",
+          isAccountComplete: false,
+          userRole: user?.role,
+        };
+      }
+    }
+
     return {
       status: 200,
       accountId: account?.accountId || "",
@@ -93,7 +109,7 @@ export async function getPercentage() {
   if (!account) {
     return { status: 404, error: "Account not found" };
   }
-
+  console.log(account.percentage, "account.percentage");
   return { status: 200, percentage: account.percentage || null };
 }
 
@@ -136,17 +152,17 @@ export async function storeSuccessResult(accountId) {
     const existingAccount = await Account.findOne({ userId: session.user.id });
 
     if (existingAccount) {
-      try {
-        const account = await stripe.accounts.retrieve(
-          existingAccount.accountId
-        );
-        if (account) {
-          const oldAccount = existingAccount.accountId;
-          await stripe.accounts.del(oldAccount);
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
+      // try {
+      //   const account = await stripe.accounts.retrieve(
+      //     existingAccount.accountId
+      //   );
+      //   if (account) {
+      //     const oldAccount = existingAccount.accountId;
+      //     await stripe.accounts.del(oldAccount);
+      //   }
+      // } catch (error) {
+      //   console.log(error.message);
+      // }
 
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete = isAccountComplete;
@@ -196,7 +212,7 @@ export async function getTransactionsForConnectedAccount(accountId) {
         stripeAccount: account.accountId, // Connected account ID
       }
     );
-    
+
     return {
       status: 200,
       transactions: transactions.data,

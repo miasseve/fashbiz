@@ -28,6 +28,12 @@ const Profile = ({ user, stripeResponse }) => {
       value: state.isoCode,
       label: state.name,
     }));
+  }else
+  {
+    sOptions = State.getStatesOfCountry('DK').map((state) => ({
+      value: state.isoCode,
+      label: state.name,
+    }));
   }
 
   const [stateOptions, setStateOptions] = useState(sOptions || []);

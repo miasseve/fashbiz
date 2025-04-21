@@ -35,7 +35,7 @@ const StripeConnect = () => {
           disabled={loading}
           className="success-btn w-auto max-w-max"
         >
-          {loading ? "Loading" : "Connect with Stripe"}
+          {loading ? "Loading..." : "Connect with Stripe"}
         </Button>
         {error && <p className="text-red-500">{error}</p>}
       </div>

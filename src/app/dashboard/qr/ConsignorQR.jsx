@@ -27,7 +27,7 @@ const ConsignorQR = ({ qrData, stripeResponse }) => {
         <p className="text-red-500 italic font-bold">*{stripeResponse.error}</p>
         <Link
         href="/dashboard/stripe-connect"
-        className="bg-[#0c0907] text-white py-1 px-3 rounded-lg"
+         className="success-btn"
       >
         Go to Stripe Connect
       </Link>

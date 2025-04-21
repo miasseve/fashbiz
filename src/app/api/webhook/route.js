@@ -110,23 +110,37 @@ export async function POST(req, res) {
       break;
     case "transfer.created":
       const transfer = event.data.object;
-      await transferCreated(
-        transfer.metadata.name,
-        transfer.metadata.email,
-        transfer.amount / 100,
-        transfer.currency,
-        transfer.id
-      );
+      try {
+        await transferCreated(
+          transfer.metadata.name,
+          transfer.metadata.email,
+          transfer.amount / 100,
+          transfer.currency,
+          transfer.id
+        );
+      } catch (error) {
+        console.error(
+          "❌ Failed to send transferCreated email:",
+          error.message
+        );
+      }
       // Handle transfer creation (e.g., record the transfer in your database)
       break;
     case "transfer.failed":
-      await transferFailed(
-        transfer.metadata.name,
-        transfer.metadata.email,
-        transfer.amount / 100,
-        transfer.currency,
-        transfer.id
-      );
+      try {
+        await transferFailed(
+          transfer.metadata.name,
+          transfer.metadata.email,
+          transfer.amount / 100,
+          transfer.currency,
+          transfer.id
+        );
+      } catch (error) {
+        console.error(
+          "❌ Failed to send transferCreated email:",
+          error.message
+        );
+      }
       // Handle failed transfer (e.g., notify the user or retry the transfer)
       break;
     case "transfer.paid":

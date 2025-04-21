@@ -5,15 +5,19 @@ import { Select, SelectItem, Button, Card, CardBody } from "@heroui/react";
 import { toast } from "react-toastify";
 const PercentForm = ({ percentage }) => {
   const [loading, setLoading] = useState(false);
-  const [selectedPercent, setSelectedPercent] = useState("");
+  const [selectedPercent, setSelectedPercent] = useState(null);
+
+  useEffect(() => {
+    setSelectedPercent(percentage);
+  }, []);
 
   const percentOptions = [
-    { label: "10%", key: "10" },
-    { label: "20%", key: "20" },
-    { label: "30%", key: "30" },
-    { label: "40%", key: "40" },
-    { label: "50%", key: "50" },
-    { label: "60%", key: "60" },
+    { label: "10%", value: "10" },
+    { label: "20%", value: "20" },
+    { label: "30%", value: "30" },
+    { label: "40%", value: "40" },
+    { label: "50%", value: "50" },
+    { label: "60%", value: "60" },
   ];
 
   const handleChange = (e) => {
@@ -43,7 +47,7 @@ const PercentForm = ({ percentage }) => {
       setLoading(false);
     }
   };
-  console.log(percentOptions);
+
   return (
     <Card className="p-12 border border-green-500">
       <CardBody>
@@ -55,11 +59,9 @@ const PercentForm = ({ percentage }) => {
               className="!max-w-[40%] border border-gray-300 rounded px-3 py-2"
               defaultValue={`${percentage}`}
             >
-              <option value="" disabled>
-                Select Percentage
-              </option>
+              <option value="">Select Percentage</option>
               {percentOptions.map((percent) => (
-                <option key={percent.key} value={percent.key}>
+                <option key={percent.value} value={percent.value}>
                   {percent.label}
                 </option>
               ))}

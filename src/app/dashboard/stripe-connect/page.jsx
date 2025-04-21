@@ -16,7 +16,7 @@ const page = async () => {
   let userRole = "";
   const result = await getAccountId();
   const response = await getPercentage();
-
+   console.log(response,'response')
   if (response.status == 200) {
     percentage = response.percentage;
   }

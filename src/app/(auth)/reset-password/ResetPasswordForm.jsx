@@ -68,7 +68,7 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6">
+    <div className="flex items-center justify-center min-h-screen bg-fash-gradient px-6">
       <Card className="w-full max-w-2xl p-12 shadow-2xl rounded-2xl bg-white">
         <form onSubmit={handleResetPassword} className="space-y-6">
           <CardHeader className="text-center flex flex-col gap-4">
@@ -80,20 +80,23 @@ const ResetPasswordForm = () => {
             </p>
           </CardHeader>
           <CardBody className="mt-6">
-            <Input
-              type="password"
-              placeholder="Enter new password"
-              className="text-lg py-4"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Input
-              type="password"
-              placeholder="Confirm new password"
-              className="text-lg py-4"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="mb-8 relative">
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="mb-8 relative">
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+
             {error && error.length > 0 && (
               <div style={{ color: "red", fontSize: "12px" }}>
                 <ul style={{ listStyleType: "disc", paddingLeft: "20px" }}>
@@ -107,8 +110,8 @@ const ResetPasswordForm = () => {
           <CardFooter className="text-center text-lg text-gray-600 block">
             <Button
               type="submit"
-              className="text-white text-lg py-4 rounded-lg"
-              color="success"
+              className="auth-btn bg-[#06cb03] m-auto"
+              color="primary"
               isLoading={loading}
             >
               {loading ? "Resetting" : "Reset Password"}

@@ -44,7 +44,7 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6">
+    <div className="flex items-center justify-center min-h-screen px-6 bg-fash-gradient">
       <Card className="w-full max-w-4xl p-16 shadow-2xl rounded-2xl bg-white">
         <CardHeader className="text-center flex flex-col gap-4">
           <h2 className="text-4xl font-extrabold text-gray-900">
@@ -72,7 +72,7 @@ const ForgotPasswordForm = () => {
               <Button
                 type="submit"
                 color="primary"
-                className="auth-btn bg-[#06cb03]"
+                className="auth-btn bg-[#06cb03] m-auto"
                 isLoading={loading}
               >
                 {loading ? "Sending" : "Send Reset Link"}
