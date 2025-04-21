@@ -44,7 +44,7 @@ export async function POST(req) {
     return NextResponse.json({
       url: uploadResponse.secure_url,
       publicId: uploadResponse.public_id,
-    });
+    },{status:200});
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

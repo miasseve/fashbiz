@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button,Spinner } from "@heroui/react";
+import { Button, Spinner } from "@heroui/react";
 import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { removeProfile, updateUser } from "@/actions/authActions";
@@ -132,6 +132,7 @@ const Profile = ({ user, stripeResponse }) => {
   };
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
+    console.log("heeloo");
     setLoading(true);
     if (file) {
       const formData = new FormData();
@@ -144,12 +145,12 @@ const Profile = ({ user, stripeResponse }) => {
       });
       // console.log(res,'res')
 
-    //  if(res.status==200){
-      const { publicId, url } = response.data;
-      setValue("profileImage", { publicId, url });
-      setPreviewUrl(url);
-      setLoading(false);
-    //  }
+      if (response.status == 200) {
+        const { publicId, url } = response.data;
+        setValue("profileImage", { publicId, url });
+        setPreviewUrl(url);
+        setLoading(false);
+      }
     }
   };
 
@@ -199,6 +200,11 @@ const Profile = ({ user, stripeResponse }) => {
         position: "top-right",
         autoClose: 2000,
       });
+    } else if (response.status === 400) {
+      setValue("profileImage", {});
+      imageInputRef.value = "";
+      setPreviewUrl("");
+      setImageInputRef(null);
     } else {
       setValue("profileImage", {});
       toast.error("Something went wrong!", {

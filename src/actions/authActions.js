@@ -211,6 +211,7 @@ export async function removeProfile() {
     }
 
     const publicId = user.profileImage.publicId;
+    if(publicId){
     // const resource = await cloudinary.api.resource(publicId);
     // console.log(resource,'resource');
     const deleteResponse = await cloudinary.uploader.destroy(publicId, {
@@ -220,7 +221,7 @@ export async function removeProfile() {
     if (deleteResponse.result !== "ok") {
       return { status: 500, error: "Failed to remove image from Cloudinary" };
     }
-
+    }
     user.profileImage = {};
     await user.save();
 
