@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import User from "@/models/User";
 
 export const config = {
-  runtime: "nodejs",
+  api: {
+    bodyParser: false,
+  },
 };
 
 export async function POST(req) {

@@ -137,7 +137,10 @@ const Profile = ({ user, stripeResponse }) => {
       formData.append("file", file);
       formData.append("userId", user._id);
       formData.append("isProfileImage", true);
-      const response = await axios.post("/api/upload", formData);
+      // await storeProfileImage(formData);
+      const response = await axios.post("/api/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       const { publicId, url } = response.data;
       setValue("profileImage", { publicId, url });

@@ -1,6 +1,9 @@
 'use server';
 import cloudinary from "@/lib/cloudinary";
 
+import User from "@/models/User";
+
+
 export async function updateCloudinaryImage(file) {
   try {
     if (!file) {
@@ -24,4 +27,57 @@ export async function updateCloudinaryImage(file) {
       error: error.message,
     };
   }
+}
+
+
+export async function storeProfileImage(data)
+{
+
+  console.log(data);
+  // try {
+  //     const formData = await req.formData();
+  //     const isProfileImage = formData.get("isProfileImage");
+  //     const file = formData.get("file");
+  
+  //     if (!file) {
+  //       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  //     }
+  //     const buffer = Buffer.from(await file.arrayBuffer());
+  
+  //     const uploadPromise = new Promise((resolve, reject) => {
+  //       const uploadStream = cloudinary.v2.uploader.upload_stream(
+  //         {
+  //           folder: "nm-demo",
+  //           format: "webp",
+  //         },
+  //         (error, result) => {
+  //           if (error) {
+  //             return reject(error);
+  //           }
+  //           resolve(result);
+  //         }
+  //       );
+  
+  //       uploadStream.end(buffer);
+  //     });
+  
+  //     const uploadResponse = await uploadPromise;
+  //     if (isProfileImage=='true') {
+  //       const userId = formData.get("userId");
+  //       const user = await User.findById(userId);
+  //       if (!user) throw new Error("User not found");
+  //       user.profileImage = {
+  //         url: uploadResponse.secure_url,
+  //         publicId: uploadResponse.public_id,
+  //       }; // Update the profile image URL
+  //       await user.save();
+  //     }
+  
+  //     return NextResponse.json({
+  //       url: uploadResponse.secure_url,
+  //       publicId: uploadResponse.public_id,
+  //     });
+  //   } catch (error) {
+  //     return NextResponse.json({ error: error.message }, { status: 500 });
+  //   }
 }
