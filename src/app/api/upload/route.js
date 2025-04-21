@@ -30,7 +30,7 @@ export async function POST(req) {
       uploadStream.end(buffer);
     });
     const uploadResponse = await uploadPromise;
-    if (isProfileImage=='true') {
+    if (isProfileImage==true) {
       const userId = formData.get("userId");
       const user = await User.findById(userId);
       if (!user) throw new Error("User not found");
