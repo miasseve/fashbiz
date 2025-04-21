@@ -138,18 +138,18 @@ const Profile = ({ user, stripeResponse }) => {
       formData.append("file", file);
       formData.append("userId", user._id);
       formData.append("isProfileImage", true);
-      const res = await storeProfileImage(formData);
-      // const response = await axios.post("/api/upload", formData, {
-      //   headers: { "Content-Type": "multipart/form-data" },
-      // });
-      console.log(res,'res')
+      // const res = await storeProfileImage(formData);
+      const response = await axios.post("/api/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      // console.log(res,'res')
 
-     if(res.status==200){
-      const { publicId, url } = res.data;
+    //  if(res.status==200){
+      const { publicId, url } = response.data;
       setValue("profileImage", { publicId, url });
       setPreviewUrl(url);
       setLoading(false);
-     }
+    //  }
     }
   };
 

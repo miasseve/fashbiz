@@ -29,7 +29,6 @@ export async function updateCloudinaryImage(file) {
 }
 
 export async function storeProfileImage(formData) {
-
   try {
     const isProfileImage = formData.get("isProfileImage");
     const file = formData.get("file");

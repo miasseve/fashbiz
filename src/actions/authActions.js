@@ -24,7 +24,7 @@ export async function registerUser(data) {
     await registerSchema.validate(data, { abortEarly: false });
 
     const existingUser = await User.findOne({ email });
-  
+
     if (existingUser) {
       return { status: 400, error: "User already exists" };
     }
@@ -64,28 +64,28 @@ export async function signInUser(data) {
     const { email, password } = data;
 
     await loginSchema.validate(data, { abortEarly: false });
- 
+
     const result = await signIn("credentials", {
       email: email,
-      password: password, 
+      password: password,
       redirect: false,
     });
     if (result?.error) {
       return { status: 401, error: "Invalid credentials" };
     }
 
-    console.log(result,'result');
+    console.log(result, "result");
 
     const user = await User.findOne({ email: email });
-    
+
     return {
       status: 200,
       message: "Logged in successfully",
       profileStatus: user.isProfileComplete,
-      role:user.role
+      role: user.role,
     };
   } catch (error) {
-    console.log(error.message,'error');
+    console.log(error.message, "error");
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
@@ -93,7 +93,7 @@ export async function signInUser(data) {
       };
     }
 
-    return { status: 500, error: 'Invalid Credentials' };
+    return { status: 500, error: "Invalid Credentials" };
   }
 }
 
