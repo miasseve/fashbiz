@@ -152,6 +152,7 @@ export async function getUser() {
 
 export async function updateUser(updatedData) {
   try {
+    console.log(updatedData,'updatedData')
     const session = await auth();
     if (!session) {
       return { status: 400, error: "Invalid User" };
@@ -211,16 +212,16 @@ export async function removeProfile() {
     }
 
     const publicId = user.profileImage.publicId;
-    if(publicId){
-    // const resource = await cloudinary.api.resource(publicId);
-    // console.log(resource,'resource');
-    const deleteResponse = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
-    });
+    if (publicId) {
+      // const resource = await cloudinary.api.resource(publicId);
+      // console.log(resource,'resource');
+      const deleteResponse = await cloudinary.uploader.destroy(publicId, {
+        resource_type: "image",
+      });
 
-    if (deleteResponse.result !== "ok") {
-      return { status: 500, error: "Failed to remove image from Cloudinary" };
-    }
+      if (deleteResponse.result !== "ok") {
+        return { status: 500, error: "Failed to remove image from Cloudinary" };
+      }
     }
     user.profileImage = {};
     await user.save();

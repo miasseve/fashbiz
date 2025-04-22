@@ -11,6 +11,7 @@ export async function POST(req) {
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
+
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const uploadPromise = new Promise((resolve, reject) => {
@@ -30,21 +31,24 @@ export async function POST(req) {
       uploadStream.end(buffer);
     });
     const uploadResponse = await uploadPromise;
-    if (isProfileImage==true) {
+
+    if (isProfileImage) {
       const userId = formData.get("userId");
       const user = await User.findById(userId);
       if (!user) throw new Error("User not found");
       user.profileImage = {
         url: uploadResponse.secure_url,
         publicId: uploadResponse.public_id,
-      }; // Update the profile image URL
+      };
       await user.save();
     }
-
-    return NextResponse.json({
-      url: uploadResponse.secure_url,
-      publicId: uploadResponse.public_id,
-    },{status:200});
+    return NextResponse.json(
+      {
+        url: uploadResponse.secure_url,
+        publicId: uploadResponse.public_id,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -9,7 +9,6 @@ import { FaCamera } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { countries } from "countries-list";
 import { useSession } from "next-auth/react";
-import { Select, SelectItem } from "@heroui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { State } from "country-state-city";
 import * as Yup from "yup";
@@ -18,7 +17,6 @@ import { FaUserEdit } from "react-icons/fa";
 import { RiDeleteBinFill } from "react-icons/ri";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { storeProfileImage } from "@/actions/cloudinaryActions";
 import PhoneInput from "react-phone-number-input";
 
 const Profile = ({ user, stripeResponse }) => {
@@ -132,24 +130,27 @@ const Profile = ({ user, stripeResponse }) => {
   };
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    console.log("heeloo");
     setLoading(true);
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("userId", user._id);
       formData.append("isProfileImage", true);
-      // const res = await storeProfileImage(formData);
+
       const response = await axios.post("/api/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      // console.log(res,'res')
 
       if (response.status == 200) {
         const { publicId, url } = response.data;
         setValue("profileImage", { publicId, url });
         setPreviewUrl(url);
         setLoading(false);
+      } else {
+        toast.error("Failed to upload image", {
+          position: "top-right",
+          autoClose: 2000,
+        });
       }
     }
   };
@@ -190,9 +191,9 @@ const Profile = ({ user, stripeResponse }) => {
 
   const handleRemoveImage = async () => {
     setLoading(true);
-
     const response = await removeProfile();
     setLoading(false);
+    console.log(response, "response");
     if (response.status === 200) {
       setValue("profileImage", {});
       setPreviewUrl("");
@@ -200,11 +201,6 @@ const Profile = ({ user, stripeResponse }) => {
         position: "top-right",
         autoClose: 2000,
       });
-    } else if (response.status === 400) {
-      setValue("profileImage", {});
-      imageInputRef.value = "";
-      setPreviewUrl("");
-      setImageInputRef(null);
     } else {
       setValue("profileImage", {});
       toast.error("Something went wrong!", {
