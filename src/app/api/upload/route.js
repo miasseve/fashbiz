@@ -1,12 +1,14 @@
 import cloudinary from "@/lib/cloudinary";
 import { NextResponse } from "next/server";
 import User from "@/models/User";
-
+import dbConnect from "@/lib/db";
 export async function POST(req) {
   try {
+    await dbConnect();
     const formData = await req.formData();
-    const isProfileImage = formData.get("isProfileImage");
     const file = formData.get("file");
+    const isProfileImage = formData.get("isProfileImage");
+    const userId = formData.get("userId");
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -14,42 +16,35 @@ export async function POST(req) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadPromise = new Promise((resolve, reject) => {
+    const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.v2.uploader.upload_stream(
-        {
-          folder: "nm-demo",
-          format: "webp",
-        },
-        (error, result) => {
-          if (error) {
-            return reject(error);
-          }
-          resolve(result);
-        }
+        { folder: "nm-demo", format: "webp" },
+        (error, result) => (error ? reject(error) : resolve(result))
       );
-
       uploadStream.end(buffer);
     });
-    const uploadResponse = await uploadPromise;
 
-    if (isProfileImage) {
-      const userId = formData.get("userId");
+    if (isProfileImage && userId) {
       const user = await User.findById(userId);
-      if (!user) throw new Error("User not found");
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
       user.profileImage = {
-        url: uploadResponse.secure_url,
-        publicId: uploadResponse.public_id,
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
       };
       await user.save();
     }
     return NextResponse.json(
       {
-        url: uploadResponse.secure_url,
-        publicId: uploadResponse.public_id,
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
       },
       { status: 200 }
     );
   } catch (error) {
+    console.log(error.message, "error.message");
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
