@@ -11,7 +11,7 @@ import {
 import { Button } from "@heroui/button";
 import { deleteProductById } from "@/actions/productActions";
 import { toast } from "react-toastify";
-
+import Swal from "sweetalert2";
 const SoldTable = ({ products }) => {
   const [localProducts, setLocalProducts] = useState(products);
   const [loading, setLoading] = useState(false);
@@ -23,20 +23,34 @@ const SoldTable = ({ products }) => {
   if (!localProducts || localProducts.length === 0) {
     return <div>No products to display</div>;
   }
-
   const handleDelete = async (productId) => {
-    try {
-      setLoading(true);
-      const response = await deleteProductById(productId);
-      setLoading(false);
-      if (response.status === 200) {
-        toast.success("Product deleted successfully");
-        setLocalProducts((prev) => prev.filter((pre) => pre._id !== productId));
-      } else {
-        toast.error(response.error);
+    const result = await Swal.fire({
+      title: "Are you sure you want to delete this product?",
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, keep it!",
+      reverseButtons: true,
+      customClass: {
+        confirmButton: "btn-danger",
+      },
+    });
+    if (result.isConfirmed) {
+      try {
+        setLoading(true);
+        const response = await deleteProductById(productId);
+        setLoading(false);
+        if (response.status === 200) {
+    
+          toast.success("Product deleted successfully");
+          setLocalProducts((prev) => prev.filter(pre => pre._id !== productId));
+        } else {
+          toast.error(response.error);
+        }
+      } catch (error) {
+        toast.error("Error while deleting the product");
       }
-    } catch (error) {
-      toast.error("Error while deleting the product");
     }
   };
 

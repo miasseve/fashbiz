@@ -80,9 +80,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   return (
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
-        <Link href="/">
+        {/* <Link href="/"> */}
           <img src="/fashlogo.svg" className="w-[138px] mx-auto" />
-        </Link>
+        {/* </Link> */}
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
         {menuItems.map(({ href, label, icon }) => (

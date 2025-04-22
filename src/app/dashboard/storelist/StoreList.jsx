@@ -3,8 +3,8 @@ import { State } from "country-state-city";
 
 const StoreList = ({ stores }) => {
   return (
-    <div className="p-4">
-      <ul className="rounded-lg p-4 grid gap-6 sm:grid-cols-2 grid-cols-1">
+    <div className="sm:p-4 p-0">
+      <ul className="rounded-lg sm:p-4 p-0 grid gap-6 sm:grid-cols-2 grid-cols-1">
         {stores.length > 0 ? (
           stores.map((store) => {
             let state = {};

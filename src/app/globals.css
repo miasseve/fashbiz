@@ -158,6 +158,16 @@ select {
 .carousel .thumb:hover {
   border: 1px solid #c1c1c1;
 }
+.swal2-confirm.btn-danger{font-size: 14px;}
+.swal2-cancel {
+  font-size: 14px;
+}
+.swal2-popup{
+    width: 463px;
+    min-height: 222px;
+    padding: 50px;
+}
+
 @media screen and (max-width: 767px) {
   .lftlogin {
     padding-left: 4px !important;
