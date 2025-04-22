@@ -39,7 +39,7 @@ const ProductItem = ({ product, isGrid }) => {
               </p>
               {/* </CardBody> */}
 
-              <Button onPress={handleClick} className="success-btn ">
+              <Button onPress={handleClick} className="success-btn">
                 View Details
               </Button>
             </div>
@@ -67,14 +67,14 @@ const ProductItem = ({ product, isGrid }) => {
                 €{product.price.toFixed(2)}
               </p>
             </div>
+            <div>
             <Button
               onPress={handleClick}
-              className="text-[12px] px-[3rem] py-[1rem] text-white rounded-lg w-min"
-              color="success"
-              size="md"
+              className="success-btn"
             >
               View
             </Button>
+            </div>
           </div>
         </div>
       )}
