@@ -310,47 +310,49 @@ export async function getProductsByEmail(email) {
     }
 
     await dbConnect();
-    const groupedProducts = await Product.aggregate([
-      {
-        $match: {
-          consignorEmail: email,
-          // sold: false,
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "userDetails",
-          pipeline: [
-            {
-              $project: {
-                firstname: 1,
-                lastname: 1,
-                email: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $unwind: "$userDetails",
-      },
-      {
-        $group: {
-          _id: "$userId",
-          products: { $push: "$$ROOT" },
-        },
-      },
-      {
-        $sort: { "products.createdAt": -1 },
-      },
-    ]);
+    const products = await Product.find({ consignorEmail: email }).sort({ createdAt: -1 });
+
+    // const groupedProducts = await Product.aggregate([
+    //   {
+    //     $match: {
+    //       consignorEmail: email,
+    //       // sold: false,
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "users",
+    //       localField: "userId",
+    //       foreignField: "_id",
+    //       as: "userDetails",
+    //       pipeline: [
+    //         {
+    //           $project: {
+    //             firstname: 1,
+    //             lastname: 1,
+    //             email: 1,
+    //           },
+    //         },
+    //       ],
+    //     },
+    //   },
+    //   {
+    //     $unwind: "$userDetails",
+    //   },
+    //   {
+    //     $group: {
+    //       _id: "$userId",
+    //       products: { $push: "$$ROOT" },
+    //     },
+    //   },
+    //   {
+    //     $sort: { "products.createdAt": -1 },
+    //   },
+    // ]);
 
     return {
       status: 200,
-      products: JSON.stringify(groupedProducts),
+      products: JSON.stringify(products),
     };
   } catch (error) {
     return {
