@@ -302,14 +302,13 @@ export async function getProductsByEmail(email) {
     if (!session) {
       throw new Error("User is not authenticated");
     }
-
+    await dbConnect();
     const existingUser = await User.findOne({ email });
 
     if (!existingUser) {
       throw new Error("User not found");
     }
 
-    await dbConnect();
     const products = await Product.find({ consignorEmail: email }).sort({ createdAt: -1 });
 
     // const groupedProducts = await Product.aggregate([
