@@ -24,7 +24,7 @@ const Main = ({ user, productCount, stripeResponse }) => {
 
   return (
     <div>
-      {stripeResponse.status !== 200 ? (
+      {/* {stripeResponse.status !== 200 ? (
         <div className="flex flex-col justify-center items-center my-[20rem] mx-auto gap-[17px]">
           <p className="text-red-500 text-center italic font-bold">
             *{stripeResponse.error}
@@ -34,7 +34,7 @@ const Main = ({ user, productCount, stripeResponse }) => {
           </Link>
         </div>
       ) : (
-        <>
+        <> */}
           {currentStep === 1 && (
             <ConsignorSelect
               step2Handler={handleSaveUrl}
@@ -55,8 +55,8 @@ const Main = ({ user, productCount, stripeResponse }) => {
               handleAddMoreProducts={handleAddMoreProducts}
             />
           )}
-        </>
-      )}
+        {/* </>
+      )} */}
     </div>
   );
 };

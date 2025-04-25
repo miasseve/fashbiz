@@ -115,7 +115,6 @@ export async function createProduct(formData) {
         await user.save();
       }
 
-
       const link = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
       return {
@@ -309,7 +308,9 @@ export async function getProductsByEmail(email) {
       throw new Error("User not found");
     }
 
-    const products = await Product.find({ consignorEmail: email }).sort({ createdAt: -1 });
+    const products = await Product.find({ consignorEmail: email }).sort({
+      createdAt: -1,
+    });
 
     // const groupedProducts = await Product.aggregate([
     //   {
@@ -438,7 +439,6 @@ export async function deleteProductsFromWix(products) {
     } catch (error) {
       return true;
     }
-   
   }
 }
 
@@ -522,7 +522,7 @@ export async function deleteProductById(productId) {
     if (!product) {
       throw new Error("Product not found.");
     }
-    
+
     if (product.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }
