@@ -3,13 +3,15 @@ import { Button } from "@heroui/button";
 import { useSelector } from "react-redux";
 import QRScanner from "./QRScanner";
 import { Card } from "@heroui/card";
+import QRCode from "./QRCode";
 
 const ConsignorSelect = ({ step2Handler }) => {
   const consignor = useSelector((state) => state.product.consignor);
 
   return (
     <Card className="mx-auto lg:my-[10px]  bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all">
-      <QRScanner />
+      {/* <QRScanner /> */}
+      <QRCode />
       {Object.keys(consignor).length > 0 && (
         <>
           <div className="text-center mb-10 bg-[#f6f6f6] py-[15px] px-4 sm:px-0 sm:w-[498px] mx-auto border border-[silver] mb-[20px]">
@@ -33,7 +35,7 @@ const ConsignorSelect = ({ step2Handler }) => {
       <Button
         onPress={step2Handler}
         isDisabled={Object.keys(consignor).length === 0}
-        className="danger-btn !mb-[20px] m-auto"
+        className="auth-btn m-auto mb-5"
       >
         Next
       </Button>
