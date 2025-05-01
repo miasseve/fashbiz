@@ -156,131 +156,129 @@ const SecondStep = ({
         </div>
       ) : (
         <div className="flex justify-center">
-          <Card className="lg:w-[38%] w-full m-auto mt-[50px] inline-block mb-10">
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]"
-            >
+        <Card className="lg:w-[38%] md:w-[45%] w-[90%] m-auto mt-[50px] inline-block mb-10">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]"
+          >
+            <div>
+              <h2 className="text-center font-semibold">Enter Product Info</h2>
+            </div>
+            <CardBody className="gap-[15px]">
+              {errorMessage && (
+                <span className="text-red-500 font-bold text-[12px]">
+                  {errorMessage}
+                </span>
+              )}
+
               <div>
-                <h2 className="text-center font-semibold">
-                  Enter Product Info
-                </h2>
-              </div>
-              <CardBody className="gap-[15px]">
-                {errorMessage && (
+                <label className="text-sm font-medium">Category</label>
+                <select
+                  {...register("collectionId", {
+                    required: "Category is required",
+                  })}
+                  className="max-w-xs border border-gray-300 rounded px-3 py-2"
+                  placeholder="Select Category"
+                >
+                  <option value="" disabled>
+                    Select Category
+                  </option>
+                  {collections.map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.collectionId && (
                   <span className="text-red-500 font-bold text-[12px]">
-                    {errorMessage}
+                    {errors.collectionId.message}
                   </span>
                 )}
-
-                <div>
-                  <label className="text-sm font-medium">Category</label>
-                  <select
-                    {...register("collectionId", {
-                      required: "Category is required",
-                    })}
-                    className="max-w-xs border border-gray-300 rounded px-3 py-2"
-                    placeholder="Select Category"
-                  >
-                    <option value="" disabled>
-                      Select Category
-                    </option>
-                    {collections.map((collection) => (
-                      <option key={collection.id} value={collection.id}>
-                        {collection.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.collectionId && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.collectionId.message}
-                    </span>
-                  )}
-                </div>
-                <div className="h-full">
-                  <input
-                    placeholder="Enter SKU"
-                    {...register("sku", {
-                      required: "SKU is required",
-                    })}
-                  />
-                  {errors.sku && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.sku.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <input
-                    placeholder="Title"
-                    {...register("title", {
-                      required: "Title is required",
-                    })}
-                  />
-                  {errors.title && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.title.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <input
-                    placeholder="Brand"
-                    {...register("brand", {
-                      required: "Brand is required",
-                    })}
-                  />
-                  {errors.brand && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.brand.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <input
-                    {...register("price", {
-                      required: "Price is required",
-                    })}
-                    type="number"
-                    placeholder="Price in €"
-                  />
-                  {errors.price && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.price.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows="4"
-                    placeholder="Enter description"
-                    {...register("description", {
-                      required: "Description is required",
-                    })}
-                  />
-                  {errors.description && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.description.message}
-                    </span>
-                  )}
-                </div>
-              </CardBody>
-              <CardFooter className="flex justify-between">
-                <Button onPress={handleBackStep} className="auth-btn">
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  isLoading={isSubmitting}
-                  className="success-btn"
-                >
-                  Submit Product Info
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
+              </div>
+              <div className="h-full">
+                <input
+                  placeholder="Enter SKU"
+                  {...register("sku", {
+                    required: "SKU is required",
+                  })}
+                />
+                {errors.sku && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.sku.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <input
+                  placeholder="Title"
+                  {...register("title", {
+                    required: "Title is required",
+                  })}
+                />
+                {errors.title && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.title.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <input
+                  placeholder="Brand"
+                  {...register("brand", {
+                    required: "Brand is required",
+                  })}
+                />
+                {errors.brand && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.brand.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <input
+                  {...register("price", {
+                    required: "Price is required",
+                  })}
+                  type="number"
+                  placeholder="Price in €"
+                />
+                {errors.price && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.price.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows="4"
+                  placeholder="Enter description"
+                  {...register("description", {
+                    required: "Description is required",
+                  })}
+                />
+                {errors.description && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.description.message}
+                  </span>
+                )}
+              </div>
+            </CardBody>
+            <CardFooter className="flex justify-between">
+              <Button onPress={handleBackStep} className="auth-btn">
+                Back
+              </Button>
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                className="success-btn"
+              >
+                Submit Product Info
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
         </div>
       )}
 
