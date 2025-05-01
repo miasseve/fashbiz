@@ -334,6 +334,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
             <video
               ref={videoRef}
               autoPlay
+              playsInline
               className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
             />
             <Button
