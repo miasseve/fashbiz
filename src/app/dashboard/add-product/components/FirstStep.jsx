@@ -24,6 +24,8 @@ import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
+  const [isBackCameraAvailable, setIsBackCameraAvailable] = useState(true);
+
   const [selectedView, setSelectedView] = useState("frontView");
   const topRef = useRef(null);
 
@@ -37,6 +39,27 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const storedProductImages = useSelector(
     (state) => state.product.uploadedImages
   );
+
+  useEffect(() => {
+    const checkBackCamera = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasBackCamera = devices.some(
+          (device) =>
+            device.kind === "videoinput" &&
+            device.label.toLowerCase().includes("back")
+        );
+
+        // Some devices (e.g., iPhones) may not expose 'back' in the label unless permission was granted
+        setIsBackCameraAvailable(hasBackCamera);
+      } catch (err) {
+        console.error("Could not enumerate devices", err);
+        setIsBackCameraAvailable(false);
+      }
+    };
+
+    checkBackCamera();
+  }, []);
 
   useEffect(() => {
     const isEmpty = Object.values(storedProductImages).every(
@@ -140,10 +163,11 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       return updatedImages;
     });
   };
+
   const constraints = {
     video: {
-      facingMode: { exact: "environment" } // Request back camera
-    }
+      facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
+    },
   };
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
