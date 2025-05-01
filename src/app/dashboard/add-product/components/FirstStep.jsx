@@ -140,7 +140,11 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       return updatedImages;
     });
   };
-
+  const constraints = {
+    video: {
+      facingMode: { exact: "environment" } // Request back camera
+    }
+  };
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
     setSelectedView(viewType);
@@ -154,7 +158,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       }
     }, 100);
     navigator.mediaDevices
-      .getUserMedia({ video: true })
+      .getUserMedia(constraints)
       .then((stream) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
