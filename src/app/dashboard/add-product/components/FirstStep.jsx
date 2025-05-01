@@ -41,6 +41,15 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   );
 
   useEffect(() => {
+    const isEmpty = Object.values(storedProductImages).every(
+      (value) => value === null
+    );
+    if (!isEmpty) {
+      setUploadedImagesWithView(storedProductImages);
+    }
+  }, []);
+  
+  useEffect(() => {
     const checkBackCamera = async () => {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -59,15 +68,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     };
 
     checkBackCamera();
-  }, []);
-
-  useEffect(() => {
-    const isEmpty = Object.values(storedProductImages).every(
-      (value) => value === null
-    );
-    if (!isEmpty) {
-      setUploadedImagesWithView(storedProductImages);
-    }
   }, []);
 
   const [croppingImage, setCroppingImage] = useState(null);
@@ -164,11 +164,11 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     });
   };
 
-  const constraints = {
-    video: {
-      facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
-    },
-  };
+  // const constraints = {
+  //   video: {
+  //     facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
+  //   },
+  // };
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
     setSelectedView(viewType);
@@ -182,7 +182,11 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       }
     }, 100);
     navigator.mediaDevices
-      .getUserMedia(constraints)
+      .getUserMedia({
+        video: {
+          facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
+        },
+      })
       .then((stream) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
