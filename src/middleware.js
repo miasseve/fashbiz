@@ -35,10 +35,12 @@ export async function middleware(req) {
 
   const userRole = token?.role || null;
 
-  if (isPublic) {
+  if (isPublic && token) {
+    return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
+  }
+  if (isPublic ){
     return NextResponse.next();
   }
-
   if (isAuthRoute && token) {
     if (userRole === "store") {
       return NextResponse.redirect(new URL("/dashboard/add-product", req.url));

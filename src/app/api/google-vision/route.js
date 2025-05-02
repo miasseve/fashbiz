@@ -19,9 +19,9 @@ export async function POST(req) {
         { type: "TEXT_DETECTION" },
         { type: "IMAGE_PROPERTIES" },
         { type: "LABEL_DETECTION" },
+        { type: "WEB_DETECTION" },
       ],
     });
-
     // Extract relevant details from the response.
     const logos =
       result.logoAnnotations?.map((logo) => ({
@@ -34,16 +34,12 @@ export async function POST(req) {
         description: text.description,
       })) || [];
 
-    const dominantColors =
-      result.imagePropertiesAnnotation?.dominantColors?.colors
-        ?.sort((a, b) => b.pixelFraction - a.pixelFraction)
-        .slice(0, 3) // Take top 3 colors.
-        .map((color) => ({
-          red: color.color.red,
-          green: color.color.green,
-          blue: color.color.blue,
-          fraction: color.pixelFraction,
-        })) || [];
+    const webEntities = result.webDetection?.webEntities || [];
+    const descriptions = webEntities
+      .slice(0, 5)
+      .map((e) => e.description)
+      .filter(Boolean);
+    const descriptionString = descriptions.join("\n");
 
     const garmentLabels =
       result.labelAnnotations?.slice(0, 4).map((label) => ({
@@ -57,13 +53,12 @@ export async function POST(req) {
         message: "Image processed successfully",
         logos,
         texts,
-        colors: dominantColors,
+        descriptions: descriptionString,
         garmentLabels,
       },
       { status: 200 }
     );
   } catch (error) {
-
     // Return the error message.
     return NextResponse.json(
       { errorMessage: error.message },
