@@ -4,24 +4,31 @@ import FirstStep from "./components/FirstStep";
 import SecondStep from "./components/SecondStep";
 import Link from "next/link";
 import QRCode from "./components/QRCode";
+import { setCurrentStep } from "@/features/productSlice";
+import { useSelector ,useDispatch} from "react-redux";
 import ConsignorSelect from "./components/ConsignorSelect";
 import ProgressBar from "./components/ProgressBar";
 const Main = ({ user, productCount, stripeResponse }) => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const  currentStep  = useSelector((state) => state.product.currentStep);
   const [count, setCount] = useState(productCount || 0);
+  const dispatch=useDispatch();
 
   const handleSaveUrl = () => {
-    setCurrentStep(currentStep + 1);
+    dispatch(setCurrentStep(currentStep + 1));
+    // setCurrentStep(currentStep + 1);
   };
 
   const handleBackStep = () => {
-    setCurrentStep(currentStep - 1);
+    dispatch(setCurrentStep(currentStep - 1));
+    // setCurrentStep(currentStep - 1);
   };
 
   const handleAddMoreProducts = () => {
     setCount(count + 1);
-    setCurrentStep(2);
+    dispatch(setCurrentStep(2));
+    // setCurrentStep(2);
   };
+  
   const steps = ["Select Consignor", "Product Details", "Finish"];
   return (
     <div className="mx-auto lg:my-[10px] bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all ">
@@ -37,7 +44,7 @@ const Main = ({ user, productCount, stripeResponse }) => {
         </div>
       ) : (
         <> */}
-      {currentStep === 1 && (
+      {currentStep == 1 && (
         <ConsignorSelect
           step2Handler={handleSaveUrl}
           handleBackStep={handleBackStep}

@@ -1,8 +1,10 @@
 // src/features/productSlice.js
 import { createSlice } from "@reduxjs/toolkit";
+import { set } from "mongoose";
 
 const initialState = {
   consignor: {},
+  currentStep: 1,
   uploadedImages: {
     frontView: null,
     sideView: null,
@@ -17,6 +19,9 @@ const productSlice = createSlice({
   reducers: {
     setUploadedImagesOfProduct: (state, action) => {
       state.uploadedImages = action.payload;
+    },
+    setCurrentStep: (state, action) => {
+      state.currentStep = action.payload; 
     },
     clearProductState: (state) => {
       state.uploadedImages = {};
@@ -42,6 +47,7 @@ export const {
   setConsignors,
   clearConsignors,
   removeUploadedImagesByIndex,
+  setCurrentStep
 } = productSlice.actions;
 
 export default productSlice.reducer;

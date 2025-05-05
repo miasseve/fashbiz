@@ -10,23 +10,24 @@ import { Button } from "@heroui/react";
 import { SessionProvider } from "next-auth/react";
 import { LuLogOut } from "react-icons/lu";
 import { persistor } from "@/store";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
-import { usePathname } from "next/navigation"; // 👈 Needed for detecting route change
+import { usePathname } from "next/navigation"; 
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shadowClass, setShadowClass] = useState("");
   const dispatch = useDispatch();
-  const scrollRef = useRef(null); // 👈 Create a ref
-  const pathname = usePathname(); // 👈 Detect path change
+  const { currentStep } = useSelector((state) => state.product);
+  const scrollRef = useRef(null);
+  const pathname = usePathname(); 
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [pathname]);
+  }, [pathname,currentStep]);
 
   const toggleSidebar = () => {
     if (shadowClass == "") {

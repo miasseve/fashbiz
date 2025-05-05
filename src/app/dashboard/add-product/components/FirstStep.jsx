@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Spinner } from "@heroui/react";
+import { Spinner } from "@heroui/react"; 
 import { IoIosCamera } from "react-icons/io";
 import { filters } from "@/lib/constants";
 import { toast } from "react-toastify";
@@ -361,7 +361,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <div className="camera-container">
             <video
               ref={videoRef}
-              autoPlay
+              autoPlay 
               playsInline
               className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
             />
