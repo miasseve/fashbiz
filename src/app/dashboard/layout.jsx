@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shadowClass, setShadowClass] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const { currentStep } = useSelector((state) => state.product);
   const scrollRef = useRef(null);
@@ -52,11 +53,13 @@ const Layout = ({ children }) => {
     });
 
     if (result.isConfirmed) {
+      setLoading(true);
       persistor.purge();
       dispatch(clearCart());
       dispatch(clearConsignors());
       dispatch(clearProductState());
       await signOutUser({ callbackUrl: "/login" });
+      setLoading(false);
     }
   };
 
@@ -90,8 +93,8 @@ const Layout = ({ children }) => {
             </button>
 
             <div className="cursor-pointer">
-              <Button className="danger-btn" onPress={handleLogout}>
-                <LuLogOut />
+              <Button isLoading={loading}  className="danger-btn" onPress={handleLogout}>
+                {loading ? '':<LuLogOut />}
                 Logout
               </Button>
             </div>

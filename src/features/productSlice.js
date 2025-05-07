@@ -30,6 +30,7 @@ const productSlice = createSlice({
       state.consignor = action.payload;
     },
     clearConsignors: (state) => {
+      state.currentStep = 1;
       state.consignor = {};
     },
     removeUploadedImagesByIndex: (state, action) => {
