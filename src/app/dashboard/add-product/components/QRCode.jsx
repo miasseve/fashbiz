@@ -16,7 +16,7 @@ export default function QRCode() {
 
   // Start camera scanning
   const startCamera = async () => {
-    const config = { fps: 15, qrbox: { width: 200, height: 200 } };
+    const config = { fps: 15, qrbox: { width: 300, height: 300 } };
     const scanner = new Html5Qrcode("camera-preview");
     scannerRef.current = scanner;
 
