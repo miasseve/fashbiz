@@ -6,7 +6,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // Uses localStorage for persistence
 // Configuration for redux-persist
 const persistConfig = {
-  key: "root",
+  key: "fash",
   storage,
 };
 
