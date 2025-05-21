@@ -3,7 +3,9 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import Account from "@/models/Account";
 import { auth } from "@/auth";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  httpClient: Stripe.createFetchHttpClient()
+});
 export async function GET(req) {
   try {
     const url = new URL(req.url);

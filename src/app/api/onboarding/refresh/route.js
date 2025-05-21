@@ -2,7 +2,9 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  httpClient: Stripe.createFetchHttpClient()
+});
 export async function GET(req) {
   try {
     const url = new URL(req.url);

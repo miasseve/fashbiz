@@ -5,7 +5,9 @@ import dbConnect from "@/lib/db";
 import ConsignorSelect from "@/app/dashboard/add-product/components/ConsignorSelect";
 import User from "@/models/User";
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  httpClient: Stripe.createFetchHttpClient()
+});
 
 export async function GET(req) {
   try {

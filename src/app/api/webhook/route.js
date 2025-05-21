@@ -6,8 +6,10 @@ import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Replace with your Stripe secret key
-
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  httpClient: Stripe.createFetchHttpClient()
+}); // Replace with your Stripe secret key
+  
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
 const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
 // Middleware to handle raw body for webhook verification
