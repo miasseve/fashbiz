@@ -16,7 +16,7 @@ import {
   resetPasswordSchema,
 } from "./validations";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
-
+  
 export async function registerUser(data) {
   try {
     await dbConnect();
@@ -46,7 +46,7 @@ export async function registerUser(data) {
     if (error instanceof Yup.ValidationError) {
       return {
         status: 400,
-        error: error.errors.join(", "), // Join errors for easier reading
+        error: error.errors.join(", "),
       };
     }
 

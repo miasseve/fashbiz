@@ -88,7 +88,7 @@ const SecondStep = ({
           const response = await axios.post("/api/google-vision", {
             imageUrl: imagesFiltered[0]?.url ?? "",
           });
-
+          console.log(response, "response");
           if (response.status === 200) {
             const garments = response.data?.garmentLabels
               ?.map((label) => label.description)
