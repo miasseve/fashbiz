@@ -29,15 +29,13 @@ const Main = ({ user, productCount, stripeResponse }) => {
     // setCurrentStep(2);
   };
 
-  console.log(productCount,'product-count');
-
   const steps = ["Select Consignor", "Product Details", "Finish"];
-  
+
   return (
-    <div className="mx-auto lg:my-[10px] bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all ">
+    <div className="mx-auto lg:my-[10px] bg-white rounded-xl dark:bg-gray-900 transition-all ">
         <ProgressBar currentStep={currentStep} steps={steps} />
       {stripeResponse.status !== 200 ? (
-        <div className="flex flex-col justify-center items-center my-[20rem] mx-auto gap-[17px]">
+        <div className="flex flex-col justify-center items-center my-[10rem] mx-auto gap-[17px] pb-20">
           <p className="text-red-500 text-center italic font-bold">
             *{stripeResponse.error}
           </p>

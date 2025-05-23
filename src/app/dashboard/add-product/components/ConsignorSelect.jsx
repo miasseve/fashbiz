@@ -34,7 +34,7 @@ const ConsignorSelect = ({ step2Handler }) => {
       <Button
         onPress={step2Handler}
         // isDisabled={Object.keys(consignor).length === 0}
-        className="auth-btn m-auto mb-5"
+        className="auth-btn m-auto mb-10"
       >
         Next
       </Button>

@@ -565,7 +565,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
             )
           )}
         </div>
-        <div className="flex  items-center w-full justify-between lg:pr-[25px] p-0">
+        <div className="flex  items-center w-full justify-between  p-0">
           <div className="text-start mt-5 ">
             <Button
               isDisabled={
