@@ -6,7 +6,7 @@ import ConsignorSelect from "@/app/dashboard/add-product/components/ConsignorSel
 import User from "@/models/User";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  httpClient: Stripe.createFetchHttpClient()
+  httpClient: Stripe.createFetchHttpClient(),
 });
 
 export async function GET(req) {
@@ -30,16 +30,11 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await dbConnect();
-    const {
-      payment_method,
-      userId,
-      userName,
-      userEmail,
-      groupedProducts,
-    } = await req.json();
+    const { payment_method, userId, userName, userEmail, groupedProducts } =
+      await req.json();
 
     // Validate required fields
-    if (!payment_method || !userId ) {
+    if (!payment_method || !userId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -51,74 +46,80 @@ export async function POST(req) {
     if (!account) {
       return NextResponse.json({ error: "Account not exist" }, { status: 400 });
     }
-      const { products: consignorProducts, total: consignorTotal,consignorAccount } =
-        groupedProducts;
-      const formattedProducts = consignorProducts.map(
-        ({ title, brand, price }) => ({
-          title,
-          brand,
-          price,
-        })
-      );
 
-      let paymentIntent;
-      try {
-        paymentIntent = await stripe.paymentIntents.create({
-          amount: consignorTotal * 100,
-          currency: "eur",
-          payment_method: payment_method,
-          confirm: true,
-          automatic_payment_methods: {
-            enabled: true,
-            allow_redirects: "never",
-          },
-          metadata: {
-            storeOwnerEmail: userEmail,
-            storeOwnerName: userName,
-            storeOwnerAccountId: account.accountId,
-            consignorAccountId: consignorAccount,
-            storeOwnerPercentage: account.percentage,
-            consignorName: consignorProducts[0]?.consignorName || "",
-            consignorEmail: consignorProducts[0]?.consignorEmail || "",
-            formattedProducts: JSON.stringify(formattedProducts),
-          },
-        });
+    const {
+      products: consignorProducts,
+      total: consignorTotal,
+      consignorAccount,
+    } = groupedProducts;
 
-        if (
-          paymentIntent.status === "requires_action" &&
-          paymentIntent.next_action.type === "use_stripe_sdk"
-        ) {
-          return NextResponse.json(
-            {
-              requires_action: true,
-              client_secret: paymentIntent.client_secret,
-            },
-            { status: 200 }
-          );
-        }
+    const formattedProducts = consignorProducts.map(
+      ({ title, brand, price }) => ({
+        title,
+        brand,
+        price,
+      })
+    );
 
-        // Payment succeeded
-        if (paymentIntent.status === "succeeded") {
-          return NextResponse.json(
-            {
-              success: true,
-            },
-            { status: 200 }
-          );
-        }
+    let paymentIntent;
+
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: consignorTotal * 100,
+        currency: "eur",
+        payment_method: payment_method,
+        confirm: true,
+        automatic_payment_methods: {
+          enabled: true,
+          allow_redirects: "never",
+        },
+        metadata: {
+          storeOwnerEmail: userEmail,
+          storeOwnerName: userName,
+          storeOwnerAccountId: account.accountId,
+          consignorAccountId: consignorAccount,
+          storeOwnerPercentage: account.percentage,
+          consignorName: consignorProducts[0]?.consignorName || "",
+          consignorEmail: consignorProducts[0]?.consignorEmail || "",
+          formattedProducts: JSON.stringify(formattedProducts),
+        },
+      });
+
+      if (
+        paymentIntent.status === "requires_action" &&
+        paymentIntent.next_action.type === "use_stripe_sdk"
+      ) {
         return NextResponse.json(
           {
-            error: "Unexpected payment status",
+            requires_action: true,
+            client_secret: paymentIntent.client_secret,
           },
-          { status: 400 }
-        );
-        // Catch-all for unexpected status
-      } catch (error) {
-        return NextResponse.json(
-          { error: `Payment failed: ${error.message}` },
-          { status: 500 }
+          { status: 200 }
         );
       }
+
+      // Payment succeeded
+      if (paymentIntent.status === "succeeded") {
+        return NextResponse.json(
+          {
+            success: true,
+          },
+          { status: 200 }
+        );
+      }
+      return NextResponse.json(
+        {
+          error: "Unexpected payment status",
+        },
+        { status: 400 }
+      );
+      // Catch-all for unexpected status
+    } catch (error) {
+      return NextResponse.json(
+        { error: `Payment failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
     // }
   } catch (error) {
     return NextResponse.json(

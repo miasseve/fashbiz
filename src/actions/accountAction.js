@@ -176,6 +176,7 @@ export async function storeSuccessResult(accountId) {
       const newAccount = new Account({
         userId: session.user.id,
         accountId: accountId,
+        percentage:10,
         isAccountComplete: isAccountComplete,
       });
       await newAccount.save();

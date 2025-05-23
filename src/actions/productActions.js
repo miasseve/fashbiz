@@ -102,9 +102,9 @@ export async function createProduct(formData) {
         price,
         images,
         userId: session.user.id,
-        consignorName: `${firstName} ${lastName}`,
-        consignorEmail: email,
-        consignorAccount: accountId,
+        consignorName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+        consignorEmail: email ?? "",
+        consignorAccount: accountId ?? "",
         wixProductId: productId,
       });
       await newProduct.save();
@@ -488,9 +488,9 @@ export async function getProductById(productId) {
       "firstname lastname email address phoneNumber city"
     );
 
-    if (!user) {
-      throw new Error("User related to the product not found");
-    }
+    // if (!user) {
+    //   throw new Error("User related to the product not found");
+    // }
     return {
       status: 200, // Success status code
       message: "Product fetched successfully",

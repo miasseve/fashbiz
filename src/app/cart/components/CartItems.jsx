@@ -15,17 +15,19 @@ const CartItems = ({ user }) => {
   useEffect(() => {
     const groupedProducts = products.reduce((acc, product) => {
       const { consignorName, price, consignorAccount } = product;
-      if (!consignorName) return acc;
-      if (!acc[consignorName]) {
-        acc[consignorName] = {
+      const key = consignorName || "Store Owner";
+
+      if (!acc[key]) {
+        acc[key] = {
           products: [],
           total: 0,
-          consignorAccount: consignorAccount,
+          consignorAccount: consignorName ? consignorAccount : "",
         };
       }
 
-      acc[consignorName].products.push(product);
-      acc[consignorName].total += price;
+      acc[key].products.push(product);
+      acc[key].total += price;
+
       return acc;
     }, {});
 
@@ -37,15 +39,16 @@ const CartItems = ({ user }) => {
     setCartProducts((prev) => {
       const updatedCart = { ...prev };
       const { products: consignorProducts } =
-        updatedCart[product.consignorName];
+        updatedCart[product?.consignorName || "Store Owner"];
       if (consignorProducts) {
         const filteredProducts = consignorProducts.filter(
           (item) => item._id !== product._id
         );
         if (filteredProducts.length === 0) {
-          delete updatedCart[product.consignorName];
+          delete updatedCart[product?.consignorName || "Store Owner"];
         } else {
-          updatedCart[product.consignorName].products = filteredProducts;
+          updatedCart[product?.consignorName || "Store Owner"].products =
+            filteredProducts;
         }
         return updatedCart;
       }

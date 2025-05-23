@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { storePercentage } from "@/actions/accountAction";
-import { Select, SelectItem, Button, Card, CardBody } from "@heroui/react";
+import {  Button, Card, CardBody } from "@heroui/react";
 import { toast } from "react-toastify";
 const PercentForm = ({ percentage }) => {
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,6 @@ const PercentForm = ({ percentage }) => {
               className="!max-w-[40%] border border-gray-300 rounded px-3 py-2"
               defaultValue={`${percentage}`}
             >
-              <option value="">Select Percentage</option>
               {percentOptions.map((percent) => (
                 <option key={percent.value} value={percent.value}>
                   {percent.label}

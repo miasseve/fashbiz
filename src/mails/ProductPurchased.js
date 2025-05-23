@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
 
-export async function productPurchased(customerEmail, customerName,consignorEmail,consignorName,formattedProducts) {
+export async function productPurchased(
+  customerEmail,
+  customerName,
+  consignorEmail,
+  consignorName,
+  formattedProducts
+) {
   // Create reset password URL
 
   // Create transporter using SMTP configuration from environment variables
@@ -12,22 +18,31 @@ export async function productPurchased(customerEmail, customerName,consignorEmai
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 
-  const productListHTML = formattedProducts.map(product => `
+  const productListHTML = formattedProducts
+    .map(
+      (product) => `
     <tr>
       <td style="padding: 8px; border: 1px solid #ddd;">${product.title}</td>
       <td style="padding: 8px; border: 1px solid #ddd;">${product.brand}</td>
-      <td style="padding: 8px; border: 1px solid #ddd;">€${product.price.toFixed(2)}</td>
+      <td style="padding: 8px; border: 1px solid #ddd;">€${product.price.toFixed(
+        2
+      )}</td>
     </tr>
-  `).join("");
+  `
+    )
+    .join("");
 
   // Send the email
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: customerEmail, 
+    to: customerEmail,
     subject: "Product Purchased",
-        html: `
+    html: `
       <p>Dear ${customerName},</p>
       <p>Customer has purchase the products from store! Below are the details of the products :</p>
       <p>Consignor linked with that products - ${consignorName} ( ${consignorEmail} )</p>

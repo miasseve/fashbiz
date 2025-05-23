@@ -33,16 +33,19 @@ const Page = async ({ params }) => {
           </h1>
           <ul className="space-y-2 text-gray-700">
             <li>
-              <span className="font-semibold">Brand :</span> {parsedProduct.brand}
+              <span className="font-semibold">Brand :</span>{" "}
+              {parsedProduct.brand}
             </li>
             <li>
-              <span className="font-semibold">Price :</span> <span className="font-semibold">€{parsedProduct.price}</span>
+              <span className="font-semibold">Price :</span>{" "}
+              <span className="font-semibold">€{parsedProduct.price}</span>
             </li>
             <li>
-            <span className="font-semibold">Description :</span> {parsedProduct.description}
+              <span className="font-semibold">Description :</span>{" "}
+              {parsedProduct.description}
             </li>
           </ul>
-       
+
           <Link
             href={`/product/${parsedProduct._id}`}
             target="_blank"
@@ -50,21 +53,34 @@ const Page = async ({ params }) => {
           >
             View Product Details
           </Link>
-
-          <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
-            <p className="text-gray-800 italic font-semibold">Consignor Details</p>
-            <p className="text-gray-700 italic">
-             <span className="font-semibold"> Name :</span> {parsedUser.firstname} {parsedUser.lastname}
-            </p>
-            <p className="text-gray-700 italic"> <span className="font-semibold">Email : </span>{parsedUser.email}</p>
-            <p className="text-gray-700 italic">
-            <span className="font-semibold">Address : </span>{parsedUser.address}
-            </p>
-            <p className="text-gray-700 italic">
-            <span className="font-semibold">Phone Number : </span>{parsedUser.phoneNumber}
-            </p>
-            <p className="text-gray-700 italic"><span className="font-semibold">City : </span>{parsedUser.city}</p>
-          </div>
+          {parsedUser && (
+            <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
+              <p className="text-gray-800 italic font-semibold">
+                Consignor Details
+              </p>
+              <p className="text-gray-700 italic">
+                <span className="font-semibold"> Name :</span>{" "}
+                {parsedUser.firstname} {parsedUser.lastname}
+              </p>
+              <p className="text-gray-700 italic">
+                {" "}
+                <span className="font-semibold">Email : </span>
+                {parsedUser.email}
+              </p>
+              <p className="text-gray-700 italic">
+                <span className="font-semibold">Address : </span>
+                {parsedUser.address}
+              </p>
+              <p className="text-gray-700 italic">
+                <span className="font-semibold">Phone Number : </span>
+                {parsedUser.phoneNumber}
+              </p>
+              <p className="text-gray-700 italic">
+                <span className="font-semibold">City : </span>
+                {parsedUser.city}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

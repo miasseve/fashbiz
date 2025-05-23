@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { IoArrowBack } from "react-icons/io5";
 import { Spinner } from "@heroui/react";
 import axios from "axios";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "@heroui/react";
@@ -13,7 +12,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { useForm } from "react-hook-form";
-import { clearProductState, clearConsignors } from "@/features/productSlice";
+import { clearProductState, clearConsignors ,setCurrentStep} from "@/features/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct } from "@/actions/productActions";
 import { useRouter } from "next/navigation";
@@ -72,7 +71,7 @@ const SecondStep = ({
 
     fetchCollections();
   }, []);
-
+  
   useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
@@ -110,6 +109,8 @@ const SecondStep = ({
 
     fetchProductDetails();
   }, []);
+
+  
   const onSubmit = async (data) => {
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });
@@ -127,6 +128,7 @@ const SecondStep = ({
     // Set the state to hide the confirmation message
     setShowConfirmation(false);
     dispatch(clearConsignors());
+    dispatch(setCurrentStep(1));
     router.push("/dashboard/store");
   };
 
@@ -177,7 +179,7 @@ const SecondStep = ({
                     className="max-w-xs border border-gray-300 rounded px-3 py-2"
                     placeholder="Select Category"
                   >
-                    <option value="" disabled>
+                    <option value="">
                       Select Category
                     </option>
                     {collections.map((collection) => (

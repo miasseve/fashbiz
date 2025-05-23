@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardBody, CardFooter, Button } from "@heroui/react";
+import { Badge } from "@heroui/react";
+import { SiBookmyshow } from "react-icons/si";
+import { Card, Button } from "@heroui/react";
 
 const ProductItem = ({ product, isGrid }) => {
   const router = useRouter();
@@ -16,12 +18,30 @@ const ProductItem = ({ product, isGrid }) => {
           <Card
             className={`p-[10px] h-full border-none rounded-none shadow-[0_1px_2px_rgba(0,0,0,0.2)]} p-0`}
           >
-            {product.images.length > 0 && (
-              <img
-                src={product.images[0].url}
-                alt={product.title}
-                className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 "
-              />
+            {product.consignorAccount == "" ? (
+              <Badge
+                color="danger"
+                content={<SiBookmyshow />}
+                size="lg"
+                shape="circle"
+                placement="top-right"
+              >
+                {product.images.length > 0 && (
+                  <img
+                    src={product.images[0].url}
+                    alt={product.title}
+                    className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 "
+                  />
+                )}
+              </Badge>
+            ) : (
+              product.images.length > 0 && (
+                <img
+                  src={product.images[0].url}
+                  alt={product.title}
+                  className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 "
+                />
+              )
             )}
 
             <div className="p-8">
@@ -48,13 +68,32 @@ const ProductItem = ({ product, isGrid }) => {
       ) : (
         // Line (List) view layout
         <div className="flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 ">
-          {product.images.length > 0 && (
-            <img
-              src={product.images[0].url}
-              alt={product.title}
-              className="w-[15rem] h-[15rem]  rounded-lg me-[2rem] object-cover"
-            />
+          {product.consignorAccount == "" ? (
+            <Badge
+              color="danger"
+              content={<SiBookmyshow />}
+              size="lg"
+              shape="circle"
+              placement="top-right"
+            >
+              {product.images.length > 0 && (
+                <img
+                  src={product.images[0].url}
+                  alt={product.title}
+                  className="w-[15rem] h-[15rem]  rounded-lg me-[2rem] object-cover"
+                />
+              )}
+            </Badge>
+          ) : (
+            product.images.length > 0 && (
+              <img
+                src={product.images[0].url}
+                alt={product.title}
+                className="w-[15rem] h-[15rem]  rounded-lg me-[2rem] object-cover"
+              />
+            )
           )}
+
           <div className="flex gap-[15px] flex-col">
             <div className="flex-1 gap-3">
               <h2 className="text-[20px] font-semibold">{product.title}</h2>
@@ -68,12 +107,9 @@ const ProductItem = ({ product, isGrid }) => {
               </p>
             </div>
             <div>
-            <Button
-              onPress={handleClick}
-              className="success-btn"
-            >
-              View
-            </Button>
+              <Button onPress={handleClick} className="success-btn">
+                View
+              </Button>
             </div>
           </div>
         </div>

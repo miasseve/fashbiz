@@ -31,6 +31,7 @@ export default {
             storename: user.storename,
             email: user.email,
             role: user.role,
+            name: user.firstname + " " + user.lastname
           };
         } catch (error) {
           throw new Error("Authentication failed");

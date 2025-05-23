@@ -1,17 +1,17 @@
 "use client";
-import React, { useState} from "react";
+import React, { useState } from "react";
 import FirstStep from "./components/FirstStep";
 import SecondStep from "./components/SecondStep";
 import Link from "next/link";
 import QRCode from "./components/QRCode";
 import { setCurrentStep } from "@/features/productSlice";
-import { useSelector ,useDispatch} from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import ConsignorSelect from "./components/ConsignorSelect";
 import ProgressBar from "./components/ProgressBar";
 const Main = ({ user, productCount, stripeResponse }) => {
-  const  currentStep  = useSelector((state) => state.product.currentStep);
+  const currentStep = useSelector((state) => state.product.currentStep);
   const [count, setCount] = useState(productCount || 0);
-  const dispatch=useDispatch();
+  const dispatch = useDispatch();
 
   const handleSaveUrl = () => {
     dispatch(setCurrentStep(currentStep + 1));
@@ -28,12 +28,15 @@ const Main = ({ user, productCount, stripeResponse }) => {
     dispatch(setCurrentStep(2));
     // setCurrentStep(2);
   };
-  
+
+  console.log(productCount,'product-count');
+
   const steps = ["Select Consignor", "Product Details", "Finish"];
+  
   return (
     <div className="mx-auto lg:my-[10px] bg-white rounded-xl shadow-sm dark:bg-gray-900 transition-all ">
         <ProgressBar currentStep={currentStep} steps={steps} />
-      {/* {stripeResponse.status !== 200 ? (
+      {stripeResponse.status !== 200 ? (
         <div className="flex flex-col justify-center items-center my-[20rem] mx-auto gap-[17px]">
           <p className="text-red-500 text-center italic font-bold">
             *{stripeResponse.error}
@@ -43,26 +46,28 @@ const Main = ({ user, productCount, stripeResponse }) => {
           </Link>
         </div>
       ) : (
-        <> */}
-      {currentStep == 1 && (
-        <ConsignorSelect
-          step2Handler={handleSaveUrl}
-          handleBackStep={handleBackStep}
-        />
-      )}
-      {currentStep === 2 && (
-        <FirstStep
-          handleSaveUrl={handleSaveUrl}
-          handleBackStep={handleBackStep}
-        />
-      )}
-      {currentStep === 3 && (
-        <SecondStep
-          handleBackStep={handleBackStep}
-          user={user}
-          productCount={count}
-          handleAddMoreProducts={handleAddMoreProducts}
-        />
+        <>
+          {currentStep == 1 && (
+            <ConsignorSelect
+              step2Handler={handleSaveUrl}
+              handleBackStep={handleBackStep}
+            />
+          )}
+          {currentStep === 2 && (
+            <FirstStep
+              handleSaveUrl={handleSaveUrl}
+              handleBackStep={handleBackStep}
+            />
+          )}
+          {currentStep === 3 && (
+            <SecondStep
+              handleBackStep={handleBackStep}
+              user={user}
+              productCount={count}
+              handleAddMoreProducts={handleAddMoreProducts}
+            />
+          )}
+        </>
       )}
     </div>
   );

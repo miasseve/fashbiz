@@ -407,3 +407,40 @@ export async function resetPassword(token, password, confirmPassword) {
     return { status: 500, error: [error.message || "Internal Server Error"] };
   }
 }
+
+
+export async function getStoreOwnerDetail() {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    // Connect to the database
+    await dbConnect();
+    // Fetch the product by ID for the authenticated user
+    const user = await User.findOne({
+      _id: session.user.id,
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const account = await Account.findOne({ userId: session.user.id });
+
+    return {
+      status: 200, 
+      message: "Store Owner details fetched successfully",
+      data: {
+        user: JSON.stringify(user),
+        account: JSON.stringify(account)
+      },
+    }; // Return the product details
+  } catch (error) {
+    return {
+      status: 500, // Internal server error status code
+      error: error.message || "Failed to fetch user",
+    };
+  }
+}

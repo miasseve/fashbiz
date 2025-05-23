@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { Button } from "@heroui/button";
 import {
@@ -12,19 +11,17 @@ import { removeMultipleProductsFromCart } from "@/features/cartSlice";
 import { toast } from "react-toastify";
 
 const CheckoutForm = ({ user, consignorProducts }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
   const dispatch = useDispatch();
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
-
+  const [error, setError] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+    console.log(user,'user')
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
-    if (!stripe || !elements) return;
 
+    if (!stripe || !elements) return;
     setIsProcessing(true);
 
     const { error, paymentMethod } = await stripe.createPaymentMethod({
@@ -39,6 +36,7 @@ const CheckoutForm = ({ user, consignorProducts }) => {
     }
 
     // Make a request to the backend to create a payment intent or session
+
     const res = await fetch("/api/payment-intent", {
       method: "POST",
       headers: {
@@ -54,16 +52,18 @@ const CheckoutForm = ({ user, consignorProducts }) => {
     });
     const data = await res.json();
 
-    if (data.error) {
+    if (data?.error) {
+      setIsProcessing(false);
       toast.error(`Payment failed: ${data.error}`);
       return;
     }
 
-    if (data.requires_action) {
+    if (data?.requires_action) {
       const { error: confirmError, paymentIntent } =
         await stripe.confirmCardPayment(data.client_secret);
 
       if (confirmError) {
+        setIsProcessing(false);
         toast.error("Payment confirmation failed: " + confirmError.message);
       } else if (paymentIntent.status === "succeeded") {
         const productIds = consignorProducts.products.map(
@@ -73,7 +73,6 @@ const CheckoutForm = ({ user, consignorProducts }) => {
         await soldProductsByIds(productIds);
         toast.success("Payment succeeded!");
         dispatch(removeMultipleProductsFromCart(productIds));
-        // router.push("/thankyou");
       }
     } else {
       const productIds = consignorProducts.products.map(
