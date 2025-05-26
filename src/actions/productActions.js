@@ -29,13 +29,13 @@ export async function createProduct(formData) {
     } = formData;
 
     await dbConnect();
-
+    const formattedPrice = Number(parseFloat(price).toFixed(2));
     // Construct product data for Wix API
     const productData = {
       product: {
         name: title,
         productType: "physical",
-        priceData: { price: price },
+        priceData: { price: formattedPrice },
         description: description,
         sku: sku,
         visible: false,
@@ -99,7 +99,7 @@ export async function createProduct(formData) {
         brand,
         category: collectionId,
         description,
-        price,
+        price:formattedPrice,
         images,
         userId: session.user.id,
         consignorName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),

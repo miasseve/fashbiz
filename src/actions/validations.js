@@ -79,7 +79,6 @@ export const resetPasswordSchema = Yup.object().shape({
     .required("Confirm Password is required"),
 });
 
-
 // const currency = z
 //   .string()
 //   .refine(
@@ -91,3 +90,20 @@ export const resetPasswordSchema = Yup.object().shape({
 //     const [int, decimal] = num.toString().split('.');
 //     return decimal ? `${int}.${decimal.padEnd(2, '0')}` : `${int}.00`;
 // }
+
+export const productSchema = Yup.object().shape({
+  collectionId: Yup.string().required("Category is required"),
+  sku: Yup.string().required("SKU is required"),
+  title: Yup.string().required("Title is required"),
+  brand: Yup.string().required("Brand is required"),
+  price: Yup.number()
+    .typeError("Price must be a number")
+    .required("Price is required")
+    .positive("Price must be greater than zero")
+    .test(
+      "max-2-decimals",
+      "Price can have at most 2 decimal places",
+      (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
+    ),
+  description: Yup.string().required("Description is required"),
+});

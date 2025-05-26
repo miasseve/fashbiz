@@ -11,6 +11,8 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@heroui/react";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { productSchema } from "@/actions/validations";
 import { useForm } from "react-hook-form";
 import { clearProductState, clearConsignors ,setCurrentStep} from "@/features/productSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -45,6 +47,7 @@ const SecondStep = ({
     formState: { errors, isValid, isSubmitting },
   } = useForm({
     mode: "onTouched",
+    resolver: yupResolver(productSchema),
     defaultValues: {
       sku: user.storename + currentYear + (parseInt(productCount) + 1),
       images: Object.values(reduxImages)
@@ -87,7 +90,7 @@ const SecondStep = ({
           const response = await axios.post("/api/google-vision", {
             imageUrl: imagesFiltered[0]?.url ?? "",
           });
-          console.log(response, "response");
+          
           if (response.status === 200) {
             const garments = response.data?.garmentLabels
               ?.map((label) => label.description)
@@ -173,9 +176,7 @@ const SecondStep = ({
                 <div>
                   <label className="text-sm font-medium">Category</label>
                   <select
-                    {...register("collectionId", {
-                      required: "Category is required",
-                    })}
+                    {...register("collectionId")}
                     className="max-w-xs border border-gray-300 rounded px-3 py-2"
                     placeholder="Select Category"
                   >
@@ -197,9 +198,7 @@ const SecondStep = ({
                 <div className="h-full">
                   <input
                     placeholder="Enter SKU"
-                    {...register("sku", {
-                      required: "SKU is required",
-                    })}
+                    {...register("sku")}
                   />
                   {errors.sku && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -210,9 +209,7 @@ const SecondStep = ({
                 <div>
                   <input
                     placeholder="Title"
-                    {...register("title", {
-                      required: "Title is required",
-                    })}
+                    {...register("title")}
                   />
                   {errors.title && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -223,9 +220,7 @@ const SecondStep = ({
                 <div>
                   <input
                     placeholder="Brand"
-                    {...register("brand", {
-                      required: "Brand is required",
-                    })}
+                    {...register("brand")}
                   />
                   {errors.brand && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -235,10 +230,8 @@ const SecondStep = ({
                 </div>
                 <div>
                   <input
-                    {...register("price", {
-                      required: "Price is required",
-                    })}
-                    type="number"
+                    {...register("price")}
+                    type="text"
                     placeholder="Price in €"
                   />
                   {errors.price && (
@@ -252,9 +245,7 @@ const SecondStep = ({
                     id="description"
                     rows="4"
                     placeholder="Enter description"
-                    {...register("description", {
-                      required: "Description is required",
-                    })}
+                    {...register("description")}
                   />
                   {errors.description && (
                     <span className="text-red-500 font-bold text-[12px]">

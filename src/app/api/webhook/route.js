@@ -84,7 +84,6 @@ export async function POST(req, res) {
         const storeOwnerAmount =
           (Math.floor(netAmount / 100) * storeOwnerPercentage) / 100;
         const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
-
         try {
           await stripe.transfers.create({
             amount: storeOwnerAmount * 100,
@@ -138,7 +137,6 @@ export async function POST(req, res) {
       break;
     case "transfer.created":
       const transfer = event.data.object;
-      console.log("transfer created", transfer);
       try {
         await transferCreated(
           transfer.metadata.name,

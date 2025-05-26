@@ -16,7 +16,7 @@ const CheckoutForm = ({ user, consignorProducts }) => {
   const elements = useElements();
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-    console.log(user,'user')
+   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -36,7 +36,7 @@ const CheckoutForm = ({ user, consignorProducts }) => {
     }
 
     // Make a request to the backend to create a payment intent or session
-
+ 
     const res = await fetch("/api/payment-intent", {
       method: "POST",
       headers: {
