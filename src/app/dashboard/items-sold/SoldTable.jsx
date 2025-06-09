@@ -71,8 +71,8 @@ const SoldTable = ({ products }) => {
               <TableCell>{product.sku}</TableCell>
               <TableCell>{product.title}</TableCell>
               <TableCell>{product.price}</TableCell>
-              <TableCell>{product.consignorName}</TableCell>
-              <TableCell>{product.consignorEmail}</TableCell>
+              <TableCell>{product.consignorName || "Store Owner"}</TableCell>
+              <TableCell>{product.consignorEmail || "Store Owner"}</TableCell>
               <TableCell>
                 <Button
                   isDisabled={loading}

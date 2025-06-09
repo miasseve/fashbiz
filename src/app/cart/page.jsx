@@ -9,7 +9,7 @@ const page = async () => {
     redirect("/login"); 
   }
 
-  return <CartItems user={session.user} />;
+  return <CartItems storeUser={session.user} />;
 };
 
 export default page;

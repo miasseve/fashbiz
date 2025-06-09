@@ -5,13 +5,17 @@ import getStripe from "./getStripe";
 import { Elements } from "@stripe/react-stripe-js";
 import CheckoutForm from "@/app/cart/components/CheckoutForm";
 
-const BuyNow = ({ user , consignorProducts}) => {
+const BuyNow = ({ storeUser, allConsignorProducts, grandTotal }) => {
   const stripePromise = getStripe();
 
   return (
-    <div className="w-[300px] ml-auto">
+    <div className="max-w-[500px] mx-auto">
       <Elements stripe={stripePromise}>
-        <CheckoutForm user={user} consignorProducts={consignorProducts}/>
+        <CheckoutForm 
+          storeUser={storeUser} 
+          allConsignorProducts={allConsignorProducts}
+          grandTotal={grandTotal}
+        />
       </Elements>
     </div>
   );

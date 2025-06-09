@@ -8,7 +8,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log(user,'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww')
         token.id = user.id;
         token.email = user.email;
         token.storename = user.storename;

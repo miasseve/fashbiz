@@ -6,7 +6,7 @@ import BuyNow from "./BuyNow";
 import Link from "next/link";
 import { Button } from "@heroui/button";
 
-const CartItems = ({ user }) => {
+const CartItems = ({ storeUser }) => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
   const [cartProducts, setCartProducts] = useState([]);
@@ -55,8 +55,14 @@ const CartItems = ({ user }) => {
     });
   };
 
+  // Calculate grand total for all consignors
+  const grandTotal = Object.values(cartProducts).reduce(
+    (total, consignor) => total + consignor.total,
+    0
+  );
+
   return (
-    <div className="mx-auto p-4 max-w-[100%]  bg-[#FEEBEB] min-h-screen">
+    <div className="mx-auto p-4 max-w-[100%] bg-[#FEEBEB] min-h-screen">
       <div className="bg-white rounded-lg p-4 sm:p-10 sm:max-w-[80%] m-auto">
         <h2 className="text-[30px] font-semibold mb-4 text-center">
           Shopping Cart
@@ -104,18 +110,26 @@ const CartItems = ({ user }) => {
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-6 text-center">
-                    <p className="text-2xl font-semibold mb-4 sm:mb-0">
-                      Total: €{total}
-                    </p>
-                    <BuyNow
-                      user={user}
-                      consignorProducts={cartProducts[consignorName]}
-                    />
+                  <div className="text-right">
+                    <p className="text-lg font-semibold">Subtotal: €{total}</p>
                   </div>
                 </div>
               );
             })}
+
+            {/* Single payment section at the bottom */}
+            <div className="mt-8 pt-6 border-t-2 border-gray-200">
+              <div className="text-center mb-6">
+                <p className="text-3xl font-bold text-gray-800">
+                  Grand Total: €{grandTotal}
+                </p>
+              </div>
+              <BuyNow
+                storeUser={storeUser}
+                allConsignorProducts={cartProducts}
+                grandTotal={grandTotal}
+              />
+            </div>
           </>
         ) : (
           <>
