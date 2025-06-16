@@ -115,16 +115,16 @@ export async function getPercentage() {
 
 export async function storeSuccessResult(accountId) {
   try {
-    const session = await auth();
-    if (!session) {
-      return { status: 400, error: "Invalid User" };
-    }
-    if (!accountId) {
-      return {
-        status: 400,
-        error: "Account ID is required.",
-      };
-    }
+    // const session = await auth();
+    // if (!session) {
+    //   return { status: 400, error: "Invalid User" };
+    // }
+    // if (!accountId) {
+    //   return {
+    //     status: 400,
+    //     error: "Account ID is required.",
+    //   };
+    // }
 
     // Retrieve the account from Stripe
     const account = await stripe.accounts.retrieve(accountId);
@@ -134,8 +134,6 @@ export async function storeSuccessResult(accountId) {
         error: "Account not found.",
       };
     }
-    // const isChargesEnabled = account.charges_enabled;
-    // const isPayoutsEnabled = account.payouts_enabled;
 
     const {
       charges_enabled,
@@ -143,26 +141,28 @@ export async function storeSuccessResult(accountId) {
       requirements: { currently_due = [], eventually_due = [] } = {},
     } = account;
 
-    // const missingRequirements =
-    //   account.requirements && account.requirements.currently_due.length > 0;
-    // const eventuallyDueRequirements =
-    //   account.requirements && account.requirements.eventually_due.length > 0;
-
-    // Determine if the account is fully filled (i.e., complete and enabled)
-
     const isAccountComplete =
       charges_enabled &&
       payouts_enabled &&
       currently_due.length === 0 &&
       eventually_due.length === 0;
 
-    // const isAccountComplete =
-    //   isChargesEnabled &&
-    //   isPayoutsEnabled &&
-    //   !missingRequirements &&
-    //   !eventuallyDueRequirements;
-    // Check if the account document exists for the user
-    const existingAccount = await Account.findOne({ userId: session.user.id });
+    return {
+      status: 200,
+      isAccountComplete: isAccountComplete,
+    };
+  } catch (error) {
+    console.log(error.message, "message");
+    return {
+      status: 500,
+      error: "An error occurred while refreshing the onboarding process.",
+    };
+  }
+}
+
+export async function storeAccountDetail(userId, accountId, isAccountComplete) {
+  try {
+    const existingAccount = await Account.findOne({ userId });
 
     if (existingAccount) {
       existingAccount.accountId = accountId;
@@ -176,7 +176,7 @@ export async function storeSuccessResult(accountId) {
     }
 
     await Account.create({
-      userId: session.user.id,
+      userId: userId,
       accountId,
       percentage: 10,
       isAccountComplete,
