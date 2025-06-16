@@ -186,6 +186,7 @@ export async function storeSuccessResult(accountId) {
       };
     }
   } catch (error) {
+    console.log(error.message,'message')
     return {
       status: 500,
       error: "An error occurred while refreshing the onboarding process.",

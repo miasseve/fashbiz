@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 const page = async ({ params }) => {
   const { accountId } = await params;
   const response = await storeSuccessResult(accountId);
+  console.log(response,accountId, "responseeeeee");
   if (response.status === 200) {
     redirect("/dashboard/stripe-connect");
   } else {
