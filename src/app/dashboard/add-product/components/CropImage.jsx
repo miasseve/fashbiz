@@ -77,7 +77,7 @@ const CropImage = ({
         className="m-auto my-6 w-full sm:w-4/5 md:w-3/5 lg:w-2/5"
         src={cropImage}
         style={{ height: 200 }}
-        aspectRatio={1} // Adjust aspect ratio as needed
+        // aspectRatio={1} // Adjust aspect ratio as needed
         guides={false}
         ref={cropperRef}
       />

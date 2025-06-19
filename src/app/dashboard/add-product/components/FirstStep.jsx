@@ -274,13 +274,13 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         const blob = await removeBackground(
           uploadedImagesWithView[viewType].url
         );
-        const processedUrl = URL.createObjectURL(blob);
-        const processedBlob = await fetch(processedUrl).then((res) =>
-          res.blob()
-        );
-
+        // const processedUrl = URL.createObjectURL(blob);
+        // const processedBlob = await fetch(processedUrl).then((res) =>
+        //   res.blob()
+        // );
+        const base64File = await blobToBase64(blob);
         // Convert Blob to Base64
-        const base64File = await blobToBase64(processedBlob);
+        // const base64File = await blobToBase64(processedBlob);
         const res = await updateCloudinaryImage(base64File);
         if (res.status == 200) {
           setUploadedImagesWithView((prevImages) => ({
