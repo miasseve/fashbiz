@@ -3,7 +3,7 @@ import { getProductById } from "@/actions/productActions";
 import ImageCarousel from "@/app/product/components/ImageCarousel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
+import DeleteButton from "./DeleteButton";
 export const metadata = {
   title: "Product",
 };
@@ -53,6 +53,7 @@ const Page = async ({ params }) => {
           >
             View Product Details
           </Link>
+          <DeleteButton productId={parsedProduct._id} />
           {parsedUser && (
             <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
               <p className="text-gray-800 italic font-semibold">
