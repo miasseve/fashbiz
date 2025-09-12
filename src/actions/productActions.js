@@ -99,7 +99,7 @@ export async function createProduct(formData) {
         brand,
         category: collectionId,
         description,
-        price:formattedPrice,
+        price: formattedPrice,
         images,
         userId: session.user.id,
         consignorName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
@@ -504,6 +504,62 @@ export async function getProductById(productId) {
       status: 500, // Internal server error status code
       error: error.message || "Failed to fetch product",
     };
+  }
+}
+
+export async function deleteProductByIdAndWix(product) {
+  const { _id, wixProductId } = product;
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    // Connect to the database
+    await dbConnect();
+
+    // Check if the product exists before attempting to delete
+    const product = await Product.findById(_id);
+    if (!product) {
+      throw new Error("Product not found.");
+    }
+
+    if (product.userId.toString() !== session.user.id) {
+      throw new Error("You do not have permission to delete this product.");
+    }
+    // Delete the product by ID
+    await Product.deleteOne({ _id });
+
+    try {
+      const getResponse = await axios.get(
+        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (getResponse.status === 200) {
+        await axios.delete(
+          `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+              "wix-site-id": process.env.WIX_SITE_ID,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.log(error, "error");
+    }
+
+    return { status: 200, message: "Product deleted successfully." };
+  } catch (error) {
+    return { status: 500, error: error.message || "Something went wrong" };
   }
 }
 
