@@ -92,14 +92,11 @@ const SecondStep = ({
           });
           
           if (response.status === 200) {
-            const garments = response.data?.garmentLabels
-              ?.map((label) => label.description)
-              .join(" , ");
-
+             const garments = response.data?.garmentLabels?.join(" , ");
             setValue("title", garments || "");
             setValue(
               "brand",
-              response.data?.logos[0]?.description || garments || ""
+              response.data?.logos[0] || garments || ""
             );
             setValue("description", response.data?.descriptions || "");
           }
