@@ -129,7 +129,7 @@ label {
 }
 
 .bg-fash-gradient {
-  background: linear-gradient(180.65deg, #f4b5b5 -20.23%, #d17273 99.41%);
+    background: linear-gradient(90deg, #ff3131 0%, #ff7dc3 100%);
 }
 .tabbutton div > button {
   height: 40px;

@@ -51,7 +51,7 @@ const LoginForm = () => {
     <section className="min-h-screen bg-fash-gradient">
       <div className="md:max-w-[100%] mx-auto min-h-screen">
         <div className="sm:flex w-full gap-5 justify-between relative h-full min-h-screen">
-          <div className="bg-[#fff] sm:flex justify-end items-center  sm:p-4 lg:p-0  p-8 sm:p-0 sm:min-h-screen w-full sm:w-[50%]">
+          <div className=" sm:flex justify-end items-center  sm:p-4 lg:p-0  p-8 sm:p-0 sm:min-h-screen w-full sm:w-[50%]">
             <div className="w-100% md:w-[430px] sm:pr-[2rem] lftlogin">
               <div className="w-full text-center">
                 <div className="icon-text text-black relative">

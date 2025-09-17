@@ -99,7 +99,7 @@ const Layout = ({ children }) => {
               </Button>
             </div>
           </Card>
-          <div className="max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px]  px-[15px]  bg-[#FEEBEB] min-h-screen h-auto">
+          <div className={`max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px]  px-[15px] bg-fash-gradient min-h-screen h-auto`}>
             {children}
           </div>
         </div>
