@@ -107,3 +107,19 @@ export const productSchema = Yup.object().shape({
     ),
   description: Yup.string().required("Description is required"),
 });
+
+export const updateProductSchema = Yup.object().shape({
+  sku: Yup.string().required("SKU is required"),
+  title: Yup.string().required("Title is required"),
+  brand: Yup.string().required("Brand is required"),
+  price: Yup.number()
+    .typeError("Price must be a number")
+    .required("Price is required")
+    .positive("Price must be greater than zero")
+    .test(
+      "max-2-decimals",
+      "Price can have at most 2 decimal places",
+      (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
+    ),
+  description: Yup.string().required("Description is required"),
+});

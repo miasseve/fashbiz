@@ -422,7 +422,7 @@ export async function deleteProductsFromWix(products) {
       );
       if (getResponse.status === 200) {
         try {
-          const response = await axios.delete(
+             await axios.delete(
             `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
             {
               headers: {
@@ -586,6 +586,65 @@ export async function deleteProductById(productId) {
     await Product.deleteOne({ _id: productId });
 
     return { status: 200, message: "Product deleted successfully." };
+  } catch (error) {
+    return { status: 500, error: error.message || "Something went wrong" };
+  }
+}
+
+export async function updateProduct(productId, data) {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    await dbConnect();
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new Error("Product not found.");
+    }
+
+    // Ensure logged-in user owns this product
+    if (product.userId.toString() !== session.user.id) {
+      throw new Error("You do not have permission to update this product.");
+    }
+    await Product.updateOne({ _id: productId }, { $set: data });
+
+    if (product.wixProductId) {
+      try {
+        const productData = {
+          product: {
+            name: data.title || product.title,
+            priceData: {
+              price: data.price || product.price,
+            },
+            description: data.description || product.description,
+            sku: data.sku || product.sku,
+          },
+        };
+
+        await axios.patch(
+          `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
+          productData,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+              "wix-site-id": process.env.WIX_SITE_ID,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        return {
+          status: 500,
+          error: "Product updated in DB but failed to update Wix.",
+        };
+      }
+    }
+
+    return { status: 200, message: "Product updated successfully" };
   } catch (error) {
     return { status: 500, error: error.message || "Something went wrong" };
   }

@@ -44,6 +44,7 @@ const SecondStep = ({
     register,
     handleSubmit,
     setValue,
+      watch,
     formState: { errors, isValid, isSubmitting },
   } = useForm({
     mode: "onTouched",
@@ -109,6 +110,16 @@ const SecondStep = ({
 
     fetchProductDetails();
   }, []);
+
+  const brandValue = watch("brand");
+
+  useEffect(() => {
+  if (brandValue) {
+    const formattedBrand = brandValue.replace(/\s+/g, "").toUpperCase();
+    const generatedSKU = `${user.storename}${currentYear}${formattedBrand}${parseInt(productCount) + 1}`;
+    setValue("sku", generatedSKU);
+  }
+}, [brandValue, setValue, user.storename, currentYear, productCount]);
 
   
   const onSubmit = async (data) => {

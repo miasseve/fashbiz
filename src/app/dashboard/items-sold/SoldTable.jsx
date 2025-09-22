@@ -54,8 +54,40 @@ const SoldTable = ({ products }) => {
     }
   };
 
+  
+  // Function to download CSV
+  const downloadCSV = () => {
+    if (!localProducts || localProducts.length === 0) return;
+
+    const headers = ["SKU", "Product Name", "Price", "Consignor Name", "Consignor Email"];
+    const rows = localProducts.map((p) => [
+      p.sku,
+      p.title,
+      p.price,
+      p.consignorName || "Store Owner",
+      p.consignorEmail || "Store Owner",
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "sold_products.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div>
+       <div className="mb-4 flex justify-end">
+        <Button onPress={downloadCSV} className="success-btn">
+          Download CSV
+        </Button>
+      </div>
       <Table aria-label="Sold Products Table">
         <TableHeader>
           <TableColumn>SKU</TableColumn>

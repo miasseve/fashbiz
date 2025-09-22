@@ -39,7 +39,7 @@ const ProductPage = async ({ params }) => {
           </li>
         </ul>
         <p className="text-gray-700">{parsedProduct.description}</p>
-        <AddToCart product={parsedProduct} />
+        <AddToCart product={parsedProduct} /> 
       </div>
     </div>
     </div>

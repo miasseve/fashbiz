@@ -15,7 +15,7 @@ const AddToCart = ({ product }) => {
   return (
     <Button
       type="submit"
-      className="danger-btn max-w-max"
+      className="success-btn"
       onPress={handleAddToCart}
     >
       Add To Cart

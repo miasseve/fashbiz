@@ -1,15 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 import { removeProductFromCart } from "@/features/cartSlice";
 import BuyNow from "./BuyNow";
 import Link from "next/link";
 import { Button } from "@heroui/button";
+import { ArrowLeft } from "lucide-react"; 
 
 const CartItems = ({ storeUser }) => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
   const [cartProducts, setCartProducts] = useState([]);
+  const router=useRouter();
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -64,6 +67,16 @@ const CartItems = ({ storeUser }) => {
   return (
     <div className="mx-auto p-4 max-w-[100%] bg-[#FEEBEB] min-h-screen">
       <div className="bg-white rounded-lg p-4 sm:p-10 sm:max-w-[80%] m-auto">
+          <div className="mb-4">
+          <Button
+            onPress={() => router.push("/dashboard/store")}
+            variant="light"
+            className="flex items-center gap-2 text-gray-700 hover:text-black"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Store
+          </Button>
+        </div>
         <h2 className="text-[30px] font-semibold mb-4 text-center">
           Shopping Cart
         </h2>
