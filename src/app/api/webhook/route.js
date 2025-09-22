@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 }); // Replace with your Stripe secret key
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
+const endpointSecret = "whsec_mk77xOjunaM55oV9dQtRCNSiXTBjcT5w";
 
 // const endpointSecret =
 //   "whsec_6df68ad07c5fc76857088ec698734ad7b9a5b92af228c6e019582a5239f60f4f";
