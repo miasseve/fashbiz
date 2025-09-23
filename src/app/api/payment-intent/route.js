@@ -96,7 +96,6 @@ export async function POST(req) {
           customer: finalCustomerId,
         });
       }
-
       paymentIntent = await stripe.paymentIntents.create({
         amount: consignorTotal * 100,
         currency: "eur",

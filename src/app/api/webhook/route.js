@@ -9,13 +9,12 @@ import { transferCreated } from "@/mails/TransferCreated";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient(),
-}); // Replace with your Stripe secret key
+}); 
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
+const endpointSecret =
+  "whsec_mk77xOjunaM55oV9dQtRCNSiXTBjcT5w";
 
-// const endpointSecret =
-//   "whsec_6df68ad07c5fc76857088ec698734ad7b9a5b92af228c6e019582a5239f60f4f";
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
@@ -41,113 +40,112 @@ export async function POST(req, res) {
 
   // Handle the event
   switch (event.type) {
-    case "balance.available":
-      console.log(
-        "🔄 Funds are now available! Proceeding with second transfer..."
-      );
-      break;
-    case "payment_intent.succeeded":
-      const paymentIntent = event.data.object;
-      const metaData = paymentIntent.metadata;
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+    case "charge.updated":
+      const charges = event.data.object;
+      // balance_transaction should be available here
+      try {
+        // Get payment intent to access metadata
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          charges.payment_intent
+        );
+        const metaData = paymentIntent.metadata;
 
-      const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+        const balanceTransaction = await stripe.balanceTransactions.retrieve(
+          charges.balance_transaction
+        );
 
-      const balanceTransaction = await stripe.balanceTransactions.retrieve(
-        charge.balance_transaction
-      );
+        const netAmount = balanceTransaction.net;
+     
+        if (
+          metaData.consignorEmail == "" &&
+          metaData.consignorAccountId == ""
+        ) {
+          try {
+            await stripe.transfers.create({
+              amount: netAmount,
+              currency: "eur",
+              destination: metaData.storeOwnerAccountId,
+              source_transaction: paymentIntent.latest_charge,
+              transfer_group: `ORDER_${paymentIntent.id}`,
+              metadata: {
+                name: metaData.storeOwnerName,
+                email: metaData.storeOwnerEmail,
+              },
+            });
+          } catch (error) {
+            await transferFailed(
+              metaData.storeOwnerName,
+              metaData.storeOwnerEmail,
+              netAmount / 100,
+              "eur",
+              `Failed Payment`
+            );
+          }
+        } else {
+          const storeOwnerPercentage = metaData.storeOwnerPercentage;
+          const storeOwnerAmount =
+            (Math.floor(netAmount / 100) * storeOwnerPercentage) / 100;
+          const consignorAmount =
+            Math.floor(netAmount / 100) - storeOwnerAmount;
+          try {
+            await stripe.transfers.create({
+              amount: storeOwnerAmount * 100,
+              currency: "eur",
+              destination: metaData.storeOwnerAccountId,
+              source_transaction: paymentIntent.latest_charge,
+              transfer_group: `ORDER_${paymentIntent.id}`,
+              metadata: {
+                name: metaData.storeOwnerName,
+                email: metaData.storeOwnerEmail,
+              },
+            });
+          } catch (error) {
+            await transferFailed(
+              metaData.storeOwnerName,
+              metaData.storeOwnerEmail,
+              storeOwnerAmount,
+              "eur",
+              `Failed Payment`
+            );
+          }
 
-      const netAmount = balanceTransaction.net;
-      if (metaData.consignorEmail == "" && metaData.consignorAccountId == "") {
-        try {
-          await stripe.transfers.create({
-            amount: netAmount,
-            currency: "eur",
-            destination: metaData.storeOwnerAccountId,
-            source_transaction: paymentIntent.latest_charge,
-            transfer_group: `ORDER_${paymentIntent.id}`,
-            metadata: {
-              name: metaData.storeOwnerName,
-              email: metaData.storeOwnerEmail,
-            },
-          });
-        } catch (error) {
-          await transferFailed(
-            metaData.storeOwnerName,
-            metaData.storeOwnerEmail,
-            netAmount / 100,
-            "eur",
-            `Failed Payment`
-          );
+          try {
+            await stripe.transfers.create({
+              amount: consignorAmount * 100,
+              currency: "eur",
+              destination: metaData.consignorAccountId,
+              source_transaction: paymentIntent.latest_charge,
+              transfer_group: `ORDER_${paymentIntent.id}`,
+              metadata: {
+                name: metaData.consignorName,
+                email: metaData.consignorEmail,
+              },
+            });
+          } catch (error) {
+            await transferFailed(
+              metaData.consignorName,
+              metaData.consignorEmail,
+              consignorAmount,
+              "eur",
+              `Failed Payment`
+            );
+          }
         }
-      } else {
-        const storeOwnerPercentage = metaData.storeOwnerPercentage;
-        const storeOwnerAmount =
-          (Math.floor(netAmount / 100) * storeOwnerPercentage) / 100;
-        const consignorAmount = Math.floor(netAmount / 100) - storeOwnerAmount;
-        try {
-          await stripe.transfers.create({
-            amount: storeOwnerAmount * 100,
-            currency: "eur",
-            destination: metaData.storeOwnerAccountId,
-            source_transaction: paymentIntent.latest_charge,
-            transfer_group: `ORDER_${paymentIntent.id}`,
-            metadata: {
-              name: metaData.storeOwnerName,
-              email: metaData.storeOwnerEmail,
-            },
-          });
-
-
-        } catch (error) {
-          await transferFailed(
-            metaData.storeOwnerName,
-            metaData.storeOwnerEmail,
-            storeOwnerAmount,
-            "eur",
-            `Failed Payment`
-          );
-          console.error("Transfer failed:", error.message);
-        }
-
-        try {
-          await stripe.transfers.create({
-            amount: consignorAmount * 100,
-            currency: "eur",
-            destination: metaData.consignorAccountId,
-            source_transaction: paymentIntent.latest_charge,
-            transfer_group: `ORDER_${paymentIntent.id}`,
-            metadata: {
-              name: metaData.consignorName,
-              email: metaData.consignorEmail,
-            },
-          });
-        } catch (error) {
-          await transferFailed(
-            metaData.consignorName,
-            metaData.consignorEmail,
-            consignorAmount,
-            "eur",
-            `Failed Payment`
-          );
-        }
+      } catch (error) {
+        console.error("Error processing charge:", error);
       }
-
-      // return NextResponse.json({
-      //   success: "PaymentIntent processed successfully",
-      // });
-
       break;
+
     case "transfer.created":
-        const transferCreated = event.data.object;
-        console.log("Transfer Created Event:", transferCreated);
+      const transferCreate = event.data.object;
+      // console.log("Transfer Created Event:", transferCreat);
       try {
         await transferCreated(
-          transferCreated.metadata.name,
-          transferCreated.metadata.email,
-          transferCreated.amount / 100,
-          transferCreated.currency,
-          transferCreated.id
+          transferCreate.metadata.name,
+          transferCreate.metadata.email,
+          transferCreate.amount / 100,
+          transferCreate.currency,
+          transferCreate.id
         );
       } catch (error) {
         console.error(
@@ -158,22 +156,18 @@ export async function POST(req, res) {
       // Handle transfer creation (e.g., record the transfer in your database)
       break;
     case "transfer.failed":
-      const transferFailed = event.data.object; 
+      const transferFail = event.data.object;
       try {
         await transferFailed(
-          transferFailed.metadata.name,
-          transferFailed.metadata.email,
-          transferFailed.amount / 100,
-          transferFailed.currency,
-          transferFailed.id
+          transferFail.metadata.name,
+          transferFail.metadata.email,
+          transferFail.amount / 100,
+          transferFail.currency,
+          transferFail.id
         );
       } catch (error) {
-        console.error(
-          "❌ Failed to send transferCreated email:",
-          error.message
-        );
+        console.error("❌ Failed to send transferFailed email:", error.message);
       }
-      // Handle failed transfer (e.g., notify the user or retry the transfer)
       break;
     case "transfer.paid":
       break;
@@ -184,3 +178,4 @@ export async function POST(req, res) {
 
   return NextResponse.json({ message: "Event received" }, { status: 200 });
 }
+
