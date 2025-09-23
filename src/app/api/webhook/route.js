@@ -5,6 +5,7 @@ import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
+
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient(),
@@ -96,6 +97,8 @@ export async function POST(req, res) {
               email: metaData.storeOwnerEmail,
             },
           });
+
+
         } catch (error) {
           await transferFailed(
             metaData.storeOwnerName,
@@ -136,14 +139,15 @@ export async function POST(req, res) {
 
       break;
     case "transfer.created":
-      const transfer = event.data.object;
+        const transferCreated = event.data.object;
+        console.log("Transfer Created Event:", transferCreated);
       try {
         await transferCreated(
-          transfer.metadata.name,
-          transfer.metadata.email,
-          transfer.amount / 100,
-          transfer.currency,
-          transfer.id
+          transferCreated.metadata.name,
+          transferCreated.metadata.email,
+          transferCreated.amount / 100,
+          transferCreated.currency,
+          transferCreated.id
         );
       } catch (error) {
         console.error(
@@ -154,13 +158,14 @@ export async function POST(req, res) {
       // Handle transfer creation (e.g., record the transfer in your database)
       break;
     case "transfer.failed":
+      const transferFailed = event.data.object; 
       try {
         await transferFailed(
-          transfer.metadata.name,
-          transfer.metadata.email,
-          transfer.amount / 100,
-          transfer.currency,
-          transfer.id
+          transferFailed.metadata.name,
+          transferFailed.metadata.email,
+          transferFailed.amount / 100,
+          transferFailed.currency,
+          transferFailed.id
         );
       } catch (error) {
         console.error(
