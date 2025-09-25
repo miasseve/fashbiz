@@ -18,13 +18,12 @@ const endpointSecret =
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
-    bodyParser: false, // Disable Next.js body parser, Stripe requires raw body
+    bodyParser: false, 
   },
 };
 
 // Handle POST requests (webhook events)
 export async function POST(req, res) {
-  // const sig = req.headers['stripe-signature'];
   const sig = req.headers.get("stripe-signature");
   let event;
 
@@ -44,7 +43,6 @@ export async function POST(req, res) {
       const charges = event.data.object;
       // balance_transaction should be available here
       try {
-        // Get payment intent to access metadata
         const paymentIntent = await stripe.paymentIntents.retrieve(
           charges.payment_intent
         );

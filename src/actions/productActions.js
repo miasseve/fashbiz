@@ -38,7 +38,7 @@ export async function createProduct(formData) {
         priceData: { price: formattedPrice },
         description: description,
         sku: sku,
-        visible: false,
+        visible: true,
       },
     };
 
