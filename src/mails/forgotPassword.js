@@ -42,10 +42,6 @@ export async function sendResetPasswordEmail(user, resetToken) {
         <p style="font-size: 14px; color: #777;">
           If you didn’t request a password reset, you can safely ignore this email. This link will expire in 1 hour.
         </p>
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-        <p style="font-size: 12px; color: #aaa; text-align: center;">
-          Need help? Contact our support team at <a href="mailto:support@yourwebsite.com" style="color: #007bff;">support@yourwebsite.com</a>
-        </p>
       </div>
     `,
   });

@@ -44,9 +44,9 @@ export async function transferFailed(
 
       <p>If you believe this was a mistake or need support resolving it, feel free to contact our support team.</p>
 
-      <p>Thank you for using Fashbiz.</p>
+      <p>Thank you for using LESTORES.</p>
 
-      <p>Best regards,<br/>Fashbiz Team</p>
+      <p>Best regards,<br/>REELESTORES Team</p>
     </div>`,
   });
 }

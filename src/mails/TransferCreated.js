@@ -42,9 +42,9 @@ export async function transferCreated(
 
       <p>You can expect to see this amount reflected in your connected Stripe account shortly. If you have any questions or concerns, feel free to reach out to our support team.</p>
 
-      <p>Thank you for being part of Fashbiz!</p>
+      <p>Thank you for being part of LESTORES!</p>
 
-      <p>Best regards,<br/>Fashbiz Team</p>
+      <p>Best regards,<br/>REELESTORES Team</p>
     </div>`,
   });
 }
