@@ -45,39 +45,6 @@ export default function SubscriptionPlans({ user }) {
     );
   }
 
-  // const plans = [
-  //   {
-  //     name: "Starter",
-  //     price: "$0",
-  //     period: "month",
-  //     features: ["✔ 14 day free trial"],
-  //     button: "Subscribe Now",
-  //   },
-  //   {
-  //     name: "Pro",
-  //     price: "$29",
-  //     period: "month",
-  //     features: [
-  //       "✔ Add Unlimited Products to Your Store",
-  //       "✔ Connect Stripe for Secure Split Payments",
-  //       "✔ Access to Sales, Orders & Analytics Dashboard",
-  //     ],
-  //     button: "Subscribe Now",
-  //   },
-  //   {
-  //     name: "Business",
-  //     price: "$99",
-  //     period: "month",
-  //     features: [
-  //       "✔ Add Unlimited Products to Your Store",
-  //       "✔ Connect Stripe for Secure Split Payments",
-  //       "✔ Access to Sales, Orders & Analytics Dashboard",
-  //       "✔ Upload Product Images & Descriptions",
-  //       "✔ Manage Categories and Pricing Dynamically",
-  //     ],
-  //     button: "Subscribe Now",
-  //   },
-  // ];
 
   const hasActiveSubscription =
     user?.subscriptionEnd && dayjs().isBefore(dayjs(user.subscriptionEnd));
@@ -159,28 +126,7 @@ export default function SubscriptionPlans({ user }) {
         }
       }
     });
-    // if (!confirm("Cancel subscription at period end?")) return;
-    // setActionLoading('cancel');
-
-    // try {
-    //   const res = await fetch("/api/stripe/subscription", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ userId: user._id, action: "cancel" }),
-    //   });
-
-    //   const data = await res.json();
-    //   if (data.success) {
-    //     toast.success(data.message || "Subscription will cancel at period end");
-    //     await fetchData();
-    //   } else {
-    //     toast.error(`Error: ${data.error}`);
-    //   }
-    // } catch (error) {
-    //   alert("Failed to cancel subscription");
-    // } finally {
-    //   // setActionLoading(null);
-    // }
+   
   };
 
   return (
@@ -260,8 +206,7 @@ export default function SubscriptionPlans({ user }) {
         )}
       </div>
 
-      {/* 🟢 Make cards appear in one line */}
-      <div className="flex flex-wrap justify-center gap-8 px-4">
+     <div className="flex flex-wrap justify-center gap-8 px-4">
         {plans.map((plan, index) => (
           <Card
             key={index}
@@ -305,13 +250,6 @@ export default function SubscriptionPlans({ user }) {
             </CardHeader>
 
             <CardBody className="flex flex-col items-center pb-6">
-              {/* <ul className={`mb-6 space-y-4 text-lg text-start h-full ${plan.popular ? "text-white/90" : "text-gray-600 dark:text-gray-300"}`}>
-          {plan.features.map((f, i) => (
-            <li className="leading-8" key={i}>
-              {f}
-            </li>
-          ))}
-        </ul> */}
               <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-lg text-left px-6">
                 <li>✔ Full access to premium features</li>
                 <li>✔ Priority customer support</li>
