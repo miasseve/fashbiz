@@ -9,10 +9,10 @@ import Providers from "@/components/Providers";
 
 export const metadata = {
   title: {
-    template: "%s | Fashbiz",
-    default: "Fashbiz",
+    template: "%s | Ree",
+    default: "Ree",
   },
-  description: "A modern ecommerce platform",
+  description: "A SECONDHAND STORES AI Automated listing of new products & Smart POS for resale and secondhand stores",
 };
 
 const montserrat = Montserrat({

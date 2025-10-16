@@ -13,6 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.storename = user.storename;
         token.role = user.role;
         token.name=user.name;
+        token.isActive=user.isActive;
       }
 
       return token;
@@ -25,6 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.storename=token.storename;
         session.user.role=token.role;
         session.user.name=token.name;
+        session.user.isActive=token.isActive;
       }
 
       return session;

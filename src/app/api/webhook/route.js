@@ -1,5 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import User from "@/models/User";
+import Subscription from "@/models/Subscription";
 import { productPurchased } from "@/mails/ProductPurchased";
 import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
@@ -9,15 +11,16 @@ import { transferCreated } from "@/mails/TransferCreated";
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient(),
-}); 
+});
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
 const endpointSecret ="whsec_mk77xOjunaM55oV9dQtRCNSiXTBjcT5w";
-
+// const endpointSecret =
+//   "whsec_817651dd8124d7d8557327bc20cda1f981e946abc7ad01c55a6b7d7294392b68";
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
 };
 
@@ -38,6 +41,82 @@ export async function POST(req, res) {
 
   // Handle the event
   switch (event.type) {
+    case "customer.subscription.created": {
+      const subscriptionObj = event.data.object;
+
+      // Find user by stripeCustomerId
+      const fullSubscription = await stripe.subscriptions.retrieve(
+        subscriptionObj.id
+      );
+      console.log("Subscription Created Event:", fullSubscription);
+      const user = await User.findOne({
+        stripeCustomerId: fullSubscription.customer,
+      });
+      if (!user) {
+        console.warn(
+          "User not found for subscription:",
+          fullSubscription.customer
+        );
+        break;
+      }
+
+      // Get price & product info from Stripe
+      const price = await stripe.prices.retrieve(
+        fullSubscription.items.data[0].price.id
+      );
+      const product = await stripe.products.retrieve(price.product);
+
+      // Upsert subscription in DB
+      const subscriptionData = {
+        userId: user._id,
+        stripeSubscriptionId: fullSubscription.id,
+        stripeCustomerId: fullSubscription.customer,
+        planName: price.nickname || product.name || "Unknown Plan",
+        planPriceId: price.id,
+        status: fullSubscription.status,
+        startDate: new Date(fullSubscription.start_date * 1000),
+        endDate: new Date(fullSubscription.current_period_end * 1000),
+        cancelAtPeriodEnd: fullSubscription.cancel_at_period_end || false,
+      };
+
+      await Subscription.findOneAndUpdate(
+        { userId: user._id }, // ✅ match by user, not subscription ID
+        subscriptionData,
+        { upsert: true, new: true }
+      );
+
+      // Update user document
+      user.subscriptionType = price.nickname || product.name || "Unknown Plan";
+      user.subscriptionStart = new Date(fullSubscription.start_date * 1000);
+      user.subscriptionEnd = new Date(
+        fullSubscription.current_period_end * 1000
+      );
+      user.isActive = true;
+      await user.save();
+
+      console.log("Subscription created & user updated:", fullSubscription.id);
+      break;
+    }
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const userId = session.metadata.userId;
+
+      // Get subscription details
+      const subscriptionId = session.subscription;
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+      // Update user in MongoDB
+      await dbConnect();
+      await User.findByIdAndUpdate(userId, {
+        subscriptionType: subscription.items.data[0].plan.nickname || "Pro",
+        subscriptionStart: new Date(subscription.current_period_start * 1000),
+        subscriptionEnd: new Date(subscription.current_period_end * 1000),
+        stripeSubscriptionId: subscription.id,
+      });
+
+      console.log(`✅ Subscription updated for user ${userId}`);
+      break;
+    }
     case "charge.updated":
       const charges = event.data.object;
       // balance_transaction should be available here
@@ -52,7 +131,7 @@ export async function POST(req, res) {
         );
 
         const netAmount = balanceTransaction.net;
-     
+
         if (
           metaData.consignorEmail == "" &&
           metaData.consignorAccountId == ""
@@ -175,4 +254,3 @@ export async function POST(req, res) {
 
   return NextResponse.json({ message: "Event received" }, { status: 200 });
 }
-

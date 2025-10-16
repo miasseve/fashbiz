@@ -91,17 +91,14 @@ const SecondStep = ({
           const response = await axios.post("/api/google-vision", {
             imageUrl: imagesFiltered[0]?.url ?? "",
           });
-          
-          if (response.status === 200) {
-             const garments = response.data?.garmentLabels?.join(" , ");
-            setValue("title", garments || "");
-            setValue(
-              "brand",
-              response.data?.logos[0] || garments || ""
-            );
-            setValue("description", response.data?.descriptions || "");
+         if (response.status === 200) {
+          const {   title = '', brand='', description = "" } = response.data;
+          setValue("title", title);
+          setValue("brand", brand);
+          setValue("description", description || "");
           }
         } catch (error) {
+           console.error("Error fetching product details:", error);
         } finally {
           setLoading(false);
         }

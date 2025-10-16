@@ -3,7 +3,7 @@ import { getProductById } from "@/actions/productActions";
 import ImageCarousel from "../components/ImageCarousel";
 import AddToCart from "./AddToCart";
 import { redirect } from "next/navigation";
-
+import BackButton from "./BackButton";
 const ProductPage = async ({ params }) => {
   const { productId } = await params;
   const response = await getProductById(productId);
@@ -22,8 +22,8 @@ const ProductPage = async ({ params }) => {
 
   return (
     
-    <div className="flex sm:flex-col lg:flex-row gap-8  bg-[#FEEBEB] w-full lg:gap-16 p-6 lg:p-12 m-auto item-center">
-      <div className="w-full sm:w-[80%] m-auto sm:flex h-screen ">
+    <div className="bg-fash-gradient  flex sm:flex-col lg:flex-row gap-8 w-full lg:gap-16 p-6 lg:p-12 m-auto item-center">
+      <div className="w-full sm:w-[80%] m-auto sm:flex ">
       <div className="lg:w-1/2 flex flex-col items-center border border-[#ccc] p-4 max-h-max">
         <ImageCarousel images={parsedProduct.images} />
       </div>
@@ -38,8 +38,9 @@ const ProductPage = async ({ params }) => {
             <strong>Price:</strong> €{parsedProduct.price}
           </li>
         </ul>
-        <p className="text-gray-700">{parsedProduct.description}</p>
+        <p className="text-gray-800">{parsedProduct.description}</p>
         <AddToCart product={parsedProduct} /> 
+        {/* <BackButton /> */}
       </div>
     </div>
     </div>

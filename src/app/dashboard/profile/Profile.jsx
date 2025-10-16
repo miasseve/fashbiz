@@ -22,7 +22,6 @@ import PhoneInput from "react-phone-number-input";
 const Profile = ({ user, stripeResponse }) => {
   let sOptions = [];
   const router = useRouter();
-
   if (user?.country) {
     sOptions = State.getStatesOfCountry(user.country).map((state) => ({
       value: state.isoCode,
@@ -48,12 +47,24 @@ const Profile = ({ user, stripeResponse }) => {
     email: Yup.string()
       .email("Invalid email format")
       .required("Email is required"),
-    phoneNumber: Yup.string()
+    phone: Yup.string()
       .required("Phone number is required")
       .test("is-valid-phone", "Phone number is not valid", (value) => {
         if (!value) return false;
         return isValidPhoneNumber(value);
       }),
+    businessNumber: Yup.string().when("role", {
+          is: "store",
+          then: () =>
+            Yup.string()
+              .trim()
+              .matches(
+                /^[A-Z]{2}\d+$/,
+                "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+              )
+              .required("Business Registration Number is required"),
+          otherwise: () => Yup.string().nullable(),
+        }),
     address: Yup.string().trim().required("Address is required"),
     city: Yup.string().trim().required("City is required"),
     zipcode: Yup.string().when("country", {
@@ -87,7 +98,8 @@ const Profile = ({ user, stripeResponse }) => {
       lastname: user?.lastname || "",
       email: user?.email || "",
       storename: user?.storename || "",
-      phoneNumber: user?.phoneNumber || "",
+      businessNumber: user?.businessNumber || "",
+      phone: user?.phone || "",
       address: user?.address || "",
       city: user?.city || "",
       zipcode: user?.zipcode || "",
@@ -160,7 +172,7 @@ const Profile = ({ user, stripeResponse }) => {
       setError("");
       await profileSchema.validate(data, { abortEarly: false });
 
-      if (!isValidPhoneNumber(data.phoneNumber)) {
+      if (!isValidPhoneNumber(data.phone)) {
         setError("Invalid phone number");
         toast.error("Invalid phone number!", {
           position: "top-right",
@@ -182,6 +194,7 @@ const Profile = ({ user, stripeResponse }) => {
         setError(response.error);
       }
     } catch (error) {
+      console.log(error.message,'erroror')
       toast.error("Something went wrong!", {
         position: "top-right",
         autoClose: 2000,
@@ -251,7 +264,6 @@ const Profile = ({ user, stripeResponse }) => {
             {previewUrl && (
               <div className="flex gap-4">
                 <Button
-                  // className="px-4 py-2 rounded-md text-white hover:bg-blue-700"
                   className="success-btn"
                   onPress={handleImageClick}
                   color="success"
@@ -259,7 +271,6 @@ const Profile = ({ user, stripeResponse }) => {
                   <FaUserEdit />
                 </Button>
                 <Button
-                  // className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
                   className="danger-btn"
                   onPress={handleRemoveImage}
                 >
@@ -315,15 +326,35 @@ const Profile = ({ user, stripeResponse }) => {
             />
           </div>
         )}
+        {session?.user?.role === "store" && (
+            <>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Business Registration Number (VAT/CVR)
+                </label>
+                <input
+                  type="text"
+                  {...register("businessNumber")}
+                  placeholder="e.g., DK12345678"
+                  className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
+                />
+                {errors.businessNumber && (
+                  <span className="text-red-500 font-bold text-[12px]">
+                    {errors.businessNumber.message}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Phone Number
             </label>
             <Controller
-              name="phoneNumber"
+              name="phone"
               control={control}
-              defaultValue={user?.phoneNumber || ""}
+              defaultValue={user?.phone || ""}
               render={({ field }) => (
                 <PhoneInput
                   {...field}
@@ -334,9 +365,9 @@ const Profile = ({ user, stripeResponse }) => {
                 />
               )}
             />
-            {errors.phoneNumber && (
+            {errors.phone && (
               <span className="text-red-500 font-bold text-[12px]">
-                {errors.phoneNumber.message}
+                {errors.phone.message}
               </span>
             )}
           </div>
@@ -405,18 +436,6 @@ const Profile = ({ user, stripeResponse }) => {
                 </option>
               ))}
             </select>
-            {/* <Select
-              {...register("state")}
-              className="max-w-xs"
-              placeholder="Select state"
-              onChange={handleStateChange}
-            >
-              {stateOptions.map((state) => (
-                <SelectItem key={state.value} value={state.value}>
-                  {state.label}
-                </SelectItem>
-              ))}
-            </Select> */}
             {errors.state && (
               <span className="text-red-500 font-bold text-[12px]">
                 {errors.state.message}
@@ -442,18 +461,6 @@ const Profile = ({ user, stripeResponse }) => {
                 </option>
               ))}
             </select>
-            {/* <Select
-              {...register("country")}
-              className="max-w-xs"
-              placeholder="Select country"
-              onChange={handleCountryChange}
-            >
-              {countryOptions.map((country) => (
-                <SelectItem key={country.value} value={country.value}>
-                  {country.label}
-                </SelectItem>
-              ))}
-            </Select> */}
             {errors.country && (
               <span className="text-red-500 font-bold text-[12px]">
                 {errors.country.message}

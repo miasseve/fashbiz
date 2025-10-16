@@ -10,7 +10,7 @@ import {
 } from "@heroui/table";
 
 const formatTimestamp = (timestamp) => {
-  return new Date(timestamp * 1000).toLocaleString(); // Convert Unix timestamp to readable format
+  return new Date(timestamp * 1000).toLocaleString(); 
 };
 
 const HistoryTable = ({ historyData }) => {

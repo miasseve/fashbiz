@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import DeleteButton from "./DeleteButton";
 import EditButton from "./EditButton";
 import AddToCart from "@/app/product/[productId]/AddToCart";
+import CopyLinkButton from "./CopyLinkButton";
 export const metadata = {
   title: "Product",
 };
@@ -47,6 +48,9 @@ const Page = async ({ params }) => {
               {parsedProduct.description}
             </li>
           </ul>
+          <p>
+
+          </p>
           <AddToCart product={parsedProduct} />
           {/* <Link
             href={`/product/${parsedProduct._id}`}
@@ -57,6 +61,7 @@ const Page = async ({ params }) => {
           </Link> */}
           <DeleteButton product={parsedProduct} />
           <EditButton product={parsedProduct} />
+          {/* <CopyLinkButton productId={parsedProduct._id} /> */}
           {parsedUser && (
             <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
               <p className="text-gray-800 italic font-semibold">

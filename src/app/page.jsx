@@ -1,4 +1,3 @@
-import { FaArrowRightLong } from "react-icons/fa6";
 import Link from "next/link";
 
 export const metadata = {
@@ -49,20 +48,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Buttons Section */}
-      {/* <div className="container mx-auto">
-        <div className="flex flex-col sm:flex-row justify-center sm:justify-between gap-4 sm:gap-6">
-          <button className="border border-neutral-200 w-full sm:w-[33.333%] text-[#edf0f2] py-6 text-[1rem] sm:text-[1.5rem] 2xl:text-[2rem] lg:text-[1.5rem] hover:bg-[#0dcf00] transition duration-300">
-            Let's revolutionize resale fashion
-          </button>
-          <button className="border border-neutral-200 w-full sm:w-[33.333%] text-white py-6 text-[1rem] sm:text-[1.25rem] lg:text-[1.3rem] font-bold">
-            CONTACT <span className="ml-6 sm:ml-[60px]">ABOUT</span>
-          </button>
-          <button className="border border-neutral-200 w-full sm:w-[33.333%] text-white py-6 flex items-center gap-4 justify-center text-[1rem] sm:text-[1.25rem] lg:text-[1.3rem] font-bold hover:bg-[#0dcf00] transition duration-300">
-            <FaArrowRightLong size={24} /> MEMBERSHIP
-          </button>
-        </div>
-      </div> */}
     </section>
   );
 }

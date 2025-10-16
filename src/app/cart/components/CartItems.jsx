@@ -65,7 +65,7 @@ const CartItems = ({ storeUser }) => {
   );
 
   return (
-    <div className="mx-auto p-4 max-w-[100%] bg-[#FEEBEB] min-h-screen">
+    <div className="bg-fash-gradient mx-auto p-4 max-w-[100%] min-h-screen">
       <div className="bg-white rounded-lg p-4 sm:p-10 sm:max-w-[80%] m-auto">
           <div className="mb-4">
           <Button

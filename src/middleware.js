@@ -14,9 +14,9 @@ export async function middleware(req) {
   const publicRoutes = ["/"];
   const authRoutes = ["/login", "/register"];
   const protectedRoutes = [
-    "/dashboard",
-    "/dashboard/qr",
-    "/dashboard/add-product",
+    "/dashboard",                  
+    "/dashboard/qr",              
+    "/dashboard/add-product",       
     "/dashboard/profile",
     "/dashboard/store",
     "/dashboard/consignors",

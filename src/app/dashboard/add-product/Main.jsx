@@ -15,18 +15,15 @@ const Main = ({ user, productCount, stripeResponse }) => {
 
   const handleSaveUrl = () => {
     dispatch(setCurrentStep(currentStep + 1));
-    // setCurrentStep(currentStep + 1);
   };
 
   const handleBackStep = () => {
     dispatch(setCurrentStep(currentStep - 1));
-    // setCurrentStep(currentStep - 1);
   };
 
   const handleAddMoreProducts = () => {
     setCount(count + 1);
     dispatch(setCurrentStep(2));
-    // setCurrentStep(2);
   };
 
   const steps = ["Select Consignor", "Product Details", "Finish"];

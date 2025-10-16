@@ -8,7 +8,6 @@ import { toast } from "react-toastify";
 import { removeBackground } from "@imgly/background-removal";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
-
 import { setUploadedImagesOfProduct } from "@/features/productSlice";
 import {
   Input,

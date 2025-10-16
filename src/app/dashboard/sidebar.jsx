@@ -43,6 +43,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "QR code",
       icon: <IoQrCode />,
     },
+    // session.data?.user?.role === "store" && {
+    //   href: "/dashboard/subscription-plan",
+    //   label: "Subscription Plan",
+    //   icon: <IoQrCode />,
+    // },
     session.data?.user?.role === "consignor" && {
       href: "/dashboard/storelist",
       label: "Stores",

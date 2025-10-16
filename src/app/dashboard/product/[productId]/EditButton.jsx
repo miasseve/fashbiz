@@ -18,7 +18,7 @@ import { updateProductSchema } from "@/actions/validations";
 import { updateProduct } from "@/actions/productActions";
 import { useDispatch } from "react-redux";
 import { updateProductInCart } from "@/features/cartSlice";
-
+import { FiEdit2 } from "react-icons/fi";
 
 const EditButton = ({ product }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -62,7 +62,7 @@ const EditButton = ({ product }) => {
     const response = await updateProduct(product._id, data);
     if (response.status === 200) {
       toast.success("Product updated successfully!");
-        dispatch(
+      dispatch(
         updateProductInCart({
           _id: product._id,
           updatedData: {
@@ -82,6 +82,7 @@ const EditButton = ({ product }) => {
   return (
     <>
       <Button onPress={onOpen} className="auth-btn">
+        <FiEdit2 size={18} />
         Edit Product
       </Button>
 

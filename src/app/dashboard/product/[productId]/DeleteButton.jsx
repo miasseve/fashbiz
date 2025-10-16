@@ -2,16 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { deleteProductByIdAndWix } from "@/actions/productActions";
-import { removeProductById } from "@/features/cartSlice"; 
+import { removeProductById } from "@/features/cartSlice";
 import Swal from "sweetalert2";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { Button } from "@heroui/react";
 import { useDispatch } from "react-redux";
-
+import { FiTrash2 } from "react-icons/fi";
 const DeleteButton = ({ product }) => {
   const router = useRouter();
-   const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const handleDelete = async () => {
     const result = await Swal.fire({
@@ -46,11 +46,8 @@ const DeleteButton = ({ product }) => {
   };
 
   return (
-    <Button
-      onPress={handleDelete}
-      disabled={loading}
-      className={`danger-btn`}
-    >
+    <Button onPress={handleDelete} disabled={loading} className={`danger-btn`}>
+      <FiTrash2 size={18} />
       {loading ? "Deleting..." : "Delete Product"}
     </Button>
   );

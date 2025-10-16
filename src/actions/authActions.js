@@ -15,12 +15,26 @@ import {
   loginSchema,
   resetPasswordSchema,
 } from "./validations";
+import dayjs from "dayjs";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
   
 export async function registerUser(data) {
   try {
     await dbConnect();
-    const { firstname, lastname, storename, email, password, role } = data;
+    const { firstname, lastname, storename, email, password, role,country, businessNumber, phone } = data;
+    
+     let subscriptionData = {};
+      if (role === "store") {
+        const subscriptionStart = new Date();
+        const subscriptionEnd = dayjs(subscriptionStart).add(14, "day").toDate();
+        subscriptionData = {
+          subscriptionType: "free",
+          subscriptionStart,
+          subscriptionEnd,
+          isActive: true,
+        };
+      }
+
     await registerSchema.validate(data, { abortEarly: false });
 
     const existingUser = await User.findOne({ email });
@@ -38,6 +52,11 @@ export async function registerUser(data) {
       email,
       password: hashedPassword,
       role,
+      storename: role === "store" ? storename : undefined,
+      country: role === "store" ? country : undefined,
+      businessNumber: role === "store" ? businessNumber : undefined,
+      phone: phone || undefined,
+      ...subscriptionData
     });
 
     const savedUser = await user.save();
@@ -70,11 +89,10 @@ export async function signInUser(data) {
       password: password,
       redirect: false,
     });
+    
     if (result?.error) {
       return { status: 401, error: "Invalid credentials" };
     }
-
-    console.log(result, "result");
 
     const user = await User.findOne({ email: email });
 
@@ -152,7 +170,6 @@ export async function getUser() {
 
 export async function updateUser(updatedData) {
   try {
-    console.log(updatedData,'updatedData')
     const session = await auth();
     if (!session) {
       return { status: 400, error: "Invalid User" };

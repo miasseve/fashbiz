@@ -8,6 +8,25 @@ export const registerSchema = Yup.object({
     then: () => Yup.string().trim().required("Store name is required"),
     otherwise: () => Yup.string(),
   }),
+  country: Yup.string().when("role", {
+    is: "store",
+    then: () => Yup.string().required("Country is required"),
+    otherwise: () => Yup.string().nullable(),
+  }),
+  businessNumber: Yup.string().when("role", {
+    is: "store",
+    then: () =>
+      Yup.string()
+        .trim()
+        .matches(
+          /^[A-Z]{2}\d+$/,
+          "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+        )
+        .required("Business Registration Number is required"),
+    otherwise: () => Yup.string().nullable(),
+  }),
+  phone: Yup.string()
+    .required("Phone number is required"),
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),
@@ -40,7 +59,7 @@ export const profileSchema = Yup.object({
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),
-  phoneNumber: Yup.string().required("Phone number is required"),
+  phone: Yup.string().required("Phone number is required"),
   address: Yup.string().trim().required("Address is required"),
   city: Yup.string().trim().required("City is required"),
   zipcode: Yup.string().when("country", {
@@ -78,18 +97,6 @@ export const resetPasswordSchema = Yup.object().shape({
     .oneOf([Yup.ref("password"), null], "Passwords do not match")
     .required("Confirm Password is required"),
 });
-
-// const currency = z
-//   .string()
-//   .refine(
-//     (value) => /^\d+(\.\d{2})?$/.test(formatNumberWithDecimal(Number(value))),
-//     'Price must have exactly two decimal places (e.g., 49.99)'
-//   );
-
-// function formatNumberWithDecimal(num) {
-//     const [int, decimal] = num.toString().split('.');
-//     return decimal ? `${int}.${decimal.padEnd(2, '0')}` : `${int}.00`;
-// }
 
 export const productSchema = Yup.object().shape({
   collectionId: Yup.string().required("Category is required"),

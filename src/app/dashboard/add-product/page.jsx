@@ -16,6 +16,16 @@ const page = async () => {
   if (response.status != 200) {
     throw new Error(response.error);
   }
+
+  if(session?.user?.isActive === false){
+    return (
+      <div className="flex flex-col justify-center items-center my-[10rem] mx-auto gap-[17px] pb-20">
+        <p className="text-white text-center italic font-bold">
+          *Your Subscription Plan is expired. Please upgrade your plan.
+        </p>
+      </div>
+    );
+  }
   
   return <Main user={session.user} productCount={response.count} stripeResponse={stripeResponse}/>;
 };

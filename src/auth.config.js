@@ -2,6 +2,7 @@ import Credentials from "next-auth/providers/credentials";
 import dbConnect from "./lib/db";
 import User from "./models/User";
 import bcrypt from "bcryptjs";
+import dayjs from "dayjs";
 
 export default {
   providers: [
@@ -25,13 +26,28 @@ export default {
             throw new Error("Invalid credentials");
           }
 
+          if (user.role === "store" && user.subscriptionType === "free") {
+            const now = dayjs();
+            const endDate = dayjs(user.subscriptionEnd);
+
+            // If free plan expired, deactivate
+            if (now.isAfter(endDate)) {
+              user.isActive = false;
+              await user.save();
+            }
+          }
+
           // Return user data if authentication succeeds
           return {
             id: user._id,
             storename: user.storename,
             email: user.email,
             role: user.role,
-            name: user.firstname + " " + user.lastname
+            name: user.firstname + " " + user.lastname,
+            subscriptionType: user.subscriptionType,
+            isActive: user.isActive,
+            subscriptionStart: user.subscriptionStart,
+            subscriptionEnd: user.subscriptionEnd,
           };
         } catch (error) {
           throw new Error("Authentication failed");
