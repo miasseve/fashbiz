@@ -30,18 +30,18 @@ const RegisterForm = () => {
               <div className="lg:pb-[5rem] pb-[5rem]">
                 <div className="">
                   <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
-                    Sell instantly
+                    14 DAYS FREE TO SELL INSTANTLY
                   </div>
 
                   <p className="text-[18px] font-semibold text-black m-0 ">
-                    Choose your role to get started:
+                     Your trusted marketplace to sell with ease
                     </p>
-                   <p className="mb-6"> <span className="font-semibold">Store</span> – Ideal for
-                    businesses managing their own inventory.
-                    </p>
-                    <p className="mb-10"><span className="font-semibold">Consignor</span> – Great for
-                    sellers who want to list items on behalf of others.
-                    </p>
+                    <p className="text-[18px] font-normal text-black m-0 mb-[40px]">
+                    Trouble logging in?{" "}
+                    <Link href="/contact-support" className="underline">
+                      Contact support
+                    </Link>
+                  </p>
                 </div>
 
                 <div className="w-1/2">
@@ -54,7 +54,6 @@ const RegisterForm = () => {
           </div>
           <div className="sm:w-[50%] flex justify-center items-center pt-8 sm:pt-0">
             <div className="text-center m-auto md:w-[80%] w-[100%] rounded-[8px] p-4">
-              {/* <div className="text-[1.5rem] font-bold">Welcome</div> */}
               <div className="text-[24px] font-bold  leading-[4.2rem] mb-[1.5rem]">
                 Sign Up
               </div>
@@ -91,57 +90,6 @@ const RegisterForm = () => {
       </div>
     </section>
 
-    // <section className="min-h-screen md:pt-[8rem] pt-[5rem] pb-[5rem]">
-    //   <div className="md:max-w-[100%] md:px-[20px] 2xl:max-w-[1100px] mx-auto px-[15px] 2xl:px-20">
-    //
-
-    //       <div className="lg:w-[400px] w-[100%]  lg:absolute  right-0 top-0">
-    //         <div
-    //           className="text-center m-auto w-[300px] rounded-[8px] p-4"
-    //           style={{
-    //             backgroundImage: "url('/bg-img.png')",
-    //             backgroundSize: "cover", // Ensures the image covers the container
-    //             backgroundPosition: "center", // Centers the image
-    //           }}
-    //         >
-    //           <div className="text-[1.5rem] font-bold text-white mb-[4rem]">
-    //             Hi Welcome
-    //           </div>
-    //           <div className="text-[3.25rem] font-bold text-white leading-[4.2rem] mb-[2rem]">
-    //             Register
-    //           </div>
-
-    //           <Card className="w-full max-w-md">
-    //             <CardBody>
-    //               <Tabs
-    //                 fullWidth
-    //                 aria-label="Register Tabs"
-    //                 selectedKey={selectedTab}
-    //                 onSelectionChange={(key) => {
-    //                   setSelectedTab(key);
-    //                 }}
-    //               >
-    //                 <Tab key="store" title="Store">
-    //                   <StoreForm />
-    //                 </Tab>
-    //                 <Tab key="consignor" title="Consignor">
-    //                   <ConsignorForm />
-    //                 </Tab>
-    //               </Tabs>
-    //             </CardBody>
-    //           </Card>
-
-    //           <div className="text-[1.5rem] text-white text-center mt-4 leading-[2rem] ">
-    //             Already have an account ?{" "}
-    //             <Link href="/login" className="hover:underline text-[#6e482d]">
-    //               Login
-    //             </Link>
-    //           </div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // </section>
   );
 };
 

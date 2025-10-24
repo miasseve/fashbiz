@@ -9,7 +9,6 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { EyeFilledIcon } from "../icons/EyeFilledIcon ";
 import { EyeSlashFilledIcon } from "../icons/EyeSlashFilledIcon ";
-import { validatePassword } from "../validation/validation";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -28,7 +27,7 @@ const LoginForm = () => {
     setError("");
     const payload = {
       ...data,
-      email: data.email.toLowerCase(), // Convert email to lowercase before sending
+      email: data.email.toLowerCase()
     };
 
     const result = await signInUser(payload);
@@ -64,7 +63,7 @@ const LoginForm = () => {
               <div className="lg:pb-[5rem] sm:pb-[5rem]">
                 <div className="">
                   <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
-                    Sell instantly
+                    14 DAYS FREE TO SELL INSTANTLY
                   </div>
                   <p className="text-[18px] font-normal text-black m-0">
                     Your trusted marketplace to sell with ease.
@@ -88,7 +87,6 @@ const LoginForm = () => {
           <div className="sm:w-[50%] flex justify-center items-center pt-8 sm:pt-0">
             <div className="text-center m-auto md:w-[80%] w-[100%] rounded-[8px] p-4">
               <Card className="p-8 bg-white shadow-lg rounded-[14px]">
-                {/* <div className="text-[1.5rem] font-bold">Hi Welcome</div> */}
                 <div className="text-[24px] font-bold  leading-[4.2rem] mb-[2rem]">
                   Sign In
                 </div>
@@ -97,7 +95,7 @@ const LoginForm = () => {
                   onSubmit={handleSubmit(onSubmit)}
                 >
                   {error && (
-                    <span className="text-red-500 right-0 text-[10px]">
+                    <span className="text-red-500 left-0 text-[12px] font-bold mb-2">
                       {error}
                     </span>
                   )}
@@ -117,13 +115,14 @@ const LoginForm = () => {
                       })}
                     />
                     {errors.email && (
-                      <span className="text-red-500 font-bold text-[12px]">
+                      <span className="text-red-500 font-bold text-[10px] left-0">
                         {errors.email.message}
                       </span>
                     )}
                   </div>
 
                   <div className="mb-8 relative">
+                    <div className="relative">
                     <input
                       type={isVisible ? "text" : "password"}
                       size="lg"
@@ -136,7 +135,7 @@ const LoginForm = () => {
                       aria-label="toggle password visibility"
                       type="button"
                       onClick={toggleVisibility}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+                      className="absolute right-4 top-1/2 -translate-y-1/2  text-gray-500"
                     >
                       {isVisible ? (
                         <EyeSlashFilledIcon className="h-8 w-10" />
@@ -144,8 +143,9 @@ const LoginForm = () => {
                         <EyeFilledIcon className="h-8 w-10" />
                       )}
                     </button>
+                    </div>
                     {errors.password && (
-                      <span className="text-red-500 font-bold text-[12px]">
+                      <span className="text-red-500 font-bold text-[10px] left-0">
                         {errors.password.message}
                       </span>
                     )}

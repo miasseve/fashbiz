@@ -108,7 +108,7 @@ const ProductItem = ({ product, isGrid }) => {
             </div>
             <div>
               <Button onPress={handleClick} className="success-btn">
-                View
+                View Details
               </Button>
             </div>
           </div>

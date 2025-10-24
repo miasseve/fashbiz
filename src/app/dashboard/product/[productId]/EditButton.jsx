@@ -24,24 +24,7 @@ const EditButton = ({ product }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const router = useRouter();
   const dispatch = useDispatch();
-  //   const [collections, setCollections] = useState([]);
-
-  //    useEffect(() => {
-  //       const fetchCollections = async () => {
-  //         try {
-  //           const response = await axios.get("/api/wixCollections");
-  //           if (response.status !== 200) {
-  //             setErrorMessage("Failed to fetch categories.Please try again !!");
-  //           }
-  //           setCollections(response.data.collections);
-  //         } catch (error) {
-  //           setErrorMessage("Failed to fetch categories.Please try again !!");
-  //         }
-  //       };
-
-  //       fetchCollections();
-  //     }, []);
-
+ 
   const {
     register,
     handleSubmit,
@@ -67,7 +50,7 @@ const EditButton = ({ product }) => {
           _id: product._id,
           updatedData: {
             ...data,
-            price: Number(data.price), // ensure price is a number
+            price: Number(data.price), 
           },
         })
       );
@@ -75,7 +58,7 @@ const EditButton = ({ product }) => {
       onOpenChange(false);
       router.push("/dashboard/product/" + product._id);
     } else {
-      toast.error("Failed to update the product.");
+      toast.error(response.error || "Failed to update product.");
     }
   };
 

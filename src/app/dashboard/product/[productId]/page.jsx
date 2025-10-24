@@ -7,6 +7,7 @@ import DeleteButton from "./DeleteButton";
 import EditButton from "./EditButton";
 import AddToCart from "@/app/product/[productId]/AddToCart";
 import CopyLinkButton from "./CopyLinkButton";
+
 export const metadata = {
   title: "Product",
 };
@@ -18,8 +19,8 @@ const Page = async ({ params }) => {
   if (response.status !== 200) {
     redirect("/");
   }
-  const { product, user } = response.data;
 
+  const { product, user } = response.data;
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
 
@@ -29,7 +30,6 @@ const Page = async ({ params }) => {
         <div className="w-full sm:w-1/2 flex justify-center">
           <ImageCarousel images={parsedProduct.images} />
         </div>
-
         <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg  p-[20px] bg-[#f6f6f6]">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
             {parsedProduct.title}
@@ -49,19 +49,11 @@ const Page = async ({ params }) => {
             </li>
           </ul>
           <p>
-
           </p>
           <AddToCart product={parsedProduct} />
-          {/* <Link
-            href={`/product/${parsedProduct._id}`}
-            target="_blank"
-            className="success-btn max-w-max"
-          >
-            View Product Details
-          </Link> */}
           <DeleteButton product={parsedProduct} />
           <EditButton product={parsedProduct} />
-          {/* <CopyLinkButton productId={parsedProduct._id} /> */}
+          <CopyLinkButton productId={parsedProduct._id} />
           {parsedUser && (
             <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
               <p className="text-gray-800 italic font-semibold">

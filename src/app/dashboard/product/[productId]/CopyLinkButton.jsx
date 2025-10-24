@@ -15,8 +15,7 @@ const CopyLinkButton = ({ productId }) => {
 
       await navigator.clipboard.writeText(productUrl);
       setCopied(true);
-
-      setTimeout(() => setCopied(false), 2000); // reset after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
     }

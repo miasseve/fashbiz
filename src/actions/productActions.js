@@ -9,6 +9,7 @@ import axios from "axios";
 export async function createProduct(formData) {
   try {
     const session = await auth();
+
     if (!session) {
       return { status: 400, error: "User is not authenticated" };
     }
@@ -25,7 +26,7 @@ export async function createProduct(formData) {
       email,
       accountId,
       // color,
-      collectionId, // <-- Receiving the collection ID from frontend
+      collectionId, 
     } = formData;
 
     await dbConnect();
@@ -56,7 +57,7 @@ export async function createProduct(formData) {
         }
       );
 
-      const productId = response.data.product.id; // Get the created product ID
+      const productId = response.data.product.id; 
       // Add images to product
       const productImages = {
         media: images.map((image) => ({ url: image.url })),
@@ -74,10 +75,8 @@ export async function createProduct(formData) {
         }
       );
 
-      // ✅ Assign the product to the selected collection
       if (collectionId) {
         await axios.post(
-          // https://www.wixapis.com/stores/v1/collections/{id}/productIds
           `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
           {
             productIds: [productId], // Add product to the collection
@@ -112,11 +111,13 @@ export async function createProduct(formData) {
       const user = await User.findById(session.user.id);
       if (user) {
         user.products.push(newProduct._id);
-        await user.save();
+        await user.save(); 
       }
-
-      const link = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
-
+      
+      const link = process.env.NODE_ENV === "development"
+          ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+      
       return {
         status: 200,
         message: "Product created successfully and added to collection",
@@ -624,7 +625,7 @@ export async function updateProduct(productId, data) {
             sku: data.sku || product.sku,
           },
         };
-
+        console.log(productData,'productData');
         await axios.patch(
           `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
           productData,
@@ -637,9 +638,10 @@ export async function updateProduct(productId, data) {
           }
         );
       } catch (error) {
+        console.log(error,'error')
         return {
           status: 500,
-          error: "Product updated in DB but failed to update Wix.",
+          error: "Product updated in DB but failed to update in Wix.",
         };
       }
     }

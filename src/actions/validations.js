@@ -25,8 +25,7 @@ export const registerSchema = Yup.object({
         .required("Business Registration Number is required"),
     otherwise: () => Yup.string().nullable(),
   }),
-  phone: Yup.string()
-    .required("Phone number is required"),
+  phone: Yup.string().required("Phone number is required"),
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),
@@ -38,7 +37,8 @@ export const registerSchema = Yup.object({
       ["store", "consignor"],
       'Invalid role. Role must be "store" or "consignor"'
     )
-    .required("Role is required"),
+    .required("Role is required")
+    .default("consignor"),
 });
 
 export const loginSchema = Yup.object({

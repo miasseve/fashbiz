@@ -83,7 +83,7 @@ const ForgotPasswordForm = () => {
         <CardFooter className="text-center text-xl text-gray-600  block">
           <div className="text-center "> 
             Remembered your password?
-            <Link href="/login" className="font-semibold ml-1 underline">
+            <Link href="/" className="font-semibold ml-1 underline">
               Login
             </Link>
             

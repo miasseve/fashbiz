@@ -40,7 +40,7 @@ const ProductPage = async ({ params }) => {
         </ul>
         <p className="text-gray-800">{parsedProduct.description}</p>
         <AddToCart product={parsedProduct} /> 
-        {/* <BackButton /> */}
+        <BackButton />
       </div>
     </div>
     </div>
