@@ -14,9 +14,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret ="whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
-// const endpointSecret =
-//   "whsec_817651dd8124d7d8557327bc20cda1f981e946abc7ad01c55a6b7d7294392b68";
+const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
+// const endpointSecret = "whsec_817651dd8124d7d8557327bc20cda1f981e946abc7ad01c55a6b7d7294392b68";
+
 // Middleware to handle raw body for webhook verification
 export const config = {
   api: {
@@ -48,7 +48,6 @@ export async function POST(req, res) {
       const fullSubscription = await stripe.subscriptions.retrieve(
         subscriptionObj.id
       );
-      console.log("Subscription Created Event:", fullSubscription);
       const user = await User.findOne({
         stripeCustomerId: fullSubscription.customer,
       });
@@ -94,7 +93,6 @@ export async function POST(req, res) {
       user.isActive = true;
       await user.save();
 
-      console.log("Subscription created & user updated:", fullSubscription.id);
       break;
     }
     case "checkout.session.completed": {
@@ -114,7 +112,6 @@ export async function POST(req, res) {
         stripeSubscriptionId: subscription.id,
       });
 
-      console.log(`✅ Subscription updated for user ${userId}`);
       break;
     }
     case "charge.updated":
@@ -214,7 +211,6 @@ export async function POST(req, res) {
 
     case "transfer.created":
       const transferCreate = event.data.object;
-      // console.log("Transfer Created Event:", transferCreat);
       try {
         await transferCreated(
           transferCreate.metadata.name,

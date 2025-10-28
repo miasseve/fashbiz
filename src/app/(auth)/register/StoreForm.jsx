@@ -21,8 +21,7 @@ const StoreForm = () => {
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm({
-    mode: "onTouched",
+  } = useForm({ mode: "onTouched",
     resolver: yupResolver(registerSchema),
     defaultValues: {
       role: "store",
@@ -30,9 +29,8 @@ const StoreForm = () => {
   });
 
   const [apiError, setApiError] = useState("");
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
-
   const router = useRouter();
 
   const storeSubmit = async (data) => {
@@ -87,7 +85,6 @@ const StoreForm = () => {
               </span>
             )}
           </div>
-
           <div className="relative mb-8 lg:w-[48%]">
             <input
               placeholder="Last Name"

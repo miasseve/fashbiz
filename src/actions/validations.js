@@ -14,17 +14,17 @@ export const registerSchema = Yup.object({
     otherwise: () => Yup.string().nullable(),
   }),
   businessNumber: Yup.string().when("role", {
-    is: "store",
-    then: () =>
-      Yup.string()
-        .trim()
-        .matches(
-          /^[A-Z]{2}\d+$/,
-          "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
-        )
-        .required("Business Registration Number is required"),
-    otherwise: () => Yup.string().nullable(),
-  }),
+          is: "store",
+          then: () =>
+            Yup.string()
+              .trim()
+              .matches(
+                /^\d+$/,
+                "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+              )
+              .required("Business Registration Number is required"),
+          otherwise: () => Yup.string().nullable(),
+        }),
   phone: Yup.string().required("Phone number is required"),
   email: Yup.string()
     .email("Invalid email format")

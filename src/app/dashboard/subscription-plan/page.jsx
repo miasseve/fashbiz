@@ -5,14 +5,15 @@ import { getUser } from '@/actions/authActions';
 const page =async () => {
   // const response = await getUser();
 
-  //  if (response.status != 200) {
+  // if (response.status != 200) {
   //   throw new Error("Failed to fetch user profile");
   // }
-
+  
   // const user = JSON.parse(response.data);
 
   return (
-    <div>In Progress</div>
+    <h3>In Progress</h3>
+    // <SubscriptionPlans user={user}/>
   )
 }
 

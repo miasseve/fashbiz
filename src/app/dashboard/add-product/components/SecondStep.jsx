@@ -72,7 +72,7 @@ const SecondStep = ({
         setErrorMessage("Failed to fetch categories.Please try again !!");
       }
     };
-
+ 
     fetchCollections();
   }, []);
   

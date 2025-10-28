@@ -83,7 +83,7 @@ export default function SubscriptionPlans({ user }) {
     if (!user) return;
     router.push(`/checkout?userId=${user._id}&priceId=${priceId}`);
   };
-  // Update handleCancelSubscription:
+
   const handleCancelSubscription = async () => {
     Swal.fire({
       title: "Are you sure?",
