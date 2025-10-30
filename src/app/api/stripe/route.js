@@ -44,7 +44,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const { accountId } = await req.json();
-
+  
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${

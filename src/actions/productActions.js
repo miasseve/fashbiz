@@ -25,10 +25,10 @@ export async function createProduct(formData) {
       lastName,
       email,
       accountId,
-      // color,
-      collectionId, 
+      color,
+      subcategory,
+      collectionId,
     } = formData;
-
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     // Construct product data for Wix API
@@ -37,9 +37,21 @@ export async function createProduct(formData) {
         name: title,
         productType: "physical",
         priceData: { price: formattedPrice },
-        description: description,
+        description: `${description}\n\nSubcategory: ${subcategory}`,
         sku: sku,
         visible: true,
+        manageVariants: true, 
+        productOptions: [
+          {
+            name: "Color",
+            choices: [
+              {
+                value: color.name || "N/A",
+                description: color.name || color.hex || "N/A",
+              },
+            ],
+          },
+        ],
       },
     };
 
@@ -57,7 +69,7 @@ export async function createProduct(formData) {
         }
       );
 
-      const productId = response.data.product.id; 
+      const productId = response.data.product.id;
       // Add images to product
       const productImages = {
         media: images.map((image) => ({ url: image.url })),
@@ -96,8 +108,10 @@ export async function createProduct(formData) {
         sku,
         title,
         brand,
+        subcategory,
         category: collectionId,
         description,
+        color,
         price: formattedPrice,
         images,
         userId: session.user.id,
@@ -111,13 +125,13 @@ export async function createProduct(formData) {
       const user = await User.findById(session.user.id);
       if (user) {
         user.products.push(newProduct._id);
-        await user.save(); 
+        await user.save();
       }
-      
+
       const link = process.env.NODE_ENV === "development"
-          ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
-          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
-      
+        ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
+        : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+
       return {
         status: 200,
         message: "Product created successfully and added to collection",
@@ -137,7 +151,7 @@ export async function createProduct(formData) {
       } else {
         return {
           status: 400,
-          error: "An error occurred while creating the product.",
+          error: error.response?.data?.message || error?.message,
         };
       }
     }
@@ -423,7 +437,7 @@ export async function deleteProductsFromWix(products) {
       );
       if (getResponse.status === 200) {
         try {
-             await axios.delete(
+          await axios.delete(
             `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
             {
               headers: {
@@ -501,6 +515,7 @@ export async function getProductById(productId) {
       },
     }; // Return the product details
   } catch (error) {
+    console.log(error, "errorrrrrrrrrrrr");
     return {
       status: 500, // Internal server error status code
       error: error.message || "Failed to fetch product",
@@ -625,7 +640,6 @@ export async function updateProduct(productId, data) {
             sku: data.sku || product.sku,
           },
         };
-        console.log(productData,'productData');
         await axios.patch(
           `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
           productData,
@@ -638,7 +652,7 @@ export async function updateProduct(productId, data) {
           }
         );
       } catch (error) {
-        console.log(error,'error')
+        console.log(error, 'error')
         return {
           status: 500,
           error: "Product updated in DB but failed to update in Wix.",

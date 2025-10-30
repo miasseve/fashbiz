@@ -39,6 +39,14 @@ const Page = async ({ params }) => {
               <span className="font-semibold">Brand :</span>{" "}
               {parsedProduct.brand}
             </li>
+             <li>
+              <span className="font-semibold">Color :</span>{" "}
+              {parsedProduct.color?.name|| 'N/A'}
+            </li>
+             <li>
+              <span className="font-semibold">Sub Category :</span>{" "}
+              {parsedProduct.subcategory}
+            </li>
             <li>
               <span className="font-semibold">Price :</span>{" "}
               <span className="font-semibold">€{parsedProduct.price}</span>

@@ -14,7 +14,7 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import { productSchema } from "@/actions/validations";
 import { useForm } from "react-hook-form";
-import { clearProductState, clearConsignors ,setCurrentStep} from "@/features/productSlice";
+import { clearProductState, clearConsignors, setCurrentStep } from "@/features/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct } from "@/actions/productActions";
 import { useRouter } from "next/navigation";
@@ -36,21 +36,27 @@ const SecondStep = ({
   const targetRef = React.useRef(null);
 
   const [collections, setCollections] = useState([]);
+  const [colorHex, setColorHex] = useState("");
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
-  const currentYear = new Date().getFullYear();
+  // const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear().toString().slice(-2);
+  const formattedStoreName = user.storename
+  .toUpperCase()               
+  .replace(/[^A-Z0-9]/g, '')   
+  .slice(0, 3);
 
   const {
     register,
     handleSubmit,
     setValue,
-      watch,
+    watch,
     formState: { errors, isValid, isSubmitting },
   } = useForm({
     mode: "onTouched",
     resolver: yupResolver(productSchema),
     defaultValues: {
-      sku: user.storename + currentYear + (parseInt(productCount) + 1),
+      sku: formattedStoreName + currentYear + (parseInt(productCount) + 1),
       images: Object.values(reduxImages)
         .filter((image) => image !== null)
         .map((image) => ({
@@ -72,10 +78,10 @@ const SecondStep = ({
         setErrorMessage("Failed to fetch categories.Please try again !!");
       }
     };
- 
+
     fetchCollections();
   }, []);
-  
+
   useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
@@ -91,14 +97,18 @@ const SecondStep = ({
           const response = await axios.post("/api/google-vision", {
             imageUrl: imagesFiltered[0]?.url ?? "",
           });
-         if (response.status === 200) {
-          const {   title = '', brand='', description = "" } = response.data;
-          setValue("title", title);
-          setValue("brand", brand);
-          setValue("description", description || "");
+          if (response.status === 200) {
+            const { title = '', brand = '', description = "", color = {}, subcategory = "" } = response.data;
+            setValue("title", title);
+            setValue("brand", brand);
+            setValue("description", description || "");
+            setValue("color.name", color?.name || "");
+            setValue("color.hex", color?.hex || "");
+            setValue("subcategory", subcategory || "");
+            setColorHex(color?.hex);
           }
         } catch (error) {
-           console.error("Error fetching product details:", error);
+          console.error("Error fetching product details:", error);
         } finally {
           setLoading(false);
         }
@@ -111,14 +121,14 @@ const SecondStep = ({
   const brandValue = watch("brand");
 
   useEffect(() => {
-  if (brandValue) {
-    const formattedBrand = brandValue.replace(/\s+/g, "").toUpperCase();
-    const generatedSKU = `${user.storename}${currentYear}${formattedBrand}${parseInt(productCount) + 1}`;
-    setValue("sku", generatedSKU);
-  }
-}, [brandValue, setValue, user.storename, currentYear, productCount]);
+    if (brandValue) {
+      const formattedBrand = brandValue.replace(/\s+/g, "").toUpperCase().slice(0, 2);;
+      const generatedSKU = `${formattedStoreName}${currentYear}${formattedBrand}${parseInt(productCount) + 1}`;
+      setValue("sku", generatedSKU);
+    }
+  }, [brandValue, setValue, user.storename, currentYear, productCount]);
 
-  
+
   const onSubmit = async (data) => {
     setErrorMessage("");
     const response = await createProduct({ ...data, ...consignorData });
@@ -200,7 +210,20 @@ const SecondStep = ({
                     </span>
                   )}
                 </div>
+                <div>
+                  <label className="text-sm font-medium">Sub Category</label>
+                  <input
+                    placeholder="Sub Category"
+                    {...register("subcategory")}
+                  />
+                  {errors.subcategory && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.subcategory.message}
+                    </span>
+                  )}
+                </div>
                 <div className="h-full">
+                  <label className="text-sm font-medium">SKU</label>
                   <input
                     placeholder="Enter SKU"
                     {...register("sku")}
@@ -212,6 +235,7 @@ const SecondStep = ({
                   )}
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Title</label>
                   <input
                     placeholder="Title"
                     {...register("title")}
@@ -223,6 +247,7 @@ const SecondStep = ({
                   )}
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Brand</label>
                   <input
                     placeholder="Brand"
                     {...register("brand")}
@@ -234,6 +259,42 @@ const SecondStep = ({
                   )}
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Color</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="text"
+                      placeholder="white"
+                      {...register("color.name")}
+                      className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                    />
+                    <input
+                      type="hidden"
+                      {...register("color.hex")}
+                      value={colorHex || ""}
+                    />
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "8px",
+                        border: "1px solid #D3D3D3",
+                        backgroundColor:
+                          colorHex && colorHex !== "transparent"
+                            ? colorHex
+                            : watch("color.name")?.trim()
+                              ? watch("color.name")
+                              : "transparent",
+                        transition: "background-color 0.3s ease",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                {errors.color && (
+                  <p className="text-red-500 text-sm mt-1">{errors.color.message}</p>
+                )}
+
+                <div>
+                  <label className="text-sm font-medium">Price</label>
                   <input
                     {...register("price")}
                     type="text"
@@ -246,6 +307,7 @@ const SecondStep = ({
                   )}
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Description</label>
                   <textarea
                     id="description"
                     rows="4"
@@ -273,50 +335,52 @@ const SecondStep = ({
               </CardFooter>
             </form>
           </Card>
-        </div>
+        </div >
       )}
 
-      {showConfirmation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
-          <Modal
-            ref={targetRef}
-            isOpen={showConfirmation}
-            onOpenChange={onOpenChange}
-            className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
-          >
-            <ModalContent>
-              {(onClose) => (
-                <>
-                  <ModalHeader className="flex flex-col gap-1 text-center">
-                    Product Added Successfully
-                    <input type="text" value={generatedLink} readOnly />
-                    <Button onPress={handleCopyLink} className="dark-btn">
-                      Copy Link
-                    </Button>
-                  </ModalHeader>
-                  <ModalBody className="text-center">
-                    <p>Do you want to add more products?</p>
-                  </ModalBody>
-                  <ModalFooter className="flex justify-center">
-                    <Button
-                      onPress={handleAddMoreProducts}
-                      className="success-btn m-auto"
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      onPress={handleGoToDashboard}
-                      className="danger-btn m-auto"
-                    >
-                      No
-                    </Button>
-                  </ModalFooter>
-                </>
-              )}
-            </ModalContent>
-          </Modal>
-        </div>
-      )}
+      {
+        showConfirmation && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
+            <Modal
+              ref={targetRef}
+              isOpen={showConfirmation}
+              onOpenChange={onOpenChange}
+              className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
+            >
+              <ModalContent>
+                {(onClose) => (
+                  <>
+                    <ModalHeader className="flex flex-col gap-1 text-center">
+                      Product Added Successfully
+                      <input type="text" value={generatedLink} readOnly />
+                      <Button onPress={handleCopyLink} className="dark-btn">
+                        Copy Link
+                      </Button>
+                    </ModalHeader>
+                    <ModalBody className="text-center">
+                      <p>Do you want to add more products?</p>
+                    </ModalBody>
+                    <ModalFooter className="flex justify-center">
+                      <Button
+                        onPress={handleAddMoreProducts}
+                        className="success-btn m-auto"
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        onPress={handleGoToDashboard}
+                        className="danger-btn m-auto"
+                      >
+                        No
+                      </Button>
+                    </ModalFooter>
+                  </>
+                )}
+              </ModalContent>
+            </Modal>
+          </div>
+        )
+      }
     </>
   );
 };

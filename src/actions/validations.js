@@ -14,17 +14,17 @@ export const registerSchema = Yup.object({
     otherwise: () => Yup.string().nullable(),
   }),
   businessNumber: Yup.string().when("role", {
-          is: "store",
-          then: () =>
-            Yup.string()
-              .trim()
-              .matches(
-                /^\d+$/,
-                "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
-              )
-              .required("Business Registration Number is required"),
-          otherwise: () => Yup.string().nullable(),
-        }),
+    is: "store",
+    then: () =>
+      Yup.string()
+        .trim()
+        .matches(
+          /^\d+$/,
+          "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+        )
+        .required("Business Registration Number is required"),
+    otherwise: () => Yup.string().nullable(),
+  }),
   phone: Yup.string().required("Phone number is required"),
   email: Yup.string()
     .email("Invalid email format")
@@ -112,6 +112,11 @@ export const productSchema = Yup.object().shape({
       "Price can have at most 2 decimal places",
       (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
     ),
+  color: Yup.object({
+    name: Yup.string().required("Color name is required"),
+    hex: Yup.string(),
+  }),
+  subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
 });
 
@@ -128,5 +133,6 @@ export const updateProductSchema = Yup.object().shape({
       "Price can have at most 2 decimal places",
       (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
     ),
+  subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
 });

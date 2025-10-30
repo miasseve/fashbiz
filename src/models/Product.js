@@ -5,8 +5,16 @@ const productSchema = new mongoose.Schema({
   title: { type: String, required: true },
   brand: { type: String, required: true },
   category: { type: String, required: true },
+  subcategory: { type: String, default: "" },
   description: { type: String, required: true },
-  // color: { type: String, required: true },
+  color: {
+    name: { type: String, default: "No Color" },  
+    hex: {
+      type: String,
+      match: /^#([0-9A-F]{3}){1,2}$/i,               
+      default: "#fff",                             
+    },
+  },
   price: { type: Number, required: true },
   images: [
     {

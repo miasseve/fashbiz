@@ -37,6 +37,7 @@ const EditButton = ({ product }) => {
       brand: product?.brand || "",
       price: product?.price || "",
       description: product?.description || "",
+      subcategory:product?.subcategory || "",
       sku: product?.sku || "",
     },
   });
@@ -50,7 +51,7 @@ const EditButton = ({ product }) => {
           _id: product._id,
           updatedData: {
             ...data,
-            price: Number(data.price), 
+            price: Number(data.price),
           },
         })
       );
@@ -100,10 +101,12 @@ const EditButton = ({ product }) => {
                 </div> */}
 
                 <div>
+                  <label className="text-sm font-medium">SKU</label>
                   <input
                     {...register("sku")}
                     placeholder="Enter SKU"
                     className="w-full border px-3 py-2 rounded"
+                    readOnly
                   />
                   {errors.sku && (
                     <p className="text-red-500 font-bold text-[12px]">
@@ -113,6 +116,7 @@ const EditButton = ({ product }) => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium">Title</label>
                   <input
                     {...register("title")}
                     placeholder="Title"
@@ -126,6 +130,7 @@ const EditButton = ({ product }) => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium">Brand</label>
                   <input
                     {...register("brand")}
                     placeholder="Brand"
@@ -139,6 +144,21 @@ const EditButton = ({ product }) => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium">Sub Category</label>
+                  <input
+                    {...register("subcategory")}
+                    placeholder="Sub Category"
+                    className="w-full border px-3 py-2 rounded"
+                  />
+                  {errors.subcategory && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.subcategory.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Price</label>
                   <input
                     {...register("price")}
                     placeholder="Price (€)"
@@ -153,6 +173,7 @@ const EditButton = ({ product }) => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium">Description</label>
                   <textarea
                     {...register("description")}
                     placeholder="Enter description"
