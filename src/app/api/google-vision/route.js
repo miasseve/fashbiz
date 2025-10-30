@@ -20,7 +20,7 @@ export async function POST(req) {
       messages: [
         {
           role: "system",
-          content:'Analyze the image and return a valid JSON object with the following fields: "title", "brand", "color","subcategory" (the specific product type, e.g., "hoodie", "denim jacket", "t-shirt", "sneakers") and "short description".The "color" field must contain both the color name and its HEX code in the format: {"name": "red", "hex": "#FF0000"}. Respond with only the raw JSON — no markdown, no code blocks, no explanations.',
+          content:'Analyze the image and return a valid JSON object with the following fields: "title", "brand", "color","subcategory" (the specific product type, e.g., "hoodie", "denim jacket", "t-shirt", "sneakers") and "description".The "color" field must contain both the color name and its HEX code in the format: {"name": "red", "hex": "#FF0000"}. Respond with only the raw JSON — no markdown, no code blocks, no explanations.',
         },
         {
           role: "user",

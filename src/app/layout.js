@@ -1,5 +1,3 @@
-// changes in this file
-// import { Inria_Sans } from "next/font/google";
 import { Montserrat } from "next/font/google";
 
 import "./globals.css";
