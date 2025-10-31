@@ -9,11 +9,13 @@ import {
 } from "@/actions/productActions";
 import { removeMultipleProductsFromCart } from "@/features/cartSlice";
 import { toast } from "react-toastify";
-import {clearCartOnCheckout} from "@/actions/productActions";
+import { clearCartOnCheckout } from "@/actions/productActions";
+import { useRouter } from "next/navigation";
 
 const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
   const dispatch = useDispatch();
   const stripe = useStripe();
+  const router = useRouter();
   const elements = useElements();
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -156,6 +158,9 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
         toast.success(
           `All payments completed successfully! Total: €${grandTotal}`
         );
+        setTimeout(() => {
+          router.push("/dashboard/items-sold");
+        }, 1500);
       } catch (cleanupError) {
         console.error("Cleanup error:", cleanupError);
         toast.warning(
