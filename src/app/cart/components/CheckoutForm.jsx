@@ -9,6 +9,7 @@ import {
 } from "@/actions/productActions";
 import { removeMultipleProductsFromCart } from "@/features/cartSlice";
 import { toast } from "react-toastify";
+import {clearCartOnCheckout} from "@/actions/productActions";
 
 const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
   const dispatch = useDispatch();
@@ -134,8 +135,7 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
         // Show progress
         if (consignorNames.length > 1) {
           toast.info(
-            `Payment ${i + 1} of ${
-              consignorNames.length
+            `Payment ${i + 1} of ${consignorNames.length
             } completed for ${consignorName}`
           );
         }
@@ -146,6 +146,13 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
         await deleteProductsFromWix(allProducts);
         await soldProductsByIds(allProductIds);
         dispatch(removeMultipleProductsFromCart(allProductIds));
+        const clearRes = await clearCartOnCheckout();
+        if (clearRes.status === 200) {
+          console.log("Cart cleared successfully after checkout");
+        } else {
+          console.warn("Cart clear failed:", clearRes.message || clearRes.error);
+        }
+
         toast.success(
           `All payments completed successfully! Total: €${grandTotal}`
         );

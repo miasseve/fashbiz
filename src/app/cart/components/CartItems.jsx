@@ -6,56 +6,117 @@ import { removeProductFromCart } from "@/features/cartSlice";
 import BuyNow from "./BuyNow";
 import Link from "next/link";
 import { Button } from "@heroui/button";
-import { ArrowLeft } from "lucide-react"; 
+import { ArrowLeft } from "lucide-react";
+import { getProductfromCart } from "@/actions/productActions";
+import {removeProductfromCart} from "@/actions/productActions";
 
 const CartItems = ({ storeUser }) => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
   const [cartProducts, setCartProducts] = useState([]);
-  const router=useRouter();
+  const router = useRouter();
   const dispatch = useDispatch();
 
+  // useEffect(() => {
+  //   const groupedProducts = products.reduce((acc, product) => {
+  //     const { consignorName, price, consignorAccount } = product;
+  //     const key = consignorName || "Store Owner";
+
+  //     if (!acc[key]) {
+  //       acc[key] = {
+  //         products: [],
+  //         total: 0,
+  //         consignorAccount: consignorName ? consignorAccount : "",
+  //       };
+  //     }
+
+  //     acc[key].products.push(product);
+  //     acc[key].total += price;
+
+  //     return acc;
+  //   }, {});
+  //   setCartProducts(groupedProducts);
+  // }, [productTotal]);
+
   useEffect(() => {
-    const groupedProducts = products.reduce((acc, product) => {
-      const { consignorName, price, consignorAccount } = product;
-      const key = consignorName || "Store Owner";
+    const fetchCartProducts = async () => {
+      try {
+        const response = await getProductfromCart();
+        const data = response.data;
+        console.log("Cart Product :", data);
 
-      if (!acc[key]) {
-        acc[key] = {
-          products: [],
-          total: 0,
-          consignorAccount: consignorName ? consignorAccount : "",
-        };
-      }
-
-      acc[key].products.push(product);
-      acc[key].total += price;
-
-      return acc;
-    }, {});
-
-    setCartProducts(groupedProducts);
-  }, [productTotal]);
-
-  const handleRemove = (product) => {
-    dispatch(removeProductFromCart(product));
-    setCartProducts((prev) => {
-      const updatedCart = { ...prev };
-      const { products: consignorProducts } =
-        updatedCart[product?.consignorName || "Store Owner"];
-      if (consignorProducts) {
-        const filteredProducts = consignorProducts.filter(
-          (item) => item._id !== product._id
-        );
-        if (filteredProducts.length === 0) {
-          delete updatedCart[product?.consignorName || "Store Owner"];
-        } else {
-          updatedCart[product?.consignorName || "Store Owner"].products =
-            filteredProducts;
+        if (!data || !Array.isArray(data.items)) {
+          console.warn("No items found in cart");
+          setCartProducts({});
+          return;
         }
-        return updatedCart;
+
+        const grouped = data.items.reduce((acc, item) => {
+          const consignorName = item?.consignorId?.name || "Store Owner";
+          const consignorAccount = item?.consignorId?.account || "";
+          const product = {
+            _id: item?.productId?._id,
+            title: item?.productId?.title,
+            images: item?.productId?.images || [],
+            price: item?.price,
+            consignorName,
+            consignorAccount,
+          };
+
+          if (!acc[consignorName]) {
+            acc[consignorName] = {
+              products: [],
+              total: 0,
+              consignorAccount,
+            };
+          }
+
+          acc[consignorName].products.push(product);
+          acc[consignorName].total += product.price;
+
+          return acc;
+        }, {});
+
+        setCartProducts(grouped);
+
+        const total = Object.values(grouped).reduce(
+          (sum, c) => sum + c.total,
+          0
+        );
+      } catch (error) {
+        console.error("Error fetching cart:", error);
       }
-    });
+    };
+
+    fetchCartProducts();
+  }, []);
+
+
+  const handleRemove = async(product) => {
+    try {
+      // await axios.delete(`/api/cart/${product._id}`);
+      const res = await removeProductfromCart(product._id);
+      dispatch(removeProductFromCart(product));
+      setCartProducts((prev) => {
+        const updatedCart = { ...prev };
+        const { products: consignorProducts } =
+          updatedCart[product?.consignorName || "Store Owner"];
+        if (consignorProducts) {
+          const filteredProducts = consignorProducts.filter(
+            (item) => item._id !== product._id
+          );
+          if (filteredProducts.length === 0) {
+            delete updatedCart[product?.consignorName || "Store Owner"];
+          } else {
+            updatedCart[product?.consignorName || "Store Owner"].products =
+              filteredProducts;
+          }
+          return updatedCart;
+        }
+      });
+    } catch (error) {
+
+    }
   };
 
   // Calculate grand total for all consignors
@@ -67,7 +128,7 @@ const CartItems = ({ storeUser }) => {
   return (
     <div className="bg-fash-gradient mx-auto p-4 max-w-[100%] min-h-screen">
       <div className="bg-white rounded-lg p-4 sm:p-10 sm:max-w-[80%] m-auto">
-          <div className="mb-4">
+        <div className="mb-4">
           <Button
             onPress={() => router.push("/dashboard/store")}
             variant="light"

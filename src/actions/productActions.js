@@ -5,6 +5,7 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import User from "@/models/User";
 import axios from "axios";
+import Cart from "@/models/Cart";
 
 export async function createProduct(formData) {
   try {
@@ -40,7 +41,7 @@ export async function createProduct(formData) {
         description: `${description}\n\nSubcategory: ${subcategory}`,
         sku: sku,
         visible: true,
-        manageVariants: true, 
+        manageVariants: true,
         productOptions: [
           {
             name: "Color",
@@ -515,7 +516,6 @@ export async function getProductById(productId) {
       },
     }; // Return the product details
   } catch (error) {
-    console.log(error, "errorrrrrrrrrrrr");
     return {
       status: 500, // Internal server error status code
       error: error.message || "Failed to fetch product",
@@ -705,6 +705,167 @@ export async function soldProductsByIds(productIds) {
     return {
       status: 500,
       error: "Something went wrong",
+    };
+  }
+}
+
+export async function addProductToCart(product) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return { status: 400, error: "User is not authenticated" };
+    }
+    const userId = session.user.id;
+    await dbConnect();
+    const { productId, title, price } = product;
+    if (!productId || !title || !price) {
+      return { status: 400, message: "Missing required fields" };
+    }
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      // Create new cart if none exists
+      cart = new Cart({
+        userId,
+        items: [{ productId, title, price }],
+        total: price,
+      });
+    } else {
+      // Check if product already exists in cart
+      const existingItem = cart.items.find(
+        (item) => item.productId.toString() === productId
+      );
+
+      if (existingItem) {
+        return { status: 200, message: "Product already in cart" };
+      } else {
+        // Add new item
+        cart.items.push({ productId, title, price });
+        cart.total += price;
+      }
+    }
+
+    await cart.save();
+    return { message: "Product added to cart successfully", status: 200 };
+  } catch (error) {
+    return { error: error.message || "Failed to add product to cart", status: 500 };
+  }
+}
+
+export async function getProductfromCart() {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return { status: 401, error: "User is not authenticated" };
+    }
+
+    await dbConnect();
+
+    const userId = session.user.id;
+    const cart = await Cart.findOne({ userId })
+      .populate({
+        path: "items.productId",
+        model: Product,
+        select: "title price images total",
+      })
+      .lean();
+
+    if (!cart) {
+      return { status: 404, message: "Cart not found" };
+    }
+
+    return {
+      status: 200,
+      data: JSON.parse(JSON.stringify(cart)),
+    };
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    return {
+      status: 500,
+      error: error.message || "Failed to fetch cart",
+    };
+  }
+}
+
+export async function removeProductfromCart(productId) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { status: 401, message: "User not authenticated" };
+    }
+
+    const userId = session.user.id;
+
+    if (!productId) {
+      return { status: 400, message: "Product ID is required" };
+    }
+
+    await dbConnect();
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      return { status: 404, message: "Cart not found" };
+    }
+
+    // Find item index in cart
+    const itemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (itemIndex === -1) {
+      return { status: 404, message: "Product not found in cart" };
+    }
+
+    // Remove item and update total
+    const removedItem = cart.items[itemIndex];
+    cart.total -= removedItem.price;
+    cart.items.splice(itemIndex, 1);
+
+    await cart.save();
+    return {
+      message: "Product removed successfully",
+      status: 200
+    };
+  } catch (error) {
+    console.error("Error removing item from cart:", error);
+    return {
+      error: error.message || "Failed to remove item",
+      status: 200
+    };
+  }
+}
+
+export async function clearCartOnCheckout() {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { status: 401, message: "User not authenticated" };
+    }
+
+    const userId = session.user.id;
+
+    await dbConnect();
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      return { status: 404, message: "Cart not found" };
+    }
+
+    cart.items = [];
+    cart.total = 0;
+
+    await cart.save();
+    return {
+      message: "All Products removed successfully",
+      status: 200
+    };
+  } catch (error) {
+    console.error("Error clearing cart after checkout:", error);
+    return {
+      error: error.message || "Failed to clear cart",
+      status: 200
     };
   }
 }
