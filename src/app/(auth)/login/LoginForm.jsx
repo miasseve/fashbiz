@@ -27,10 +27,17 @@ const LoginForm = () => {
     setError("");
     const payload = {
       ...data,
-      email: data.email.toLowerCase()
+      email: data.email.toLowerCase(),
     };
 
-    const result = await signInUser(payload);
+    // const result = await signInUser(payload);
+    const res = await fetch("api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json();
     if (result.status === 200) {
       if (result.profileStatus) {
         if (result.role == "store") {
@@ -123,26 +130,26 @@ const LoginForm = () => {
 
                   <div className="mb-8 relative">
                     <div className="relative">
-                    <input
-                      type={isVisible ? "text" : "password"}
-                      size="lg"
-                      placeholder="Enter Your Password"
-                      {...register("password", {
-                        required: "Password is required",
-                      })}
-                    />
-                    <button
-                      aria-label="toggle password visibility"
-                      type="button"
-                      onClick={toggleVisibility}
-                      className="absolute right-4 top-1/2 -translate-y-1/2  text-gray-500"
-                    >
-                      {isVisible ? (
-                        <EyeSlashFilledIcon className="h-8 w-10" />
-                      ) : (
-                        <EyeFilledIcon className="h-8 w-10" />
-                      )}
-                    </button>
+                      <input
+                        type={isVisible ? "text" : "password"}
+                        size="lg"
+                        placeholder="Enter Your Password"
+                        {...register("password", {
+                          required: "Password is required",
+                        })}
+                      />
+                      <button
+                        aria-label="toggle password visibility"
+                        type="button"
+                        onClick={toggleVisibility}
+                        className="absolute right-4 top-1/2 -translate-y-1/2  text-gray-500"
+                      >
+                        {isVisible ? (
+                          <EyeSlashFilledIcon className="h-8 w-10" />
+                        ) : (
+                          <EyeFilledIcon className="h-8 w-10" />
+                        )}
+                      </button>
                     </div>
                     {errors.password && (
                       <span className="text-red-500 font-bold text-[10px] left-0">

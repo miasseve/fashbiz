@@ -4,6 +4,8 @@ import User from "@/models/User";
 import Stripe from "stripe";
 import dbConnect from "@/lib/db";
 import { auth } from "@/auth";
+import StoreReferralCode from "@/models/StoreReferralCode";
+import ReferralDetails from "@/models/Referral";
 
 // Function to store accountId in the database
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -221,5 +223,57 @@ export async function getTransactionsForConnectedAccount(accountId) {
       status: 500,
       error: "Something went wrong",
     };
+  }
+}
+
+export async function checkvalidReferralCode(referralCode) {
+  try {
+    await dbConnect();
+    const session = await auth();
+    //validate referral code
+    const referral = await StoreReferralCode.findOne({ referralCode });
+    if (!referral) {
+      return { status: 404, message: "Invalid referral code" };
+    }
+    //check if the referral code is used by 3 persons already
+    const referredByuserId = referral.user_id;
+    const usedBy = await ReferralDetails.find({
+      referredByuser_id: referredByuserId,
+      referralCode,
+      used: true,
+    });
+    if (usedBy && usedBy.length >= 3) {
+      return {
+        status: 404,
+        message:
+          "This referral code has expired. It has already been used 3 times.",
+      };
+    }
+    const referredTouser_id = session?.user?.id;
+    //self referral check
+    if (String(referredTouser_id) === String(referredByuserId)) {
+      return { status: 400, message: "You cannot refer yourself" };
+    }
+    //store in referral details collection
+    const exist = await ReferralDetails.findOne({
+      referredByuser_id: referredByuserId,
+      referralCode,
+      referredTouser_id,
+    });
+    if(exist && exist.used){
+      return { status: 400, message: "You have already used this referral code" };
+    }
+    if (!exist) {
+      await ReferralDetails.create({
+        referredByuser_id: referredByuserId,
+        referralCode,
+        referredTouser_id,
+        used: false,
+      });
+    }
+    return { status: 200, message: "Valid referral code" };
+  } catch (error) {
+    console.error("Error checking referral code:", error);
+    return { status: 500, error: error.message || "Server error" };
   }
 }

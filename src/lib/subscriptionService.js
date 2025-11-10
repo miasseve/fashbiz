@@ -44,36 +44,36 @@ export const subscriptionService = {
     });
  
     // Get plan details
-    // const price = await stripe.prices.retrieve(priceId);
-    // const product = await stripe.products.retrieve(price.product);
+    const price = await stripe.prices.retrieve(priceId);
+    const product = await stripe.products.retrieve(price.product);
  
-    // // Save to database immediately
-    // const subscriptionData = {
-    //   userId: user._id,
-    //   stripeSubscriptionId: stripeSubscription.id,
-    //   stripeCustomerId: customerId,
-    //   planName: price.nickname || product.name || "Unknown Plan",
-    //   planPriceId: priceId,
-    //   status: stripeSubscription.status,
-    //   startDate: new Date(stripeSubscription.start_date * 1000),
-    //   endDate: new Date(stripeSubscription.current_period_end * 1000),
-    //   // trialEnd: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null, // Add this
-    //   cancelAtPeriodEnd: false,
-    // };
+    // Save to database immediately
+    const subscriptionData = {
+      userId: user._id,
+      stripeSubscriptionId: stripeSubscription.id,
+      stripeCustomerId: customerId,
+      planName: price.nickname || product.name || "Unknown Plan",
+      planPriceId: priceId,
+      status: stripeSubscription.status,
+      startDate: new Date(stripeSubscription.start_date * 1000),
+      endDate: new Date(stripeSubscription.current_period_end * 1000),
+      // trialEnd: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null, // Add this
+      cancelAtPeriodEnd: false,
+    };
  
-    // const subscription = await Subscription.findOneAndUpdate(
-    //   { userId: user._id },
-    //   subscriptionData,
-    //   { upsert: true, new: true }
-    // );
+    const subscription = await Subscription.findOneAndUpdate(
+      { userId: user._id },
+      subscriptionData,
+      { upsert: true, new: true }
+    );
 
-    // user.subscriptionType = price.nickname || product.name || "Unknown Plan";
-    // user.subscriptionStart = new Date(stripeSubscription.start_date * 1000);
-    // user.subscriptionEnd = new Date(stripeSubscription.current_period_end * 1000);
-    // user.isActive = true; // optional: activate the user if required
-    // user.stripeCustomerId = customerId;
+    user.subscriptionType = price.nickname || product.name || "Unknown Plan";
+    user.subscriptionStart = new Date(stripeSubscription.start_date * 1000);
+    user.subscriptionEnd = new Date(stripeSubscription.current_period_end * 1000);
+    user.isActive = true; // optional: activate the user if required
+    user.stripeCustomerId = customerId;
 
-    // await user.save();
+    await user.save();
 
     // Send activation email
     // await emailService.sendSubscriptionActivated(user, subscription);

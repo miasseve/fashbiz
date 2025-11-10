@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { RiProductHuntFill } from "react-icons/ri";
 import { FaHistory } from "react-icons/fa";
+import { FaHandHoldingUsd } from "react-icons/fa";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
@@ -43,11 +44,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "QR code",
       icon: <IoQrCode />,
     },
-    // session.data?.user?.role === "store" && {
-    //   href: "/dashboard/subscription-plan",
-    //   label: "Subscription Plan",
-    //   icon: <IoQrCode />,
-    // },
+    session.data?.user?.role === "store" && {
+      href: "/dashboard/subscription-plan",
+      label: "Subscription Plan",
+      icon: <IoQrCode />,
+    },
     session.data?.user?.role === "consignor" && {
       href: "/dashboard/storelist",
       label: "Stores",
@@ -86,7 +87,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
         {/* <Link href="/"> */}
-          <img src="/fashlogo.svg" className="w-[138px] mx-auto" />
+        <img src="/fashlogo.svg" className="w-[138px] mx-auto" />
         {/* </Link> */}
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
@@ -95,16 +96,24 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             key={href}
             onClick={() => handleLinkClick(href)}
             // href={href}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${
-              pathname === href
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${pathname === href
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
-            } cursor-pointer`}
+              } cursor-pointer`}
           >
             {icon} <span className="ml-2">{label}</span>
           </div>
         ))}
       </nav>
+
+      <div
+        onClick={() => handleLinkClick("/dashboard/invite-store")}
+        className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  
+        w-[80%] text-black cursor-pointer mt-32`}
+      >
+        <FaHandHoldingUsd className="text-[1.3rem]" />
+        <span className="ml-2">Invite a store</span>
+      </div>
     </div>
   );
 };

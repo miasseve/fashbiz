@@ -7,6 +7,8 @@ import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
+import RefferralDetails from "@/models/Referral";
+import { user } from "@heroui/theme";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -79,7 +81,7 @@ export async function POST(req, res) {
       };
 
       await Subscription.findOneAndUpdate(
-        { userId: user._id }, // ✅ match by user, not subscription ID
+        { userId: user._id }, // match by user, not subscription ID
         subscriptionData,
         { upsert: true, new: true }
       );
@@ -112,6 +114,51 @@ export async function POST(req, res) {
         stripeSubscriptionId: subscription.id,
       });
 
+      const referral = await RefferralDetails.findOne({
+        referredTouser_id: userId,
+        used: true,
+      });
+
+      if (referral) {
+        const referrer = await User.findById(referral.referredByuser_id);
+        const stripeCustomerId = referrer.stripeCustomerId;
+        const referrerSubscription = await stripe.subscriptions.list({
+          customer: stripeCustomerId,
+          status: "active",
+          limit: 1,
+        });
+
+        if (referrerSubscription.data.length > 0) {
+          const activeSub = referrerSubscription.data[0];
+
+          // Calculate new end date (extend by 1 month)
+          const currentEndDate = new Date(activeSub.current_period_end * 1000);
+          const extendedEndDate = new Date(currentEndDate);
+          extendedEndDate.setMonth(extendedEndDate.getMonth() + 1);
+
+          // Convert extended date to UNIX timestamp (for Stripe)
+          const extendedEndTimestamp = Math.floor(
+            extendedEndDate.getTime() / 1000
+          );
+
+          // update Stripe subscription
+          const updatedSub = await stripe.subscriptions.update(activeSub.id, {
+            current_period_end: extendedEndTimestamp,
+            proration_behavior: "always_invoice",
+          });
+
+          // Only update db if Stripe update succeeded
+          if (updatedSub) {
+            await User.findByIdAndUpdate(referrer._id, {
+              subscriptionEnd: new Date(updatedSub.current_period_end * 1000),
+            });
+            await Subscription.findOneAndUpdate({ userId: referrer._id }, {
+              endDate: new Date(updatedSub.current_period_end * 1000),
+            });
+          }
+        }
+        // console.log("reward given sucessfully");
+      }
       break;
     }
     case "charge.updated":

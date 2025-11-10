@@ -17,23 +17,35 @@ import {
 } from "./validations";
 import dayjs from "dayjs";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
-  
+import ActiveUser from "@/models/Activeuser";
+import { getInternetIp } from "./getClientIp";
+
 export async function registerUser(data) {
   try {
     await dbConnect();
-    const { firstname, lastname, storename, email, password, role,country, businessNumber, phone } = data;
-    
-     let subscriptionData = {};
-      if (role === "store") {
-        const subscriptionStart = new Date();
-        const subscriptionEnd = dayjs(subscriptionStart).add(14, "day").toDate();
-        subscriptionData = {
-          subscriptionType: "free",
-          subscriptionStart,
-          subscriptionEnd,
-          isActive: true,
-        };
-      }
+    const {
+      firstname,
+      lastname,
+      storename,
+      email,
+      password,
+      role,
+      country,
+      businessNumber,
+      phone,
+    } = data;
+
+    let subscriptionData = {};
+    if (role === "store") {
+      const subscriptionStart = new Date();
+      const subscriptionEnd = dayjs(subscriptionStart).add(14, "day").toDate();
+      subscriptionData = {
+        subscriptionType: "free",
+        subscriptionStart,
+        subscriptionEnd,
+        isActive: true,
+      };
+    }
 
     await registerSchema.validate(data, { abortEarly: false });
 
@@ -56,7 +68,7 @@ export async function registerUser(data) {
       country: role === "store" ? country : undefined,
       businessNumber: role === "store" ? businessNumber : undefined,
       phone: phone || undefined,
-      ...subscriptionData
+      ...subscriptionData,
     });
 
     const savedUser = await user.save();
@@ -76,8 +88,20 @@ export async function registerUser(data) {
   }
 }
 export async function signOutUser() {
-  await signOut({ redirectTo: "/" });
+  try {
+    await dbConnect();
+    const session = await auth();
+    const userId = session?.user?.id;
+    const ipAddress = await getInternetIp();
+    await ActiveUser.deleteOne({ userId, ipAddress});
+  } catch (error) {
+    console.error("Error during cleanup before signout:", error);
+  }
+
+  // Redirect AFTER cleanup
+  return signOut({ redirectTo: "/" });
 }
+
 export async function signInUser(data) {
   try {
     const { email, password } = data;
@@ -89,7 +113,7 @@ export async function signInUser(data) {
       password: password,
       redirect: false,
     });
-    
+
     if (result?.error) {
       return { status: 401, error: "Invalid credentials" };
     }
@@ -425,7 +449,6 @@ export async function resetPassword(token, password, confirmPassword) {
   }
 }
 
-
 export async function getStoreOwnerDetail() {
   try {
     const session = await auth();
@@ -443,15 +466,15 @@ export async function getStoreOwnerDetail() {
     if (!user) {
       throw new Error("User not found");
     }
-    
+
     const account = await Account.findOne({ userId: session.user.id });
 
     return {
-      status: 200, 
+      status: 200,
       message: "Store Owner details fetched successfully",
       data: {
         user: JSON.stringify(user),
-        account: JSON.stringify(account)
+        account: JSON.stringify(account),
       },
     }; // Return the product details
   } catch (error) {
