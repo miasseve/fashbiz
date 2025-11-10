@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import SubscriptionPlans from './SubscriptionPlans';
 import { getUser } from '@/actions/authActions';
