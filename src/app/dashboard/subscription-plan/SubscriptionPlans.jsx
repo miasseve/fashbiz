@@ -264,10 +264,10 @@ export default function SubscriptionPlans({ user }) {
                     <span className="font-bold">Start:</span>{" "}
                     {dayjs(user.subscriptionStart).format("DD MMM YYYY")}
                   </p>
-                  {/* <p>
-                    <span className="font-bold">End:</span>{" "}
+                  <p>
+                    <span className="font-bold">Renews On:</span>{" "}
                     {dayjs(user.subscriptionEnd).format("DD MMM YYYY")}
-                  </p> */}
+                  </p>
                 </div>
                 {activePlan ? (
                   <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
@@ -306,11 +306,13 @@ export default function SubscriptionPlans({ user }) {
                       </Button>
                     ) : (
                       <div className="text-yellow-600 font-semibold text-lg mt-4">
-                        ⏳ You can cancel your subscription after{" "}
+                        ⏳ <span className="font-semibold">Note:</span> Your
+                        subscription is locked for the first  <span className="font-bold">6 months</span>. You’ll be
+                        able to cancel it after{" "}
                         <span className="font-bold">
                           {sixMonthsLater.toLocaleDateString()}
                         </span>
-                        . Please continue enjoying your plan until then!
+                        . Until then, enjoy uninterrupted access to your plan!
                       </div>
                     );
                   })()}

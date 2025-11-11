@@ -36,7 +36,7 @@ export default function InviteStorePage() {
         <h2 className="text-2xl font-bold mb-4">Refer & Earn</h2>
         <p className="text-gray-700">
           Get <span className="font-semibold">1 month free</span> per paid
-          referral. Share your unique link below.
+          referral. Share your unique code below.
         </p>
 
         {referralLink && (
@@ -71,7 +71,7 @@ function CopyButton({ text }) {
   return (
     <button
       onClick={handleCopy}
-      className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      className="ml-2 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700"
     >
       {copied ? "Copied!" : "Copy"}
     </button>
