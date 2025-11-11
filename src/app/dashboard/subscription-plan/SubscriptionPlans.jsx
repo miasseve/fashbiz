@@ -145,7 +145,7 @@ export default function SubscriptionPlans({ user }) {
 
       let encryptedReferral = null;
       if (referralCode?.trim()) {
-        const res = await fetch("/api/encryptReferral", {
+        const res = await fetch("/api/encryptreferral", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: referralCode.trim() }),
