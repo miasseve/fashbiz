@@ -307,10 +307,15 @@ export default function SubscriptionPlans({ user }) {
                     ) : (
                       <div className="text-yellow-600 font-semibold text-lg mt-4">
                         ⏳ <span className="font-semibold">Note:</span> Your
-                        subscription is locked for the first  <span className="font-bold">6 months</span>. You’ll be
+                        subscription is locked for the first{" "}
+                        <span className="font-bold">6 months</span>. You’ll be
                         able to cancel it after{" "}
                         <span className="font-bold">
-                          {sixMonthsLater.toLocaleDateString()}
+                          {sixMonthsLater.toLocaleDateString("en-US", {
+                            month: "short", // "Dec"
+                            day: "numeric", // "26"
+                            year: "numeric", // "2026"
+                          })}
                         </span>
                         . Until then, enjoy uninterrupted access to your plan!
                       </div>
@@ -506,6 +511,10 @@ export default function SubscriptionPlans({ user }) {
                       `/checkout?userId=${user._id}&priceId=${selectedPriceId}`
                     );
                   }}
+                  // onPress={() => {
+                  //   setIsOpen(false);
+                  //   handleSubscribe(selectedPlan);
+                  // }}
                 >
                   No
                 </Button>
