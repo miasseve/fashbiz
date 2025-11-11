@@ -9,8 +9,6 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Loader2, Lock } from "lucide-react";
-import RefferralDetails from "@/models/Referral";
-import User from "@/models/User";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -37,7 +35,7 @@ function CheckoutForm({ plan, userId }) {
       let referralCode = null;
       if (encryptedReferral) {
         const res = await fetch(
-          `/api/encryptReferral?referral=${encodeURIComponent(
+          `/api/encryptreferral?referral=${encodeURIComponent(
             encryptedReferral
           )}`
         );
@@ -72,19 +70,11 @@ function CheckoutForm({ plan, userId }) {
       const data = await res.json();
 
       if (data.success) {
-        await User.findByIdAndUpdate(userId, {
-          isActive: true,
+        await fetch("/api/referral/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, referralCode }),
         });
-        //on sucessful payment update the referral table that this user has used the referral code
-        const refferalDet = await RefferralDetails.findOne({
-          referredTouser_id: userId,
-          referralCode,
-        });
-        if (refferalDet) {
-          refferalDet.used = true;
-          refferalDet.usedAt = new Date();
-          await refferalDet.save();
-        }
         router.push("dashboard/subscription-plan");
         router.refresh();
       } else {

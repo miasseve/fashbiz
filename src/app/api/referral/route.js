@@ -1,3 +1,4 @@
+// C:\Users\Admin\Desktop\React\NextJS\live\fashion-app\src\app\api\referral\route.js
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";

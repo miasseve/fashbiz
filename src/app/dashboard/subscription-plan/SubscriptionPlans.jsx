@@ -49,7 +49,7 @@ export default function SubscriptionPlans({ user }) {
     }
     let encryptedReferral = null;
     try {
-      const res = await fetch("/api/encryptReferral", {
+      const res = await fetch("/api/encryptreferral", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: referralCode.trim() }),
@@ -65,7 +65,7 @@ export default function SubscriptionPlans({ user }) {
         )}`
       );
     } catch (err) {
-      router.push("dashboard/subscription-plan");
+      router.push("subscription-plan");
       console.error("Failed to encrypt referral:", err.message);
       return;
     }
@@ -234,11 +234,8 @@ export default function SubscriptionPlans({ user }) {
   };
 
   return (
-    <section className="py-16">
+    <section>
       <div className="max-w-6xl mx-auto text-center mb-10">
-        <h2 className="text-6xl font-bold text-gray-900 text-white mb-4">
-          Choose Your Plan
-        </h2>
         {hasActiveSubscription ? (
           <div className="max-w-xl mx-auto mb-10">
             <Card className="relative bg-gray-200 dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden p-10">
@@ -321,7 +318,7 @@ export default function SubscriptionPlans({ user }) {
             </Card>
           </div>
         ) : (
-          <div className="max-w-xl mx-auto mb-10">
+          <div className="max-w-xl mx-auto">
             <Card className="bg-gray-200 dark:bg-gray-800 rounded-2xl text-gray-900 dark:text-white shadow-lg">
               <CardHeader className="flex flex-col items-center pt-8 pb-4">
                 <h3 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-2">
@@ -348,6 +345,9 @@ export default function SubscriptionPlans({ user }) {
         )}
       </div>
 
+      <h2 className="text-6xl font-bold text-center text-gray-900 text-white mb-5">
+        Choose Your Plan
+      </h2>
       <div className="flex flex-wrap justify-center gap-8 px-4">
         {plans.map((plan, index) => {
           return (
