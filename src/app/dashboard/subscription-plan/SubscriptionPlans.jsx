@@ -436,8 +436,9 @@ export default function SubscriptionPlans({ user }) {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         isDismissable={false}
+        placement="center"
         size="2xl"
-        className="rounded-xl"
+        className="rounded-xl mx-6 sm:mx-8"
       >
         <ModalContent>
           <ModalHeader className="flex justify-center items-center text-2xl font-semibold">
