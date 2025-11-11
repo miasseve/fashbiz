@@ -1,4 +1,3 @@
-// C:\Users\Admin\Desktop\React\NextJS\live\fashion-app\src\app\dashboard\subscription-plan\page.jsx
 import React from "react";
 import SubscriptionPlans from "./SubscriptionPlans";
 import { getUser } from "@/actions/authActions";
