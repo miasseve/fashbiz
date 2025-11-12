@@ -92,7 +92,7 @@ function CheckoutForm({ plan, userId }) {
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
         <h3 className="font-semibold text-lg mb-1">{plan.nickname}</h3>
         <p className="text-3xl font-bold text-blue-600">
-          ${(plan.unit_amount / 100).toFixed(2)}
+          {(plan.unit_amount / 100).toFixed(2)} {plan.currency.toUpperCase()}
           <span className="text-base text-gray-600 font-normal">
             /{plan.recurring?.interval}
           </span>
@@ -168,7 +168,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!userId || !priceId) {
-      router.push("dashboard/subscription");
+      router.push("dashboard/subscription-plan");
       return;
     }
 
@@ -179,10 +179,10 @@ export default function CheckoutPage() {
         if (selectedPlan) {
           setPlan(selectedPlan);
         } else {
-          router.push("dashboard/subscription");
+          router.push("dashboard/subscription-plan");
         }
       })
-      .catch(() => router.push("dashboard/subscription"))
+      .catch(() => router.push("dashboard/subscription-plan"))
       .finally(() => setLoading(false));
   }, [priceId, userId, router]);
 
@@ -214,7 +214,7 @@ export default function CheckoutPage() {
           </Elements>
 
           <button
-            onClick={() => router.push("dashboard/subscription")}
+            onClick={() => router.push("dashboard/subscription-plan")}
             className="w-full mt-4 text-gray-600 hover:text-gray-800 text-sm"
           >
             ← Back to Plans

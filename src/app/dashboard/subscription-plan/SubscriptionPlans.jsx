@@ -88,7 +88,7 @@ export default function SubscriptionPlans({ user }) {
         name: plan.product.name,
         price: plan.unit_amount
           ? `${(plan.unit_amount / 100).toFixed(2)} ${plan.currency.toUpperCase()}`
-          : "0DKK",
+          : "0 DKK",
         period: plan.recurring_interval || "month",
         features: plan.features || ["✔ Basic access"],
       }));
