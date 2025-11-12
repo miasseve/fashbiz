@@ -57,6 +57,7 @@ export async function GET() {
 
     for (const price of prices.data.filter((p) => p.type === "recurring")) {
       const product = products.data.find((p) => p.id === price.product);
+      if (!product || !product.active || !price.active) continue;
       const nickname = price.nickname || product?.name || "Unnamed Plan";
 
       let planDoc = await SubscriptionPlan.findOne({
@@ -80,7 +81,7 @@ export async function GET() {
           modules: config.modules,
         });
 
-        console.log(`Created new plan: ${nickname}`);
+        // console.log(`Created new plan: ${nickname}`);
       }
 
       subscriptionPlans.push({

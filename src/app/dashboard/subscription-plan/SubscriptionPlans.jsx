@@ -42,7 +42,7 @@ export default function SubscriptionPlans({ user }) {
     const { status, message } = await checkvalidReferralCode(
       referralCode.trim()
     );
-    console.log("Referral code validation:", status, message);
+    // console.log("Referral code validation:", status, message);
     if (status != 200) {
       toast.error(message);
       return;
@@ -82,14 +82,13 @@ export default function SubscriptionPlans({ user }) {
     try {
       const res = await fetch("/api/stripe/plans");
       const data = await res.json();
-      // console.log("Fetched plans:", data);
 
       const formattedPlans = data.map((plan) => ({
         id: plan.id,
         name: plan.product.name,
         price: plan.unit_amount
-          ? `$${(plan.unit_amount / 100).toFixed(2)}`
-          : "$0",
+          ? `${(plan.unit_amount / 100).toFixed(2)} ${plan.currency.toUpperCase()}`
+          : "0DKK",
         period: plan.recurring_interval || "month",
         features: plan.features || ["✔ Basic access"],
       }));
