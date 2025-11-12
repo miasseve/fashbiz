@@ -10,11 +10,11 @@ import { Button } from "@heroui/react";
 import { SessionProvider } from "next-auth/react";
 import { LuLogOut } from "react-icons/lu";
 import { persistor } from "@/store";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
-import { usePathname } from "next/navigation"; 
-import {getInternetIp} from "@/actions/getClientIp";
+import { usePathname } from "next/navigation";
+import { getInternetIp } from "@/actions/getClientIp";
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,13 +23,13 @@ const Layout = ({ children }) => {
   const dispatch = useDispatch();
   const { currentStep } = useSelector((state) => state.product);
   const scrollRef = useRef(null);
-  const pathname = usePathname(); 
+  const pathname = usePathname();
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [pathname,currentStep]);
+  }, [pathname, currentStep]);
 
   const toggleSidebar = () => {
     if (shadowClass == "") {
@@ -59,7 +59,9 @@ const Layout = ({ children }) => {
       dispatch(clearCart());
       dispatch(clearConsignors());
       dispatch(clearProductState());
-      const ipAddress = await getInternetIp();
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      const ipAddress = data.ip;
       await signOutUser({ ipAddress, callbackUrl: "/login" });
       setLoading(false);
     }
@@ -95,13 +97,19 @@ const Layout = ({ children }) => {
             </button>
 
             <div className="cursor-pointer">
-              <Button isLoading={loading}  className="danger-btn" onPress={handleLogout}>
-                {loading ? '':<LuLogOut />}
+              <Button
+                isLoading={loading}
+                className="danger-btn"
+                onPress={handleLogout}
+              >
+                {loading ? "" : <LuLogOut />}
                 Logout
               </Button>
             </div>
           </Card>
-          <div className={`max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px]  px-[15px] bg-fash-gradient min-h-screen h-auto`}>
+          <div
+            className={`max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px]  px-[15px] bg-fash-gradient min-h-screen h-auto`}
+          >
             {children}
           </div>
         </div>
