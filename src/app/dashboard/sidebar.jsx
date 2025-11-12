@@ -96,10 +96,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             key={href}
             onClick={() => handleLinkClick(href)}
             // href={href}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${pathname === href
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${
+              pathname === href
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
-              } cursor-pointer`}
+            } cursor-pointer`}
           >
             {icon} <span className="ml-2">{label}</span>
           </div>
@@ -109,8 +110,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       <div
         onClick={() => handleLinkClick("/dashboard/invite-store")}
         className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  
-        w-[80%] text-black cursor-pointer mt-32`}
-      >
+                w-[80%] text-black cursor-pointer mt-32 hover:bg-[#ffd7d7] hover:text-black`}
+          >
         <FaHandHoldingUsd className="text-[1.3rem]" />
         <span className="ml-2">Invite a store</span>
       </div>
