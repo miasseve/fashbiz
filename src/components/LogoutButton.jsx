@@ -2,10 +2,17 @@
 import { signOutUser } from "@/actions/authActions";
 import React from "react";
 import { Button } from "@heroui/react";
+import getInternetIp from "@/actions/getClientIp";
 
 const LogoutButton = () => {
   const handleLogout = async () => {
-    await signOutUser();
+    try{
+      const ipAddress = await getInternetIp();
+      await signOutUser({ ipAddress, callbackUrl: "/" });
+    }catch(err){  
+      console.error("Logout Error:", err);
+      await signOutUser({ callbackUrl: "/" });
+    }
   };
 
   return (

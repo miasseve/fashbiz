@@ -87,19 +87,22 @@ export async function registerUser(data) {
     };
   }
 }
-export async function signOutUser() {
+export async function signOutUser({ ipAddress, callbackUrl = "/" } = {}) {
   try {
     await dbConnect();
     const session = await auth();
     const userId = session?.user?.id;
-    const ipAddress = await getInternetIp();
-    await ActiveUser.deleteOne({ userId, ipAddress});
+
+    if (userId && ipAddress) {
+      await ActiveUser.deleteOne({ userId, ipAddress });
+    } else {
+      console.warn("Missing userId or ipAddress");
+    }
   } catch (error) {
     console.error("Error during cleanup before signout:", error);
   }
 
-  // Redirect AFTER cleanup
-  return signOut({ redirectTo: "/" });
+  return signOut({ redirectTo: callbackUrl });
 }
 
 export async function signInUser(data) {

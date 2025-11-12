@@ -14,6 +14,7 @@ import { useDispatch,useSelector } from "react-redux";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
 import { usePathname } from "next/navigation"; 
+import {getInternetIp} from "@/actions/getClientIp";
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -58,7 +59,8 @@ const Layout = ({ children }) => {
       dispatch(clearCart());
       dispatch(clearConsignors());
       dispatch(clearProductState());
-      await signOutUser({ callbackUrl: "/login" });
+      const ipAddress = await getInternetIp();
+      await signOutUser({ ipAddress, callbackUrl: "/login" });
       setLoading(false);
     }
   };
