@@ -96,7 +96,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             key={href}
             onClick={() => handleLinkClick(href)}
             // href={href}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  w-[80%] ${
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
               pathname === href
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
@@ -105,18 +105,22 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             {icon} <span className="ml-2">{label}</span>
           </div>
         ))}
-      </nav>
 
-      {session?.data?.user?.role === "store" && (
-        <div
-          onClick={() => handleLinkClick("/dashboard/invite-store")}
-          className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px]  
-        w-[80%] text-black cursor-pointer mt-32 hover:bg-[#ffd7d7] hover:text-black`}
-        >
-          <FaHandHoldingUsd className="text-[1.3rem]" />
-          <span className="ml-2">Invite a store</span>
-        </div>
-      )}
+        {/* Invite a store link */}
+        {session.data?.user?.role === "store" && (
+          <div
+            onClick={() => handleLinkClick("/dashboard/invite-store")}
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer mt-32 ${
+              pathname === "/dashboard/invite-store"
+                ? "bg-[#ffd7d7] text-black"
+                : "hover:bg-[#ffd7d7] hover:text-black"
+            }`}
+          >
+            <FaHandHoldingUsd className="text-[1.3rem]" />
+            <span className="ml-2">Invite a store</span>
+          </div>
+        )}
+      </nav>
     </div>
   );
 };

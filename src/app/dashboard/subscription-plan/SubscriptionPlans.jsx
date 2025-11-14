@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
+import { archiveProduct } from "@/actions/productActions";
 
 export default function SubscriptionPlans({ user }) {
   const [plans, setPlans] = useState([]);
@@ -76,7 +77,7 @@ export default function SubscriptionPlans({ user }) {
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [hasActiveSubscription, user]);
 
   const fetchPlans = async () => {
     try {
@@ -87,7 +88,9 @@ export default function SubscriptionPlans({ user }) {
         id: plan.id,
         name: plan.product.name,
         price: plan.unit_amount
-          ? `${(plan.unit_amount / 100).toFixed(2)} ${plan.currency.toUpperCase()}`
+          ? `${(plan.unit_amount / 100).toFixed(
+              2
+            )} ${plan.currency.toUpperCase()}`
           : "0 DKK",
         period: plan.recurring_interval || "month",
         features: plan.features || ["✔ Basic access"],
@@ -214,9 +217,12 @@ export default function SubscriptionPlans({ user }) {
           });
           const data = await res.json();
           if (data.success) {
+            //archive all products of the user
+            await archiveProduct(user._id);
             toast.success(
               data.message || "Subscription will cancel at period end"
             );
+            router.refresh();
             // await fetchData();
           } else {
             toast.error(`Error: ${data.error}`);
@@ -264,7 +270,11 @@ export default function SubscriptionPlans({ user }) {
                     {dayjs(user.subscriptionStart).format("DD MMM YYYY")}
                   </p>
                   <p>
-                    <span className="font-bold">Renews On:</span>{" "}
+                    <span className="font-bold">
+                      {user.subscriptionType !== "free"
+                        ? "Renews On:"
+                        : "Ends On:"}
+                    </span>{" "}
                     {dayjs(user.subscriptionEnd).format("DD MMM YYYY")}
                   </p>
                 </div>
@@ -331,7 +341,7 @@ export default function SubscriptionPlans({ user }) {
                   Subscription Expired
                 </h3>
                 <p className="text-xl sm:text-2xl font-semibold text-gray-700 dark:text-gray-300 text-center">
-                  Your free plan has expired
+                  Your plan has expired
                 </p>
               </CardHeader>
               <CardBody className="text-center pb-8 px-6">
@@ -414,12 +424,12 @@ export default function SubscriptionPlans({ user }) {
                         : "bg-[#dc2626] hover:bg-red-700"
                     }`}
                     onPress={() => {
-                      if (user && user.subscriptionType === plan.name) return;
+                      if (activePlan && activePlan?.name === plan.name) return;
                       handleCheckout(plan.id);
                     }}
-                    disabled={user && user.subscriptionType === plan.name}
+                    disabled={activePlan && activePlan?.name === plan.name}
                   >
-                    {user.subscriptionType === plan.name
+                    {activePlan?.name === plan.name
                       ? "Subscribed"
                       : plan.popular
                       ? "Get Started"

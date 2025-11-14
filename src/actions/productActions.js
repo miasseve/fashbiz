@@ -30,7 +30,7 @@ export async function createProduct(formData) {
       subcategory,
       collectionId,
     } = formData;
-    
+
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     // Construct product data for Wix API
@@ -131,9 +131,10 @@ export async function createProduct(formData) {
         await user.save();
       }
 
-      const link = process.env.NODE_ENV === "development"
-        ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
-        : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+      const link =
+        process.env.NODE_ENV === "development"
+          ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
+          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
       return {
         status: 200,
@@ -492,7 +493,7 @@ export async function updateProduct(productId, data) {
           }
         );
       } catch (error) {
-        console.log(error, 'error')
+        console.log(error, "error");
         return {
           status: 500,
           error: "Product updated in DB but failed to update in Wix.",
@@ -587,7 +588,10 @@ export async function addProductToCart(product) {
     await cart.save();
     return { message: "Product added to cart successfully", status: 200 };
   } catch (error) {
-    return { error: error.message || "Failed to add product to cart", status: 500 };
+    return {
+      error: error.message || "Failed to add product to cart",
+      status: 500,
+    };
   }
 }
 
@@ -611,18 +615,18 @@ export async function getProductfromCart() {
       .lean();
 
     if (!cart) {
-     return { status: 404, message: "Cart not found" };
+      return { status: 404, message: "Cart not found" };
     }
 
-     return {
-       status: 200,
-       data: JSON.parse(JSON.stringify(cart)),
-     };
+    return {
+      status: 200,
+      data: JSON.parse(JSON.stringify(cart)),
+    };
   } catch (error) {
-     return {
-       status: 500,
-       error: error.message || "Failed to fetch cart",
-     };
+    return {
+      status: 500,
+      error: error.message || "Failed to fetch cart",
+    };
   }
 }
 
@@ -663,13 +667,13 @@ export async function removeProductfromCart(productId) {
     await cart.save();
     return {
       message: "Product removed successfully",
-      status: 200
+      status: 200,
     };
   } catch (error) {
     console.error("Error removing item from cart:", error);
     return {
       error: error.message || "Failed to remove item",
-      status: 200
+      status: 200,
     };
   }
 }
@@ -696,13 +700,179 @@ export async function clearCartOnCheckout() {
     await cart.save();
     return {
       message: "All Products removed successfully",
-      status: 200
+      status: 200,
     };
   } catch (error) {
     console.error("Error clearing cart after checkout:", error);
     return {
       error: error.message || "Failed to clear cart",
-      status: 200
+      status: 200,
     };
   }
+}
+
+export async function archiveProduct(userId) {
+  await dbConnect();
+
+  // Find all active (non-archived) products for this user
+  const products = await Product.find({
+    userId: userId,
+    archived: { $ne: true },
+  });
+
+  if (!products.length) {
+    return { status: 200, message: "No active products to archive" };
+  }
+
+  const results = [];
+
+  // 2 Loop through each product and archive it in Wix + DB
+  for (const product of products) {
+    try {
+      await Product.updateMany(
+        { archived: { $exists: false } },
+        { $set: { archived: false } }
+      );
+      console.log(
+        "product.title",
+        product.title,
+        "product.wixProductId",
+        product.wixProductId,
+        "product.sku",
+        product.sku
+      );
+      if (!product.wixProductId) {
+        results.push({
+          productId: product._id.toString(),
+          wixProductId: null,
+          success: false,
+          error: "Missing wixProductId",
+        });
+        continue;
+      }
+      // 2a. Hide product in Wix
+      const result = await axios.patch(
+        `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
+        {
+          product: {
+            visible: false,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Update in MongoDB
+      if(result.status === 200){
+      const updatedProduct = await Product.findOneAndUpdate(
+        { _id: product._id },
+        { archived: true },
+        { new: true }
+      );
+    }
+
+      results.push({
+        productId: product._id.toString(),
+        wixProductId: product.wixProductId,
+        success: true,
+      });
+    } catch (error) {
+      console.error(`Error archiving product ${product._id}:`, error.message);
+      results.push({
+        productId: product._id.toString(),
+        wixProductId: product.wixProductId,
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+  return {
+    status: 200,
+    message: "Archiving process completed",
+    results,
+  };
+}
+
+export async function unarchiveProduct(userId) {
+  await dbConnect();
+
+  //Find all archived products for this user
+  const products = await Product.find({
+    userId: userId,
+    archived: true,
+  });
+
+  if (!products.length) {
+    return { status: 200, message: "No archived products to unarchive" };
+  }
+
+  const results = [];
+
+  // 2Loop through and make each product visible again
+  for (const product of products) {
+    try {
+      if (!product.wixProductId) {
+        results.push({
+          productId: product._id.toString(),
+          wixProductId: null,
+          success: false,
+          error: "Missing wixProductId",
+        });
+        continue;
+      }
+      // Update visibility in Wix
+      await axios.patch(
+        `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
+        {
+          product: {
+            visible: true,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+            "wix-site-id": process.env.WIX_SITE_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(
+        "Unarchiving product:",
+        product.title,
+        "Wix ID:",
+        product.wixProductId
+      );
+
+      //  Update in MongoDB
+      await Product.findOneAndUpdate(
+        { _id: product._id },
+        { archived: false },
+        { new: true }
+      );
+
+      results.push({
+        productId: product._id.toString(),
+        wixProductId: product.wixProductId,
+        success: true,
+      });
+    } catch (error) {
+      // console.error(`Error unarchiving product ${product._id}:`, error.message);
+      results.push({
+        productId: product._id.toString(),
+        wixProductId: product.wixProductId,
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+  return {
+    status: 200,
+    message: "Unarchiving process completed",
+    results,
+  };
 }

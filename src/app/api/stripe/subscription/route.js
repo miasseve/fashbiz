@@ -22,7 +22,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await dbConnect();
-    const { userId, action, priceId, paymentMethodId } = await req.json();
+    const { userId, action, priceId, paymentMethodId, referredBy } = await req.json();
 
     let result;
 
@@ -30,7 +30,8 @@ export async function POST(req) {
       result = await subscriptionService.createSubscription(
         userId,
         priceId,
-        paymentMethodId
+        paymentMethodId,
+        referredBy
       );
       return NextResponse.json({ success: true, subscription: result });
     }

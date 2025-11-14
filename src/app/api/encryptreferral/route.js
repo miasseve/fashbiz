@@ -1,5 +1,6 @@
 import { encrypt } from "@/actions/encryption";
 import { decrypt } from "@/actions/encryption";
+import StoreReferralCode from "@/models/StoreReferralCode";
 
 export async function POST(req) {
   try {
@@ -23,10 +24,13 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("Encryption error:", err);
-    return new Response(JSON.stringify({ error: "Failed to encrypt referral code" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to encrypt referral code" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }
 
@@ -35,26 +39,34 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
 
     // Match the URL query parameter
-    const encryptedCode = searchParams.get("referral"); 
+    const encryptedCode = searchParams.get("referral");
     if (!encryptedCode) {
       return new Response(JSON.stringify({ error: "Missing referral code" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
-    }   
+    }
 
     const decrypted = decrypt(encryptedCode);
-
-    return new Response(JSON.stringify({ code: decrypted }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const referraldata = await StoreReferralCode.findOne({
+      referralCode: decrypted,
     });
+
+    return new Response(
+      JSON.stringify({ code: decrypted, userId: referraldata?.user_id }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (err) {
     console.error("Decryption error:", err);
-    return new Response(JSON.stringify({ error: "Failed to decrypt referral code" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }     
+    return new Response(
+      JSON.stringify({ error: "Failed to decrypt referral code" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 }
-

@@ -9,6 +9,8 @@ import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
 import RefferralDetails from "@/models/Referral";
 import { user } from "@heroui/theme";
+import { archiveProduct } from "@/actions/productActions";
+import { unarchiveProduct } from "@/actions/productActions";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -152,9 +154,12 @@ export async function POST(req, res) {
             await User.findByIdAndUpdate(referrer._id, {
               subscriptionEnd: new Date(updatedSub.current_period_end * 1000),
             });
-            await Subscription.findOneAndUpdate({ userId: referrer._id }, {
-              endDate: new Date(updatedSub.current_period_end * 1000),
-            });
+            await Subscription.findOneAndUpdate(
+              { userId: referrer._id },
+              {
+                endDate: new Date(updatedSub.current_period_end * 1000),
+              }
+            );
           }
         }
         // console.log("reward given sucessfully");
@@ -290,6 +295,81 @@ export async function POST(req, res) {
       break;
     case "transfer.paid":
       break;
+    case "customer.subscription.updated": {
+      const sub = event.data.object;
+
+      // Fetch user
+      const user = await User.findOne({ stripeSubscriptionId: sub.id });
+      if (!user) break;
+
+      const currentStart = new Date(sub.current_period_start * 1000);
+      const currentEnd = new Date(sub.current_period_end * 1000);
+
+      // Determine if subscription is actually active
+      const isActiveStatus = ["active", "trialing"].includes(sub.status);
+      const hasExpired = currentEnd < new Date(); // past end date
+      const newStatus = isActiveStatus && !hasExpired;
+
+      const wasActive = user.isActive;
+
+      // Update User
+      user.subscriptionStart = currentStart;
+      user.subscriptionEnd = currentEnd;
+      user.isActive = newStatus;
+      await user.save();
+
+      // Update Subscription collection
+      await Subscription.findOneAndUpdate(
+        { stripeSubscriptionId: sub.id },
+        {
+          status: sub.status,
+          startDate: currentStart,
+          endDate: currentEnd,
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+        }
+      );
+
+      // Product visibility logic
+      if (wasActive && !newStatus) {
+        // became inactive
+        await archiveProduct(user._id);
+      } else if (!wasActive && newStatus) {
+        // became active
+        await unarchiveProduct(user._id);
+      }
+
+      break;
+    }
+
+    case "customer.subscription.deleted": {
+      const sub = event.data.object;
+
+      const user = await User.findOne({ stripeSubscriptionId: sub.id });
+      if (!user) break;
+
+      const wasActive = user.isActive;
+
+      // User is no longer active
+      user.isActive = false;
+      await user.save();
+
+      await Subscription.findOneAndUpdate(
+        { stripeSubscriptionId: sub.id },
+        {
+          status: "canceled",
+          endDate: new Date(sub.current_period_end * 1000),
+          cancelAtPeriodEnd: true,
+        }
+      );
+
+      // Only archive products if user was previously active
+      if (wasActive) {
+        await archiveProduct(user._id);
+      }
+
+      break;
+    }
+
     // You can handle other event types here if needed
     default:
       console.log(`Unhandled event type: ${event.type}`);

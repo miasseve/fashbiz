@@ -27,6 +27,7 @@ const productSchema = new mongoose.Schema({
   consignorEmail: { type: String },
   consignorAccount: { type: String },
   sold: { type: Boolean, default: false },
+  archived: { type: Boolean, default: false },
   wixProductId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
 });

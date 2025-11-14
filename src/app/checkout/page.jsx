@@ -9,6 +9,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Loader2, Lock } from "lucide-react";
+import {unarchiveProduct} from "@/actions/productActions";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -33,6 +34,7 @@ function CheckoutForm({ plan, userId }) {
       const encryptedReferral = urlParams.get("referral");
 
       let referralCode = null;
+      let referredBy = null;
       if (encryptedReferral) {
         const res = await fetch(
           `/api/encryptreferral?referral=${encodeURIComponent(
@@ -41,6 +43,8 @@ function CheckoutForm({ plan, userId }) {
         );
         const data = await res.json();
         referralCode = data.code || null;
+        referredBy = data.userId || null;
+        console.log("Decrypted referral code:", referralCode,"of" ,referredBy);
       }
       const cardElement = elements.getElement(CardElement);
 
@@ -64,6 +68,7 @@ function CheckoutForm({ plan, userId }) {
           userId,
           priceId: plan.id,
           paymentMethodId: paymentMethod.id,
+          referredBy: referredBy,
         }),
       });
 
@@ -75,6 +80,7 @@ function CheckoutForm({ plan, userId }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, referralCode }),
         });
+        await unarchiveProduct(userId);
         router.push("dashboard/subscription-plan");
         router.refresh();
       } else {

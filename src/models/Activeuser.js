@@ -8,6 +8,11 @@ const ActiveUserSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // deviceId: {
+    //   type: String,
+    //   required: true,
+    //   index: true,
+    // },
     ipAddress: {
       type: String,
       required: true,
@@ -25,4 +30,5 @@ const ActiveUserSchema = new mongoose.Schema(
 
 ActiveUserSchema.index({ userId: 1, ipAddress: 1 }, { unique: true });
 
-export default mongoose.models.ActiveUser || mongoose.model("ActiveUser", ActiveUserSchema);
+export default mongoose.models.ActiveUser ||
+  mongoose.model("ActiveUser", ActiveUserSchema);
