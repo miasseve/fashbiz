@@ -4,4 +4,11 @@
       "maxDuration": 60
     }
   }
+  ,
+  "crons": [
+    {
+      "path": "/api/check-subscription",
+      "schedule": "0 1 * * *"
+    }
+  ]
 }
