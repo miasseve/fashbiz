@@ -140,19 +140,19 @@ const CollectProductItem = ({ product, isGrid, userRole }) => {
           >
             {/* ${isHovered ? "opacity-100" : "opacity-0"} */}
             <button
-              onClick={() => handleEdit(product.id)}
+              onClick={() => handleEdit(product?._id)}
               className="text-gray-800 rounded-lg shadow-lg transition-all duration-200"
               aria-label="Edit product"
             >
               {userRole === "store" ? (
                 <MdModeEdit size={20} />
               ) : (
-                <FaEye size={20} />
+                <FaEye size={20} title="Preview"/>
               )}
             </button>
             {userRole === "store" && (
               <button
-                onClick={() => handleDelete(product.id)}
+                onClick={() => handleDelete(product?._id)}
                 className="text-gray-800 p-2 rounded-lg shadow-lg transition-all duration-200"
                 aria-label="Delete product"
               >

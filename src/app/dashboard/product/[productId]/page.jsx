@@ -65,19 +65,18 @@ const Page = async ({ params }) => {
               {parsedProduct.description}
             </li>
           </ul>
-          <p></p>
-          {parsedProduct.collect !== true && (
-            <>
-              <AddToCart product={parsedProduct} />
-            </>
-          )}
           {userRole !== "brand" && (
             <>
               <EditButton product={parsedProduct} />
               <CopyLinkButton productId={parsedProduct._id} />
             </>
           )}
-          <DeleteButton product={parsedProduct} />
+          {parsedProduct.collect !== true && (
+            <>
+              <AddToCart product={parsedProduct} />
+              <DeleteButton product={parsedProduct} />
+            </>
+          )}
           {parsedUser && (
             <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
               <p className="text-gray-800 italic font-semibold">
