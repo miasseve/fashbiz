@@ -104,47 +104,47 @@ const SecondStep = ({
     fetchCollections();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchProductDetails = async () => {
-  //     setLoading(true);
-  //     const imagesFiltered = Object.values(reduxImages)
-  //       .filter((image) => image !== null)
-  //       .map((image) => ({
-  //         url: image.url,
-  //         publicId: image.publicId,
-  //       }));
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      setLoading(true);
+      const imagesFiltered = Object.values(reduxImages)
+        .filter((image) => image !== null)
+        .map((image) => ({
+          url: image.url,
+          publicId: image.publicId,
+        }));
 
-  //     if (imagesFiltered.length > 0) {
-  //       try {
-  //         const response = await axios.post("/api/google-vision", {
-  //           imageUrl: imagesFiltered[0]?.url ?? "",
-  //         });
-  //         if (response.status === 200) {
-  //           const {
-  //             title = "",
-  //             brand = "",
-  //             description = "",
-  //             color = {},
-  //             subcategory = "",
-  //           } = response.data;
-  //           setValue("title", title);
-  //           setValue("brand", brand);
-  //           setValue("description", description || "");
-  //           setValue("color.name", color?.name || "");
-  //           setValue("color.hex", color?.hex || "");
-  //           setValue("subcategory", subcategory || "");
-  //           setColorHex(color?.hex);
-  //         }
-  //       } catch (error) {
-  //         console.error("Error fetching product details:", error);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     }
-  //   };
+      if (imagesFiltered.length > 0) {
+        try {
+          const response = await axios.post("/api/google-vision", {
+            imageUrl: imagesFiltered[0]?.url ?? "",
+          });
+          if (response.status === 200) {
+            const {
+              title = "",
+              brand = "",
+              description = "",
+              color = {},
+              subcategory = "",
+            } = response.data;
+            setValue("title", title);
+            setValue("brand", brand);
+            setValue("description", description || "");
+            setValue("color.name", color?.name || "");
+            setValue("color.hex", color?.hex || "");
+            setValue("subcategory", subcategory || "");
+            setColorHex(color?.hex);
+          }
+        } catch (error) {
+          console.error("Error fetching product details:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
 
-  //   fetchProductDetails();
-  // }, []);
+    fetchProductDetails();
+  }, []);
 
   const brandValue = watch("brand");
 
