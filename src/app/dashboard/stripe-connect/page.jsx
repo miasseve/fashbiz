@@ -1,9 +1,10 @@
 import React from "react";
 import StripeConnect from "./StripeConnect";
-import { getAccountId, getPercentage } from "@/actions/accountAction";
+import { getAccountId, getPercentage,getRewardAmount } from "@/actions/accountAction";
 import PercentForm from "./PercentForm";
 import StripeButton from "./StripeButton";
 import { Card, CardBody } from "@heroui/card";
+import BrandForm from "./BrandForm";
 
 export const metadata = {
   title: 'Stripe Connect',
@@ -13,9 +14,15 @@ const page = async () => {
   let accountId = "";
   let isAccountComplete = "";
   let percentage = null;
+  let reeCollectAmount = 0;
   let userRole = "";
   const result = await getAccountId();
   const response = await getPercentage();
+  const rewardResponse = await getRewardAmount();
+
+  if (rewardResponse.status == 200) {
+    reeCollectAmount = rewardResponse.reeCollectAmount;
+  }
   if (response.status == 200) {
     percentage = response.percentage;
   }
@@ -42,6 +49,7 @@ const page = async () => {
             </CardBody>
           </Card>
           {userRole == "store" && <PercentForm percentage={percentage} />}
+          {userRole == "brand" && <BrandForm amount={reeCollectAmount} />}
         </>
       )}
 

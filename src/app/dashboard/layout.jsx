@@ -7,14 +7,13 @@ import Swal from "sweetalert2";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { Button } from "@heroui/react";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider} from "next-auth/react";
 import { LuLogOut } from "react-icons/lu";
 import { persistor } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
 import { usePathname } from "next/navigation";
-import { getInternetIp } from "@/actions/getClientIp";
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -59,10 +58,7 @@ const Layout = ({ children }) => {
       dispatch(clearCart());
       dispatch(clearConsignors());
       dispatch(clearProductState());
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = await res.json();
-      const ipAddress = data.ip;
-      await signOutUser({ ipAddress, callbackUrl: "/login" });
+      await signOutUser({ callbackUrl: "/" });
       setLoading(false);
     }
   };
@@ -100,6 +96,7 @@ const Layout = ({ children }) => {
               <Button
                 isLoading={loading}
                 className="danger-btn"
+                // style={{ backgroundColor: 'black', color: 'white' }}
                 onPress={handleLogout}
               >
                 {loading ? "" : <LuLogOut />}

@@ -6,7 +6,7 @@ import dbConnect from "@/lib/db";
 import { auth } from "@/auth";
 import StoreReferralCode from "@/models/StoreReferralCode";
 import ReferralDetails from "@/models/Referral";
-
+import Product from "@/models/Product";
 // Function to store accountId in the database
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -111,7 +111,7 @@ export async function getPercentage() {
   if (!account) {
     return { status: 404, error: "Account not found" };
   }
-  console.log(account.percentage, "account.percentage");
+  // console.log(account.percentage, "account.percentage");
   return { status: 200, percentage: account.percentage || null };
 }
 
@@ -277,3 +277,85 @@ export async function checkvalidReferralCode(referralCode) {
     return { status: 500, error: error.message || "Server error" };
   }
 }
+export async function getRewardAmount() {
+  const session = await auth();
+  if (!session) {
+    return { status: 400, error: "Invalid User" };
+  }
+  const account = await Account.findOne({ userId: session.user.id });
+  if (!account) {
+    return { status: 404, error: "Account not found" };
+  }
+  return { status: 200, reeCollectAmount: account.reeCollectAmount || 0 };
+}
+
+export async function activateCollectSubscription(brandName) {
+  if (!brandName) {
+    return { status: 200, data: null };
+  }
+  // Normalize input brandName (remove spaces + lowercase)
+  const normalizedBrand = brandName.replace(/\s+/g, "").toLowerCase();
+
+  // Find all accounts where collect = true
+  const accounts = await Account.find({ collect: true });
+
+  if (!accounts || accounts.length === 0) {
+    return { status: 200, data: null };
+  }
+
+  // Extract userIds
+  const userIds = accounts.map(acc => acc.userId);
+  const users = await User.find({ _id: { $in: userIds } });
+
+  // Fetch users
+  let matchedUser = null;
+  for (const user of users) {
+    if (!user.brandname) continue;
+
+    const normalizedUserBrand = user.brandname
+      .toString()
+      .replace(/\s+/g, "")
+      .toLowerCase();
+
+    if (normalizedUserBrand === normalizedBrand) {
+      matchedUser = user; 
+      break;
+    }
+  }
+
+  if (!matchedUser) {
+    // No matching brand found
+    return { status: 200, data: null };
+  }
+
+  const matchedAccount = accounts.find(acc => acc.userId.toString() === matchedUser._id.toString());
+  return {
+    status: 200,
+    data: matchedAccount?.reeCollectAmount ?? null, // true if brandName matches any user
+  };
+}
+
+export async function storeBrandAmount({ amount }) {
+  const session = await auth();
+  if (!session) {
+    return { status: 400, error: "Invalid User" };
+  }
+  const account = await Account.findOne({ userId: session.user.id });
+  if (!account) {
+    return { status: 404, error: "Account not found" };
+  }
+  account.reeCollectAmount = amount;
+  await account.save();
+  const user = await User.findById(session.user.id).select("brandname");
+  
+  if(user){
+    await Product.updateMany(
+    { brand: user.brandname },
+    { $set: { brandPrice: amount } }
+  );
+}
+  return {
+    status: 200,
+    message: "Brand amount updated successfully!",
+  };
+};

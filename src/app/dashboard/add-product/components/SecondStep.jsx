@@ -14,10 +14,17 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import { productSchema } from "@/actions/validations";
 import { useForm } from "react-hook-form";
-import { clearProductState, clearConsignors, setCurrentStep } from "@/features/productSlice";
+import {
+  clearProductState,
+  clearConsignors,
+  setCurrentStep,
+} from "@/features/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct } from "@/actions/productActions";
 import { useRouter } from "next/navigation";
+import { activateCollectSubscription } from "@/actions/accountAction";
+import { FaBoxOpen } from "react-icons/fa6";
+import { toast } from "react-toastify";
 
 const SecondStep = ({
   handleBackStep,
@@ -37,14 +44,17 @@ const SecondStep = ({
 
   const [collections, setCollections] = useState([]);
   const [colorHex, setColorHex] = useState("");
+  const [isCollectOpen, setIsCollectOpen] = useState(false);
+  const [collectSelection, setCollectSelection] = useState(null);
+  const [formData, setFormData] = useState(null);
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   // const currentYear = new Date().getFullYear();
   const currentYear = new Date().getFullYear().toString().slice(-2);
   const formattedStoreName = user.storename
-  .toUpperCase()               
-  .replace(/[^A-Z0-9]/g, '')   
-  .slice(0, 3);
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 3);
 
   const {
     register,
@@ -66,6 +76,18 @@ const SecondStep = ({
     },
   });
 
+  const handleCollectSubmit = async () => {
+    if (collectSelection === null) {
+      toast.error("Please select Yes or No");
+      return;
+    }
+
+    if (formData) {
+      await handleFinalProductCreation(formData);
+      setIsCollectOpen(false);
+    }
+  };
+
   useEffect(() => {
     const fetchCollections = async () => {
       try {
@@ -82,62 +104,116 @@ const SecondStep = ({
     fetchCollections();
   }, []);
 
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      setLoading(true);
-      const imagesFiltered = Object.values(reduxImages)
-        .filter((image) => image !== null)
-        .map((image) => ({
-          url: image.url,
-          publicId: image.publicId,
-        }));
+  // useEffect(() => {
+  //   const fetchProductDetails = async () => {
+  //     setLoading(true);
+  //     const imagesFiltered = Object.values(reduxImages)
+  //       .filter((image) => image !== null)
+  //       .map((image) => ({
+  //         url: image.url,
+  //         publicId: image.publicId,
+  //       }));
 
-      if (imagesFiltered.length > 0) {
-        try {
-          const response = await axios.post("/api/google-vision", {
-            imageUrl: imagesFiltered[0]?.url ?? "",
-          });
-          if (response.status === 200) {
-            const { title = '', brand = '', description = "", color = {}, subcategory = "" } = response.data;
-            setValue("title", title);
-            setValue("brand", brand);
-            setValue("description", description || "");
-            setValue("color.name", color?.name || "");
-            setValue("color.hex", color?.hex || "");
-            setValue("subcategory", subcategory || "");
-            setColorHex(color?.hex);
-          }
-        } catch (error) {
-          console.error("Error fetching product details:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
+  //     if (imagesFiltered.length > 0) {
+  //       try {
+  //         const response = await axios.post("/api/google-vision", {
+  //           imageUrl: imagesFiltered[0]?.url ?? "",
+  //         });
+  //         if (response.status === 200) {
+  //           const {
+  //             title = "",
+  //             brand = "",
+  //             description = "",
+  //             color = {},
+  //             subcategory = "",
+  //           } = response.data;
+  //           setValue("title", title);
+  //           setValue("brand", brand);
+  //           setValue("description", description || "");
+  //           setValue("color.name", color?.name || "");
+  //           setValue("color.hex", color?.hex || "");
+  //           setValue("subcategory", subcategory || "");
+  //           setColorHex(color?.hex);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching product details:", error);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     }
+  //   };
 
-    fetchProductDetails();
-  }, []);
+  //   fetchProductDetails();
+  // }, []);
 
   const brandValue = watch("brand");
 
   useEffect(() => {
     if (brandValue) {
-      const formattedBrand = brandValue.replace(/\s+/g, "").toUpperCase().slice(0, 2);;
-      const generatedSKU = `${formattedStoreName}${currentYear}${formattedBrand}${parseInt(productCount) + 1}`;
+      const formattedBrand = brandValue
+        .replace(/\s+/g, "")
+        .toUpperCase()
+        .slice(0, 2);
+      const generatedSKU = `${formattedStoreName}${currentYear}${formattedBrand}${
+        parseInt(productCount) + 1
+      }`;
       setValue("sku", generatedSKU);
     }
   }, [brandValue, setValue, user.storename, currentYear, productCount]);
 
-
   const onSubmit = async (data) => {
     setErrorMessage("");
-    const response = await createProduct({ ...data, ...consignorData });
-    if (response.status == 200) {
-      setGeneratedLink(response.data);
-      dispatch(clearProductState());
-      setShowConfirmation(true);
-    } else {
-      setErrorMessage(response.error);
+    //check if the product brand has Ree collect subscription
+    try {
+      const collectResponse = await activateCollectSubscription(brandValue);
+      console.log(collectResponse, "collectResponse");
+
+      if (collectResponse.status === 200 && collectResponse.data !== null) {
+        const updatedData = {
+          ...data,
+          brandPrice: collectResponse.data,
+        };
+        setFormData(updatedData);
+        setIsCollectOpen(true);
+        return;
+      }
+
+      await handleFinalProductCreation(data);
+    } catch (error) {
+      console.error("Error checking collect subscription:", error);
+      await handleFinalProductCreation(data);
+    }
+    // const response = await createProduct({ ...data, ...consignorData,collect:collectSelection });
+    // if (response.status == 200) {
+    //   setGeneratedLink(response.data);
+    //   dispatch(clearProductState());
+    //   setShowConfirmation(true);
+    // } else {
+    //   setErrorMessage(response.error);
+    // }
+  };
+
+  const handleFinalProductCreation = async (data) => {
+    if (!data) return;
+    try {
+      const response = await createProduct({
+        ...data,
+        ...consignorData,
+        collect: collectSelection ?? false,
+      });
+
+      if (response.status === 200) {
+        setGeneratedLink(response.data);
+        setShowConfirmation(true);
+        dispatch(clearProductState());
+        setFormData(null);
+        setCollectSelection(null);
+      } else {
+        setErrorMessage(response.error);
+      }
+    } catch (e) {
+      console.log("Error in product creation:", e);
+      setErrorMessage("Failed to create product. Please try again.");
     }
   };
 
@@ -147,6 +223,10 @@ const SecondStep = ({
     setShowConfirmation(false);
     dispatch(clearConsignors());
     dispatch(setCurrentStep(1));
+    if(collectSelection){
+      router.push("/dashboard/ree-collect");
+      return;
+    }
     router.push("/dashboard/store");
   };
 
@@ -195,9 +275,7 @@ const SecondStep = ({
                     className="max-w-xs border border-gray-300 rounded px-3 py-2"
                     placeholder="Select Category"
                   >
-                    <option value="">
-                      Select Category
-                    </option>
+                    <option value="">Select Category</option>
                     {collections.map((collection) => (
                       <option key={collection.id} value={collection.id}>
                         {collection.name}
@@ -224,10 +302,7 @@ const SecondStep = ({
                 </div>
                 <div className="h-full">
                   <label className="text-sm font-medium">SKU</label>
-                  <input
-                    placeholder="Enter SKU"
-                    {...register("sku")}
-                  />
+                  <input placeholder="Enter SKU" {...register("sku")} />
                   {errors.sku && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.sku.message}
@@ -236,10 +311,7 @@ const SecondStep = ({
                 </div>
                 <div>
                   <label className="text-sm font-medium">Title</label>
-                  <input
-                    placeholder="Title"
-                    {...register("title")}
-                  />
+                  <input placeholder="Title" {...register("title")} />
                   {errors.title && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.title.message}
@@ -248,10 +320,7 @@ const SecondStep = ({
                 </div>
                 <div>
                   <label className="text-sm font-medium">Brand</label>
-                  <input
-                    placeholder="Brand"
-                    {...register("brand")}
-                  />
+                  <input placeholder="Brand" {...register("brand")} />
                   {errors.brand && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.brand.message}
@@ -282,15 +351,17 @@ const SecondStep = ({
                           colorHex && colorHex !== "transparent"
                             ? colorHex
                             : watch("color.name")?.trim()
-                              ? watch("color.name")
-                              : "transparent",
+                            ? watch("color.name")
+                            : "transparent",
                         transition: "background-color 0.3s ease",
                       }}
                     ></div>
                   </div>
                 </div>
                 {errors.color && (
-                  <p className="text-red-500 text-sm mt-1">{errors.color.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.color.message}
+                  </p>
                 )}
 
                 <div>
@@ -335,52 +406,114 @@ const SecondStep = ({
               </CardFooter>
             </form>
           </Card>
-        </div >
+        </div>
       )}
 
-      {
-        showConfirmation && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
-            <Modal
-              ref={targetRef}
-              isOpen={showConfirmation}
-              onOpenChange={onOpenChange}
-              className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
+      {showConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
+          <Modal
+            ref={targetRef}
+            isOpen={showConfirmation}
+            onOpenChange={onOpenChange}
+            className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
+          >
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalHeader className="flex flex-col gap-1 text-center">
+                    Product Added Successfully
+                    <input type="text" value={generatedLink} readOnly />
+                    <Button onPress={handleCopyLink} className="dark-btn">
+                      Copy Link
+                    </Button>
+                  </ModalHeader>
+                  <ModalBody className="text-center">
+                    <p>Do you want to add more products?</p>
+                  </ModalBody>
+                  <ModalFooter className="flex justify-center">
+                    <Button
+                      onPress={handleAddMoreProducts}
+                      className="success-btn m-auto"
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      onPress={handleGoToDashboard}
+                      className="danger-btn m-auto"
+                    >
+                      No
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+        </div>
+      )}
+      <Modal
+        backdrop="blur"
+        isOpen={isCollectOpen}
+        onClose={() => setIsCollectOpen(false)}
+        isDismissable={false}
+        placement="center"
+        size="2xl"
+        className="rounded-xl mx-6 sm:mx-8"
+      >
+        <ModalContent>
+          <ModalHeader className="flex justify-center items-center text-2xl font-semibold">
+            Brand Collect
+          </ModalHeader>
+
+          <ModalBody className="flex flex-col gap-6 items-center justify-center py-6">
+            {/* Pink Icon */}
+            <div className="bg-pink-500 p-6 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+              <FaBoxOpen className="text-white text-5xl" />
+            </div>
+
+            {/* Description */}
+            <p className="text-center text-gray-700 dark:text-gray-300 text-lg leading-relaxed px-4">
+              Do you want to add this product to the{" "}
+              <strong>Ree Collect</strong> program? If yes, this product will
+              not appear in your store but will be visible in the Ree Collect
+              marketplace.
+            </p>
+
+            {/* Yes / No Radio Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6 items-center">
+              <label className="flex items-center gap-3 cursor-pointer text-lg">
+                <input
+                  type="radio"
+                  name="collectOption"
+                  value="yes"
+                  onChange={() => setCollectSelection(true)}
+                  className="w-5 h-5 cursor-pointer"
+                />
+                Yes
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer text-lg">
+                <input
+                  type="radio"
+                  name="collectOption"
+                  value="no"
+                  onChange={() => setCollectSelection(false)}
+                  className="w-5 h-5 cursor-pointer"
+                />
+                No
+              </label>
+            </div>
+          </ModalBody>
+
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={handleCollectSubmit}
+              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md text-lg"
             >
-              <ModalContent>
-                {(onClose) => (
-                  <>
-                    <ModalHeader className="flex flex-col gap-1 text-center">
-                      Product Added Successfully
-                      <input type="text" value={generatedLink} readOnly />
-                      <Button onPress={handleCopyLink} className="dark-btn">
-                        Copy Link
-                      </Button>
-                    </ModalHeader>
-                    <ModalBody className="text-center">
-                      <p>Do you want to add more products?</p>
-                    </ModalBody>
-                    <ModalFooter className="flex justify-center">
-                      <Button
-                        onPress={handleAddMoreProducts}
-                        className="success-btn m-auto"
-                      >
-                        Yes
-                      </Button>
-                      <Button
-                        onPress={handleGoToDashboard}
-                        className="danger-btn m-auto"
-                      >
-                        No
-                      </Button>
-                    </ModalFooter>
-                  </>
-                )}
-              </ModalContent>
-            </Modal>
+              Continue
+            </button>
           </div>
-        )
-      }
+        </ModalContent>
+      </Modal>
     </>
   );
 };

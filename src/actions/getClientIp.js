@@ -5,6 +5,7 @@ export async function getInternetIp() {
     return data.ip;
   } catch (err) {
     console.error("Error:", err);
+    return "0.0.0.0"
   }
 }
 

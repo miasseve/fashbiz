@@ -19,6 +19,16 @@ const AccountSchema = new mongoose.Schema({
     type: Boolean,
     default: false, 
   },
+  //brand reward amt per product
+  reeCollectAmount: {
+    type: Number,
+    default: 0,
+  },
+  //if brand has taken collect subscription
+  collect: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.models.Account ||

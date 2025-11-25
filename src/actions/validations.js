@@ -3,15 +3,55 @@ import * as Yup from "yup";
 export const registerSchema = Yup.object({
   firstname: Yup.string().trim().required("First name is required"),
   lastname: Yup.string().trim().required("Last name is required"),
+  contactTitle: Yup.string().when("role", {
+    is: "brand",
+    then: () =>
+      Yup.string()
+        .trim()
+        .required("Contact Person Title is required")
+        .max(50, "Title cannot exceed 50 characters"),
+    otherwise: () => Yup.string().nullable(),
+  }),
+  brandname: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().trim().required("Brand Name is required"),
+    otherwise: () => Yup.string(),
+  }),
+  legalCompanyName: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().trim().required("Legal Company Name is required"),
+    otherwise: () => Yup.string(),
+  }),
+  companyWebsite: Yup.string().when("role", {
+    is: "brand",
+    then: () =>
+      Yup.string()
+        .trim()
+        .url("Must be a valid URL")
+        .required("Company Website is required"),
+    otherwise: () => Yup.string(),
+  }),
+  companyNumber: Yup.string().when("role", {
+    is: "brand",
+    then: () =>
+      Yup.string()
+        .trim()
+        .matches(
+          /^[A-Za-z0-9\s\-\/]+$/,
+          "Enter a valid company registration number"
+        )
+        .required("Company Registration Number is required"),
+    otherwise: () => Yup.string(),
+  }),
+  country: Yup.string().when("role", {
+    is: (role) => role === "brand" || role === "store",
+    then: () => Yup.string().required("Country is required"),
+    otherwise: () => Yup.string().nullable(),
+  }),
   storename: Yup.string().when("role", {
     is: "store",
     then: () => Yup.string().trim().required("Store name is required"),
     otherwise: () => Yup.string(),
-  }),
-  country: Yup.string().when("role", {
-    is: "store",
-    then: () => Yup.string().required("Country is required"),
-    otherwise: () => Yup.string().nullable(),
   }),
   businessNumber: Yup.string().when("role", {
     is: "store",
@@ -34,8 +74,8 @@ export const registerSchema = Yup.object({
     .required("Password is required"),
   role: Yup.string()
     .oneOf(
-      ["store", "consignor"],
-      'Invalid role. Role must be "store" or "consignor"'
+      ["store", "consignor", "brand"],
+      'Invalid role. Role must be "store", "consignor", or "brand"'
     )
     .required("Role is required")
     .default("consignor"),
@@ -75,6 +115,37 @@ export const profileSchema = Yup.object({
   }),
   state: Yup.string().trim().required("State is required"),
   country: Yup.string().trim().required("Country is required"),
+  contactTitle: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().required("Contact Title is required"),
+    otherwise: () => Yup.string(),
+  }),
+  brandname: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().required("Brand Name is required"),
+    otherwise: () => Yup.string(),
+  }),
+  legalCompanyName: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().required("Legal Company Name is required"),
+    otherwise: () => Yup.string(),
+  }),
+  companyWebsite: Yup.string().when("role", {
+    is: "brand",
+    then: () => Yup.string().url().required("Company Website is required"),
+    otherwise: () => Yup.string(),
+  }),
+  companyNumber: Yup.string().when("role", {
+    is: "brand",
+    then: () =>
+      Yup.string()
+        .matches(
+          /^[A-Za-z0-9\s\-\/]+$/,
+          "Enter a valid company registration number"
+        )
+        .required("Company Registration Number is required"),
+    otherwise: () => Yup.string(),
+  }),
 });
 
 export const resetPasswordSchema = Yup.object().shape({

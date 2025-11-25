@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema({
   country: {
     type: String,
     required: function () {
-      return this.role === "store";
+      return this.role === "store" || this.role === "brand";
     },
   },
   businessNumber: {
@@ -32,31 +32,58 @@ const UserSchema = new mongoose.Schema({
       return this.role === "store";
     },
   },
+  contactTitle: {
+    type: String,
+    required: function () {
+      return this.role === "brand";
+    },
+  },
+  companyNumber: {
+    type: String,
+    required: function () {
+      return this.role === "brand";
+    },
+  },
+  companyWebsite: {
+    type: String,
+  },
+  legalCompanyName: {
+    type: String,
+    required: function () {
+      return this.role === "brand";
+    },
+  },
+  brandname: {
+    type: String,
+    required: function () {
+      return this.role === "brand";
+    },
+  },
   products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   role: {
     type: String,
     required: true,
-    enum: ["store", "consignor"],
+    enum: ["store", "consignor", "brand"],
   },
   emailVerified: Date,
   subscriptionType: {
     type: String,
     default: function () {
-        return this.role === "store" ? "free" : undefined;
+      return this.role === "store" ? "free" : undefined;
     },
-    },
+  },
   subscriptionStart: { type: Date },
   subscriptionEnd: { type: Date },
   isActive: {
     type: Boolean,
     default: function () {
-        return this.role === "store" ? true : undefined;
+      return this.role === "store" ? true : undefined;
     },
- },
+  },
   isProfileComplete: { type: Boolean, default: false },
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: String, default: null },
-  stripeCustomerId: { type: String }
+  stripeCustomerId: { type: String },
 });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

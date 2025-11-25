@@ -14,7 +14,7 @@ const ProductList = ({ products }) => {
         <Button
           onPress={() => setIsGrid(!isGrid)}
           variant="ghost"
-          className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-[#06cb03]"
+          className="font-semibold p-7 border border-[#06cb03] rounded-[4px] mr-[10px] border border-white text-black bg-white"
         >
           {isGrid ? <ListIcon size={20} /> : <GridIcon size={20} />}
           {isGrid ? "List View" : "Grid View"}
@@ -24,7 +24,9 @@ const ProductList = ({ products }) => {
       {/* Product List */}
       <div
         className={`${
-          isGrid ? "grid sm:grid-cols-3 grid-cols-1 px-[15px]  gap-[15px] lg:p-[10px]" : ""
+          isGrid
+            ? "grid sm:grid-cols-3 grid-cols-1 px-[15px]  gap-[15px] lg:p-[10px]"
+            : ""
         }`}
       >
         {products.map((product) => (

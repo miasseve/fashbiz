@@ -1,11 +1,12 @@
 "use server";
-
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import User from "@/models/User";
 import axios from "axios";
 import Cart from "@/models/Cart";
+import Account from "@/models/Account";
+import { user } from "@heroui/theme";
 
 export async function createProduct(formData) {
   try {
@@ -29,72 +30,51 @@ export async function createProduct(formData) {
       color,
       subcategory,
       collectionId,
+      collect,
     } = formData;
 
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
-    // Construct product data for Wix API
-    const productData = {
-      product: {
-        name: title,
-        productType: "physical",
-        priceData: { price: formattedPrice },
-        description: `${description}\n\nSubcategory: ${subcategory}`,
-        sku: sku,
-        visible: true,
-        manageVariants: true,
-        productOptions: [
-          {
-            name: "Color",
-            choices: [
-              {
-                value: color.name || "N/A",
-                description: color.name || color.hex || "N/A",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    let productId = null;
+    let brandPrice = null;
 
-    try {
-      // Create product in Wix
-      const response = await axios.post(
-        "https://www.wixapis.com/stores/v1/products",
-        productData,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    if (collect === true) {
+      const userId = await User.findOne({brandname: brand}).select('_id');
+      const reeamt = await Account.findOne({ userId: userId?._id }).select("reeCollectAmount");
+      brandPrice = reeamt ? Number(parseFloat(reeamt?.reeCollectAmount).toFixed(2)) : null;
+    }
 
-      const productId = response.data.product.id;
-      // Add images to product
-      const productImages = {
-        media: images.map((image) => ({ url: image.url })),
+    // Only create product in Wix if collect is false
+    if (collect === false) {
+      // Construct product data for Wix API
+      const productData = {
+        product: {
+          name: title,
+          productType: "physical",
+          priceData: { price: formattedPrice },
+          description: `${description}\n\nSubcategory: ${subcategory}`,
+          sku: sku,
+          visible: true,
+          manageVariants: true,
+          productOptions: [
+            {
+              name: "Color",
+              choices: [
+                {
+                  value: color.name || "N/A",
+                  description: color.name || color.hex || "N/A",
+                },
+              ],
+            },
+          ],
+        },
       };
 
-      await axios.post(
-        `https://www.wixapis.com/stores/v1/products/${productId}/media`,
-        productImages,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (collectionId) {
-        await axios.post(
-          `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
-          {
-            productIds: [productId], // Add product to the collection
-          },
+      try {
+        // Create product in Wix
+        const response = await axios.post(
+          "https://www.wixapis.com/stores/v1/products",
+          productData,
           {
             headers: {
               Authorization: `Bearer ${process.env.WIX_API_KEY}`,
@@ -103,62 +83,102 @@ export async function createProduct(formData) {
             },
           }
         );
-      }
 
-      // Save product in MongoDB
-      const newProduct = new Product({
-        sku,
-        title,
-        brand,
-        subcategory,
-        category: collectionId,
-        description,
-        color,
-        price: formattedPrice,
-        images,
-        userId: session.user.id,
-        consignorName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
-        consignorEmail: email ?? "",
-        consignorAccount: accountId ?? "",
-        wixProductId: productId,
-      });
+        productId = response.data.product.id;
 
-      await newProduct.save();
-
-      const user = await User.findById(session.user.id);
-      if (user) {
-        user.products.push(newProduct._id);
-        await user.save();
-      }
-
-      const link =
-        process.env.NODE_ENV === "development"
-          ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
-          : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
-
-      return {
-        status: 200,
-        message: "Product created successfully and added to collection",
-        data: link,
-      };
-    } catch (error) {
-      if (error.response) {
-        const { status, data } = error.response;
-        if (
-          status === 400 &&
-          data?.message === "requirement failed: product.sku is not unique"
-        ) {
-          return { status: 400, error: "SKU already exists" };
-        } else {
-          return { status: 400, error: data?.message };
-        }
-      } else {
-        return {
-          status: 400,
-          error: error.response?.data?.message || error?.message,
+        // Add images to product
+        const productImages = {
+          media: images.map((image) => ({ url: image.url })),
         };
+
+        await axios.post(
+          `https://www.wixapis.com/stores/v1/products/${productId}/media`,
+          productImages,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+              "wix-site-id": process.env.WIX_SITE_ID,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (collectionId) {
+          await axios.post(
+            `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
+            {
+              productIds: [productId],
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+                "wix-site-id": process.env.WIX_SITE_ID,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+      } catch (error) {
+        if (error.response) {
+          const { status, data } = error.response;
+          if (
+            status === 400 &&
+            data?.message === "requirement failed: product.sku is not unique"
+          ) {
+            return { status: 400, error: "SKU already exists" };
+          } else {
+            return { status: 400, error: data?.message };
+          }
+        } else {
+          return {
+            status: 400,
+            error: error.response?.data?.message || error?.message,
+          };
+        }
       }
     }
+
+    // Save product in MongoDB (always happens regardless of collect value)
+    const newProduct = new Product({
+      sku,
+      title,
+      brand,
+      subcategory,
+      category: collectionId,
+      description,
+      color,
+      price: formattedPrice,
+      images,
+      brandPrice: brandPrice,
+      userId: session.user.id,
+      consignorName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+      consignorEmail: email ?? "",
+      consignorAccount: accountId ?? "",
+      wixProductId: productId, // Will be null if collect === true
+      collect: collect ?? false,
+    });
+
+    await newProduct.save();
+
+    const user = await User.findById(session.user.id);
+    if (user) {
+      user.products.push(newProduct._id);
+      await user.save();
+    }
+
+    const link =
+      process.env.NODE_ENV === "development"
+        ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
+        : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+
+    return {
+      status: 200,
+      message:
+        collect === false
+          ? "Product created successfully and added to collection"
+          : "Product saved successfully (Wix creation skipped)",
+      data: link,
+    };
   } catch (error) {
     return { status: 500, error: error.message || "Failed to create product" };
   }
@@ -176,13 +196,26 @@ export async function getUserProducts() {
     await dbConnect();
 
     // Fetch products for the authenticated user
-    const userProducts = await Product.find({
-      userId: session.user.id,
-      sold: false,
-    }).sort({
-      createdAt: -1,
-    });
-
+    let userProducts = [];
+    if (session.user.role === "store") {
+      userProducts = await Product.find({
+        userId: session.user.id,
+        sold: false,
+        collect: { $ne: true },
+      }).sort({
+        createdAt: -1,
+      });
+    } else {
+      const userbrand = await User.findById(session.user.id).select(
+        "brandname"
+      );
+      userProducts = await Product.find({
+        brand: userbrand.brandname,
+        collect: { $eq: true },
+      }).sort({
+        createdAt: -1,
+      });
+    }
     return { status: 200, products: JSON.stringify(userProducts) }; // Return the user's products
   } catch (error) {
     return { status: 500, error: error.message || "Failed to fetch products" };
@@ -336,14 +369,25 @@ export async function getProductById(productId) {
       throw new Error("Product not found");
     }
 
-    if (product.userId.toString() !== session.user.id.toString()) {
-      throw new Error("You are not authorized to view this product");
+    if (session.user.role === "store") {
+      if (product.userId.toString() !== session.user.id.toString()) {
+        throw new Error("You are not authorized to view this product");
+      }
     }
 
     const user = await User.findOne(
       { email: product.consignorEmail },
       "firstname lastname email address phoneNumber city"
     );
+
+    if (session.user.role === "brand") {
+      const userBrand = await User.findById(session.user.id).select(
+        "brandname"
+      );
+      if (product.brand !== userBrand.brandname) {
+        throw new Error("You are not authorized to view this product");
+      }
+    }
 
     // if (!user) {
     //   throw new Error("User related to the product not found");
@@ -354,6 +398,7 @@ export async function getProductById(productId) {
       data: {
         product: JSON.stringify(product),
         user: JSON.stringify(user),
+        userRole: session.user.role,
       },
     }; // Return the product details
   } catch (error) {
@@ -435,8 +480,8 @@ export async function deleteProductById(productId) {
     if (!product) {
       throw new Error("Product not found.");
     }
-
-    if (product.userId.toString() !== session.user.id) {
+    
+    if (session.user.role === "store" && product.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }
     // Delete the product by ID
@@ -768,13 +813,13 @@ export async function archiveProduct(userId) {
       );
 
       // Update in MongoDB
-      if(result.status === 200){
-      const updatedProduct = await Product.findOneAndUpdate(
-        { _id: product._id },
-        { archived: true },
-        { new: true }
-      );
-    }
+      if (result.status === 200) {
+        const updatedProduct = await Product.findOneAndUpdate(
+          { _id: product._id },
+          { archived: true },
+          { new: true }
+        );
+      }
 
       results.push({
         productId: product._id.toString(),
@@ -875,4 +920,91 @@ export async function unarchiveProduct(userId) {
     message: "Unarchiving process completed",
     results,
   };
+}
+
+export async function getCollectProducts() {
+  try {
+    // Authenticate and get the session
+    const session = await auth();
+
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+    // Connect to the database
+    await dbConnect();
+
+    // Fetch products for the authenticated user
+    if (session.user.role === "store") {
+      const collectProducts = await Product.find({
+        userId: session.user.id,
+        sold: false,
+        collect: true,
+      }).sort({
+        createdAt: -1,
+      });
+
+      return { status: 200, products: JSON.stringify(collectProducts) };
+    } else if (session.user.role === "brand") {
+      const userbrand = await User.findById(session.user.id).select(
+        "brandname"
+      );
+      const collectProducts = await Product.find({
+        brand: userbrand.brandname,
+        collect: true,
+      })
+        .populate("userId", "storename brandname")
+        .sort({
+          createdAt: -1,
+        });
+      return { status: 200, products: JSON.stringify(collectProducts) };
+    }
+  } catch (error) {
+    return { status: 500, error: error.message || "Failed to fetch products" };
+  }
+}
+
+export async function getCollectStoreOrBrandNames() {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    await dbConnect();
+    let FilterList = [];
+    const userRole = session.user.role;
+
+    if (userRole === "store") {
+      // Get distinct brand names for store users
+      const brandNames = await Product.distinct("brand", {
+        userId: session.user.id,
+        collect: true,
+      });
+      FilterList = brandNames;
+    } else if (userRole === "brand") {
+      // Get distinct store names for brand users
+      const storeNames = await User.find(
+        {
+          _id: {
+            $in: await Product.distinct("userId", {
+              brand: (
+                await User.findById(session.user.id).select("brandname")
+              ).brandname,
+              collect: true,
+            }),
+          },
+        },
+        "storename"
+      );
+      FilterList = storeNames.map((store) => store.storename);
+    }
+    return {
+      FilterList,
+      userRole,
+    };
+  } catch (error) {
+    console.error("Error fetching store or brand names:", error);
+    return [];
+  }
 }

@@ -26,6 +26,11 @@ export async function registerUser(data) {
     const {
       firstname,
       lastname,
+      contactTitle,
+      companyNumber,
+      companyWebsite,
+      legalCompanyName,
+      brandname,
       storename,
       email,
       password,
@@ -59,16 +64,30 @@ export async function registerUser(data) {
 
     const user = new User({
       firstname,
-      lastname,
-      storename: role === "store" ? storename : undefined,
+      lastname:(role === "brand") ? undefined : lastname,
       email,
       password: hashedPassword,
       role,
-      storename: role === "store" ? storename : undefined,
-      country: role === "store" ? country : undefined,
-      businessNumber: role === "store" ? businessNumber : undefined,
       phone: phone || undefined,
-      ...subscriptionData,
+
+      // Save country ONLY for brand + store
+      country: (role === "store" || role === "brand") ? country : undefined,
+
+      // Store fields
+      ...(role === "store" && {
+        storename,
+        businessNumber,
+        ...subscriptionData,
+      }),
+
+      // Brand fields
+      ...(role === "brand" && {
+        contactTitle,
+        companyNumber,
+        companyWebsite,
+        legalCompanyName,
+        brandname,
+      }),
     });
 
     const savedUser = await user.save();
@@ -87,23 +106,34 @@ export async function registerUser(data) {
     };
   }
 }
-export async function signOutUser({ ipAddress, callbackUrl = "/" } = {}) {
+export async function signOutUser({ callbackUrl = "/" } = {}) {
   try {
     await dbConnect();
     const session = await auth();
     const userId = session?.user?.id;
+    console.log("session is:", session);
+    if(session?.user?.role ==='store'){
+    const ipAddress = await getInternetIp();
+    // Get IP from server-side environment (safe)
+    // const headersList = headers();
+    // const forwarded = headersList.get("x-forwarded-for");
+    // const ipAddress = forwarded ? forwarded.split(",")[0].trim() : null;
+
+    // console.log("Detected IP on logout:", ipAddress);
 
     if (userId && ipAddress) {
       await ActiveUser.deleteOne({ userId, ipAddress });
     } else {
-      console.warn("Missing userId or ipAddress");
+      console.warn("Missing userId or IP address during logout");
     }
+  }
   } catch (error) {
     console.error("Error during cleanup before signout:", error);
   }
 
   return signOut({ redirectTo: callbackUrl });
 }
+
 
 export async function signInUser(data) {
   try {

@@ -61,9 +61,14 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 
+  if(userRole === "brand" && 
+    ["/dashboard/consignors","/dashboard/add-product","/dashboard/items-sold","/dashboard/invite-store","/dashboard/qr"].includes(nextUrl.pathname)){
+    return NextResponse.redirect(new URL("/dashboard/profile", req.url));
+  }
+
   if (
     userRole === "consignor" &&
-    ["/dashboard/store", "/dashboard/add-product", "/dashboard/items-sold"].includes(nextUrl.pathname)
+    ["/dashboard/store", "/dashboard/add-product", "/dashboard/items-sold","/dashboard/ree-collect","/dashboard/invite-store"].includes(nextUrl.pathname)
   ) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }

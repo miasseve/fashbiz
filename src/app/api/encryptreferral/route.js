@@ -1,9 +1,18 @@
+// C:\Users\Admin\Desktop\React\NextJS\live\fashion-app\src\app\api\encryptreferral\route.js
 import { encrypt } from "@/actions/encryption";
 import { decrypt } from "@/actions/encryption";
 import StoreReferralCode from "@/models/StoreReferralCode";
+import { auth } from "@/auth";
 
 export async function POST(req) {
   try {
+    const session = await auth();
+    if (!session || !session.user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized access" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
     const body = await req.json();
     const { code } = body;
 
@@ -36,6 +45,13 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const session = await auth();
+    if (!session || !session.user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized access" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
     const { searchParams } = new URL(req.url);
 
     // Match the URL query parameter

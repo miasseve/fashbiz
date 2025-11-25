@@ -2,6 +2,7 @@ import { signInUser } from "@/actions/authActions";
 import ActiveUser from "@/models/Activeuser";
 import User from "@/models/User";
 import { getInternetIp } from "@/actions/getClientIp";
+import { getSubscriptionPlans } from "@/actions/stripePlans";
 
 export async function POST(req) {
   try {
@@ -12,14 +13,9 @@ export async function POST(req) {
     if (result.status === 200) {
       const user = await User.findOne({ email: payload.email });
       const subscriptionType = user?.subscriptionType;
-      if (subscriptionType != "free") {
-        const base =
-          process.env.NODE_ENV === "production"
-            ? process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL
-            : process.env.NEXT_PUBLIC_FRONTEND_URL;
-
-        const res = await fetch(`${base}/api/stripe/plans`);
-        const data = await res.json();
+      const userRole = user?.role;
+      if (subscriptionType != "free" && userRole === "store") {
+        const data = await getSubscriptionPlans();
 
         const matchedPlan = data.find(
           (plan) => plan.product.name === subscriptionType

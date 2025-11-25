@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getUserProductCount } from "@/actions/productActions";
 import { checkStripeIsConnected } from "@/actions/authActions";
 import { getUser } from "@/actions/authActions";
+import { getSubscriptionPlans } from "@/actions/stripePlans";
 
 export const metadata = {
   title: "Add Product",
@@ -37,8 +38,7 @@ const base =
     const subscription = data?.subscription || null;
 
     if (subscription) {
-      const res = await fetch(`${base}/api/stripe/plans`);
-      const data = await res.json();
+      const data = await getSubscriptionPlans();
 
       const formattedPlans = data.map((plan) => ({
         id: plan.id,

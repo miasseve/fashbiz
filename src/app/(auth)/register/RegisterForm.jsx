@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Tabs, Tab, Card, CardBody } from "@heroui/react";
 import ConsignorForm from "./ConsignorForm";
 import StoreForm from "./StoreForm";
-
+import BrandForm from "./BrandForm";
 const RegisterForm = () => {
   const [selectedTab, setSelectedTab] = useState("consignor");
 
@@ -74,6 +74,9 @@ const RegisterForm = () => {
                     </Tab>
                     <Tab key="consignor" title="Consignor">
                       <ConsignorForm />
+                    </Tab>
+                    <Tab key="brand" title="Brand">
+                      <BrandForm />
                     </Tab>
                   </Tabs>
                 </CardBody>

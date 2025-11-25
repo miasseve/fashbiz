@@ -53,18 +53,58 @@ const Profile = ({ user, stripeResponse }) => {
         if (!value) return false;
         return isValidPhoneNumber(value);
       }),
-    businessNumber: Yup.string().when("role", {
-          is: "store",
+      contactTitle: Yup.string().when("role", {
+          is: "brand",
+          then: () =>
+            Yup.string()
+              .trim()
+              .required("Contact Person Title is required")
+              .max(50, "Title cannot exceed 50 characters"),
+          otherwise: () => Yup.string().nullable(),
+        }),
+        brandname: Yup.string().when("role", {
+          is: "brand",
+          then: () => Yup.string().trim().required("Brand Name is required"),
+          otherwise: () => Yup.string(),
+        }),
+        legalCompanyName: Yup.string().when("role", {
+          is: "brand",
+          then: () => Yup.string().trim().required("Legal Company Name is required"),
+          otherwise: () => Yup.string(),
+        }),
+        companyWebsite: Yup.string().when("role", {
+          is: "brand",
+          then: () =>
+            Yup.string()
+              .trim()
+              .url("Must be a valid URL")
+              .required("Company Website is required"),
+          otherwise: () => Yup.string(),
+        }),
+        companyNumber: Yup.string().when("role", {
+          is: "brand",
           then: () =>
             Yup.string()
               .trim()
               .matches(
-                /^\d+$/,
-                "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+                /^[A-Za-z0-9\s\-\/]+$/,
+                "Enter a valid company registration number"
               )
-              .required("Business Registration Number is required"),
-          otherwise: () => Yup.string().nullable(),
+              .required("Company Registration Number is required"),
+          otherwise: () => Yup.string(),
         }),
+    businessNumber: Yup.string().when("role", {
+      is: "store",
+      then: () =>
+        Yup.string()
+          .trim()
+          .matches(
+            /^\d+$/,
+            "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+          )
+          .required("Business Registration Number is required"),
+      otherwise: () => Yup.string().nullable(),
+    }),
     address: Yup.string().trim().required("Address is required"),
     city: Yup.string().trim().required("City is required"),
     zipcode: Yup.string().when("country", {
@@ -99,14 +139,18 @@ const Profile = ({ user, stripeResponse }) => {
       email: user?.email || "",
       storename: user?.storename || "",
       businessNumber: user?.businessNumber || "",
+      contactTitle: user?.contactTitle || "",
+      legalCompanyName: user?.legalCompanyName || "",
+      companyWebsite: user?.companyWebsite || "",
+      companyNumber: user?.companyNumber || "",
+      brandname: user?.brandname || "",
       phone: user?.phone || "",
       address: user?.address || "",
       city: user?.city || "",
       zipcode: user?.zipcode || "",
       state: user?.state || "",
       country: user?.country || "DK",
-      role:user?.role || "",
-      
+      role: user?.role || "",
     },
   });
   const [error, setError] = useState("");
@@ -182,7 +226,14 @@ const Profile = ({ user, stripeResponse }) => {
         });
         return;
       }
-
+      if (session?.user?.role === "brand") {
+        user.contactTitle = data.contactTitle;
+        user.brandname = data.brandname;
+        user.legalCompanyName = data.legalCompanyName;
+        user.companyWebsite = data.companyWebsite;
+        user.companyNumber = data.companyNumber;
+        user.role = "brand";
+      }
       const response = await updateUser(data);
       if (response.status === 200) {
         toast.success("Profile updated successfully!", {
@@ -196,7 +247,7 @@ const Profile = ({ user, stripeResponse }) => {
         setError(response.error);
       }
     } catch (error) {
-      console.log(error.message,'erroror')
+      console.log(error.message, "erroror");
       toast.error("Something went wrong!", {
         position: "top-right",
         autoClose: 2000,
@@ -272,10 +323,7 @@ const Profile = ({ user, stripeResponse }) => {
                 >
                   <FaUserEdit />
                 </Button>
-                <Button
-                  className="danger-btn"
-                  onPress={handleRemoveImage}
-                >
+                <Button className="danger-btn" onPress={handleRemoveImage}>
                   <RiDeleteBinFill />
                 </Button>
               </div>
@@ -329,25 +377,91 @@ const Profile = ({ user, stripeResponse }) => {
           </div>
         )}
         {session?.user?.role === "store" && (
-            <>
-              <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Business Registration Number (VAT/CVR)
-                </label>
-                <input
-                  type="text"
-                  {...register("businessNumber")}
-                  placeholder="e.g., DK12345678"
-                  className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
-                />
-                {errors.businessNumber && (
-                  <span className="text-red-500 font-bold text-[12px]">
-                    {errors.businessNumber.message}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
+          <>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Business Registration Number (VAT/CVR)
+              </label>
+              <input
+                type="text"
+                {...register("businessNumber")}
+                placeholder="e.g., DK12345678"
+                className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
+              />
+              {errors.businessNumber && (
+                <span className="text-red-500 font-bold text-[12px]">
+                  {errors.businessNumber.message}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+        {session?.user?.role === "brand" && (
+          <>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">
+                Contact Person Title
+              </label>
+              <input {...register("contactTitle")} className="mt-2 w-full" />
+              {errors.contactTitle && (
+                <span className="text-red-500 text-[12px]">
+                  {errors.contactTitle.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700">
+                Brand Name
+              </label>
+              <input {...register("brandname")} className="mt-2 w-full" />
+              {errors.brandname && (
+                <span className="text-red-500 text-[12px]">
+                  {errors.brandname.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700">
+                Legal Company Name
+              </label>
+              <input
+                {...register("legalCompanyName")}
+                className="mt-2 w-full"
+              />
+              {errors.legalCompanyName && (
+                <span className="text-red-500 text-[12px]">
+                  {errors.legalCompanyName.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700">
+                Company Website
+              </label>
+              <input {...register("companyWebsite")} className="mt-2 w-full" />
+              {errors.companyWebsite && (
+                <span className="text-red-500 text-[12px]">
+                  {errors.companyWebsite.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700">
+                Company Registration Number
+              </label>
+              <input {...register("companyNumber")} className="mt-2 w-full" />
+              {errors.companyNumber && (
+                <span className="text-red-500 text-[12px]">
+                  {errors.companyNumber.message}
+                </span>
+              )}
+            </div>
+          </>
+        )}
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">

@@ -22,11 +22,11 @@ const subscriptionPlanSchema = new mongoose.Schema(
     },
     productLimit: {
       type: Number,
-      required: true,
+      default: null,
     },
     maxUsers: {
       type: Number,
-      required: true,
+      default: null,
     },
     modules: [
       {
@@ -46,6 +46,9 @@ const subscriptionPlanSchema = new mongoose.Schema(
           "✔ Upto 5-10 Users access",
           "✔ Multi-store Sync",
           "✔ Priority Support",
+          "✔ Ree Collect Program",
+          "✔ Ecommerce Integrations",
+          "✔ Resale Tag",
         ],
       },
     ],

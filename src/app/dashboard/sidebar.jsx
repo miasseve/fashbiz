@@ -13,6 +13,7 @@ import { Spinner } from "@heroui/react";
 import { RiProductHuntFill } from "react-icons/ri";
 import { FaHistory } from "react-icons/fa";
 import { FaHandHoldingUsd } from "react-icons/fa";
+import { FaBoxOpen } from "react-icons/fa6";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
@@ -29,22 +30,27 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
   const menuItems = [
     { href: "/dashboard/profile", label: "Profile", icon: <FaUser /> },
-    session.data?.user?.role !== "consignor" && {
+    session.data?.user?.role === "store" && {
       href: "/dashboard/store",
       label: "Store",
       icon: <FaStore />,
     },
-    session.data?.user?.role !== "consignor" && {
+    session.data?.user?.role === "brand" && {
+      href: "/dashboard/ree-collect",
+      label: "Brand Store",
+      icon: <FaBoxOpen />,
+    },
+    session.data?.user?.role === "store" && {
       href: "/dashboard/add-product",
       label: "Add Product",
       icon: <BiLogoProductHunt />,
     },
-    session.data?.user?.role !== "store" && {
+    session.data?.user?.role === "consignor" && {
       href: "/dashboard/qr",
       label: "QR code",
       icon: <IoQrCode />,
     },
-    session.data?.user?.role === "store" && {
+    session.data?.user?.role !== "consignor" && {
       href: "/dashboard/subscription-plan",
       label: "Subscription Plan",
       icon: <IoQrCode />,
@@ -106,19 +112,35 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </div>
         ))}
 
-        {/* Invite a store link */}
         {session.data?.user?.role === "store" && (
-          <div
-            onClick={() => handleLinkClick("/dashboard/invite-store")}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer mt-32 ${
-              pathname === "/dashboard/invite-store"
-                ? "bg-[#ffd7d7] text-black"
-                : "hover:bg-[#ffd7d7] hover:text-black"
-            }`}
-          >
-            <FaHandHoldingUsd className="text-[1.3rem]" />
-            <span className="ml-2">Invite a store</span>
-          </div>
+          <>
+            <div
+              onClick={() => handleLinkClick("/dashboard/ree-collect")}
+              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer mt-32 ${
+                pathname === "/dashboard/ree-collect"
+                  ? "bg-[#ffd7d7] text-black"
+                  : "hover:bg-[#ffd7d7] hover:text-black"
+              }`}
+            >
+              <div className="bg-pink-400 p-2 rounded-full border border-white flex items-center justify-center">
+                <FaBoxOpen className="text-white text-[1.3rem]" />
+              </div>
+              <span className="ml-2">Ree Collect</span>
+            </div>
+
+            {/* Invite a store link */}
+            <div
+              onClick={() => handleLinkClick("/dashboard/invite-store")}
+              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer ${
+                pathname === "/dashboard/invite-store"
+                  ? "bg-[#ffd7d7] text-black"
+                  : "hover:bg-[#ffd7d7] hover:text-black"
+              }`}
+            >
+              <FaHandHoldingUsd className="text-[1.3rem]" />
+              <span className="ml-2">Invite a store</span>
+            </div>
+          </>
         )}
       </nav>
     </div>

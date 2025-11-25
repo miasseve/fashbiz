@@ -9,7 +9,9 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Loader2, Lock } from "lucide-react";
-import {unarchiveProduct} from "@/actions/productActions";
+import { unarchiveProduct } from "@/actions/productActions";
+import { getUser } from "@/actions/authActions";
+import { user } from "@heroui/theme";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -32,6 +34,9 @@ function CheckoutForm({ plan, userId }) {
     try {
       const urlParams = new URL(window.location.href).searchParams;
       const encryptedReferral = urlParams.get("referral");
+      const userResponse = await getUser(userId);
+      const userData = JSON.parse(userResponse?.data || "{}"); // parse JSON string
+      const userRole = userData?.role || null;
 
       let referralCode = null;
       let referredBy = null;
@@ -44,7 +49,7 @@ function CheckoutForm({ plan, userId }) {
         const data = await res.json();
         referralCode = data.code || null;
         referredBy = data.userId || null;
-        console.log("Decrypted referral code:", referralCode,"of" ,referredBy);
+        // console.log("Decrypted referral code:", referralCode, "of", referredBy);
       }
       const cardElement = elements.getElement(CardElement);
 
@@ -81,6 +86,13 @@ function CheckoutForm({ plan, userId }) {
           body: JSON.stringify({ userId, referralCode }),
         });
         await unarchiveProduct(userId);
+        if (userRole === "brand") {
+          await fetch("/api/brand", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId }),
+          });
+        }
         router.push("dashboard/subscription-plan");
         router.refresh();
       } else {

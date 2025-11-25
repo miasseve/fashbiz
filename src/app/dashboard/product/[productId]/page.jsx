@@ -20,10 +20,9 @@ const Page = async ({ params }) => {
     redirect("/");
   }
 
-  const { product, user } = response.data;
+  const { product, user,userRole } = response.data;
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
-
   return (
     <div className="container mx-auto p-0 lg:p-12">
       <div className="flex flex-col sm:flex-row gap-0  lg:shadow-lg bg-[#fff] p-[20px] rounded-lg p-6 lg:p-10">
@@ -39,29 +38,46 @@ const Page = async ({ params }) => {
               <span className="font-semibold">Brand :</span>{" "}
               {parsedProduct.brand}
             </li>
-             <li>
+            <li>
               <span className="font-semibold">Color :</span>{" "}
-              {parsedProduct.color?.name|| 'N/A'}
+              {parsedProduct.color?.name || "N/A"}
             </li>
-             <li>
+            <li>
               <span className="font-semibold">Sub Category :</span>{" "}
               {parsedProduct.subcategory}
             </li>
-            <li>
-              <span className="font-semibold">Price :</span>{" "}
-              <span className="font-semibold">€{parsedProduct.price}</span>
-            </li>
+            {parsedProduct.collect !== true && (
+              <li>
+                <span className="font-semibold">Price :</span>{" "}
+                <span className="font-semibold">€{parsedProduct.price}</span>
+              </li>
+            )}
+            {parsedProduct.collect === true && (
+              <li>
+                <span className="font-semibold">Brand Price :</span>{" "}
+                <span className="font-semibold">
+                  {parsedProduct.brandPrice} DKK
+                </span>
+              </li>
+            )}
             <li>
               <span className="font-semibold">Description :</span>{" "}
               {parsedProduct.description}
             </li>
           </ul>
-          <p>
-          </p>
-          <AddToCart product={parsedProduct} />
+          <p></p>
+          {parsedProduct.collect !== true && (
+            <>
+              <AddToCart product={parsedProduct} />
+            </>
+          )}
+          {userRole !== "brand" && (
+            <>
+              <EditButton product={parsedProduct} />
+              <CopyLinkButton productId={parsedProduct._id} />
+            </>
+          )}
           <DeleteButton product={parsedProduct} />
-          <EditButton product={parsedProduct} />
-          <CopyLinkButton productId={parsedProduct._id} />
           {parsedUser && (
             <div className="mt-6 bg-gray-100 rounded-lg shadow-sm p-4">
               <p className="text-gray-800 italic font-semibold">

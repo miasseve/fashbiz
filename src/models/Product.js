@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema({
     },
   },
   price: { type: Number, required: true },
+  brandPrice: { type: Number, required: false },
   images: [
     {
       url: { type: String },
@@ -23,6 +24,7 @@ const productSchema = new mongoose.Schema({
     },
   ],
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  collect:{type: Boolean, default: false},
   consignorName: { type: String },
   consignorEmail: { type: String },
   consignorAccount: { type: String },

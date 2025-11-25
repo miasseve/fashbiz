@@ -42,7 +42,10 @@ const LoginForm = () => {
       if (result.profileStatus) {
         if (result.role == "store") {
           router.push("/dashboard/add-product");
-        } else {
+        } else if(result.role == "brand"){
+          router.push("/dashboard/profile");
+        }
+        else{
           router.push("/dashboard/storelist");
         }
       } else {
