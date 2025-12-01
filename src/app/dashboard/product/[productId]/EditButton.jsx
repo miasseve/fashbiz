@@ -19,12 +19,40 @@ import { updateProduct } from "@/actions/productActions";
 import { useDispatch } from "react-redux";
 import { updateProductInCart } from "@/features/cartSlice";
 import { FiEdit2 } from "react-icons/fi";
+const FABRIC_OPTIONS = [
+  "Cotton",
+  "Wool",
+  "Denim",
+  "Tweed",
+  "Leather",
+  "Suede",
+  "Silk",
+  "Fur",
+  "Viscose",
+  "Acrylic",
+  "Cashmere",
+  "Alpaca",
+  "Synthetique",
+  "Synthetic Leather",
+  "Lace",
+  "Synthetic Fur",
+  "Linen",
+  "Merinos",
+  "Mousseline",
+  "Nylon",
+  "Polyester",
+  "Satin",
+  "Velvet",
+  "Corduroy",
+  "Elastane",
+];
 
 const EditButton = ({ product }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const router = useRouter();
   const dispatch = useDispatch();
- 
+  console.log("EditButton Product:", product);
+
   const {
     register,
     handleSubmit,
@@ -37,8 +65,10 @@ const EditButton = ({ product }) => {
       brand: product?.brand || "",
       price: product?.price || "",
       description: product?.description || "",
-      subcategory:product?.subcategory || "",
+      subcategory: product?.subcategory || "",
       sku: product?.sku || "",
+      size: product?.size || "",
+      fabric: product?.fabric || "",
     },
   });
 
@@ -158,6 +188,39 @@ const EditButton = ({ product }) => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium">Size</label>
+                  <input
+                    {...register("size")}
+                    placeholder="e.g. S, M, L, XL or 38, 40, 42"
+                    className="w-full border px-3 py-2 rounded"
+                  />
+                  {errors.size && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.size.message}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Fabric</label>
+                  <select
+                    {...register("fabric")}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value="">Select Fabric</option>
+                    {FABRIC_OPTIONS.map((fabric) => (
+                      <option key={fabric} value={fabric}>
+                        {fabric}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.fabric && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.fabric.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
                   <label className="text-sm font-medium">Price</label>
                   <input
                     {...register("price")}
@@ -171,7 +234,6 @@ const EditButton = ({ product }) => {
                     </p>
                   )}
                 </div>
-
                 <div>
                   <label className="text-sm font-medium">Description</label>
                   <textarea

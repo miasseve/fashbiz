@@ -189,6 +189,8 @@ export const productSchema = Yup.object().shape({
   }),
   subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
+  size: Yup.string().required("Size is required"),
+  fabric: Yup.string().optional(),
 });
 
 export const updateProductSchema = Yup.object().shape({
@@ -206,4 +208,6 @@ export const updateProductSchema = Yup.object().shape({
     ),
   subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
+  size: Yup.string().required("Size is required"),
+  fabric: Yup.string().optional(),
 });

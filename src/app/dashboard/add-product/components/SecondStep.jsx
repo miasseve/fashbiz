@@ -26,6 +26,34 @@ import { activateCollectSubscription } from "@/actions/accountAction";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 
+const FABRIC_OPTIONS = [
+  "Cotton",
+  "Wool",
+  "Denim",
+  "Tweed",
+  "Leather",
+  "Suede",
+  "Silk",
+  "Fur",
+  "Viscose",
+  "Acrylic",
+  "Cashmere",
+  "Alpaca",
+  "Synthetique",
+  "Synthetic Leather",
+  "Lace",
+  "Synthetic Fur",
+  "Linen",
+  "Merinos",
+  "Mousseline",
+  "Nylon",
+  "Polyester",
+  "Satin",
+  "Velvet",
+  "Corduroy",
+  "Elastane",
+];
+
 const SecondStep = ({
   handleBackStep,
   handleAddMoreProducts,
@@ -166,7 +194,6 @@ const SecondStep = ({
     //check if the product brand has Ree collect subscription
     try {
       const collectResponse = await activateCollectSubscription(brandValue);
-      console.log(collectResponse, "collectResponse");
 
       if (collectResponse.status === 200 && collectResponse.data !== null) {
         const updatedData = {
@@ -223,7 +250,7 @@ const SecondStep = ({
     setShowConfirmation(false);
     dispatch(clearConsignors());
     dispatch(setCurrentStep(1));
-    if(collectSelection){
+    if (collectSelection) {
       router.push("/dashboard/ree-collect");
       return;
     }
@@ -272,8 +299,7 @@ const SecondStep = ({
                   <label className="text-sm font-medium">Category</label>
                   <select
                     {...register("collectionId")}
-                    className="max-w-xs border border-gray-300 rounded px-3 py-2"
-                    placeholder="Select Category"
+                    className="w-full border border-gray-300 rounded px-3 py-2"
                   >
                     <option value="">Select Category</option>
                     {collections.map((collection) => (
@@ -288,11 +314,13 @@ const SecondStep = ({
                     </span>
                   )}
                 </div>
+
                 <div>
                   <label className="text-sm font-medium">Sub Category</label>
                   <input
                     placeholder="Sub Category"
                     {...register("subcategory")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
                   />
                   {errors.subcategory && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -300,30 +328,79 @@ const SecondStep = ({
                     </span>
                   )}
                 </div>
+
                 <div className="h-full">
                   <label className="text-sm font-medium">SKU</label>
-                  <input placeholder="Enter SKU" {...register("sku")} />
+                  <input
+                    placeholder="Enter SKU"
+                    {...register("sku")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
                   {errors.sku && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.sku.message}
                     </span>
                   )}
                 </div>
+
                 <div>
                   <label className="text-sm font-medium">Title</label>
-                  <input placeholder="Title" {...register("title")} />
+                  <input
+                    placeholder="Title"
+                    {...register("title")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
                   {errors.title && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.title.message}
                     </span>
                   )}
                 </div>
+
                 <div>
                   <label className="text-sm font-medium">Brand</label>
-                  <input placeholder="Brand" {...register("brand")} />
+                  <input
+                    placeholder="Brand"
+                    {...register("brand")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
                   {errors.brand && (
                     <span className="text-red-500 font-bold text-[12px]">
                       {errors.brand.message}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Size:
+                    <span className="text-s font-normal"><em> (Enter sizes separated by commas,e.g.S,M or 38,40)</em></span></label>
+                  <input
+                    placeholder="e.g. S, M, L, XL or 38, 40, 42"
+                    {...register("size")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
+                  {errors.size && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.size.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Fabric</label>
+                  <select
+                    {...register("fabric")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Select Fabric</option>
+                    {FABRIC_OPTIONS.map((fabric) => (
+                      <option key={fabric} value={fabric}>
+                        {fabric}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.fabric && (
+                    <span className="text-red-500 font-bold text-[12px]">
+                      {errors.fabric.message}
                     </span>
                   )}
                 </div>
@@ -357,12 +434,12 @@ const SecondStep = ({
                       }}
                     ></div>
                   </div>
+                  {errors.color && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.color.message}
+                    </p>
+                  )}
                 </div>
-                {errors.color && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.color.message}
-                  </p>
-                )}
 
                 <div>
                   <label className="text-sm font-medium">Price</label>
@@ -370,6 +447,7 @@ const SecondStep = ({
                     {...register("price")}
                     type="text"
                     placeholder="Price in €"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
                   />
                   {errors.price && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -377,6 +455,7 @@ const SecondStep = ({
                     </span>
                   )}
                 </div>
+
                 <div>
                   <label className="text-sm font-medium">Description</label>
                   <textarea
@@ -384,6 +463,7 @@ const SecondStep = ({
                     rows="4"
                     placeholder="Enter description"
                     {...register("description")}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
                   />
                   {errors.description && (
                     <span className="text-red-500 font-bold text-[12px]">
@@ -415,7 +495,7 @@ const SecondStep = ({
             ref={targetRef}
             isOpen={showConfirmation}
             onOpenChange={onOpenChange}
-            className="lg:max-w-xl w-full m-auto  mt-[15rem]" // Ensures proper width
+            className="lg:max-w-xl w-full m-auto mt-[15rem]"
           >
             <ModalContent>
               {(onClose) => (
@@ -450,6 +530,7 @@ const SecondStep = ({
           </Modal>
         </div>
       )}
+
       <Modal
         backdrop="blur"
         isOpen={isCollectOpen}
@@ -465,12 +546,10 @@ const SecondStep = ({
           </ModalHeader>
 
           <ModalBody className="flex flex-col gap-6 items-center justify-center py-6">
-            {/* Pink Icon */}
             <div className="bg-pink-500 p-6 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
               <FaBoxOpen className="text-white text-5xl" />
             </div>
 
-            {/* Description */}
             <p className="text-center text-gray-700 dark:text-gray-300 text-lg leading-relaxed px-4">
               Do you want to add this product to the{" "}
               <strong>Ree Collect</strong> program? If yes, this product will
@@ -478,7 +557,6 @@ const SecondStep = ({
               marketplace.
             </p>
 
-            {/* Yes / No Radio Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 items-center">
               <label className="flex items-center gap-3 cursor-pointer text-lg">
                 <input

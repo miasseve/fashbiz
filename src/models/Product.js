@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const productSchema = new mongoose.Schema({
   sku: { type: String, required: true },
   title: { type: String, required: true },
@@ -8,11 +7,11 @@ const productSchema = new mongoose.Schema({
   subcategory: { type: String, default: "" },
   description: { type: String, required: true },
   color: {
-    name: { type: String, default: "No Color" },  
+    name: { type: String, default: "No Color" },
     hex: {
       type: String,
-      match: /^#([0-9A-F]{3}){1,2}$/i,               
-      default: "#fff",                             
+      match: /^#([0-9A-F]{3}){1,2}$/i,
+      default: "#fff",
     },
   },
   price: { type: Number, required: true },
@@ -24,7 +23,13 @@ const productSchema = new mongoose.Schema({
     },
   ],
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  collect:{type: Boolean, default: false},
+  collect: { type: Boolean, default: false },
+  // barcode: { type: String, unique: true },
+  size: {
+    type: [String], // or [Number] if sizes are numeric
+    required: true,
+  },
+  fabric: { type: String },
   consignorName: { type: String },
   consignorEmail: { type: String },
   consignorAccount: { type: String },
@@ -34,6 +39,7 @@ const productSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
+const Product =
+  mongoose.models.Product || mongoose.model("Product", productSchema);
 
 export default Product;

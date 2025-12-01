@@ -7,6 +7,7 @@ import DeleteButton from "./DeleteButton";
 import EditButton from "./EditButton";
 import AddToCart from "@/app/product/[productId]/AddToCart";
 import CopyLinkButton from "./CopyLinkButton";
+// import GenerateBarcode from "./GenerateBarcode";
 
 export const metadata = {
   title: "Product",
@@ -20,7 +21,7 @@ const Page = async ({ params }) => {
     redirect("/");
   }
 
-  const { product, user,userRole } = response.data;
+  const { product, user, userRole } = response.data;
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
   return (
@@ -46,6 +47,16 @@ const Page = async ({ params }) => {
               <span className="font-semibold">Sub Category :</span>{" "}
               {parsedProduct.subcategory}
             </li>
+            <li>
+              <span className="font-semibold">Size :</span>{" "}
+              {parsedProduct.size?.length
+                ? parsedProduct.size.join(", ")
+                : "N/A"}
+            </li>
+            <li>
+              <span className="font-semibold">Fabric :</span>{" "}
+              {parsedProduct.fabric || "N/A"}
+            </li>
             {parsedProduct.collect !== true && (
               <li>
                 <span className="font-semibold">Price :</span>{" "}
@@ -65,6 +76,7 @@ const Page = async ({ params }) => {
               {parsedProduct.description}
             </li>
           </ul>
+          {/* <GenerateBarcode barcode={parsedProduct.barcode} /> */}
           {userRole !== "brand" && (
             <>
               <EditButton product={parsedProduct} />

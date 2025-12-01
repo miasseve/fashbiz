@@ -31,21 +31,81 @@ export async function createProduct(formData) {
       subcategory,
       collectionId,
       collect,
+      size,
+      fabric,
     } = formData;
 
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     let productId = null;
     let brandPrice = null;
+    const sizesArray = Array.isArray(size) ? size : [size]; // ["S","M","L"] or [28,30]
+    // Generate Barcode Value
+    // const year = new Date().getFullYear().toString().slice(-2);
+    // const brandCode = brand
+    //   ? brand
+    //       .replace(/[^A-Za-z0-9]/g, "")
+    //       .toUpperCase()
+    //       .slice(0, 3)
+    //   : "XXX";
+    // const barcodeValue = `REE-${brandCode}${sku}${year}`;
 
     if (collect === true) {
-      const userId = await User.findOne({brandname: brand}).select('_id');
-      const reeamt = await Account.findOne({ userId: userId?._id }).select("reeCollectAmount");
-      brandPrice = reeamt ? Number(parseFloat(reeamt?.reeCollectAmount).toFixed(2)) : null;
+      const userId = await User.findOne({ brandname: brand }).select("_id");
+      const reeamt = await Account.findOne({ userId: userId?._id }).select(
+        "reeCollectAmount"
+      );
+      brandPrice = reeamt
+        ? Number(parseFloat(reeamt?.reeCollectAmount).toFixed(2))
+        : null;
     }
 
     // Only create product in Wix if collect is false
     if (collect === false) {
+      // Build product options array dynamically
+      const productOptions = [];
+
+      // Add Color option
+      if (color) {
+        productOptions.push({
+          name: "Color",
+          choices: [
+            {
+              value: color.name || "N/A",
+              description: color.name || color.hex || "N/A",
+            },
+          ],
+        });
+      }
+
+      // Add Size option
+      if (size) {
+        // Split size if multiple sizes are provided (e.g., "S, M, L")
+        const sizes = size.split(',').map(s => s.trim()).filter(s => s);
+        if (sizes.length > 0) {
+          productOptions.push({
+            name: "Size",
+            choices: sizes.map(s => ({
+              value: s,
+              description: s,
+            })),
+          });
+        }
+      }
+
+      // Add Fabric option
+      if (fabric) {
+        productOptions.push({
+          name: "Fabric",
+          choices: [
+            {
+              value: fabric,
+              description: fabric,
+            },
+          ],
+        });
+      }
+
       // Construct product data for Wix API
       const productData = {
         product: {
@@ -56,17 +116,7 @@ export async function createProduct(formData) {
           sku: sku,
           visible: true,
           manageVariants: true,
-          productOptions: [
-            {
-              name: "Color",
-              choices: [
-                {
-                  value: color.name || "N/A",
-                  description: color.name || color.hex || "N/A",
-                },
-              ],
-            },
-          ],
+          productOptions: productOptions.length > 0 ? productOptions : undefined,
         },
       };
 
@@ -138,6 +188,7 @@ export async function createProduct(formData) {
       }
     }
 
+
     // Save product in MongoDB (always happens regardless of collect value)
     const newProduct = new Product({
       sku,
@@ -156,6 +207,9 @@ export async function createProduct(formData) {
       consignorAccount: accountId ?? "",
       wixProductId: productId, // Will be null if collect === true
       collect: collect ?? false,
+      size,
+      fabric,
+      // barcode: barcodeValue,
     });
 
     await newProduct.save();
@@ -480,8 +534,11 @@ export async function deleteProductById(productId) {
     if (!product) {
       throw new Error("Product not found.");
     }
-    
-    if (session.user.role === "store" && product.userId.toString() !== session.user.id) {
+
+    if (
+      session.user.role === "store" &&
+      product.userId.toString() !== session.user.id
+    ) {
       throw new Error("You do not have permission to delete this product.");
     }
     // Delete the product by ID
@@ -512,10 +569,61 @@ export async function updateProduct(productId, data) {
     if (product.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to update this product.");
     }
+
+    // Update product in MongoDB
     await Product.updateOne({ _id: productId }, { $set: data });
 
+    // Update product in Wix if it has a wixProductId
     if (product.wixProductId) {
       try {
+        // Build product options array dynamically for Wix update
+        const productOptions = [];
+
+        // Add Color option (use existing color from product if not in update data)
+        const currentColor = data.color || product.color;
+        if (currentColor) {
+          productOptions.push({
+            name: "Color",
+            choices: [
+              {
+                value: currentColor.name || "N/A",
+                description: currentColor.name || currentColor.hex || "N/A",
+              },
+            ],
+          });
+        }
+
+        // Add Size option
+        const currentSize = data.size || product.size;
+        if (currentSize) {
+          // Split size if multiple sizes are provided (e.g., "S, M, L" or "38, 40, 42")
+          const sizes = currentSize.split(',').map(s => s.trim()).filter(s => s);
+          if (sizes.length > 0) {
+            productOptions.push({
+              name: "Size",
+              choices: sizes.map(s => ({
+                value: s,
+                description: s,
+              })),
+            });
+          }
+        }
+
+        // Add Fabric option
+        const currentFabric = data.fabric || product.fabric;
+        if (currentFabric) {
+          productOptions.push({
+            name: "Fabric",
+            choices: [
+              {
+                value: currentFabric,
+                description: currentFabric,
+              },
+            ],
+          });
+        }
+
+        // Construct update data for Wix
         const productData = {
           product: {
             name: data.title || product.title,
@@ -526,6 +634,14 @@ export async function updateProduct(productId, data) {
             sku: data.sku || product.sku,
           },
         };
+
+        // Only add productOptions if we have any
+        if (productOptions.length > 0) {
+          productData.product.productOptions = productOptions;
+          productData.product.manageVariants = true;
+        }
+
+        // Update product in Wix
         await axios.patch(
           `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
           productData,
@@ -538,7 +654,7 @@ export async function updateProduct(productId, data) {
           }
         );
       } catch (error) {
-        console.log(error, "error");
+        console.log(error, "error updating Wix product");
         return {
           status: 500,
           error: "Product updated in DB but failed to update in Wix.",
