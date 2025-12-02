@@ -26,34 +26,6 @@ import { activateCollectSubscription } from "@/actions/accountAction";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 
-const FABRIC_OPTIONS = [
-  "Cotton",
-  "Wool",
-  "Denim",
-  "Tweed",
-  "Leather",
-  "Suede",
-  "Silk",
-  "Fur",
-  "Viscose",
-  "Acrylic",
-  "Cashmere",
-  "Alpaca",
-  "Synthetique",
-  "Synthetic Leather",
-  "Lace",
-  "Synthetic Fur",
-  "Linen",
-  "Merinos",
-  "Mousseline",
-  "Nylon",
-  "Polyester",
-  "Satin",
-  "Velvet",
-  "Corduroy",
-  "Elastane",
-];
-
 const SecondStep = ({
   handleBackStep,
   handleAddMoreProducts,
@@ -71,6 +43,7 @@ const SecondStep = ({
   const targetRef = React.useRef(null);
 
   const [collections, setCollections] = useState([]);
+  const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
   const [isCollectOpen, setIsCollectOpen] = useState(false);
   const [collectSelection, setCollectSelection] = useState(null);
@@ -133,6 +106,22 @@ const SecondStep = ({
   }, []);
 
   useEffect(() => {
+    const fetchFabricOptions = async () => {
+      try {
+        const response = await axios.get("/api/fabric-options");
+        if (response.status !== 200) {
+          setErrorMessage("Failed to fetch fabric options. Please try again !!");
+        }
+        const fabricsFromAPI = response.data.map((fabric) => fabric.name);
+        setFabricOptions(fabricsFromAPI);
+      } catch (error) {
+        setErrorMessage("Failed to fetch fabric options. Please try again !!");
+      }
+    };
+    fetchFabricOptions();
+  }, []);
+
+  useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
       const imagesFiltered = Object.values(reduxImages)
@@ -154,6 +143,7 @@ const SecondStep = ({
               description = "",
               color = {},
               subcategory = "",
+              size = "",
             } = response.data;
             setValue("title", title);
             setValue("brand", brand);
@@ -161,6 +151,7 @@ const SecondStep = ({
             setValue("color.name", color?.name || "");
             setValue("color.hex", color?.hex || "");
             setValue("subcategory", subcategory || "");
+            setValue("size", size|| "");
             setColorHex(color?.hex);
           }
         } catch (error) {
@@ -371,8 +362,15 @@ const SecondStep = ({
                   )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Size:
-                    <span className="text-s font-normal"><em> (Enter sizes separated by commas,e.g.S,M or 38,40)</em></span></label>
+                  <label className="text-sm font-medium">
+                    Size:
+                    <span className="text-s font-normal">
+                      <em>
+                        {" "}
+                        (Enter sizes separated by commas,e.g.S,M or 38,40)
+                      </em>
+                    </span>
+                  </label>
                   <input
                     placeholder="e.g. S, M, L, XL or 38, 40, 42"
                     {...register("size")}
@@ -392,7 +390,7 @@ const SecondStep = ({
                     className="w-full border border-gray-300 rounded-md px-3 py-2"
                   >
                     <option value="">Select Fabric</option>
-                    {FABRIC_OPTIONS.map((fabric) => (
+                    {fabricOptions.map((fabric) => (
                       <option key={fabric} value={fabric}>
                         {fabric}
                       </option>

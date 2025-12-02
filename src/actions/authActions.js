@@ -64,14 +64,14 @@ export async function registerUser(data) {
 
     const user = new User({
       firstname,
-      lastname:(role === "brand") ? undefined : lastname,
+      lastname: role === "brand" ? undefined : lastname,
       email,
       password: hashedPassword,
       role,
       phone: phone || undefined,
 
       // Save country ONLY for brand + store
-      country: (role === "store" || role === "brand") ? country : undefined,
+      country: role === "store" || role === "brand" ? country : undefined,
 
       // Store fields
       ...(role === "store" && {
@@ -112,28 +112,26 @@ export async function signOutUser({ callbackUrl = "/" } = {}) {
     const session = await auth();
     const userId = session?.user?.id;
     console.log("session is:", session);
-    if(session?.user?.role ==='store'){
-    const ipAddress = await getInternetIp();
-    // Get IP from server-side environment (safe)
-    // const headersList = headers();
-    // const forwarded = headersList.get("x-forwarded-for");
-    // const ipAddress = forwarded ? forwarded.split(",")[0].trim() : null;
-
-    // console.log("Detected IP on logout:", ipAddress);
-
-    if (userId && ipAddress) {
-      await ActiveUser.deleteOne({ userId, ipAddress });
-    } else {
-      console.warn("Missing userId or IP address during logout");
+    if (session?.user?.role === "store") {
+      if (userId) {
+        await ActiveUser.deleteMany({ userId });
+      } else {
+        console.warn("Missing userId during logout for store user");
+      }
+      //under Consideration to track IP for store users
+      // const ipAddress = await getInternetIp();
+      // if (userId && ipAddress) {
+      //   await ActiveUser.deleteOne({ userId, ipAddress });
+      // } else {
+      //   console.warn("Missing userId or IP address during logout");
+      // }
     }
-  }
   } catch (error) {
     console.error("Error during cleanup before signout:", error);
   }
 
   return signOut({ redirectTo: callbackUrl });
 }
-
 
 export async function signInUser(data) {
   try {
