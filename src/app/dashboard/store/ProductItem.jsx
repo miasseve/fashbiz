@@ -8,7 +8,6 @@ import { Card, Button } from "@heroui/react";
 const ProductItem = ({ product, isGrid }) => {
   const router = useRouter();
   const handleClick = () => {
-    console.log("Navigating to product:", `/dashboard/product/${product._id}`);
     router.push(`/dashboard/product/${product._id}`);
   };
 

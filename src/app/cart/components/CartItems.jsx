@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Button } from "@heroui/button";
 import { ArrowLeft } from "lucide-react";
 import { getProductfromCart } from "@/actions/productActions";
-import {removeProductfromCart} from "@/actions/productActions";
+import { removeProductfromCart } from "@/actions/productActions";
 
 const CartItems = ({ storeUser }) => {
   const products = useSelector((state) => state.cart.products);
@@ -43,7 +43,6 @@ const CartItems = ({ storeUser }) => {
       try {
         const response = await getProductfromCart();
         const data = response.data;
-        console.log("Cart Product :", data);
 
         if (!data || !Array.isArray(data.items)) {
           console.warn("No items found in cart");
@@ -52,6 +51,8 @@ const CartItems = ({ storeUser }) => {
         }
 
         const grouped = data.items.reduce((acc, item) => {
+          const productId = item?.productId;
+          if (!productId) return acc;
           const consignorName = item?.consignorId?.name || "Store Owner";
           const consignorAccount = item?.consignorId?.account || "";
           const product = {
@@ -91,8 +92,7 @@ const CartItems = ({ storeUser }) => {
     fetchCartProducts();
   }, []);
 
-
-  const handleRemove = async(product) => {
+  const handleRemove = async (product) => {
     try {
       // await axios.delete(`/api/cart/${product._id}`);
       const res = await removeProductfromCart(product._id);
@@ -114,9 +114,7 @@ const CartItems = ({ storeUser }) => {
           return updatedCart;
         }
       });
-    } catch (error) {
-
-    }
+    } catch (error) {}
   };
 
   // Calculate grand total for all consignors
