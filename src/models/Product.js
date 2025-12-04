@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
   ],
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   collect: { type: Boolean, default: false },
-  // barcode: { type: String, unique: true },
+  barcode: { type: String, unique: true },
   size: {
     type: [String], // or [Number] if sizes are numeric
     required: true,

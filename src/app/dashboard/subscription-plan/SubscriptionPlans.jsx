@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
 import { archiveProduct } from "@/actions/productActions";
+import { Spinner } from "@heroui/react";
 
 export default function SubscriptionPlans({ user }) {
   const [plans, setPlans] = useState([]);
@@ -122,8 +123,8 @@ export default function SubscriptionPlans({ user }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 text-gray-500">
-        Loading plans...
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Spinner size="lg" color="success" />
       </div>
     );
   }
@@ -191,7 +192,7 @@ export default function SubscriptionPlans({ user }) {
     setSelectedPriceId(priceId);
     if (userRole === "store") setIsOpen(true);
     if (userRole !== "store") {
-     // \app\checkout\page.jsx
+      // \app\checkout\page.jsx
       router.push(`/checkout?userId=${user._id}&priceId=${priceId}`);
     }
   };
@@ -338,7 +339,7 @@ export default function SubscriptionPlans({ user }) {
               </CardBody>
             </Card>
           </div>
-        ) :  userRole === "store" ?(
+        ) : userRole === "store" ? (
           <div className="max-w-xl mx-auto">
             <Card className="bg-gray-200 dark:bg-gray-800 rounded-2xl text-gray-900 dark:text-white shadow-lg">
               <CardHeader className="flex flex-col items-center pt-8 pb-4">
@@ -346,7 +347,7 @@ export default function SubscriptionPlans({ user }) {
                   Subscription Required
                 </h3>
                 <p className="text-xl sm:text-2xl font-semibold text-gray-700 dark:text-gray-300 text-center">
-                  Your plan has expired or you have not subscribed yet. 
+                  Your plan has expired or you have not subscribed yet.
                 </p>
               </CardHeader>
               <CardBody className="text-center pb-8 px-6">
@@ -363,7 +364,7 @@ export default function SubscriptionPlans({ user }) {
               </CardBody>
             </Card>
           </div>
-        ):null}
+        ) : null}
       </div>
 
       <h2 className="text-6xl font-bold text-center text-gray-900 text-white mb-5">
@@ -374,7 +375,7 @@ export default function SubscriptionPlans({ user }) {
           .filter(
             (plan) =>
               (userRole === "store" && plan.name !== "Brand Collect") ||
-              (userRole === "brand" && plan.name === "Brand Collect") 
+              (userRole === "brand" && plan.name === "Brand Collect")
           )
           .map((plan, index) => {
             return (
@@ -449,8 +450,8 @@ export default function SubscriptionPlans({ user }) {
                     </Button>
                     {userRole === "store" && (
                       <p className="mt-4 text-lg font-semibold text-yellow-500">
-                        🎁 Get <span className="font-bold">1 month free</span> by
-                        inviting a store!
+                        🎁 Get <span className="font-bold">1 month free</span>{" "}
+                        by inviting a store!
                       </p>
                     )}
                   </div>

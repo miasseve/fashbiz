@@ -40,7 +40,7 @@ const EditButton = ({ product }) => {
       description: product?.description || "",
       subcategory: product?.subcategory || "",
       sku: product?.sku || "",
-      size: product?.size || "",
+      size: Array.isArray(product?.size) ? product.size.join(", ") : product.size || "",
       fabric: product?.fabric || "",
     },
   });

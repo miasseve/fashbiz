@@ -41,14 +41,14 @@ export async function createProduct(formData) {
     let brandPrice = null;
     const sizesArray = Array.isArray(size) ? size : [size]; // ["S","M","L"] or [28,30]
     // Generate Barcode Value
-    // const year = new Date().getFullYear().toString().slice(-2);
-    // const brandCode = brand
-    //   ? brand
-    //       .replace(/[^A-Za-z0-9]/g, "")
-    //       .toUpperCase()
-    //       .slice(0, 3)
-    //   : "XXX";
-    // const barcodeValue = `REE-${brandCode}${sku}${year}`;
+    const year = new Date().getFullYear().toString().slice(-2);
+    const brandCode = brand
+      ? brand
+          .replace(/[^A-Za-z0-9]/g, "")
+          .toUpperCase()
+          .slice(0, 3)
+      : "XXX";
+    const barcodeValue = `REE-${brandCode}${sku}${year}`;
 
     if (collect === true) {
       const userId = await User.findOne({ brandname: brand }).select("_id");
@@ -209,7 +209,7 @@ export async function createProduct(formData) {
       collect: collect ?? false,
       size,
       fabric,
-      // barcode: barcodeValue,
+      barcode: barcodeValue,
     });
 
     await newProduct.save();

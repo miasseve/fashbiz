@@ -259,7 +259,6 @@ const Profile = ({ user, stripeResponse }) => {
     setLoading(true);
     const response = await removeProfile();
     setLoading(false);
-    console.log(response, "response");
     if (response.status === 200) {
       setValue("profileImage", {});
       setPreviewUrl("");

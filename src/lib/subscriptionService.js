@@ -210,7 +210,7 @@ export const subscriptionService = {
     if (!subscription) throw new Error("No active subscription found");
 
     const oldPlanName = subscription.planName; // Store old plan name
-    console.log(userId, newPriceId, oldPlanName, "oldddddddddd");
+    // console.log(userId, newPriceId, oldPlanName, "oldddddddddd");
     // Get the current subscription from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(
       subscription.stripeSubscriptionId

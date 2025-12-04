@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BiLogoProductHunt } from "react-icons/bi";
@@ -14,13 +14,59 @@ import { RiProductHuntFill } from "react-icons/ri";
 import { FaHistory } from "react-icons/fa";
 import { FaHandHoldingUsd } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
+import { toast } from "react-toastify";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const barcodeInputRef = useRef(null);
+  // Move useEffect BEFORE the early return
+  useEffect(() => {
+    const handleBarcodeInput = async (e) => {
+      if (e.key === "Enter") {
+        const input = e.target;
+        const scanned = input.value.trim();
 
-  if (session.status == "loading") {
+        if (!scanned) return;
+
+        try {
+          // Call API to convert scanned barcode → productId
+          const res = await fetch(`/api/product-barcode?barcode=${scanned}`);
+          const data = await res.json();
+
+          if (data.error) {
+            toast.error("Product not found for scanned barcode");
+            input.value = ""; // reset for next scan
+            return;
+          }
+
+           if (data.productId) {
+            window.open(`/dashboard/product/${data.productId}`, "_blank");
+          }
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          toast.error("Error processing barcode");
+        } finally {
+          input.value = ""; // reset for next scan
+        }
+      }
+    };
+
+    const input = barcodeInputRef.current;
+    if (!input) return;
+
+    // Add event listener
+    input.addEventListener("keydown", handleBarcodeInput);
+
+    // Cleanup: remove event listener when component unmounts
+    return () => {
+      input.removeEventListener("keydown", handleBarcodeInput);
+    };
+  }, [router]);
+
+  // Now the early return comes AFTER all hooks
+  if (session.status === "loading") {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <Spinner size="lg" color="success" />
@@ -92,16 +138,24 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   return (
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
-        {/* <Link href="/"> */}
-        <img src="/fashlogo.svg" className="w-[138px] mx-auto" />
-        {/* </Link> */}
+        <img src="/fashlogo.svg" className="w-[132px] mx-auto" />
+        {session.data?.user?.role === "store" && (
+          <input
+            ref={barcodeInputRef}
+            type="text"
+            id="barcode-input"
+            placeholder="Scan barcode..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ffd7d7]"
+            autoComplete="off"
+            hidden
+          />
+        )}
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
         {menuItems.map(({ href, label, icon }) => (
           <div
             key={href}
             onClick={() => handleLinkClick(href)}
-            // href={href}
             className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
               pathname === href
                 ? "bg-[#ffd7d7] text-black"
@@ -128,7 +182,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
               <span className="ml-2">Ree Collect</span>
             </div>
 
-            {/* Invite a store link */}
             <div
               onClick={() => handleLinkClick("/dashboard/invite-store")}
               className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer ${
