@@ -111,20 +111,13 @@ export async function signOutUser({ callbackUrl = "/" } = {}) {
     await dbConnect();
     const session = await auth();
     const userId = session?.user?.id;
-    console.log("session is:", session);
     if (session?.user?.role === "store") {
-      if (userId) {
-        await ActiveUser.deleteMany({ userId });
+      const ipAddress = await getInternetIp();
+      if (userId && ipAddress) {
+        await ActiveUser.deleteOne({ userId, ipAddress });
       } else {
-        console.warn("Missing userId during logout for store user");
+        console.warn("Missing userId or IP address during logout");
       }
-      //under Consideration to track IP for store users
-      // const ipAddress = await getInternetIp();
-      // if (userId && ipAddress) {
-      //   await ActiveUser.deleteOne({ userId, ipAddress });
-      // } else {
-      //   console.warn("Missing userId or IP address during logout");
-      // }
     }
   } catch (error) {
     console.error("Error during cleanup before signout:", error);

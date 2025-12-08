@@ -85,9 +85,9 @@ const CollectProductItem = ({ product, isGrid, userRole }) => {
                 aria-label="Edit product"
               >
                 {userRole === "store" ? (
-                  <MdModeEdit size={24} />
+                  <MdModeEdit size={20} />
                 ) : (
-                  <FaEye size={24} title="Preview" />
+                  <FaEye size={20} title="Preview" />
                 )}
               </button>
               {userRole === "store" && (
@@ -97,7 +97,7 @@ const CollectProductItem = ({ product, isGrid, userRole }) => {
                     className="text-gray-800 p-2 rounded-lg shadow-lg transition-all duration-200"
                     aria-label="Delete product"
                   >
-                    <MdDelete size={24} />
+                    <MdDelete size={20} />
                   </button>
                 </>
               )}
