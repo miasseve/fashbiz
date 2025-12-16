@@ -92,14 +92,13 @@ export async function GET(req) {
         productsUnarchived: productsUnarchivedCount,
       },
     };
-    console.log("✅ Subscription check completed:", summary);
     // Log cron run
     await CronLog.create({
       totalChecked: subscriptions.length,
       updated: updatedCount,
       activated: activatedCount,
       deactivated: deactivatedCount,
-      errors: errorCount,
+      errorCount: errorCount,
       productsArchived: productsArchivedCount,
       productsUnarchived: productsUnarchivedCount,
     });

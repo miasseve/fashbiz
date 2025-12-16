@@ -6,7 +6,7 @@ const CronLogSchema = new mongoose.Schema({
   updated: Number,
   activated: Number,
   deactivated: Number,
-  errors: Number,
+  errorCount: Number,
   productsArchived: Number,
   productsUnarchived: Number,
 }, { timestamps: true });

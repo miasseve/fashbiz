@@ -3,21 +3,60 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@heroui/react";
 import { SiBookmyshow } from "react-icons/si";
-import { Card, Button } from "@heroui/react";
+import { Card, Button,Checkbox  } from "@heroui/react";
+import { CheckCircle } from "lucide-react";
 
-const ProductItem = ({ product, isGrid }) => {
+const ProductItem = ({ 
+  product, 
+  isGrid, 
+  isSelected = false, 
+  onSelectionChange = () => {},
+  selectionMode = false 
+}) => {
   const router = useRouter();
+  
   const handleClick = () => {
-    router.push(`/dashboard/product/${product._id}`);
+    if (!selectionMode) {
+      router.push(`/dashboard/product/${product._id}`);
+    }
   };
+
+  const handleCheckboxChange = (checked) => {
+    onSelectionChange(product._id, checked);
+  };
+
+  const hasWixProductId = product.wixProductId && product.wixProductId !== "";
+  const isUnlinked = !hasWixProductId;
 
   return (
     <>
       {isGrid ? (
         <>
           <Card
-            className={`p-[10px] h-full w-full max-w-sm md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group`}
+            className={`p-[10px] h-full w-full max-w-sm md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
+              isSelected ? 'ring-2 ring-blue-500' : ''
+            }`}
           >
+            {/* Selection Checkbox or Unlinked Indicator - Top Left */}
+            {selectionMode && (
+              <div className="absolute top-4 left-4 z-10">
+                {hasWixProductId ? (
+                  <Checkbox
+                    isSelected={isSelected}
+                    onValueChange={handleCheckboxChange}
+                    size="lg"
+                    className="bg-white rounded-md shadow-md"
+                  />
+                ) : (
+                  <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+                    <CheckCircle size={14} />
+                    Unlinked
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Consignor Badge - Top Right */}
             {product.consignorAccount == "" ? (
               <Badge
                 color="danger"
@@ -58,10 +97,8 @@ const ProductItem = ({ product, isGrid }) => {
                   : product.description}
               </p>
               <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
-                {/* <span className="font-regular">Price : </span> */}
                 <span> €{product.price.toFixed(2)}</span>
               </p>
-              {/* </CardBody> */}
 
               <Button onPress={handleClick} className="success-btn">
                 View Details
@@ -71,7 +108,27 @@ const ProductItem = ({ product, isGrid }) => {
         </>
       ) : (
         // Line (List) view layout
-        <div className="flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group inline-block">
+        <div className={`flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group relative ${
+          isSelected ? 'ring-2 ring-blue-500' : ''
+        }`}>
+          {/* Selection Checkbox or Unlinked Indicator - Left Side */}
+          {selectionMode && (
+            <div className="mr-4 flex items-center">
+              {hasWixProductId ? (
+                <Checkbox
+                  isSelected={isSelected}
+                  onValueChange={handleCheckboxChange}
+                  size="lg"
+                />
+              ) : (
+                <div className="bg-green-100 text-green-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1">
+                  <CheckCircle size={14} />
+                  Unlinked
+                </div>
+              )}
+            </div>
+          )}
+
           {product.consignorAccount == "" ? (
             <Badge
               color="danger"

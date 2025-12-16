@@ -8,6 +8,7 @@ import EditButton from "./EditButton";
 import AddToCart from "@/app/product/[productId]/AddToCart";
 import CopyLinkButton from "./CopyLinkButton";
 import GenerateBarcode from "./GenerateBarcode";
+import UnlinkProduct from "./UnlinkProduct";
 
 export const metadata = {
   title: "Product",
@@ -121,7 +122,18 @@ const Page = async ({ params }) => {
           )}
 
           {/* Generate Barcode */}
-          <GenerateBarcode barcode={parsedProduct.barcode} />
+          {(userRole === "brand" || parsedProduct.collect) && (
+            <GenerateBarcode barcode={parsedProduct.barcode} />
+          )}
+
+          {userRole !== "brand" && parsedProduct.collect !== true && (
+            <div className="space-y-3 mt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <GenerateBarcode barcode={parsedProduct.barcode} />
+                <UnlinkProduct product={parsedProduct} />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 mt-4">
             {/* Secondary Actions Grid */}

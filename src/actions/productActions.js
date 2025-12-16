@@ -81,11 +81,14 @@ export async function createProduct(formData) {
       // Add Size option
       if (size) {
         // Split size if multiple sizes are provided (e.g., "S, M, L")
-        const sizes = size.split(',').map(s => s.trim()).filter(s => s);
+        const sizes = size
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s);
         if (sizes.length > 0) {
           productOptions.push({
             name: "Size",
-            choices: sizes.map(s => ({
+            choices: sizes.map((s) => ({
               value: s,
               description: s,
             })),
@@ -116,7 +119,8 @@ export async function createProduct(formData) {
           sku: sku,
           visible: true,
           manageVariants: true,
-          productOptions: productOptions.length > 0 ? productOptions : undefined,
+          productOptions:
+            productOptions.length > 0 ? productOptions : undefined,
         },
       };
 
@@ -187,7 +191,6 @@ export async function createProduct(formData) {
         }
       }
     }
-
 
     // Save product in MongoDB (always happens regardless of collect value)
     const newProduct = new Product({
@@ -463,7 +466,10 @@ export async function getProductById(productId) {
   }
 }
 
-export async function deleteProductByIdAndWix(product) {
+export async function deleteProductByIdAndWix(
+  product,
+  { deleteDb = true, deleteWix = true } = {}
+) {
   const { _id, wixProductId } = product;
   try {
     const session = await auth();
@@ -483,39 +489,86 @@ export async function deleteProductByIdAndWix(product) {
     if (product.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }
-    // Delete the product by ID
-    await Product.deleteOne({ _id });
+    if (deleteDb) {
+      // Delete the product by ID
+      await Product.deleteOne({ _id });
+    }
 
-    try {
-      const getResponse = await axios.get(
-        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (getResponse.status === 200) {
-        await axios.delete(
+    if (deleteWix && wixProductId) {
+      try {
+        const getResponse = await axios.get(
           `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
           {
             headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
               "wix-site-id": process.env.WIX_SITE_ID,
               "Content-Type": "application/json",
             },
           }
         );
+        if (getResponse.status === 200) {
+          await axios.delete(
+            `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+                "wix-site-id": process.env.WIX_SITE_ID,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+        await Product.updateOne({ _id }, { $unset: { wixProductId: "" } });
+      } catch (error) {
+        console.log(error, "error");
       }
-    } catch (error) {
-      console.log(error, "error");
     }
-
-    return { status: 200, message: "Product deleted successfully." };
+    return {
+      status: 200,
+      message: deleteWix
+        ? "Product deleted and unlinked from Wix"
+        : "Product deleted successfully",
+    };
   } catch (error) {
     return { status: 500, error: error.message || "Something went wrong" };
+  }
+}
+
+export async function unlinkProductFromWix(productIds) {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+    // Connect to the database
+    await dbConnect();
+    //get wixproductid from productid
+    for (const productId of productIds) {
+      const product = await Product.findById(productId).select("wixProductId");
+      if (product?.wixProductId) {
+        try {
+            await axios.delete(
+              `https://www.wixapis.com/stores/v1/products/${product?.wixProductId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+                  "wix-site-id": process.env.WIX_SITE_ID,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            await Product.updateOne(
+              { _id: productId },
+              { $unset: { wixProductId: "" } }
+            );
+        } catch (error) {
+          console.log(error, "error");
+        }
+      }
+    }
+    return { status: 200, message: "Products unlinked successfully" };
+  } catch (error) {
+    console.log(error, "error");
   }
 }
 
@@ -597,11 +650,14 @@ export async function updateProduct(productId, data) {
         const currentSize = data.size || product.size;
         if (currentSize) {
           // Split size if multiple sizes are provided (e.g., "S, M, L" or "38, 40, 42")
-          const sizes = currentSize.split(',').map(s => s.trim()).filter(s => s);
+          const sizes = currentSize
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s);
           if (sizes.length > 0) {
             productOptions.push({
               name: "Size",
-              choices: sizes.map(s => ({
+              choices: sizes.map((s) => ({
                 value: s,
                 description: s,
               })),

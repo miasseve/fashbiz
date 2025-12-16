@@ -29,7 +29,7 @@ const DeleteButton = ({ product }) => {
     if (!result.isConfirmed) return;
     setLoading(true);
     try {
-      const response = await deleteProductByIdAndWix(product);
+      const response = await deleteProductByIdAndWix(product, { deleteDb: true, deleteWix: !!product?.wixProductId });
       if (response.status === 200) {
         dispatch(removeProductById(product._id));
         toast.success("Product deleted successfully!");

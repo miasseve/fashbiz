@@ -4,6 +4,7 @@ import {
 } from "@/actions/productActions";
 import CollectProduct from "./CollectProduct";
 import { FaBoxOpen } from "react-icons/fa";
+export const dynamic = 'force-dynamic';
 
 export default async function CollectPage() {
   let products = [];
