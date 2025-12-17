@@ -41,7 +41,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             return;
           }
 
-           if (data.productId) {
+          if (data.productId) {
             window.open(`/dashboard/product/${data.productId}`, "_blank");
           }
         } catch (error) {
@@ -153,24 +153,26 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
         {menuItems.map(({ href, label, icon }) => (
-          <div
+          <Link
             key={href}
-            onClick={() => handleLinkClick(href)}
+            href={href}
+            onClick={() => isSidebarOpen && toggleSidebar()}
             className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
               pathname === href
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
-            } cursor-pointer`}
+            }`}
           >
             {icon} <span className="ml-2">{label}</span>
-          </div>
+          </Link>
         ))}
 
         {session.data?.user?.role === "store" && (
           <>
-            <div
-              onClick={() => handleLinkClick("/dashboard/ree-collect")}
-              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer mt-32 ${
+            <Link
+              href="/dashboard/ree-collect"
+              onClick={() => isSidebarOpen && toggleSidebar()}
+              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-32 ${
                 pathname === "/dashboard/ree-collect"
                   ? "bg-[#ffd7d7] text-black"
                   : "hover:bg-[#ffd7d7] hover:text-black"
@@ -180,11 +182,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 <FaBoxOpen className="text-white text-[1.3rem]" />
               </div>
               <span className="ml-2">Ree Collect</span>
-            </div>
+            </Link>
 
-            <div
-              onClick={() => handleLinkClick("/dashboard/invite-store")}
-              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] cursor-pointer ${
+            <Link
+              href="/dashboard/invite-store"
+              onClick={() => isSidebarOpen && toggleSidebar()}
+              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
                 pathname === "/dashboard/invite-store"
                   ? "bg-[#ffd7d7] text-black"
                   : "hover:bg-[#ffd7d7] hover:text-black"
@@ -192,7 +195,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             >
               <FaHandHoldingUsd className="text-[1.3rem]" />
               <span className="ml-2">Invite a store</span>
-            </div>
+            </Link>
           </>
         )}
       </nav>

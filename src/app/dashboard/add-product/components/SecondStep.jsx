@@ -181,6 +181,8 @@ const SecondStep = ({
   }, [brandValue, setValue, user.storename, currentYear, productCount]);
 
   const onSubmit = async (data) => {
+    console.log("Form Data Submitted:", data);
+    console.log("Error Message:", errorMessage);
     setErrorMessage("");
     //check if the product brand has Ree collect subscription
     try {

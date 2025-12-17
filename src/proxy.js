@@ -1,7 +1,8 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
-
-export async function middleware(req) {
+//middleware file
+// Export as named "proxy" function for Next.js 16
+export async function proxy(req) {
   const secret = process.env.AUTH_SECRET;
   const { nextUrl } = req;
 
