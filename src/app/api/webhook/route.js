@@ -22,11 +22,11 @@ const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
 // const endpointSecret = "whsec_817651dd8124d7d8557327bc20cda1f981e946abc7ad01c55a6b7d7294392b68";
 
 // Middleware to handle raw body for webhook verification
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
 
 // Handle POST requests (webhook events)
 export async function POST(req, res) {

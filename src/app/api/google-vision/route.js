@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, 
+  apiKey: process.env.OPENAI_API_KEY,
 });
- 
+
 export async function POST(req) {
   try {
     const { imageUrl } = await req.json();
@@ -16,11 +16,12 @@ export async function POST(req) {
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", 
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content:'Analyze the image and return a valid JSON object with the following fields: "title", "brand","size", "color","subcategory" (the specific product type, e.g., "hoodie", "denim jacket", "t-shirt", "sneakers") and "description".The "color" field must contain both the color name and its HEX code in the format: {"name": "red", "hex": "#FF0000"}. Respond with only the raw JSON — no markdown, no code blocks, no explanations.',
+          content:
+            'Analyze the image and return a valid JSON object with the following fields: "title", "brand", "size", "color", "subcategory" (the specific product type, e.g., "hoodie", "denim jacket", "t-shirt", "sneakers") and "description". The "color" field must contain both the color name and its HEX code in the format: {"name": "red", "hex": "#FF0000"}. If the item has multiple distinct colors or patterns, return {"name": "multicolor", "hex": "#FFFFFF"}. For single dominant colors, provide the specific color name and HEX code. Respond with only the raw JSON — no markdown, no code blocks, no explanations.',
         },
         {
           role: "user",
@@ -31,7 +32,7 @@ export async function POST(req) {
         },
       ],
       temperature: 0.2,
-      max_tokens: 200, 
+      max_tokens: 200,
     });
 
     let rawText = response.choices[0]?.message?.content?.trim();
@@ -40,8 +41,8 @@ export async function POST(req) {
       .replace(/```json\s*/gi, "")
       .replace(/```\s*$/g, "")
       .trim();
- 
-      let parsed;
+
+    let parsed;
     try {
       parsed = JSON.parse(rawText);
     } catch (e) {
@@ -56,10 +57,6 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
- 
-    return NextResponse.json(
-      { errorMessage: error.message },
-      { status: 500 } 
-    );
+    return NextResponse.json({ errorMessage: error.message }, { status: 500 });
   }
 }
