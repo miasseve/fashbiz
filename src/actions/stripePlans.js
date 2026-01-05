@@ -11,7 +11,7 @@ const PLAN_CONFIG = {
       "✔ Upload up to 60 products per Month",
       "✔ AI automation",
       "✔ Consignor fee setup",
-      "✔ Upto 2 Users access",
+      "✔ Up to 2 users access",
       "✔ Auto Split Payments Support",
     ],
   },
@@ -21,7 +21,7 @@ const PLAN_CONFIG = {
     modules: [
       "✔ All Starter features",
       "✔ Upload up to 500 products per Month",
-      "✔ Upto 3 Users access",
+      "✔ Up to 3 users access",
       "✔ Faster automation",
     ],
   },
@@ -31,7 +31,7 @@ const PLAN_CONFIG = {
     modules: [
       "✔ All Business features",
       "✔ Upload up to 1000 products per Month",
-      "✔ Upto 5-10 Users access",
+      "✔ Up to 5-10 users access",
       "✔ Multi-store Sync",
       "✔ Priority Support",
     ],
