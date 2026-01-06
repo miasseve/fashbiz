@@ -10,6 +10,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  Input
 } from "@heroui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { productSchema } from "@/actions/validations";
@@ -25,6 +26,8 @@ import { useRouter } from "next/navigation";
 import { activateCollectSubscription } from "@/actions/accountAction";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import PointsModal from "./PointsModal";
 
 const SecondStep = ({
   handleBackStep,
@@ -34,6 +37,14 @@ const SecondStep = ({
 }) => {
   const dispatch = useDispatch();
   const router = useRouter();
+  //for the points prediction
+  const session = useSession();
+  const pointsEnabled = session.data?.user?.points_mode || false;
+  const [pointsPreview, setPointsPreview] = useState(null);
+  const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+  const [pointsLoading, setPointsLoading] = useState(false);
+  const [availableRules, setAvailableRules] = useState([]); // Store fetched rules
+  //for product creation
   const consignorData = useSelector((state) => state.product.consignor);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -76,6 +87,44 @@ const SecondStep = ({
         })),
     },
   });
+  useEffect(() => {
+    const fetchPointRules = async () => {
+      if (!pointsEnabled) return;
+
+      try {
+        const res = await fetch("/api/dkkpointsrule");
+        const response = await res.json();
+        setAvailableRules(response);
+      } catch (error) {
+        console.error("Error fetching point rules:", error);
+        toast.error("Failed to fetch point rules");
+      }
+    };
+
+    fetchPointRules();
+  }, [pointsEnabled]);
+  const predictProductPoints = async (productData) => {
+    setPointsLoading(true);
+    try {
+      const res = await axios.post("/api/predict-points", {
+        imageUrls: productData?.images?.map(img => img.url) || [],
+        brand: productData.brand,
+        subcategory: productData.subcategory,
+        description: productData.description,
+      });
+
+      if (res.status === 200 && res.data?.success) {
+        setPointsPreview(res.data.data);
+        setIsPointsModalOpen(true);
+        return res.data.data.points || 0;
+      }
+    } catch (err) {
+      console.log("Error predicting product points:", err);
+      toast.error("Failed to predict product points");
+    } finally {
+      setPointsLoading(false);
+    }
+  };
 
   const handleCollectSubmit = async () => {
     if (collectSelection === null) {
@@ -106,11 +155,19 @@ const SecondStep = ({
   }, []);
 
   useEffect(() => {
+    if (pointsEnabled) {
+      setValue("price", "1", { shouldValidate: true });
+    }
+  }, [pointsEnabled, setValue]);
+
+  useEffect(() => {
     const fetchFabricOptions = async () => {
       try {
         const response = await axios.get("/api/fabric-options");
         if (response.status !== 200) {
-          setErrorMessage("Failed to fetch fabric options. Please try again !!");
+          setErrorMessage(
+            "Failed to fetch fabric options. Please try again !!"
+          );
         }
         const fabricsFromAPI = response.data.map((fabric) => fabric.name);
         setFabricOptions(fabricsFromAPI);
@@ -151,7 +208,7 @@ const SecondStep = ({
             setValue("color.name", color?.name || "");
             setValue("color.hex", color?.hex || "");
             setValue("subcategory", subcategory || "");
-            setValue("size", size|| "");
+            setValue("size", size || "");
             setColorHex(color?.hex);
           }
         } catch (error) {
@@ -181,36 +238,34 @@ const SecondStep = ({
   }, [brandValue, setValue, user.storename, currentYear, productCount]);
 
   const onSubmit = async (data) => {
-    console.log("Form Data Submitted:", data);
-    console.log("Error Message:", errorMessage);
     setErrorMessage("");
     //check if the product brand has Ree collect subscription
     try {
-      const collectResponse = await activateCollectSubscription(brandValue);
-
-      if (collectResponse.status === 200 && collectResponse.data !== null) {
+      if (pointsEnabled) {
+        const Productpoint = await predictProductPoints(data);
         const updatedData = {
           ...data,
-          brandPrice: collectResponse.data,
+          pointsValue: Productpoint,
         };
         setFormData(updatedData);
-        setIsCollectOpen(true);
         return;
+      } else {
+        const collectResponse = await activateCollectSubscription(brandValue);
+        if (collectResponse.status === 200 && collectResponse.data !== null) {
+          const updatedData = {
+            ...data,
+            brandPrice: collectResponse.data,
+          };
+          setFormData(updatedData);
+          setIsCollectOpen(true);
+          return;
+        }
       }
-
       await handleFinalProductCreation(data);
     } catch (error) {
       console.error("Error checking collect subscription:", error);
       await handleFinalProductCreation(data);
     }
-    // const response = await createProduct({ ...data, ...consignorData,collect:collectSelection });
-    // if (response.status == 200) {
-    //   setGeneratedLink(response.data);
-    //   dispatch(clearProductState());
-    //   setShowConfirmation(true);
-    // } else {
-    //   setErrorMessage(response.error);
-    // }
   };
 
   const handleFinalProductCreation = async (data) => {
@@ -261,6 +316,15 @@ const SecondStep = ({
     } catch (err) {
       alert("Failed to copy link. Please try again.");
     }
+  };
+    const handlePointsConfirm = async (confirmedPoints) => {
+    const updatedData = {
+      ...formData,
+      pointsValue: confirmedPoints,
+    };
+    
+    await handleFinalProductCreation(updatedData);
+    setIsPointsModalOpen(false);
   };
 
   return (
@@ -440,21 +504,22 @@ const SecondStep = ({
                     </p>
                   )}
                 </div>
-
-                <div>
-                  <label className="text-sm font-medium">Price</label>
-                  <input
-                    {...register("price")}
-                    type="text"
-                    placeholder="Price in €"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.price && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.price.message}
-                    </span>
-                  )}
-                </div>
+                {!session.data?.user?.points_mode && (
+                  <div>
+                    <label className="text-sm font-medium">Price</label>
+                    <input
+                      {...register("price")}
+                      type="text"
+                      placeholder="Price in EUR"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                    {errors.price && (
+                      <span className="text-red-500 font-bold text-[12px]">
+                        {errors.price.message}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="text-sm font-medium">Description</label>
@@ -530,7 +595,7 @@ const SecondStep = ({
           </Modal>
         </div>
       )}
-
+      {/* modal for Ree Collect */}
       <Modal
         backdrop="blur"
         isOpen={isCollectOpen}
@@ -592,6 +657,15 @@ const SecondStep = ({
           </div>
         </ModalContent>
       </Modal>
+      
+      {/* modal for Points Preview */}
+      <PointsModal
+        isOpen={isPointsModalOpen}
+        onClose={() => setIsPointsModalOpen(false)}
+        pointsPreview={pointsPreview}
+        pointsLoading={pointsLoading}
+        availableRules={availableRules}
+        onConfirm={handlePointsConfirm}/>
     </>
   );
 };

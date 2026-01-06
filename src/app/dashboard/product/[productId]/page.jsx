@@ -39,16 +39,23 @@ const Page = async ({ params }) => {
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
               {parsedProduct.title}
             </h1>
-            {parsedProduct.collect !== true && (
+            {parsedProduct.collect !== true && !parsedProduct.pointsValue && (
               <div className="inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-2 rounded-lg font-bold text-2xl shadow-md">
                 Price: €{parsedProduct.price}
               </div>
             )}
-            {parsedProduct.collect === true && (
+            {parsedProduct.collect === true && !parsedProduct.pointsValue && (
               <div className="inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-2 rounded-lg font-bold text-2xl shadow-md">
                 Brand Price: {parsedProduct.brandPrice} DKK
               </div>
             )}
+            {
+              parsedProduct.collect !== true && parsedProduct.pointsValue && (
+                <div className="inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-2 rounded-lg font-bold text-2xl shadow-md">
+                  Points: {parsedProduct.pointsValue}
+                </div>
+              )
+            }
           </div>
 
           {/* Product Details Grid */}
@@ -117,7 +124,7 @@ const Page = async ({ params }) => {
 
           {/* Action Buttons */}
           {/* Primary Action - Add to Cart */}
-          {parsedProduct.collect !== true && (
+          {!parsedProduct.collect || parsedProduct.pointsValue == null && (
             <AddToCart product={parsedProduct} />
           )}
 

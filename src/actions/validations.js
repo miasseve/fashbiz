@@ -206,8 +206,84 @@ export const updateProductSchema = Yup.object().shape({
       "Price can have at most 2 decimal places",
       (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
     ),
+  pointsValue: Yup.number()
+    .typeError("Points Value must be a number")
+    .min(0, "Points Value cannot be negative")
+    .max(1400, "Points Value cannot exceed 1400"),
   subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
   size: Yup.string().required("Size is required"),
   fabric: Yup.string().optional(),
 });
+
+export const getPointRuleForProduct = (category, brandType, rules) => {
+  if (!category || !brandType || !rules || rules.length === 0) {
+    return null;
+  }
+
+  // Find exact match for category and brandType
+  const rule = rules.find(
+    (r) => r.category === category && r.brandType === brandType
+  );
+
+  return rule || null;
+};
+// Create dynamic validation schema based on the rule
+export const createPointsSchema = (rule) => {
+  if (!rule) {
+    return Yup.object().shape({
+      points: Yup
+        .number()
+        .required("Points are required")
+        .min(0, "Points cannot be negative"),
+    });
+  }
+
+  // If the rule has fixedPoints, only allow that exact value
+  if (rule.fixedPoints !== undefined && rule.fixedPoints !== null) {
+    return Yup.object().shape({
+      points: Yup
+        .number()
+        .required("Points are required")
+        .oneOf(
+          [rule.fixedPoints],
+          `Points must be exactly ${rule.fixedPoints} for this category and brand type`
+        ),
+    });
+  }
+
+  // If the rule has a range (minPoints and maxPoints)
+  if (rule.minPoints !== undefined && rule.maxPoints !== undefined) {
+    return Yup.object().shape({
+      points: Yup
+        .number()
+        .required("Points are required")
+        .min(rule.minPoints, `Points must be at least ${rule.minPoints}`)
+        .max(rule.maxPoints, `Points cannot exceed ${rule.maxPoints}`),
+    });
+  }
+
+  // Fallback
+  return Yup.object().shape({
+    points: Yup
+      .number()
+      .required("Points are required")
+      .min(0, "Points cannot be negative"),
+  });
+};
+
+export const getPointRuleDisplayText = (rule) => {
+  if (!rule) {
+    return "No rule found for this category and brand type";
+  }
+
+  if (rule.fixedPoints !== undefined && rule.fixedPoints !== null) {
+    return `Fixed Points: ${rule.fixedPoints}`;
+  }
+
+  if (rule.minPoints !== undefined && rule.maxPoints !== undefined) {
+    return `Allowed Range: ${rule.minPoints} - ${rule.maxPoints} points`;
+  }
+
+  return "Rule information not available";
+};

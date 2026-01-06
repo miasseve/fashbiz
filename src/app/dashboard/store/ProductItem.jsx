@@ -3,18 +3,18 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@heroui/react";
 import { SiBookmyshow } from "react-icons/si";
-import { Card, Button,Checkbox  } from "@heroui/react";
+import { Card, Button, Checkbox } from "@heroui/react";
 import { CheckCircle } from "lucide-react";
 
-const ProductItem = ({ 
-  product, 
-  isGrid, 
-  isSelected = false, 
+const ProductItem = ({
+  product,
+  isGrid,
+  isSelected = false,
   onSelectionChange = () => {},
-  selectionMode = false 
+  selectionMode = false,
 }) => {
   const router = useRouter();
-  
+
   const handleClick = () => {
     if (!selectionMode) {
       router.push(`/dashboard/product/${product._id}`);
@@ -34,7 +34,7 @@ const ProductItem = ({
         <>
           <Card
             className={`p-[10px] h-full w-full max-w-sm md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
-              isSelected ? 'ring-2 ring-blue-500' : ''
+              isSelected ? "ring-2 ring-blue-500" : ""
             }`}
           >
             {/* Selection Checkbox or Unlinked Indicator - Top Left */}
@@ -96,9 +96,16 @@ const ProductItem = ({
                   ? product.description.slice(0, 90) + "..."
                   : product.description}
               </p>
-              <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
-                <span> €{product.price.toFixed(2)}</span>
-              </p>
+              {product.price > 1 && (
+                <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
+                  <span> €{product.price.toFixed(2)}</span>
+                </p>
+              )}
+              {product.pointsValue && (
+                <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
+                  <span> Points: {product.pointsValue}</span>
+                </p>
+              )}
 
               <Button onPress={handleClick} className="success-btn">
                 View Details
@@ -108,9 +115,11 @@ const ProductItem = ({
         </>
       ) : (
         // Line (List) view layout
-        <div className={`flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group relative ${
-          isSelected ? 'ring-2 ring-blue-500' : ''
-        }`}>
+        <div
+          className={`flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group relative ${
+            isSelected ? "ring-2 ring-blue-500" : ""
+          }`}
+        >
           {/* Selection Checkbox or Unlinked Indicator - Left Side */}
           {selectionMode && (
             <div className="mr-4 flex items-center">
@@ -169,9 +178,18 @@ const ProductItem = ({
                   ? product.description.slice(0, 60) + "..."
                   : product.description}
               </p>
-              <p className="font-bold text-md mt-1">
-                €{product.price.toFixed(2)}
-              </p>
+              {product.price > 1 && (
+                <p className="font-bold text-md mt-1">
+                  €{product.price.toFixed(2)}
+                </p>
+              )}
+              {
+                product.pointsValue && (
+                  <p className="font-bold text-md mt-1">
+                    Points: {product.pointsValue}
+                  </p>
+                )
+              }
             </div>
             <div>
               <Button onPress={handleClick} className="success-btn">

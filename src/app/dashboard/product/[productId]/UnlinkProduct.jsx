@@ -13,12 +13,6 @@ const UnlinkProduct = ({ product }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const isUnlinked = !product?.wixProductId;
-  console.log(
-    "UnlinkProduct - isUnlinked:",
-    isUnlinked,
-    "product wixid:",
-    product?.wixProductId
-  );
   const handleUnlink = async () => {
     const result = await Swal.fire({
       title: "Do you want to unlink this product from Leestore?",

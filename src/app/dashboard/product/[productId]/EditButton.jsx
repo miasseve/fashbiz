@@ -37,10 +37,13 @@ const EditButton = ({ product }) => {
       title: product?.title || "",
       brand: product?.brand || "",
       price: product?.price || "",
+      pointsValue: product?.pointsValue || "",
       description: product?.description || "",
       subcategory: product?.subcategory || "",
       sku: product?.sku || "",
-      size: Array.isArray(product?.size) ? product.size.join(", ") : product.size || "",
+      size: Array.isArray(product?.size)
+        ? product.size.join(", ")
+        : product.size || "",
       fabric: product?.fabric || "",
     },
   });
@@ -211,19 +214,42 @@ const EditButton = ({ product }) => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium block mb-1">
-                      Price
-                    </label>
-                    <input
-                      type="number"
-                      {...register("price")}
-                      className="w-full border px-3 py-2 rounded"
-                    />
-                    {errors.price && (
-                      <p className="text-red-500 font-bold text-[12px]">
-                        {errors.price.message}
-                      </p>
+                    {product?.price > 1 && (
+                      <>
+                        <label className="text-sm font-medium block mb-1">
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          {...register("price")}
+                          className="w-full border px-3 py-2 rounded"
+                        />
+                        {errors.price && (
+                          <p className="text-red-500 font-bold text-[12px]">
+                            {errors.price.message}
+                          </p>
+                        )}
+                      </>
                     )}
+                    {
+                      product?.pointsValue && (
+                        <>
+                          <label className="text-sm font-medium block mb-1">
+                            Points Value
+                          </label>
+                          <input
+                            type="number"
+                            {...register("pointsValue")}
+                            className="w-full border px-3 py-2 rounded"
+                          />
+                          {errors.pointsValue && (
+                            <p className="text-red-500 font-bold text-[12px]">
+                              {errors.pointsValue.message}
+                            </p>
+                          )}
+                        </>
+                      )
+                    }
                   </div>
 
                   <div className="md:col-span-2">

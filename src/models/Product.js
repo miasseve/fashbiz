@@ -15,6 +15,7 @@ const productSchema = new mongoose.Schema({
     },
   },
   price: { type: Number, required: true },
+  pointsValue: { type: Number, required: false },
   brandPrice: { type: Number, required: false },
   images: [
     {

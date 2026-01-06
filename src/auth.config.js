@@ -48,6 +48,7 @@ export default {
             isActive: user.isActive,
             subscriptionStart: user.subscriptionStart,
             subscriptionEnd: user.subscriptionEnd,
+            points_mode: user.points_mode,
           };
         } catch (error) {
           throw new Error("Authentication failed");

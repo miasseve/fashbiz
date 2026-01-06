@@ -33,6 +33,7 @@ export async function createProduct(formData) {
       collect,
       size,
       fabric,
+      pointsValue = null,
     } = formData;
 
     await dbConnect();
@@ -43,11 +44,11 @@ export async function createProduct(formData) {
     // Generate Barcode Value
     const year = new Date().getFullYear().toString().slice(-2);
     const brandCode = brand
-      ? brand
-          .replace(/[^A-Za-z0-9]/g, "")
-          .toUpperCase()
-          .slice(0, 3)
-      : "XXX";
+        ? brand
+            .replace(/[^A-Za-z0-9]/g, "")
+            .toUpperCase()
+            .slice(0, 3)
+        : "XXX";
     const barcodeValue = `REE-${brandCode}${sku}${year}`;
 
     if (collect === true) {
@@ -61,7 +62,7 @@ export async function createProduct(formData) {
     }
 
     // Only create product in Wix if collect is false
-    if (collect === false) {
+    if (collect === false && pointsValue == null) {
       // Build product options array dynamically
       const productOptions = [];
 
@@ -202,6 +203,7 @@ export async function createProduct(formData) {
       description,
       color,
       price: formattedPrice,
+      pointsValue: pointsValue,
       images,
       brandPrice: brandPrice,
       userId: session.user.id,

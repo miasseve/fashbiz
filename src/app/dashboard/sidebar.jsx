@@ -15,6 +15,7 @@ import { FaHistory } from "react-icons/fa";
 import { FaHandHoldingUsd } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
+import { CiBoxList } from "react-icons/ci";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
@@ -85,6 +86,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       href: "/dashboard/ree-collect",
       label: "Brand Store",
       icon: <FaBoxOpen />,
+    },
+    session.data?.user?.points_mode && {
+      href: "/dashboard/dkk-points",
+      label: "DKK Points",
+      icon: <CiBoxList />,
     },
     session.data?.user?.role === "store" && {
       href: "/dashboard/add-product",
@@ -169,20 +175,22 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
         {session.data?.user?.role === "store" && (
           <>
-            <Link
-              href="/dashboard/ree-collect"
-              onClick={() => isSidebarOpen && toggleSidebar()}
-              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-32 ${
-                pathname === "/dashboard/ree-collect"
-                  ? "bg-[#ffd7d7] text-black"
-                  : "hover:bg-[#ffd7d7] hover:text-black"
-              }`}
-            >
-              <div className="bg-pink-400 p-2 rounded-full border border-white flex items-center justify-center">
-                <FaBoxOpen className="text-white text-[1.3rem]" />
-              </div>
-              <span className="ml-2">Ree Collect</span>
-            </Link>
+            {!session.data?.user?.points_mode && (
+              <Link
+                href="/dashboard/ree-collect"
+                onClick={() => isSidebarOpen && toggleSidebar()}
+                className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-32 ${
+                  pathname === "/dashboard/ree-collect"
+                    ? "bg-[#ffd7d7] text-black"
+                    : "hover:bg-[#ffd7d7] hover:text-black"
+                }`}
+              >
+                <div className="bg-pink-400 p-2 rounded-full border border-white flex items-center justify-center">
+                  <FaBoxOpen className="text-white text-[1.3rem]" />
+                </div>
+                <span className="ml-2">Ree Collect</span>
+              </Link>
+            )}
 
             <Link
               href="/dashboard/invite-store"
