@@ -12,7 +12,7 @@ export async function proxy(req) {
     secureCookie: process.env.NODE_ENV === "production",
   });
 
-  const publicRoutes = ["/"];
+  const publicRoutes = ["/","/privacy-policy","/data-deletion"];
   const authRoutes = ["/login", "/register"];
   const protectedRoutes = [
     "/dashboard",                  
