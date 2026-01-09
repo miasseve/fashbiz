@@ -53,46 +53,47 @@ const Profile = ({ user, stripeResponse }) => {
         if (!value) return false;
         return isValidPhoneNumber(value);
       }),
-      contactTitle: Yup.string().when("role", {
-          is: "brand",
-          then: () =>
-            Yup.string()
-              .trim()
-              .required("Contact Person Title is required")
-              .max(50, "Title cannot exceed 50 characters"),
-          otherwise: () => Yup.string().nullable(),
-        }),
-        brandname: Yup.string().when("role", {
-          is: "brand",
-          then: () => Yup.string().trim().required("Brand Name is required"),
-          otherwise: () => Yup.string(),
-        }),
-        legalCompanyName: Yup.string().when("role", {
-          is: "brand",
-          then: () => Yup.string().trim().required("Legal Company Name is required"),
-          otherwise: () => Yup.string(),
-        }),
-        companyWebsite: Yup.string().when("role", {
-          is: "brand",
-          then: () =>
-            Yup.string()
-              .trim()
-              .url("Must be a valid URL")
-              .required("Company Website is required"),
-          otherwise: () => Yup.string(),
-        }),
-        companyNumber: Yup.string().when("role", {
-          is: "brand",
-          then: () =>
-            Yup.string()
-              .trim()
-              .matches(
-                /^[A-Za-z0-9\s\-\/]+$/,
-                "Enter a valid company registration number"
-              )
-              .required("Company Registration Number is required"),
-          otherwise: () => Yup.string(),
-        }),
+    contactTitle: Yup.string().when("role", {
+      is: "brand",
+      then: () =>
+        Yup.string()
+          .trim()
+          .required("Contact Person Title is required")
+          .max(50, "Title cannot exceed 50 characters"),
+      otherwise: () => Yup.string().nullable(),
+    }),
+    brandname: Yup.string().when("role", {
+      is: "brand",
+      then: () => Yup.string().trim().required("Brand Name is required"),
+      otherwise: () => Yup.string(),
+    }),
+    legalCompanyName: Yup.string().when("role", {
+      is: "brand",
+      then: () =>
+        Yup.string().trim().required("Legal Company Name is required"),
+      otherwise: () => Yup.string(),
+    }),
+    companyWebsite: Yup.string().when("role", {
+      is: "brand",
+      then: () =>
+        Yup.string()
+          .trim()
+          .url("Must be a valid URL")
+          .required("Company Website is required"),
+      otherwise: () => Yup.string(),
+    }),
+    companyNumber: Yup.string().when("role", {
+      is: "brand",
+      then: () =>
+        Yup.string()
+          .trim()
+          .matches(
+            /^[A-Za-z0-9\s\-\/]+$/,
+            "Enter a valid company registration number"
+          )
+          .required("Company Registration Number is required"),
+      otherwise: () => Yup.string(),
+    }),
     businessNumber: Yup.string().when("role", {
       is: "store",
       then: () =>
@@ -100,7 +101,7 @@ const Profile = ({ user, stripeResponse }) => {
           .trim()
           .matches(
             /^\d+$/,
-            "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number."
+            "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number (numbers only, without country code like FR or DK)"
           )
           .required("Business Registration Number is required"),
       otherwise: () => Yup.string().nullable(),
@@ -384,7 +385,7 @@ const Profile = ({ user, stripeResponse }) => {
               <input
                 type="text"
                 {...register("businessNumber")}
-                placeholder="e.g., DK12345678"
+                placeholder="e.g., 12345678 (numbers only)"
                 className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
               />
               {errors.businessNumber && (
