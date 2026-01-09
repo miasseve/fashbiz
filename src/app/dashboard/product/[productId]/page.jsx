@@ -124,7 +124,7 @@ const Page = async ({ params }) => {
 
           {/* Action Buttons */}
           {/* Primary Action - Add to Cart */}
-          {!parsedProduct.collect || parsedProduct.pointsValue == null && (
+          {(!parsedProduct.collect || parsedProduct.pointsValue == null) && (
             <AddToCart product={parsedProduct} />
           )}
 
