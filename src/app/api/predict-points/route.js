@@ -9,30 +9,92 @@ const openai = new OpenAI({
 });
 
 function mapSubcategoryToCategory(subcategory = "") {
+  // Normalize: lowercase and remove extra spaces
+  const normalized = subcategory.toLowerCase().trim();
+  
   const map = {
-    hoodie: "JACKET",
+    // Outerwear
+    hoodie: "SWEATSHIRT",
     jacket: "JACKET",
     "biker jacket": "JACKET",
     "leather jacket": "JACKET",
     "denim jacket": "JACKET",
     blazer: "BLAZER",
     coat: "COAT",
-    dress: "MAXI_DRESS",
+    
+    // Dresses
+    dress: "DRESS",
     "maxi dress": "MAXI_DRESS",
+    "short dress": "DRESS",
+    "knee length dress": "DRESS",
+    "knee-length dress": "DRESS",
+    
     jumpsuit: "JUMPSUIT",
+    
+    // Sets
     "co-ord": "SET",
     "co ord": "SET",
     set: "SET",
+
+    // Tops & shirts
+    "t-shirt": "TOP",
+    "t shirt": "TOP",
+    tshirt: "TOP",
+    top: "TOP",
+    shirt: "SHIRT",
+    "button-up shirt": "SHIRT",
+    "button up shirt": "SHIRT",
+    "buttonup shirt": "SHIRT",
+    "dress shirt": "SHIRT",
+    "dress-shirt": "SHIRT",
+    blouse: "SHIRT",
+
+    // Bottoms
+    shorts: "SHORTS",
+    trousers: "TROUSERS",
+    pants: "TROUSERS",
+    skirt: "SKIRT",
+    jeans: "JEANS",
+
+    // Knitwear
+    knitwear: "KNITWEAR",
+    vest: "KNITWEAR",
+
+    // Sports / special
+    sportswear: "SPORTSWEAR",
+    maternity: "MATERNITY",
+    nursing: "MATERNITY",
+    bodysuit: "BODYSUIT",
+    swimwear: "BODYSUIT",
+    bra: "BODYSUIT",
+
+    // Shoes / bags
     shoes: "SHOES",
     sneakers: "SHOES",
     boots: "BOOTS",
     bag: "BAGS",
     handbag: "BAGS",
+
+    // Accessories
     accessories: "ACCESSORIES",
+    hat: "ACCESSORIES",
+    gloves: "ACCESSORIES",
+    towel: "ACCESSORIES",
   };
 
-  const key = subcategory.toLowerCase();
-  return map[key] || "OTHER"; // safe fallback
+  // Direct match first
+  if (map[normalized]) {
+    return map[normalized];
+  }
+
+  // Fuzzy matching - check if any key is contained in the subcategory
+  for (const [key, value] of Object.entries(map)) {
+    if (normalized.includes(key)) {
+      return value;
+    }
+  }
+
+  return "OTHER"; // safe fallback
 }
 
 function mapBrandType(brand = "") {

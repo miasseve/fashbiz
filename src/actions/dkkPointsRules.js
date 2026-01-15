@@ -105,6 +105,135 @@ export const DKK_POINT_RULES = [
     brandType: "ANY",
     fixedPoints: 0,
   },
+  // Tops / basics
+  {
+    category: "TOP",
+    brandType: "FAST_FASHION",
+    fixedPoints: 100,
+  },
+  {
+    category: "TOP",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 150,
+  },
+
+  {
+    category: "SHORTS",
+    brandType: "FAST_FASHION",
+    fixedPoints: 100,
+  },
+  {
+    category: "SHORTS",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 150,
+  },
+
+  {
+    category: "SPORTSWEAR",
+    brandType: "FAST_FASHION",
+    fixedPoints: 100,
+  },
+  {
+    category: "SPORTSWEAR",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 150,
+  },
+
+  {
+    category: "MATERNITY",
+    brandType: "FAST_FASHION",
+    fixedPoints: 100,
+  },
+  {
+    category: "MATERNITY",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 150,
+  },
+
+  {
+    category: "BODYSUIT",
+    brandType: "FAST_FASHION",
+    fixedPoints: 100,
+  },
+  {
+    category: "BODYSUIT",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 150,
+  },
+  {
+    category: "TROUSERS",
+    brandType: "FAST_FASHION",
+    fixedPoints: 200,
+  },
+  {
+    category: "TROUSERS",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 350,
+  },
+
+  {
+    category: "SKIRT",
+    brandType: "FAST_FASHION",
+    fixedPoints: 200,
+  },
+  {
+    category: "SKIRT",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 350,
+  },
+  {
+    category: "SHIRT",
+    brandType: "FAST_FASHION",
+    fixedPoints: 250,
+  },
+  {
+    category: "SHIRT",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 450,
+  },
+
+  {
+    category: "SWEATSHIRT",
+    brandType: "FAST_FASHION",
+    fixedPoints: 250,
+  },
+  {
+    category: "SWEATSHIRT",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 450,
+  },
+
+  {
+    category: "KNITWEAR",
+    brandType: "FAST_FASHION",
+    fixedPoints: 250,
+  },
+  {
+    category: "KNITWEAR",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 450,
+  },
+  {
+    category: "JEANS",
+    brandType: "FAST_FASHION",
+    fixedPoints: 300,
+  },
+  {
+    category: "JEANS",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 500,
+  },
+
+  {
+    category: "DRESS",
+    brandType: "FAST_FASHION",
+    fixedPoints: 300,
+  },
+  {
+    category: "DRESS",
+    brandType: "LESS_FAST_FASHION",
+    fixedPoints: 500,
+  },
 ];
 
 import dbConnect from "@/lib/db";
