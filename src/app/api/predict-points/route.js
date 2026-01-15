@@ -32,7 +32,7 @@ function mapSubcategoryToCategory(subcategory = "") {
   };
 
   const key = subcategory.toLowerCase();
-  return map[key] || "ACCESSORIES"; // safe fallback
+  return map[key] || "OTHER"; // safe fallback
 }
 
 function mapBrandType(brand = "") {
