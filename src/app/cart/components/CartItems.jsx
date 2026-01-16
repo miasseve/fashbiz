@@ -9,13 +9,28 @@ import { Button } from "@heroui/button";
 import { ArrowLeft } from "lucide-react";
 import { getProductfromCart } from "@/actions/productActions";
 import { removeProductfromCart } from "@/actions/productActions";
+import { demomodeexits } from "@/actions/accountAction";
 
 const CartItems = ({ storeUser }) => {
   const products = useSelector((state) => state.cart.products);
   const productTotal = useSelector((state) => state.cart.total);
   const [cartProducts, setCartProducts] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
+  
+  const demomode = async() =>{
+    const demoMode = await demomodeexits(storeUser?._id);
+    if(demoMode.status == 200 && demoMode.exists == true){
+      setIsDemoMode(true);
+      return true;
+    }
+    return false;
+  }
+  
+  useEffect(()=>{
+    demomode();
+  },[])
 
   // useEffect(() => {
   //   const groupedProducts = products.reduce((acc, product) => {
@@ -196,11 +211,12 @@ const CartItems = ({ storeUser }) => {
                   Grand Total: €{grandTotal}
                 </p>
               </div>
+              {isDemoMode && (
               <BuyNow
                 storeUser={storeUser}
                 allConsignorProducts={cartProducts}
                 grandTotal={grandTotal}
-              />
+              />)}
             </div>
           </>
         ) : (

@@ -38,6 +38,10 @@ const productSchema = new mongoose.Schema({
   archived: { type: Boolean, default: false },
   wixProductId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
+  isDemo: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Product =

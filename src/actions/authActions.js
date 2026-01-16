@@ -3,6 +3,7 @@ import * as Yup from "yup";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/db";
 import Account from "@/models/Account";
+import Product from "@/models/Product";
 import User from "@/models/User";
 import { auth } from "@/auth";
 import cloudinary from "@/lib/cloudinary";
@@ -178,7 +179,17 @@ export async function checkStripeIsConnected() {
           "Please connect your stripe account for secure payment processing.",
       };
     }
-
+    const demoProductCount = await Product.countDocuments({
+      userId: session.user.id,
+      isDemo: true,
+    });
+    if(account.mode === "demo" && (demoProductCount >= account?.demoProductLimit)){
+      return {
+        status: 400,
+        error: "Demo product limit exceeded. Please connect Stripe to continue.",
+      };
+    }
+    
     if (!account.isAccountComplete) {
       return {
         status: 400,

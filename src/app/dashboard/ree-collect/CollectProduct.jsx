@@ -120,7 +120,7 @@ export default function GetCollectProduct({ products, filters, userRole }) {
           className="font-semibold p-7 border border-[#06cb03] rounded-[4px] mr-[10px] border border-white text-black bg-white"
         >
           {isGrid ? <ListIcon size={20} /> : <GridIcon size={20} />}
-          {isGrid ? "List View" : "Grid View"}
+          {/* {isGrid ? "List View" : "Grid View"} */}
         </Button>
       </div>
       <div className="relative w-full mb-4">

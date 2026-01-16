@@ -234,6 +234,11 @@ export const DKK_POINT_RULES = [
     brandType: "LESS_FAST_FASHION",
     fixedPoints: 500,
   },
+  // {
+  //   category: "OTHER",
+  //   brandType: "ANY",
+  //   fixedPoints: 0,
+  // },
 ];
 
 import dbConnect from "@/lib/db";

@@ -161,12 +161,84 @@ export async function storeSuccessResult(accountId) {
     };
   }
 }
+export async function enableDemoMode(userId) {
+  try {
+    const existingAccount = await Account.findOne({ userId });
 
+    if (existingAccount) {
+      existingAccount.mode = "demo";
+      existingAccount.accountId = null; // ensure no Stripe account
+      existingAccount.isAccountComplete = true; // allow product flow
+      await existingAccount.save();
+
+      return {
+        status: 200,
+        message: "Demo mode enabled successfully",
+      };
+    }
+
+    await Account.create({
+      userId,
+      mode: "demo",
+      accountId: null,
+      percentage: null,
+      isAccountComplete: true,
+    });
+
+    return {
+      status: 200,
+      message: "Demo account created successfully",
+    };
+  } catch (error) {
+    console.log(error.message, "message");
+    return {
+      status: 500,
+      error: "Failed to enable demo mode.",
+    };
+  }
+}
+
+export async function demomodeexits(userId) {
+  try {
+    // Find demo account
+    const account = await Account.findOne({ userId, mode: "demo" });
+
+    if (!account) {
+      return {
+        status: 200,
+        exists: false,
+        reason: "No demo account found",
+      };
+    }
+
+    // Count demo products
+    const demoProductCount = await Product.countDocuments({
+      userId,
+      isDemo: true,
+    });
+
+    // Check against demo limit
+    const demoModeExists = demoProductCount <= account.demoProductLimit ? true : false;
+
+    return {
+      status: 200,
+      exists: demoModeExists,
+      demoProductCount,
+    };
+  } catch (error) {
+    console.error(error.message);
+    return {
+      status: 500,
+      error: "Failed to check demo mode.",
+    };
+  }
+}
 export async function storeAccountDetail(userId, accountId, isAccountComplete) {
   try {
     const existingAccount = await Account.findOne({ userId });
 
     if (existingAccount) {
+      existingAccount.mode = "live";
       existingAccount.accountId = accountId;
       existingAccount.isAccountComplete = isAccountComplete;
       await existingAccount.save();

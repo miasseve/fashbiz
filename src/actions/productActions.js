@@ -40,16 +40,34 @@ export async function createProduct(formData) {
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     let productId = null;
     let brandPrice = null;
+    let isDemo = false;
     const sizesArray = Array.isArray(size) ? size : [size]; // ["S","M","L"] or [28,30]
     // Generate Barcode Value
     const year = new Date().getFullYear().toString().slice(-2);
     const brandCode = brand
-        ? brand
-            .replace(/[^A-Za-z0-9]/g, "")
-            .toUpperCase()
-            .slice(0, 3)
-        : "XXX";
+      ? brand
+          .replace(/[^A-Za-z0-9]/g, "")
+          .toUpperCase()
+          .slice(0, 3)
+      : "XXX";
     const barcodeValue = `REE-${brandCode}${sku}${year}`;
+    const demoAccount = await Account.findOne({
+      userId: session.user.id,
+      mode: "demo",
+    });
+    if (demoAccount) {
+      const demoProductCount = await Product.countDocuments({
+        userId: session.user.id,
+        isDemo: true,
+      });
+      isDemo = true;
+      if (demoProductCount >= demoAccount?.demoProductLimit) {
+        return {
+          status: 400,
+          error: `Demo product limit of ${demoAccount.demoProductLimit} reached.`,
+        };
+      }
+    }
 
     if (collect === true) {
       const userId = await User.findOne({ brandname: brand }).select("_id");
@@ -215,6 +233,7 @@ export async function createProduct(formData) {
       size,
       fabric,
       barcode: barcodeValue,
+      isDemo: isDemo,
     });
 
     await newProduct.save();
@@ -400,11 +419,31 @@ export async function getUserProductCount() {
     }
 
     await dbConnect();
+    let demoLimitReached = false;
+    const demoAccount = await Account.findOne({
+      userId: session.user.id,
+      mode: "demo",
+    });
+    if (demoAccount) {
+      const demoProductCount = await Product.countDocuments({
+        userId: session.user.id,
+        isDemo: true,
+      });
+      demoLimitReached =
+        demoProductCount >= demoAccount.demoProductLimit;
+
+      return {
+        status: 200,
+        count: demoProductCount,
+        isDemo: true,
+        demoLimitReached,
+      };
+    }
     const productCount = await Product.countDocuments({
       userId: session.user.id,
     });
 
-    return { status: 200, count: productCount };
+    return { status: 200, count: productCount , isDemo: false,demoLimitReached};
   } catch (error) {
     return { status: 500, error: "Failed to fetch count" };
   }
@@ -549,20 +588,20 @@ export async function unlinkProductFromWix(productIds) {
       const product = await Product.findById(productId).select("wixProductId");
       if (product?.wixProductId) {
         try {
-            await axios.delete(
-              `https://www.wixapis.com/stores/v1/products/${product?.wixProductId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-                  "wix-site-id": process.env.WIX_SITE_ID,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            await Product.updateOne(
-              { _id: productId },
-              { $unset: { wixProductId: "" } }
-            );
+          await axios.delete(
+            `https://www.wixapis.com/stores/v1/products/${product?.wixProductId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
+                "wix-site-id": process.env.WIX_SITE_ID,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          await Product.updateOne(
+            { _id: productId },
+            { $unset: { wixProductId: "" } }
+          );
         } catch (error) {
           console.log(error, "error");
         }

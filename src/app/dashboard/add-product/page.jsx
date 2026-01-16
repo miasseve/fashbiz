@@ -79,8 +79,6 @@ const page = async () => {
       const now = new Date();
       const start = new Date(user.subscriptionStart);
       const end = new Date(user.subscriptionEnd);
-      // const end = new Date("Sat Nov 06 2025 17:40:13 GMT+0530 (India Standard Time)");
-      // console.log("Subscription Dates:", { now, start, end });
       if (user.subscriptionType === "free") {
         if (now < start || now > end) {
           return <SubscriptionMessage message="Your free plan has expired." />;
@@ -90,6 +88,8 @@ const page = async () => {
             user={session.user}
             productCount={response.count}
             stripeResponse={stripeResponse}
+            isDemo={response.isDemo}
+            demoLimitReached={response.demoLimitReached}
           />
         );
       } else if ((now < start || now > end) && user.subscriptionType !== "free") {
@@ -114,6 +114,8 @@ const page = async () => {
       user={session.user}
       productCount={response.count}
       stripeResponse={stripeResponse}
+      isDemo={response.isDemo}
+      demoLimitReached={response.demoLimitReached}
     />
   );
 };

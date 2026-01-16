@@ -49,13 +49,11 @@ const Page = async ({ params }) => {
                 Brand Price: {parsedProduct.brandPrice} DKK
               </div>
             )}
-            {
-              parsedProduct.collect !== true && parsedProduct.pointsValue && (
-                <div className="inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-2 rounded-lg font-bold text-2xl shadow-md">
-                  Points: {parsedProduct.pointsValue}
-                </div>
-              )
-            }
+            {parsedProduct.collect !== true && parsedProduct.pointsValue && (
+              <div className="inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-2 rounded-lg font-bold text-2xl shadow-md">
+                Points: {parsedProduct.pointsValue}
+              </div>
+            )}
           </div>
 
           {/* Product Details Grid */}
@@ -135,7 +133,7 @@ const Page = async ({ params }) => {
 
           {userRole !== "brand" && parsedProduct.collect !== true && (
             <div className="space-y-3 mt-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
                 <GenerateBarcode barcode={parsedProduct.barcode} />
                 <UnlinkProduct product={parsedProduct} />
               </div>

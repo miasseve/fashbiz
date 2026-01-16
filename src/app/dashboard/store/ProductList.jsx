@@ -122,7 +122,7 @@ const ProductList = ({ products }) => {
           className="font-semibold p-7 border border-[#06cb03] rounded-[4px] border-white text-black bg-white"
         >
           {isGrid ? <List size={20} /> : <GridIcon size={20} />}
-          {isGrid ? "List View" : "Grid View"}
+          {/* {isGrid ? "List View" : "Grid View"} */}
         </Button>
       </div>
 
