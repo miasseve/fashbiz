@@ -128,13 +128,24 @@ const Page = async ({ params }) => {
 
           {/* Generate Barcode */}
           {(userRole === "brand" || parsedProduct.collect) && (
-            <GenerateBarcode barcode={parsedProduct.barcode} />
+            <GenerateBarcode
+              barcode={parsedProduct.barcode}
+              price={parsedProduct.brandPrice}
+              size={parsedProduct.size}
+              currency="DKK"
+            />
           )}
 
           {userRole !== "brand" && parsedProduct.collect !== true && (
             <div className="space-y-3 mt-4">
               <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
-                <GenerateBarcode barcode={parsedProduct.barcode} />
+                <GenerateBarcode
+                  barcode={parsedProduct.barcode}
+                  price={parsedProduct.price > 1 ? parsedProduct.price : null}
+                  points={parsedProduct.pointsValue ? parsedProduct.pointsValue : null}
+                  size={parsedProduct.size}
+                  currency="€"
+                />
                 <UnlinkProduct product={parsedProduct} />
               </div>
             </div>
