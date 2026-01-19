@@ -101,7 +101,7 @@ const Profile = ({ user, stripeResponse }) => {
           .trim()
           .matches(
             /^\d+$/,
-            "LE-stores is for professional stores only. Please enter a valid company VAT/CVR number (numbers only, without country code like FR or DK)"
+            "Please enter a valid company VAT/CVR number (numbers only, without country code like FR or DK)"
           )
           .required("Business Registration Number is required"),
       otherwise: () => Yup.string().nullable(),

@@ -144,7 +144,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   return (
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
-        <img src="/fashlogo.svg" className="w-[132px] mx-auto" />
+        {/* <img src="/fashlogo.svg" className="w-[132px] mx-auto" /> */}
+        <img src="/reelogo.png" className="w-[92px] mx-auto py-[12px]" />
         {session.data?.user?.role === "store" && (
           <input
             ref={barcodeInputRef}

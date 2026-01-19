@@ -20,7 +20,7 @@ const DataDeletion = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-5xl font-bold text-black mb-2">
-            <img src="/fashlogo.svg" className="w-[132px] mx-auto" />
+            <img src="/reelogo.png" className="w-[92px] mx-auto py-[12px]" />
           </h1>
         </div>
 

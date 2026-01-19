@@ -63,9 +63,10 @@ const LoginForm = () => {
           <div className=" sm:flex justify-end items-center  sm:p-4 lg:p-0  p-8 sm:p-0 sm:min-h-screen w-full sm:w-[50%]">
             <div className="w-100% md:w-[430px] sm:pr-[2rem] lftlogin">
               <div className="w-full text-center">
-                <div className="icon-text text-black relative">
+                <div className="icon-text text-black relative pb-[2rem]">
                   <Link href="/">
-                    <img src="/fashlogo.svg" className="w-[37%] mb-[53px]" />
+                    {/* <img src="/fashlogo.svg" className="w-[37%] mb-[53px]" /> */}
+                     <img src="/reelogo.png" className="w-[92px] py-[12px]" />
                   </Link>
                 </div>
               </div>
@@ -75,9 +76,9 @@ const LoginForm = () => {
                   <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
                     14 DAYS FREE TO SELL INSTANTLY
                   </div>
-                  <p className="text-[18px] font-normal text-black m-0">
+                  {/* <p className="text-[18px] font-normal text-black m-0">
                     Your trusted marketplace to sell with ease.
-                  </p>
+                  </p> */}
                   <p className="text-[18px] font-normal text-black m-0 mb-[40px]">
                     Trouble logging in?{" "}
                     <Link href="/contact-support" className="underline">
