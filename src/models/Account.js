@@ -9,7 +9,7 @@ const AccountSchema = new mongoose.Schema({
   accountId: {
     type: String,
     // required: true,
-    default: null,
+    // default: null,
     unique: true,
     sparse: true,
   },

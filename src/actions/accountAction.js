@@ -167,7 +167,6 @@ export async function enableDemoMode(userId) {
 
     if (existingAccount) {
       existingAccount.mode = "demo";
-      existingAccount.accountId = null; // ensure no Stripe account
       existingAccount.isAccountComplete = true; // allow product flow
       await existingAccount.save();
 
@@ -177,14 +176,12 @@ export async function enableDemoMode(userId) {
       };
     }
 
-    await Account.create({
+     await Account.create({
       userId,
       mode: "demo",
-      accountId: null,
       percentage: null,
       isAccountComplete: true,
     });
-
     return {
       status: 200,
       message: "Demo account created successfully",

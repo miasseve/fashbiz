@@ -28,7 +28,7 @@ const page = async () => {
   }
 
   if (result.status == 200) {
-    accountId = result.accountId;
+    accountId = result?.accountId;
     isAccountComplete = result.isAccountComplete;
     userRole = result.userRole;
   }
