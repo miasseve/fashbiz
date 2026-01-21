@@ -43,7 +43,7 @@ const Main = ({
       const reponse = await enableDemoMode(user.id);
       if (reponse.status === 200) {
         dispatch(setCurrentStep(1));
-        router.refresh();
+        window.location.reload();
       } else {
         console.log("Failed to enable demo mode");
       }

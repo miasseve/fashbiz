@@ -43,7 +43,7 @@ export default function SubscriptionPlans({ user }) {
     if (!allChecked) return;
     //validate the refferal code
     const { status, message } = await checkvalidReferralCode(
-      referralCode.trim()
+      referralCode.trim(),
     );
     // console.log("Referral code validation:", status, message);
     if (status != 200) {
@@ -64,8 +64,8 @@ export default function SubscriptionPlans({ user }) {
         `/checkout?userId=${
           user._id
         }&priceId=${selectedPriceId}&referral=${encodeURIComponent(
-          encryptedReferral
-        )}`
+          encryptedReferral,
+        )}`,
       );
     } catch (err) {
       router.push("subscription-plan");
@@ -92,10 +92,13 @@ export default function SubscriptionPlans({ user }) {
         name: plan.product.name,
         price: plan.unit_amount
           ? `${(plan.unit_amount / 100).toFixed(
-              2
+              2,
             )} ${plan.currency.toUpperCase()}`
           : "0 DKK",
         period: plan.recurring_interval || "month",
+        tagline: plan.tagline || "",
+        subtitle: plan.subtitle || "",
+        cardBgColor: plan.bgColor || "bg-white",
         features: plan.features || ["✔ Basic access"],
       }));
 
@@ -103,7 +106,7 @@ export default function SubscriptionPlans({ user }) {
 
       if (hasActiveSubscription && user?.subscriptionType) {
         const matchedPlan = formattedPlans.find(
-          (p) => p.name.toLowerCase() === user.subscriptionType.toLowerCase()
+          (p) => p.name.toLowerCase() === user.subscriptionType.toLowerCase(),
         );
 
         if (matchedPlan) {
@@ -137,7 +140,7 @@ export default function SubscriptionPlans({ user }) {
       if (!allChecked) return;
       if (referralCode?.trim()) {
         const { status, message } = await checkvalidReferralCode(
-          referralCode.trim()
+          referralCode.trim(),
         );
 
         console.log("Referral code validation:", status, message);
@@ -226,7 +229,7 @@ export default function SubscriptionPlans({ user }) {
             //archive all products of the user
             await archiveProduct(user._id);
             toast.success(
-              data.message || "Subscription will cancel at period end"
+              data.message || "Subscription will cancel at period end",
             );
             router.refresh();
             // await fetchData();
@@ -246,7 +249,7 @@ export default function SubscriptionPlans({ user }) {
 
   return (
     <section>
-      <div className="max-w-6xl mx-auto text-center mb-10">
+      <div className="max-w-7xl mx-auto">
         {hasActiveSubscription ? (
           <div className="max-w-xl mx-auto mb-10">
             <Card className="relative bg-gray-200 dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden p-10">
@@ -285,7 +288,7 @@ export default function SubscriptionPlans({ user }) {
                   </p>
                 </div>
                 {activePlan ? (
-                  <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
+                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
                     {activePlan.features && activePlan.features.length > 0 ? (
                       activePlan.features.map((feature, index) => (
                         <li key={index}>{feature}</li>
@@ -295,11 +298,11 @@ export default function SubscriptionPlans({ user }) {
                     )}
                   </ul>
                 ) : (
-                  <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
-                    <li>✔ Full access to premium features</li>
-                    <li>✔ Priority customer support</li>
-                    <li>✔ Unlimited product uploads</li>
-                    <li>✔ Advanced analytics & reports</li>
+                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
+                    <li>Full access to premium features</li>
+                    <li>Priority customer support</li>
+                    <li>Unlimited product uploads</li>
+                    <li>Advanced analytics & reports</li>
                   </ul>
                 )}
 
@@ -323,13 +326,13 @@ export default function SubscriptionPlans({ user }) {
                       <div className="text-yellow-600 font-semibold text-lg mt-4">
                         ⏳ <span className="font-semibold">Note:</span> Your
                         subscription is locked for the first{" "}
-                        <span className="font-bold">6 months</span>. You’ll be
+                        <span className="font-bold">6 months</span>. You'll be
                         able to cancel it after{" "}
                         <span className="font-bold">
                           {sixMonthsLater.toLocaleDateString("en-US", {
-                            month: "short", // "Dec"
-                            day: "numeric", // "26"
-                            year: "numeric", // "2026"
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
                           })}
                         </span>
                         . Until then, enjoy uninterrupted access to your plan!
@@ -351,11 +354,11 @@ export default function SubscriptionPlans({ user }) {
                 </p>
               </CardHeader>
               <CardBody className="text-center pb-8 px-6">
-                <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-lg text-left px-6">
-                  <li>✔ Full access to premium features</li>
-                  <li>✔ Priority customer support</li>
-                  <li>✔ Unlimited product uploads</li>
-                  <li>✔ Advanced analytics & reports</li>
+                <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-lg text-left px-6">
+                  <li>Full access to premium features</li>
+                  <li>Priority customer support</li>
+                  <li>Unlimited product uploads</li>
+                  <li>Advanced analytics & reports</li>
                 </ul>
 
                 <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400">
@@ -370,96 +373,141 @@ export default function SubscriptionPlans({ user }) {
       <h2 className="text-6xl font-bold text-center text-gray-900 text-white mb-5">
         Get a Plan
       </h2>
-      <div className="flex flex-wrap justify-center gap-8 px-4">
-        {plans
-          .filter(
-            (plan) =>
-              (userRole === "store" && plan.name !== "Brand Collect") ||
-              (userRole === "brand" && plan.name === "Brand Collect")
-          )
-          .map((plan, index) => {
-            return (
-              <Card
-                key={index}
-                className={`w-full sm:w-[90%] md:w-[30%] rounded-2xl transition-all transform hover:scale-105 hover:shadow-2xl overflow-hidden ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-[#f97316] to-[#f87171] text-white shadow-lg border-0"
-                    : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-4 right-4 bg-yellow-400 text-black font-bold px-4 py-1 rounded-full text-lg shadow-md">
-                    POPULAR
-                  </div>
-                )}
-                <CardHeader className="flex flex-col items-center pt-6">
-                  <h3
-                    className={`text-5xl font-extrabold mb-4 ${
-                      plan.popular
-                        ? "text-white"
-                        : "text-gray-800 dark:text-white"
-                    }`}
-                  >
-                    {plan.name}
-                  </h3>
-                  <p
-                    className={`text-5xl font-bold mt-3 ${
-                      plan.popular
-                        ? "text-white"
-                        : "text-[#dc2626] dark:text-[#dc2626]"
-                    }`}
-                  >
-                    {plan.price}
-                    <span
-                      className={`text-2xl ml-2 ${
-                        plan.popular
-                          ? "text-white/80"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      /{plan.period}
-                    </span>
-                  </p>
-                </CardHeader>
 
-                <CardBody className="flex flex-col items-center pb-6">
-                  <ul className="text-gray-700 dark:text-gray-300 mb-6 space-y-3 text-lg text-left px-6">
-                    {plan.features.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                  <div className="mt-auto flex flex-col items-center">
-                    <Button
-                      className={`text-white font-bold px-10 py-4 rounded-xl shadow-xl text-xl transition-all duration-300 ${
-                        plan.popular
-                          ? "bg-white text-[#f97316] hover:bg-gray-100"
-                          : "bg-[#dc2626] hover:bg-red-700"
-                      }`}
-                      onPress={() => {
-                        if (activePlan && activePlan?.name === plan.name)
-                          return;
-                        handleCheckout(plan.id);
-                      }}
-                      disabled={activePlan && activePlan?.name === plan.name}
-                    >
-                      {activePlan?.name === plan.name
-                        ? "Subscribed"
-                        : plan.popular
-                        ? "Get Started"
-                        : "Subscribe Now"}
-                    </Button>
-                    {userRole === "store" && (
-                      <p className="mt-4 text-lg font-semibold text-yellow-500">
-                        🎁 Get <span className="font-bold">1 month free</span>{" "}
-                        by inviting a store!
-                      </p>
+      {/* Main Layout with Plans and Add-on Cards */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Subscription Plans Grid */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          {plans
+            .filter(
+              (plan) =>
+                (userRole === "store" && plan.name !== "Brand Collect") ||
+                (userRole === "brand" && plan.name === "Brand Collect"),
+            )
+            .map((plan, index) => {
+              const cardBgColor = plan.cardBgColor || "bg-white";
+              return (
+                <div key={plan.id} className="flex flex-col">
+                  <p className="min-h-[30px] text-[#ebf96d] font-semibold mb-6 text-md leading-tight mt-2">
+                    {plan.tagline}
+                  </p>
+                  <Card
+                    className={`flex-1 flex flex-col rounded-xl ${cardBgColor} p-6 sm:p-8 text-purple-700 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl hover:-translate-y-2 relative overflow-visible`}
+                  >
+                    {plan.popular && (
+                      <div className="absolute -top-3 -right-3 bg-yellow-400 text-black font-bold px-4 py-2 rounded-full text-sm shadow-lg z-10 animate-pulse">
+                        POPULAR
+                      </div>
                     )}
-                  </div>
-                </CardBody>
-              </Card>
-            );
-          })}
+                    <CardHeader className="p-0 flex-col items-start">
+                      <span className="inline-block px-6 sm:px-8 py-3 rounded-full bg-[linear-gradient(270deg,_#FDFFE0_-3.38%,_#F5F300_45.33%,_#FFAB00_100%)] text-purple-700 font-semibold text-sm sm:text-[20px] w-fit">
+                        {plan.name}
+                      </span>
+
+                      <h3 className="mt-6 sm:mt-8 text-lg sm:text-xl font-bold text-[#6711a4]">
+                        {plan.subtitle}
+                      </h3>
+                    </CardHeader>
+
+                    <CardBody className="p-0 flex flex-col flex-1">
+                      <ul className="my-6 list-disc list-inside pl-5 space-y-2 sm:space-y-3 text-md text-purple-700">
+                        {plan.features.map((item, i) => (
+                          <li key={i} className="leading-relaxed">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="border-t-[3px] border-white mt-auto pt-6">
+                        <p className="text-3xl sm:text-4xl font-bold text-purple-700">
+                          {plan.price}
+                        </p>
+                        <Button
+                          className={`w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg ${
+                            activePlan && activePlan?.name === plan.name
+                              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                              : plan.popular
+                                ? "bg-white text-[#6711a4] hover:bg-gray-100 hover:shadow-xl"
+                                : "bg-[#6711a4] text-white hover:bg-[#5a0d8a] hover:shadow-xl"
+                          }`}
+                          onPress={() => {
+                            if (activePlan && activePlan?.name === plan.name)
+                              return;
+                            handleCheckout(plan.id);
+                          }}
+                          disabled={
+                            activePlan && activePlan?.name === plan.name
+                          }
+                        >
+                          {activePlan?.name === plan.name
+                            ? "Subscribed"
+                            : plan.popular
+                              ? "Get Started"
+                              : "Subscribe Now"}
+                        </Button>
+                        {userRole === "store" && (
+                          <p className="mt-4 text-[1.4rem] font-semibold text-purple-600 text-center">
+                            🎁 Get{" "}
+                            <span className="font-bold">1 month free</span> by
+                            inviting a store!
+                          </p>
+                        )}
+                      </div>
+                    </CardBody>
+                  </Card>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* Add-on Cards on the Right */}
+        <div className="lg:w-80 flex flex-col gap-6">
+          {/* Add-on Header */}
+          <div className="text-center lg:text-left">
+            <h3 className="text-3xl sm:text-4xl font-bold text-[#ebf96d] mb-2">
+              Add on
+            </h3>
+          </div>
+
+          {/* Re-e Plug-in Card */}
+          <Card className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-6 sm:p-8 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl">
+            <CardBody className="p-0 flex flex-col justify-between h-full">
+              <div>
+                <h4 className="text-2xl sm:text-3xl font-bold text-[#ebf96d] mb-4">
+                  Re-e plug-in to your site
+                </h4>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white mb-6">
+                  3290 DKK
+                </p>
+              </div>
+              <Button className="w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg bg-white text-teal-700 hover:bg-gray-100 hover:shadow-xl">
+                Get Started
+              </Button>
+            </CardBody>
+          </Card>
+
+          {/* Custom Web Shop Card */}
+          <Card className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-2xl p-6 sm:p-8 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl">
+            <CardBody className="p-0 flex flex-col justify-between h-full">
+              <div>
+                <h4 className="text-2xl sm:text-3xl font-bold text-[#ebf96d] mb-4">
+                  You need your web shop?
+                </h4>
+                <h5 className="text-xl sm:text-2xl font-semibold text-[#ebf96d] mb-4">
+                  Contact us for a quote
+                </h5>
+                <p className="text-md sm:text-base text-white/90 leading-relaxed">
+                  We build all and connect REe and you have an automated web
+                  shop
+                </p>
+              </div>
+              <Button className="w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg bg-white text-teal-700 hover:bg-gray-100 hover:shadow-xl mb-6">
+                Contact Us
+              </Button>
+            </CardBody>
+          </Card>
+        </div>
       </div>
+
       <Modal
         backdrop="blur"
         isOpen={isOpen}
@@ -494,7 +542,6 @@ export default function SubscriptionPlans({ user }) {
                   className="w-full"
                 />
 
-                {/* Terms and Conditions Section */}
                 <div className="flex flex-col gap-2 mt-3">
                   <p className="text-lg font-medium text-gray-700 mb-1">
                     Please agree to all terms & conditions:
@@ -508,7 +555,7 @@ export default function SubscriptionPlans({ user }) {
                       label: "text-black-700 text-xl",
                     }}
                   >
-                    I agree to the platform’s Terms and Privacy Policy.
+                    I agree to the platform's Terms and Privacy Policy.
                   </Checkbox>
                 </div>
               </div>
@@ -532,13 +579,9 @@ export default function SubscriptionPlans({ user }) {
                   onPress={() => {
                     setIsOpen(false);
                     router.push(
-                      `/checkout?userId=${user._id}&priceId=${selectedPriceId}`
+                      `/checkout?userId=${user._id}&priceId=${selectedPriceId}`,
                     );
                   }}
-                  // onPress={() => {
-                  //   setIsOpen(false);
-                  //   handleSubscribe(selectedPlan);
-                  // }}
                 >
                   No
                 </Button>
