@@ -5,20 +5,18 @@ import ConsignorQR from "./ConsignorQR";
 import { Spinner } from "@heroui/react";
 import { checkStripeIsConnected } from "@/actions/authActions";
 
-const Consignor = () => {
+const Consignor = ({ user }) => {  // Add user prop here
   const [qrData, setQrData] = useState(null);
   const [stripeResponse, setStripeResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDemo, setIsDemo] = useState(false);
+  const [demoLimitReached, setDemoLimitReached] = useState(false);
 
   useEffect(() => {
-    // Fetch data when the component mounts
     const fetchData = async () => {
       try {
-        // Fetch QR Data
         const qrResponse = await getQRData();
-
-        // Check if Stripe is connected
         const stripeData = await checkStripeIsConnected();
 
         if (qrResponse.status !== 200) {
@@ -27,6 +25,12 @@ const Consignor = () => {
 
         setQrData(qrResponse.qrData);
         setStripeResponse(stripeData);
+
+        if (stripeData?.data) {
+          const parsedData = JSON.parse(stripeData.data);
+          setIsDemo(parsedData?.mode === "demo");
+          setDemoLimitReached(parsedData?.demoLimitReached || false);
+        }
       } catch (err) {
         setError(err.message || "An error occurred while fetching data.");
       } finally {
@@ -45,7 +49,14 @@ const Consignor = () => {
     );
   if (error) return <div>Error: {error}</div>;
 
-  return <ConsignorQR qrData={qrData} stripeResponse={stripeResponse} />;
+  return (
+    <ConsignorQR
+      qrData={qrData}
+      stripeResponse={stripeResponse}
+      demoLimitReached={demoLimitReached}
+      user={user}  
+    />
+  );
 };
 
 export default Consignor;

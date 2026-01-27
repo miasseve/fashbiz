@@ -11,7 +11,6 @@ import {
 import { Loader2, Lock } from "lucide-react";
 import { unarchiveProduct } from "@/actions/productActions";
 import { getUser } from "@/actions/authActions";
-import { user } from "@heroui/theme";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
