@@ -1,3 +1,4 @@
+
 import * as Yup from "yup";
 
 export const registerSchema = Yup.object({
@@ -38,7 +39,7 @@ export const registerSchema = Yup.object({
         .trim()
         .matches(
           /^[A-Za-z0-9\s\-\/]+$/,
-          "Enter a valid company registration number"
+          "Enter a valid company registration number",
         )
         .required("Company Registration Number is required"),
     otherwise: () => Yup.string(),
@@ -60,7 +61,7 @@ export const registerSchema = Yup.object({
         .trim()
         .matches(
           /^\d+$/,
-          "Please enter a valid company VAT/CVR number (numbers only, without country code like FR or DK)."
+          "Please enter a valid company VAT/CVR number (numbers only, without country code like FR or DK).",
         )
         .required("Business Registration Number is required"),
     otherwise: () => Yup.string().nullable(),
@@ -75,7 +76,7 @@ export const registerSchema = Yup.object({
   role: Yup.string()
     .oneOf(
       ["store", "consignor", "brand"],
-      'Invalid role. Role must be "store", "consignor", or "brand"'
+      'Invalid role. Role must be "store", "consignor", or "brand"',
     )
     .required("Role is required")
     .default("consignor"),
@@ -141,7 +142,7 @@ export const profileSchema = Yup.object({
       Yup.string()
         .matches(
           /^[A-Za-z0-9\s\-\/]+$/,
-          "Enter a valid company registration number"
+          "Enter a valid company registration number",
         )
         .required("Company Registration Number is required"),
     otherwise: () => Yup.string(),
@@ -162,7 +163,7 @@ export const resetPasswordSchema = Yup.object().shape({
         const hasUppercase = /[A-Z]/.test(value);
         const hasSpecialChar = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(value);
         return hasDigit && hasLowercase && hasUppercase && hasSpecialChar;
-      }
+      },
     ),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords do not match")
@@ -171,6 +172,7 @@ export const resetPasswordSchema = Yup.object().shape({
 
 export const productSchema = Yup.object().shape({
   collectionId: Yup.string().required("Category is required"),
+  shopifyCollectionId: Yup.string().optional(),
   sku: Yup.string().required("SKU is required"),
   title: Yup.string().required("Title is required"),
   brand: Yup.string().required("Brand is required"),
@@ -181,7 +183,7 @@ export const productSchema = Yup.object().shape({
     .test(
       "max-2-decimals",
       "Price can have at most 2 decimal places",
-      (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
+      (value) => /^\d+(\.\d{1,2})?$/.test(String(value)),
     ),
   color: Yup.object({
     name: Yup.string().required("Color name is required"),
@@ -198,15 +200,25 @@ export const updateProductSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
   brand: Yup.string().required("Brand is required"),
   price: Yup.number()
-    .typeError("Price must be a number")
-    .required("Price is required")
-    .positive("Price must be greater than zero")
-    .test(
-      "max-2-decimals",
-      "Price can have at most 2 decimal places",
-      (value) => /^\d+(\.\d{1,2})?$/.test(String(value))
-    ),
+    .nullable()
+    .transform((v, o) => (o === "" ? null : v))
+    .when("$hasPrice", {
+      is: true,
+      then: (schema) =>
+        schema
+          .required("Price is required")
+          .positive("Price must be greater than zero")
+          .test(
+            "max-2-decimals",
+            "Price can have at most 2 decimal places",
+            (value) =>
+              value === null || /^\d+(\.\d{1,2})?$/.test(String(value)),
+          ),
+      otherwise: (schema) => schema.notRequired(),
+    }),
   pointsValue: Yup.number()
+    .nullable()
+    .transform((v, o) => (o === "" ? null : v))
     .typeError("Points Value must be a number")
     .min(0, "Points Value cannot be negative")
     .max(1400, "Points Value cannot exceed 1400"),
@@ -223,7 +235,7 @@ export const getPointRuleForProduct = (category, brandType, rules) => {
 
   // Find exact match for category and brandType
   const rule = rules.find(
-    (r) => r.category === category && r.brandType === brandType
+    (r) => r.category === category && r.brandType === brandType,
   );
 
   return rule || null;
@@ -232,8 +244,7 @@ export const getPointRuleForProduct = (category, brandType, rules) => {
 export const createPointsSchema = (rule) => {
   if (!rule) {
     return Yup.object().shape({
-      points: Yup
-        .number()
+      points: Yup.number()
         .required("Points are required")
         .min(0, "Points cannot be negative"),
     });
@@ -242,12 +253,11 @@ export const createPointsSchema = (rule) => {
   // If the rule has fixedPoints, only allow that exact value
   if (rule.fixedPoints !== undefined && rule.fixedPoints !== null) {
     return Yup.object().shape({
-      points: Yup
-        .number()
+      points: Yup.number()
         .required("Points are required")
         .oneOf(
           [rule.fixedPoints],
-          `Points must be exactly ${rule.fixedPoints} for this category and brand type`
+          `Points must be exactly ${rule.fixedPoints} for this category and brand type`,
         ),
     });
   }
@@ -255,8 +265,7 @@ export const createPointsSchema = (rule) => {
   // If the rule has a range (minPoints and maxPoints)
   if (rule.minPoints !== undefined && rule.maxPoints !== undefined) {
     return Yup.object().shape({
-      points: Yup
-        .number()
+      points: Yup.number()
         .required("Points are required")
         .min(rule.minPoints, `Points must be at least ${rule.minPoints}`)
         .max(rule.maxPoints, `Points cannot exceed ${rule.maxPoints}`),
@@ -265,8 +274,7 @@ export const createPointsSchema = (rule) => {
 
   // Fallback
   return Yup.object().shape({
-    points: Yup
-      .number()
+    points: Yup.number()
       .required("Points are required")
       .min(0, "Points cannot be negative"),
   });

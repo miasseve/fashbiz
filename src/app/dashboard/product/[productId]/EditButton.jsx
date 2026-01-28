@@ -33,11 +33,14 @@ const EditButton = ({ product }) => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(updateProductSchema),
+    context: {
+      hasPrice: product?.price > 1,
+    },
     defaultValues: {
       title: product?.title || "",
       brand: product?.brand || "",
-      price: product?.price || "",
-      pointsValue: product?.pointsValue || "",
+      price:  Number(product?.price) || "",
+      pointsValue: Number(product?.pointsValue) || "",
       description: product?.description || "",
       subcategory: product?.subcategory || "",
       sku: product?.sku || "",
@@ -65,6 +68,7 @@ const EditButton = ({ product }) => {
   }, []);
 
   const onSubmit = async (data) => {
+    console.log("Submitting data:", data);
     const response = await updateProduct(product._id, data);
     if (response.status === 200) {
       toast.success("Product updated successfully!");
@@ -75,7 +79,7 @@ const EditButton = ({ product }) => {
             ...data,
             price: Number(data.price),
           },
-        })
+        }),
       );
 
       onOpenChange(false);
@@ -84,6 +88,10 @@ const EditButton = ({ product }) => {
       toast.error(response.error || "Failed to update product.");
     }
   };
+  const onError = (errors) => {
+    console.log("Form errors:", errors);
+    toast.error("Error in Updating the Product details.");
+  }
 
   return (
     <>
@@ -106,7 +114,7 @@ const EditButton = ({ product }) => {
         <ModalContent>
           {(onClose) => (
             <form
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={handleSubmit(onSubmit, onError)}
               className="flex flex-col max-h-[90vh]"
             >
               <ModalHeader className="flex-shrink-0 flex justify-center text-2xl">
@@ -214,42 +222,39 @@ const EditButton = ({ product }) => {
                   </div>
 
                   <div>
-                    {product?.price > 1 && (
-                      <>
-                        <label className="text-sm font-medium block mb-1">
-                          Price
-                        </label>
-                        <input
-                          type="number"
-                          {...register("price")}
-                          className="w-full border px-3 py-2 rounded"
-                        />
-                        {errors.price && (
-                          <p className="text-red-500 font-bold text-[12px]">
-                            {errors.price.message}
-                          </p>
-                        )}
-                      </>
-                    )}
-                    {
-                      product?.pointsValue && (
-                        <>
-                          <label className="text-sm font-medium block mb-1">
-                            Points Value
-                          </label>
-                          <input
-                            type="number"
-                            {...register("pointsValue")}
-                            className="w-full border px-3 py-2 rounded"
-                          />
-                          {errors.pointsValue && (
-                            <p className="text-red-500 font-bold text-[12px]">
-                              {errors.pointsValue.message}
-                            </p>
-                          )}
-                        </>
-                      )
-                    }
+                    {/* PRICE (hidden but registered) */}
+                    <div hidden={product?.price <= 1}>
+                      <label className="text-sm font-medium block mb-1">
+                        Price
+                      </label>
+                      <input
+                        type="number"
+                        {...register("price")}
+                        className="w-full border px-3 py-2 rounded"
+                      />
+                      {errors.price && (
+                        <p className="text-red-500 font-bold text-[12px]">
+                          {errors.price.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* POINTS (hidden but registered) */}
+                    <div hidden={!product?.pointsValue}>
+                      <label className="text-sm font-medium block mb-1">
+                        Points Value
+                      </label>
+                      <input
+                        type="number"
+                        {...register("pointsValue")}
+                        className="w-full border px-3 py-2 rounded"
+                      />
+                      {errors.pointsValue && (
+                        <p className="text-red-500 font-bold text-[12px]">
+                          {errors.pointsValue.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">

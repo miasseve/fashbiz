@@ -211,7 +211,7 @@ const CartItems = ({ storeUser }) => {
                   Grand Total: €{grandTotal}
                 </p>
               </div>
-              {isDemoMode && (
+              {!isDemoMode && (
               <BuyNow
                 storeUser={storeUser}
                 allConsignorProducts={cartProducts}
