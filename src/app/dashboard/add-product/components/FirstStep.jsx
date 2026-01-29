@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Spinner } from "@heroui/react"; 
+import { Spinner } from "@heroui/react";
 import { IoIosCamera } from "react-icons/io";
 import { filters } from "@/lib/constants";
 import { toast } from "react-toastify";
-import { removeBackground } from "@imgly/background-removal";
+// import { removeBackground } from "@imgly/background-removal";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { setUploadedImagesOfProduct } from "@/features/productSlice";
@@ -36,18 +36,18 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   });
 
   const storedProductImages = useSelector(
-    (state) => state.product.uploadedImages
+    (state) => state.product.uploadedImages,
   );
 
   useEffect(() => {
     const isEmpty = Object.values(storedProductImages).every(
-      (value) => value === null
+      (value) => value === null,
     );
     if (!isEmpty) {
       setUploadedImagesWithView(storedProductImages);
     }
   }, []);
-  
+
   useEffect(() => {
     const checkBackCamera = async () => {
       try {
@@ -55,7 +55,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         const hasBackCamera = devices.some(
           (device) =>
             device.kind === "videoinput" &&
-            device.label.toLowerCase().includes("back")
+            device.label.toLowerCase().includes("back"),
         );
 
         // Some devices (e.g., iPhones) may not expose 'back' in the label unless permission was granted
@@ -81,6 +81,10 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  const getCloudinaryBgRemovedUrl = (originalUrl) => {
+    return originalUrl.replace("/upload/", "/upload/e_background_removal/");
+  };
+
   const handleGalleryClick = (viewType) => {
     setIsCameraOpen(false);
     setSelectedView(viewType);
@@ -100,7 +104,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
 
       const transformations = remaining.split("/").filter((trans) => trans);
       const transformationIndex = transformations.findIndex((trans) =>
-        trans.startsWith(prefix)
+        trans.startsWith(prefix),
       );
 
       if (value === 0 || value == "") {
@@ -130,7 +134,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           .split("/")
           .filter((trans) => trans);
         const removeTransformationIndex = removeTransformations.findIndex(
-          (trans) => trans.startsWith(prefix)
+          (trans) => trans.startsWith(prefix),
         );
 
         if (value === 0 || value == "") {
@@ -140,16 +144,15 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           }
         } else {
           if (removeTransformationIndex !== -1) {
-            removeTransformations[
-              removeTransformationIndex
-            ] = `${prefix}${value}`;
+            removeTransformations[removeTransformationIndex] =
+              `${prefix}${value}`;
           } else {
             removeTransformations.unshift(`${prefix}${value}`);
           }
         }
 
         removeBgUrl = `${removeBaseUrl}/upload/${removeTransformations.join(
-          "/"
+          "/",
         )}`;
       }
       updatedImages[viewType] = {
@@ -163,11 +166,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     });
   };
 
-  // const constraints = {
-  //   video: {
-  //     facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
-  //   },
-  // };
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
     setSelectedView(viewType);
@@ -238,83 +236,73 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     updateImageTransformationsWithView(viewType, value, "e_art:");
   };
 
-  const blobToBase64 = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
+  // const blobToBase64 = (blob) => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => resolve(reader.result);
+  //     reader.onerror = reject;
+  //     reader.readAsDataURL(blob);
+  //   });
+  // };
 
   const removeBackgroundHandlerWithView = async (e, viewType) => {
     const isChecked = e.target.checked;
 
+    if (!uploadedImagesWithView[viewType]) return;
+
     if (isChecked) {
-      setRemoveBackgroundLoader((prevState) => ({
-        ...prevState,
+      setRemoveBackgroundLoader((prev) => ({
+        ...prev,
         [viewType]: { loading: true },
       }));
 
-      if (uploadedImagesWithView[viewType].removePublicId) {
-        setUploadImageLoader(false);
-        setUploadedImagesWithView((prevImages) => ({
-          ...prevImages,
-          [viewType]: prevImages[viewType]
-            ? {
-                ...prevImages[viewType],
-                publicId: uploadedImagesWithView[viewType].removePublicId,
-                url: uploadedImagesWithView[viewType].removeBgUrl,
-                isBgRemovedImage: true,
-              }
-            : null,
-        }));
-      } else {
-        const blob = await removeBackground(
-          uploadedImagesWithView[viewType].url
-        );
-        // const processedUrl = URL.createObjectURL(blob);
-        // const processedBlob = await fetch(processedUrl).then((res) =>
-        //   res.blob()
-        // );
-        const base64File = await blobToBase64(blob);
-        // Convert Blob to Base64
-        // const base64File = await blobToBase64(processedBlob);
-        const res = await updateCloudinaryImage(base64File);
-        if (res.status == 200) {
-          setUploadedImagesWithView((prevImages) => ({
-            ...prevImages,
-            [viewType]: prevImages[viewType]
-              ? {
-                  ...prevImages[viewType],
-                  publicId: res.data.public_id,
-                  removePublicId: res.data.public_id,
-                  removeBgUrl: res.data.secure_url,
-                  url: res.data.secure_url,
-                  isBgRemovedImage: true,
-                }
-              : null,
+      try {
+        const image = uploadedImagesWithView[viewType];
+
+        // If already generated, just switch
+        if (image.removeBgUrl) {
+          setUploadedImagesWithView((prev) => ({
+            ...prev,
+            [viewType]: {
+              ...image,
+              url: image.removeBgUrl,
+              isBgRemovedImage: true,
+            },
           }));
-        } else {
-          console.log("something went wrong");
+          return;
         }
-        setUploadImageLoader(false);
+
+        // Cloudinary server-side background removal
+        const bgRemovedUrl = getCloudinaryBgRemovedUrl(image.originalUrl);
+
+        setUploadedImagesWithView((prev) => ({
+          ...prev,
+          [viewType]: {
+            ...image,
+            removeBgUrl: bgRemovedUrl,
+            url: bgRemovedUrl,
+            isBgRemovedImage: true,
+          },
+        }));
+      } catch (err) {
+        console.error("Background removal failed", err);
+        toast.error("Background removal failed");
+      } finally {
+        setRemoveBackgroundLoader({});
       }
-      setRemoveBackgroundLoader({});
     } else {
-      setUploadedImagesWithView((prevImages) => ({
-        ...prevImages,
-        [viewType]: prevImages[viewType]
-          ? {
-              ...prevImages[viewType],
-              publicId: uploadedImagesWithView[viewType].originalPublicId,
-              url: uploadedImagesWithView[viewType].originalUrl,
-              isBgRemovedImage: false,
-            }
-          : null,
+      // Restore original
+      setUploadedImagesWithView((prev) => ({
+        ...prev,
+        [viewType]: {
+          ...prev[viewType],
+          url: prev[viewType].originalUrl,
+          isBgRemovedImage: false,
+        },
       }));
     }
   };
+
   const handleImageError = (e, index) => {
     setImageUploadError((prevErrors) => {
       const newErrors = [...prevErrors];
@@ -332,7 +320,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     const invalidFile = files.some((file) => {
       const fileExtension = file.name.split(".").pop().toLowerCase();
       return ["mp4", "avi", "mov", "mkv", "webm", "gif"].includes(
-        fileExtension
+        fileExtension,
       );
     });
 
@@ -360,7 +348,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <div className="camera-container">
             <video
               ref={videoRef}
-              autoPlay 
+              autoPlay
               playsInline
               className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
             />
@@ -431,6 +419,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                             layout="intrinsic"
                             onError={(e) => handleImageError(e, viewType)}
                             className="rounded"
+                            unoptimized
                           />
                         </div>
 
@@ -561,7 +550,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                   </div>
                 )}
               </div>
-            )
+            ),
           )}
         </div>
         <div className="flex  items-center w-full justify-between  p-0">
@@ -584,7 +573,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                   uploadImageLoader ||
                   Object.keys(removeBackgroundLoader).length > 0 ||
                   Object.values(uploadedImagesWithView).every(
-                    (value) => value === null
+                    (value) => value === null,
                   )
                 }
                 onPress={step2Handler}
