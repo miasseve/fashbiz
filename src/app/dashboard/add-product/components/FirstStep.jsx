@@ -23,10 +23,13 @@ import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
-  const [isBackCameraAvailable, setIsBackCameraAvailable] = useState(true);
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+  const [currentFacingMode, setCurrentFacingMode] = useState("environment");
 
   const [selectedView, setSelectedView] = useState("frontView");
   const topRef = useRef(null);
+  const streamRef = useRef(null);
 
   const [uploadedImagesWithView, setUploadedImagesWithView] = useState({
     frontView: null,
@@ -47,26 +50,40 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       setUploadedImagesWithView(storedProductImages);
     }
   }, []);
-
+  
+  // useEffect for camera detection:
   useEffect(() => {
-    const checkBackCamera = async () => {
+    const getCameras = async () => {
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasBackCamera = devices.some(
-          (device) =>
-            device.kind === "videoinput" &&
-            device.label.toLowerCase().includes("back"),
-        );
+        // Request permissions first (required for Safari to list cameras properly)
+        await navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            // Stop the stream immediately, we just needed permission
+            stream.getTracks().forEach(track => track.stop());
+          });
 
-        // Some devices (e.g., iPhones) may not expose 'back' in the label unless permission was granted
-        setIsBackCameraAvailable(hasBackCamera);
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === "videoinput");
+        
+        setAvailableCameras(videoDevices);
+        
+        // Try to find back camera index
+        const backCameraIndex = videoDevices.findIndex(device => 
+          device.label.toLowerCase().includes("back") || 
+          device.label.toLowerCase().includes("rear") ||
+          device.label.toLowerCase().includes("environment")
+        );
+        
+        // If back camera found, set it as default, otherwise use first camera
+        if (backCameraIndex !== -1) {
+          setCurrentCameraIndex(backCameraIndex);
+        }
       } catch (err) {
         console.error("Could not enumerate devices", err);
-        setIsBackCameraAvailable(false);
       }
     };
 
-    checkBackCamera();
+    getCameras();
   }, []);
 
   const [croppingImage, setCroppingImage] = useState(null);
@@ -88,7 +105,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const handleGalleryClick = (viewType) => {
     setIsCameraOpen(false);
     setSelectedView(viewType);
-    document.getElementById("fileInput");
+    const fileInput = document.getElementById("fileInput");
     fileInput.value = "";
     fileInput.click();
   };
@@ -166,10 +183,89 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     });
   };
 
+  const startCamera = async (cameraIndex = null, facingMode = null) => {
+    try {
+      // Stop any existing stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      }
+
+      let constraints;
+
+      // Method 1: Try using specific deviceId (works best in Safari and Chrome)
+      if (cameraIndex !== null && availableCameras[cameraIndex]?.deviceId) {
+        constraints = {
+          video: {
+            deviceId: { exact: availableCameras[cameraIndex].deviceId },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+      } 
+      // Method 2: Fallback to facingMode (works on mobile browsers)
+      else if (facingMode) {
+        constraints = {
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+      }
+      // Method 3: Default to environment/back camera
+      else {
+        constraints = {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream; // Store stream reference
+      }
+      
+      if (cameraIndex !== null) {
+        setCurrentCameraIndex(cameraIndex);
+      }
+      if (facingMode) {
+        setCurrentFacingMode(facingMode);
+      }
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      
+      try {
+        const fallbackConstraints = {
+          video: {
+            facingMode: "environment", 
+          }
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          streamRef.current = stream;
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback camera access failed:", fallbackErr);
+        toast.error("Could not access camera. Please check permissions.");
+      }
+    }
+  };
+
   const handleCameraClick = (viewType = "frontView") => {
     setIsCameraOpen(true);
     setSelectedView(viewType);
     setCroppingImage(null);
+    
     setTimeout(() => {
       if (videoRef.current) {
         videoRef.current.scrollIntoView({
@@ -178,18 +274,30 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         });
       }
     }, 100);
-    navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { exact: isBackCameraAvailable ? "environment" : "user" }, // Request back camera
-        },
-      })
-      .then((stream) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      })
-      .catch((err) => console.error("Error accessing camera:", err));
+
+    // Start with back camera (environment mode)
+    if (availableCameras.length > 0) {
+      const backCameraIndex = availableCameras.findIndex(device => 
+        device.label.toLowerCase().includes("back") || 
+        device.label.toLowerCase().includes("rear") ||
+        device.label.toLowerCase().includes("environment")
+      );
+      
+      startCamera(backCameraIndex !== -1 ? backCameraIndex : 0, "environment");
+    } else {
+      startCamera(null, "environment");
+    }
+  };
+
+  const flipCamera = () => {
+    if (availableCameras.length > 1) {
+      const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+      startCamera(nextIndex);
+    } else {
+      const newFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      startCamera(null, newFacingMode);
+      setCurrentFacingMode(newFacingMode);
+    }
   };
 
   const captureImage = () => {
@@ -201,9 +309,25 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       const imageData = canvasRef.current.toDataURL("image/png");
       setCroppingImage(imageData);
       setIsCameraOpen(false);
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      
+      // Clean up camera stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      }
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   const handleBrightnessWithView = (value, viewType) => {
     setUploadedImagesWithView((prevImages) => ({
@@ -235,15 +359,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     }));
     updateImageTransformationsWithView(viewType, value, "e_art:");
   };
-
-  // const blobToBase64 = (blob) => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.onloadend = () => resolve(reader.result);
-  //     reader.onerror = reject;
-  //     reader.readAsDataURL(blob);
-  //   });
-  // };
 
   const removeBackgroundHandlerWithView = async (e, viewType) => {
     const isChecked = e.target.checked;
@@ -310,10 +425,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       return newErrors;
     });
   };
+
   const step2Handler = () => {
     dispatch(setUploadedImagesOfProduct(uploadedImagesWithView));
     handleSaveUrl();
   };
+
   const handleFileSelection = async (e) => {
     const files = Array.from(e.target.files);
     // Check if any of the selected files are videos
@@ -345,19 +462,50 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem]">
       <div className="text-center">
         {isCameraOpen && (
-          <div className="camera-container">
+          <div className="camera-container relative">
             <video
               ref={videoRef}
               autoPlay
               playsInline
+              muted
               className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
             />
-            <Button
-              onPress={captureImage}
-              className="text-white p-2 rounded success-btn m-auto mt-5"
-            >
-              Capture
-            </Button>
+            
+            <div className="flex gap-3 justify-center items-center mt-5">
+              {/* Flip Camera Button - only show if multiple cameras available */}
+              {availableCameras.length > 1 && (
+                <Button
+                  onPress={flipCamera}
+                  className="bg-gray-600 text-white p-2 rounded"
+                  aria-label="Flip camera"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth={1.5} 
+                    stroke="currentColor" 
+                    className="w-6 h-6"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" 
+                    />
+                  </svg>
+                  Flip
+                </Button>
+              )}
+
+              {/* Capture Button */}
+              <Button
+                onPress={captureImage}
+                className="text-white p-2 rounded success-btn"
+              >
+                Capture
+              </Button>
+            </div>
+            
             <canvas ref={canvasRef} className="hidden" />
           </div>
         )}
