@@ -6,7 +6,19 @@ import User from "@/models/User";
 import axios from "axios";
 import Cart from "@/models/Cart";
 import Account from "@/models/Account";
-import { user } from "@heroui/theme";
+import {
+  updateShopifyProduct,
+  createShopifyProduct,
+  deleteShopifyProduct,
+} from "./shopifyAction";
+// import {
+//   createWixProduct,
+//   unlinkWixProduct,
+//   deleteWixProduct,
+//   updateWixProduct,
+//   archiveWixProduct,
+//   unarchiveWixProduct
+// } from "./wixActions";
 
 export async function createProduct(formData) {
   try {
@@ -29,16 +41,16 @@ export async function createProduct(formData) {
       accountId,
       color,
       subcategory,
-      collectionId,
+      // collectionId,
       collect,
       size,
       fabric,
       pointsValue = null,
     } = formData;
-
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     let productId = null;
+    let shopifyProductId = null;
     let brandPrice = null;
     let isDemo = false;
     const sizesArray = Array.isArray(size) ? size : [size]; // ["S","M","L"] or [28,30]
@@ -72,7 +84,7 @@ export async function createProduct(formData) {
     if (collect === true) {
       const userId = await User.findOne({ brandname: brand }).select("_id");
       const reeamt = await Account.findOne({ userId: userId?._id }).select(
-        "reeCollectAmount"
+        "reeCollectAmount",
       );
       brandPrice = reeamt
         ? Number(parseFloat(reeamt?.reeCollectAmount).toFixed(2))
@@ -81,116 +93,30 @@ export async function createProduct(formData) {
 
     // Only create product in Wix if collect is false
     if (collect === false && pointsValue == null) {
-      // Build product options array dynamically
-      const productOptions = [];
-
-      // Add Color option
-      if (color) {
-        productOptions.push({
-          name: "Color",
-          choices: [
-            {
-              value: color.name || "N/A",
-              description: color.name || color.hex || "N/A",
-            },
-          ],
-        });
-      }
-
-      // Add Size option
-      if (size) {
-        // Split size if multiple sizes are provided (e.g., "S, M, L")
-        const sizes = size
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s) => s);
-        if (sizes.length > 0) {
-          productOptions.push({
-            name: "Size",
-            choices: sizes.map((s) => ({
-              value: s,
-              description: s,
-            })),
-          });
-        }
-      }
-
-      // Add Fabric option
-      if (fabric) {
-        productOptions.push({
-          name: "Fabric",
-          choices: [
-            {
-              value: fabric,
-              description: fabric,
-            },
-          ],
-        });
-      }
-
-      // Construct product data for Wix API
-      const productData = {
-        product: {
-          name: title,
-          productType: "physical",
-          priceData: { price: formattedPrice },
-          description: `${description}\n\nSubcategory: ${subcategory}`,
-          sku: sku,
-          visible: true,
-          manageVariants: true,
-          productOptions:
-            productOptions.length > 0 ? productOptions : undefined,
-        },
-      };
-
       try {
-        // Create product in Wix
-        const response = await axios.post(
-          "https://www.wixapis.com/stores/v1/products",
-          productData,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        productId = response.data.product.id;
-
-        // Add images to product
-        const productImages = {
-          media: images.map((image) => ({ url: image.url })),
-        };
-
-        await axios.post(
-          `https://www.wixapis.com/stores/v1/products/${productId}/media`,
-          productImages,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (collectionId) {
-          await axios.post(
-            `https://www.wixapis.com/stores/v1/collections/${collectionId}/productIds`,
-            {
-              productIds: [productId],
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-                "wix-site-id": process.env.WIX_SITE_ID,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+        // Create product in Shopify
+        const shopifyResponse = await createShopifyProduct({
+          ...formData,
+          barcodeValue,
+        });
+        if (shopifyResponse.status === 200) {
+          shopifyProductId = shopifyResponse.productId;
         }
+        // Create product in Wix
+        // const wixResult = await createWixProduct({
+        //   title,
+        //   description,
+        //   formattedPrice,
+        //   sku,
+        //   images,
+        //   color,
+        //   size,
+        //   fabric,
+        //   subcategory,
+        //   collectionId,
+        // });
+
+        // productId = wixResult.productId;
       } catch (error) {
         if (error.response) {
           const { status, data } = error.response;
@@ -217,7 +143,7 @@ export async function createProduct(formData) {
       title,
       brand,
       subcategory,
-      category: collectionId,
+      category: "Uncategorized",
       description,
       color,
       price: formattedPrice,
@@ -234,6 +160,7 @@ export async function createProduct(formData) {
       fabric,
       barcode: barcodeValue,
       isDemo: isDemo,
+      shopifyProductId: shopifyProductId,
     });
 
     await newProduct.save();
@@ -255,7 +182,10 @@ export async function createProduct(formData) {
         collect === false
           ? "Product created successfully and added to collection"
           : "Product saved successfully (Wix creation skipped)",
-      data: link,
+      data: {
+        link,
+        product: JSON.stringify(newProduct),
+      },
     };
   } catch (error) {
     return { status: 500, error: error.message || "Failed to create product" };
@@ -285,7 +215,7 @@ export async function getUserProducts() {
       });
     } else {
       const userbrand = await User.findById(session.user.id).select(
-        "brandname"
+        "brandname",
       );
       userProducts = await Product.find({
         brand: userbrand.brandname,
@@ -369,47 +299,6 @@ export async function getUserProductsSold() {
   }
 }
 
-export async function deleteProductsFromWix(products) {
-  if (!Array.isArray(products) || products.length === 0) {
-    return;
-  }
-
-  // Loop through the products array and delete each product using its wixProductId
-  for (const product of products) {
-    const { wixProductId } = product;
-    try {
-      const getResponse = await axios.get(
-        `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (getResponse.status === 200) {
-        try {
-          await axios.delete(
-            `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-                "wix-site-id": process.env.WIX_SITE_ID,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-        } catch (error) {
-          console.error("Error deleting product:", error);
-        }
-      }
-    } catch (error) {
-      return true;
-    }
-  }
-}
-
 export async function getUserProductCount() {
   try {
     // Authenticate and get the session
@@ -429,8 +318,7 @@ export async function getUserProductCount() {
         userId: session.user.id,
         isDemo: true,
       });
-      demoLimitReached =
-        demoProductCount >= demoAccount.demoProductLimit;
+      demoLimitReached = demoProductCount >= demoAccount.demoProductLimit;
 
       return {
         status: 200,
@@ -443,7 +331,12 @@ export async function getUserProductCount() {
       userId: session.user.id,
     });
 
-    return { status: 200, count: productCount , isDemo: false,demoLimitReached};
+    return {
+      status: 200,
+      count: productCount,
+      isDemo: false,
+      demoLimitReached,
+    };
   } catch (error) {
     return { status: 500, error: "Failed to fetch count" };
   }
@@ -475,12 +368,12 @@ export async function getProductById(productId) {
 
     const user = await User.findOne(
       { email: product.consignorEmail },
-      "firstname lastname email address phoneNumber city"
+      "firstname lastname email address phoneNumber city",
     );
 
     if (session.user.role === "brand") {
       const userBrand = await User.findById(session.user.id).select(
-        "brandname"
+        "brandname",
       );
       if (product.brand !== userBrand.brandname) {
         throw new Error("You are not authorized to view this product");
@@ -509,9 +402,9 @@ export async function getProductById(productId) {
 
 export async function deleteProductByIdAndWix(
   product,
-  { deleteDb = true, deleteWix = true } = {}
+  { deleteDb = true, deleteWix = true, deleteShopify = true } = {},
 ) {
-  const { _id, wixProductId } = product;
+  const { _id } = product; // Only destructure _id from parameter
   try {
     const session = await auth();
     if (!session) {
@@ -522,48 +415,38 @@ export async function deleteProductByIdAndWix(
     await dbConnect();
 
     // Check if the product exists before attempting to delete
-    const product = await Product.findById(_id);
-    if (!product) {
+    const dbProduct = await Product.findById(_id); // Renamed to avoid shadowing
+    if (!dbProduct) {
       throw new Error("Product not found.");
     }
 
-    if (product.userId.toString() !== session.user.id) {
+    if (dbProduct.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }
+    
     if (deleteDb) {
       // Delete the product by ID
       await Product.deleteOne({ _id });
     }
 
-    if (deleteWix && wixProductId) {
+    // if (deleteWix && dbProduct?.wixProductId) { 
+    //   try {
+    //     await deleteWixProduct({ wixProductId: dbProduct.wixProductId }); 
+    //     await Product.updateOne({ _id }, { $unset: { wixProductId: "" } });
+    //   } catch (error) {
+    //     console.log(error, "error");
+    //   }
+    // }
+    
+    if (deleteShopify && dbProduct?.shopifyProductId) { 
       try {
-        const getResponse = await axios.get(
-          `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (getResponse.status === 200) {
-          await axios.delete(
-            `https://www.wixapis.com/stores/v1/products/${wixProductId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-                "wix-site-id": process.env.WIX_SITE_ID,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-        }
-        await Product.updateOne({ _id }, { $unset: { wixProductId: "" } });
+        await deleteShopifyProduct([dbProduct]); 
+        await Product.updateOne({ _id }, { $unset: { shopifyProductId: "" } });
       } catch (error) {
         console.log(error, "error");
       }
     }
+    
     return {
       status: 200,
       message: deleteWix
@@ -588,19 +471,10 @@ export async function unlinkProductFromWix(productIds) {
       const product = await Product.findById(productId).select("wixProductId");
       if (product?.wixProductId) {
         try {
-          await axios.delete(
-            `https://www.wixapis.com/stores/v1/products/${product?.wixProductId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WIX_API_KEY}`, // Using the Wix API key from env
-                "wix-site-id": process.env.WIX_SITE_ID,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          // await unlinkWixProduct(product?.wixProductId);
           await Product.updateOne(
             { _id: productId },
-            { $unset: { wixProductId: "" } }
+            { $unset: { wixProductId: "" } },
           );
         } catch (error) {
           console.log(error, "error");
@@ -666,98 +540,27 @@ export async function updateProduct(productId, data) {
 
     // Update product in MongoDB
     await Product.updateOne({ _id: productId }, { $set: data });
-
-    // Update product in Wix if it has a wixProductId
-    if (product.wixProductId) {
+    //update product in Shopify if shopifyProductId exists
+    if (product?.shopifyProductId) {
       try {
-        // Build product options array dynamically for Wix update
-        const productOptions = [];
-
-        // Add Color option (use existing color from product if not in update data)
-        const currentColor = data.color || product.color;
-        if (currentColor) {
-          productOptions.push({
-            name: "Color",
-            choices: [
-              {
-                value: currentColor.name || "N/A",
-                description: currentColor.name || currentColor.hex || "N/A",
-              },
-            ],
-          });
-        }
-
-        // Add Size option
-        const currentSize = data.size || product.size;
-        if (currentSize) {
-          // Split size if multiple sizes are provided (e.g., "S, M, L" or "38, 40, 42")
-          const sizes = currentSize
-            .split(",")
-            .map((s) => s.trim())
-            .filter((s) => s);
-          if (sizes.length > 0) {
-            productOptions.push({
-              name: "Size",
-              choices: sizes.map((s) => ({
-                value: s,
-                description: s,
-              })),
-            });
-          }
-        }
-
-        // Add Fabric option
-        const currentFabric = data.fabric || product.fabric;
-        if (currentFabric) {
-          productOptions.push({
-            name: "Fabric",
-            choices: [
-              {
-                value: currentFabric,
-                description: currentFabric,
-              },
-            ],
-          });
-        }
-
-        // Construct update data for Wix
-        const productData = {
-          product: {
-            name: data.title || product.title,
-            priceData: {
-              price: data.price || product.price,
-            },
-            description: data.description || product.description,
-            sku: data.sku || product.sku,
-          },
-        };
-
-        // Only add productOptions if we have any
-        if (productOptions.length > 0) {
-          productData.product.productOptions = productOptions;
-          productData.product.manageVariants = true;
-        }
-
-        // Update product in Wix
-        await axios.patch(
-          `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
-          productData,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-              "wix-site-id": process.env.WIX_SITE_ID,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        await updateShopifyProduct(product.shopifyProductId, data);
       } catch (error) {
-        console.log(error, "error updating Wix product");
-        return {
-          status: 500,
-          error: "Product updated in DB but failed to update in Wix.",
-        };
+        console.log(error, "error updating Shopify product");
       }
     }
+
+    // Update product in Wix if it has a wixProductId
+    // if (product?.wixProductId) {
+    //   try {
+    //     await updateWixProduct({ product, data });
+    //   } catch (error) {
+    //     console.log(error, "error updating Wix product");
+    //     return {
+    //       status: 500,
+    //       error: "Product updated in DB but failed to update in Wix.",
+    //     };
+    //   }
+    // }
 
     return { status: 200, message: "Product updated successfully" };
   } catch (error) {
@@ -785,7 +588,7 @@ export async function soldProductsByIds(productIds) {
     // Delete the products with the given IDs
     const result = await Product.updateMany(
       { _id: { $in: productIds } },
-      { $set: { sold: true } }
+      { $set: { sold: true } },
     );
 
     if (result.modifiedCount === 0) {
@@ -831,7 +634,7 @@ export async function addProductToCart(product) {
     } else {
       // Check if product already exists in cart
       const existingItem = cart.items.find(
-        (item) => item.productId.toString() === productId
+        (item) => item.productId.toString() === productId,
       );
 
       if (existingItem) {
@@ -910,7 +713,7 @@ export async function removeProductfromCart(productId) {
 
     // Find item index in cart
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId.toString() === productId
+      (item) => item.productId.toString() === productId,
     );
 
     if (itemIndex === -1) {
@@ -989,15 +792,7 @@ export async function archiveProduct(userId) {
     try {
       await Product.updateMany(
         { archived: { $exists: false } },
-        { $set: { archived: false } }
-      );
-      console.log(
-        "product.title",
-        product.title,
-        "product.wixProductId",
-        product.wixProductId,
-        "product.sku",
-        product.sku
+        { $set: { archived: false } },
       );
       if (!product.wixProductId) {
         results.push({
@@ -1009,28 +804,14 @@ export async function archiveProduct(userId) {
         continue;
       }
       // 2a. Hide product in Wix
-      const result = await axios.patch(
-        `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
-        {
-          product: {
-            visible: false,
-          },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // const result = await archiveWixProduct(product?.wixProductId);
 
       // Update in MongoDB
       if (result.status === 200) {
         const updatedProduct = await Product.findOneAndUpdate(
           { _id: product._id },
           { archived: true },
-          { new: true }
+          { new: true },
         );
       }
 
@@ -1084,33 +865,13 @@ export async function unarchiveProduct(userId) {
         continue;
       }
       // Update visibility in Wix
-      await axios.patch(
-        `https://www.wixapis.com/stores/v1/products/${product.wixProductId}`,
-        {
-          product: {
-            visible: true,
-          },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WIX_API_KEY}`,
-            "wix-site-id": process.env.WIX_SITE_ID,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log(
-        "Unarchiving product:",
-        product.title,
-        "Wix ID:",
-        product.wixProductId
-      );
+      // await unarchiveWixProduct(product?.wixProductId);
 
       //  Update in MongoDB
       await Product.findOneAndUpdate(
         { _id: product._id },
         { archived: false },
-        { new: true }
+        { new: true },
       );
 
       results.push({
@@ -1159,7 +920,7 @@ export async function getCollectProducts() {
       return { status: 200, products: JSON.stringify(collectProducts) };
     } else if (session.user.role === "brand") {
       const userbrand = await User.findById(session.user.id).select(
-        "brandname"
+        "brandname",
       );
       const collectProducts = await Product.find({
         brand: userbrand.brandname,
@@ -1201,14 +962,13 @@ export async function getCollectStoreOrBrandNames() {
         {
           _id: {
             $in: await Product.distinct("userId", {
-              brand: (
-                await User.findById(session.user.id).select("brandname")
-              ).brandname,
+              brand: (await User.findById(session.user.id).select("brandname"))
+                .brandname,
               collect: true,
             }),
           },
         },
-        "storename"
+        "storename",
       );
       FilterList = storeNames.map((store) => store.storename);
     }

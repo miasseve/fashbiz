@@ -157,8 +157,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
         (device) => device.kind === "videoinput",
       );
 
-      console.log("Detected cameras:", videoDevices);
-
       setAvailableCameras(videoDevices);
 
       const backCameraIndex = videoDevices.findIndex(

@@ -11,7 +11,7 @@ export async function POST(req) {
     if (!imageUrl) {
       return NextResponse.json(
         { errorMessage: "No image URL provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,8 +20,33 @@ export async function POST(req) {
       messages: [
         {
           role: "system",
-          content:
-            'Analyze the image and return a valid JSON object with the following fields: "title", "brand", "size", "color", "subcategory" (the specific product type, e.g., "hoodie", "denim jacket", "t-shirt", "sneakers") and "description". The "color" field must contain both the color name and its HEX code in the format: {"name": "red", "hex": "#FF0000"}. If the item has multiple distinct colors or patterns, return {"name": "multicolor", "hex": "#FFFFFF"}. For single dominant colors, provide the specific color name and HEX code. Respond with only the raw JSON — no markdown, no code blocks, no explanations.',
+          content: `Analyze the image and return a valid JSON object with the following fields:
+
+            - "title"
+            - "brand"
+            - "size"
+            - "subcategory" (specific product type like "dress shirt", "biker jacket", "hoodie")
+            - "description"
+            - "color": { "name": string, "hex": string }
+            - "tags": array of 3-4 lowercase strings suitable for Shopify product tags
+
+            Tag rules:
+            - Tags must be generic, reusable, and collection-friendly
+            - Include product type (e.g. "shirt", "jacket")
+            - Include gender when clearly inferable ("men", "women", "kids", otherwise "unisex")
+            - Include color name as a tag
+            - Include category-style tags when obvious (e.g. "casual", "winter", "formal")
+            - Do NOT invent brands
+            - Do NOT include size as a tag
+            - Do NOT include duplicates
+
+            Color rules:
+            - If multiple distinct colors or patterns exist, return:
+              { "name": "multicolor", "hex": "#FFFFFF" }
+            - Otherwise return the dominant color name and hex
+
+            Respond with ONLY raw JSON.
+            No markdown, no explanations.`,
         },
         {
           role: "user",
@@ -54,7 +79,7 @@ export async function POST(req) {
         message: "Image processed successfully",
         ...parsed,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json({ errorMessage: error.message }, { status: 500 });

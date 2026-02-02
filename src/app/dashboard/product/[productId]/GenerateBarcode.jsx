@@ -18,12 +18,25 @@ export default function GenerateBarcode({
   price = null,
   size,
   currency,
+  onClose,
+  autoOpen = false,
 }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const canvasRef = useRef(null);
+
   const formatPrice = (price, currency) => {
     if (price == null) return "";
     return currency === "€" ? `${currency}${price}` : `${price} ${currency}`;
+  };
+  useEffect(() => {
+    if (autoOpen) {
+      onOpen();
+    }
+  }, [autoOpen, onOpen]);
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
   };
 
   // Generate barcode whenever modal opens
@@ -312,9 +325,14 @@ export default function GenerateBarcode({
         Generate Barcode
       </Button>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl">
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onClose={handleClose}
+        size="2xl"
+      >
         <ModalContent>
-          {(onClose) => (
+          {(onCloseModal) => (
             <>
               <ModalHeader className="flex justify-center w-full text-2xl">
                 Generated Barcode
@@ -329,7 +347,9 @@ export default function GenerateBarcode({
                         <div className="w-full border-t-2 border-gray-300 my-2"></div>
                         <div className="flex items-center justify-center gap-8 w-full">
                           <div className="text-3xl font-bold text-gray-900">
-                            {points ? `${points} Points` : formatPrice(price, currency)}
+                            {points
+                              ? `${points} Points`
+                              : formatPrice(price, currency)}
                           </div>
                           <div className="h-12 w-px bg-gray-400"></div>
                           <div className="text-2xl font-semibold text-gray-700">
@@ -359,7 +379,13 @@ export default function GenerateBarcode({
                   </>
                 )}
 
-                <Button variant="light" onPress={onClose}>
+                <Button
+                  variant="light"
+                  onPress={() => {
+                    onCloseModal();
+                    handleClose();
+                  }}
+                >
                   Close
                 </Button>
               </ModalFooter>

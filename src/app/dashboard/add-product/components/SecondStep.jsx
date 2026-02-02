@@ -10,7 +10,6 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Input
 } from "@heroui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { productSchema } from "@/actions/validations";
@@ -28,6 +27,7 @@ import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import PointsModal from "./PointsModal";
+import GenerateBarcode from "../../product/[productId]/GenerateBarcode";
 
 const SecondStep = ({
   handleBackStep,
@@ -48,12 +48,13 @@ const SecondStep = ({
   const consignorData = useSelector((state) => state.product.consignor);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
+  // const [generatedLink, setGeneratedLink] = useState("");
+  const [productDetails, setProductDetails] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const targetRef = React.useRef(null);
 
-  const [collections, setCollections] = useState([]);
+  // const [collections, setCollections] = useState([]);
   const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
   const [isCollectOpen, setIsCollectOpen] = useState(false);
@@ -107,7 +108,7 @@ const SecondStep = ({
     setPointsLoading(true);
     try {
       const res = await axios.post("/api/predict-points", {
-        imageUrls: productData?.images?.map(img => img.url) || [],
+        imageUrls: productData?.images?.map((img) => img.url) || [],
         brand: productData.brand,
         subcategory: productData.subcategory,
         description: productData.description,
@@ -138,21 +139,21 @@ const SecondStep = ({
     }
   };
 
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const response = await axios.get("/api/wixCollections");
-        if (response.status !== 200) {
-          setErrorMessage("Failed to fetch categories.Please try again !!");
-        }
-        setCollections(response.data.collections);
-      } catch (error) {
-        setErrorMessage("Failed to fetch categories.Please try again !!");
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCollections = async () => {
+  //     try {
+  //       const response = await axios.get("/api/wixCollections");
+  //       if (response.status !== 200) {
+  //         setErrorMessage("Failed to fetch categories.Please try again !!");
+  //       }
+  //       setCollections(response.data.collections);
+  //     } catch (error) {
+  //       setErrorMessage("Failed to fetch categories.Please try again !!");
+  //     }
+  //   };
 
-    fetchCollections();
-  }, []);
+  //   fetchCollections();
+  // }, []);
 
   useEffect(() => {
     if (pointsEnabled) {
@@ -166,7 +167,7 @@ const SecondStep = ({
         const response = await axios.get("/api/fabric-options");
         if (response.status !== 200) {
           setErrorMessage(
-            "Failed to fetch fabric options. Please try again !!"
+            "Failed to fetch fabric options. Please try again !!",
           );
         }
         const fabricsFromAPI = response.data.map((fabric) => fabric.name);
@@ -201,6 +202,7 @@ const SecondStep = ({
               color = {},
               subcategory = "",
               size = "",
+              tags = [],
             } = response.data;
             setValue("title", title);
             setValue("brand", brand);
@@ -209,6 +211,7 @@ const SecondStep = ({
             setValue("color.hex", color?.hex || "");
             setValue("subcategory", subcategory || "");
             setValue("size", size || "");
+            setValue("tags", tags || []);
             setColorHex(color?.hex);
           }
         } catch (error) {
@@ -276,9 +279,13 @@ const SecondStep = ({
         ...consignorData,
         collect: collectSelection ?? false,
       });
-
+      if (response.status != 400 && response.data?.error) {
+        toast.error(response.data.error);
+        return;
+      }
       if (response.status === 200) {
-        setGeneratedLink(response.data);
+        // setGeneratedLink(response.data.link);
+        setProductDetails(JSON.parse(response.data.product));
         setShowConfirmation(true);
         dispatch(clearProductState());
         setFormData(null);
@@ -305,24 +312,24 @@ const SecondStep = ({
     router.push("/dashboard/store");
   };
 
-  const handleCopyLink = async () => {
-    if (!generatedLink) {
-      alert("No link to copy!");
-      return;
-    }
+  // const handleCopyLink = async () => {
+  //   if (!generatedLink) {
+  //     alert("No link to copy!");
+  //     return;
+  //   }
 
-    try {
-      await navigator.clipboard.writeText(generatedLink);
-    } catch (err) {
-      alert("Failed to copy link. Please try again.");
-    }
-  };
-    const handlePointsConfirm = async (confirmedPoints) => {
+  //   try {
+  //     await navigator.clipboard.writeText(generatedLink);
+  //   } catch (err) {
+  //     alert("Failed to copy link. Please try again.");
+  //   }
+  // };
+  const handlePointsConfirm = async (confirmedPoints) => {
     const updatedData = {
       ...formData,
       pointsValue: confirmedPoints,
     };
-    
+
     await handleFinalProductCreation(updatedData);
     setIsPointsModalOpen(false);
   };
@@ -351,8 +358,8 @@ const SecondStep = ({
                     {errorMessage}
                   </span>
                 )}
-
-                <div>
+                {/* wix Category */}
+                {/* <div>
                   <label className="text-sm font-medium">Category</label>
                   <select
                     {...register("collectionId")}
@@ -370,7 +377,7 @@ const SecondStep = ({
                       {errors.collectionId.message}
                     </span>
                   )}
-                </div>
+                </div> */}
 
                 <div>
                   <label className="text-sm font-medium">Sub Category</label>
@@ -492,8 +499,8 @@ const SecondStep = ({
                           colorHex && colorHex !== "transparent"
                             ? colorHex
                             : watch("color.name")?.trim()
-                            ? watch("color.name")
-                            : "transparent",
+                              ? watch("color.name")
+                              : "transparent",
                         transition: "background-color 0.3s ease",
                       }}
                     ></div>
@@ -555,45 +562,62 @@ const SecondStep = ({
       )}
 
       {showConfirmation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
-          <Modal
-            ref={targetRef}
-            isOpen={showConfirmation}
-            onOpenChange={onOpenChange}
-            className="lg:max-w-xl w-full m-auto mt-[15rem]"
-          >
-            <ModalContent>
-              {(onClose) => (
-                <>
-                  <ModalHeader className="flex flex-col gap-1 text-center">
-                    Product Added Successfully
-                    <input type="text" value={generatedLink} readOnly />
-                    <Button onPress={handleCopyLink} className="dark-btn">
-                      Copy Link
-                    </Button>
-                  </ModalHeader>
-                  <ModalBody className="text-center">
-                    <p>Do you want to add more products?</p>
-                  </ModalBody>
-                  <ModalFooter className="flex justify-center">
-                    <Button
-                      onPress={handleAddMoreProducts}
-                      className="success-btn m-auto"
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      onPress={handleGoToDashboard}
-                      className="danger-btn m-auto"
-                    >
-                      No
-                    </Button>
-                  </ModalFooter>
-                </>
-              )}
-            </ModalContent>
-          </Modal>
-        </div>
+        //Generated barcode modal
+        <GenerateBarcode
+          barcode={productDetails.barcode}
+          price={
+            productDetails.price > 1
+              ? productDetails.price
+              : productDetails.brandPrice
+          }
+          points={
+            productDetails.pointsValue ? productDetails.pointsValue : null
+          }
+          size={productDetails.size}
+          currency="DKK"
+          autoOpen={true}
+          onClose={handleGoToDashboard}
+        />
+        //Modal for NFC tag Link copy - disabled for now
+        // <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
+        //   <Modal
+        //     ref={targetRef}
+        //     isOpen={showConfirmation}
+        //     onOpenChange={onOpenChange}
+        //     className="lg:max-w-xl w-full m-auto mt-[15rem]"
+        //   >
+        //     <ModalContent>
+        //       {(onClose) => (
+        //         <>
+        //           <ModalHeader className="flex flex-col gap-1 text-center">
+        //             Product Added Successfully
+        //             <input type="text" value={generatedLink} readOnly />
+        //             <Button onPress={handleCopyLink} className="dark-btn">
+        //               Copy Link
+        //             </Button>
+        //           </ModalHeader>
+        //           <ModalBody className="text-center">
+        //             <p>Do you want to add more products?</p>
+        //           </ModalBody>
+        //           <ModalFooter className="flex justify-center">
+        //             <Button
+        //               onPress={handleAddMoreProducts}
+        //               className="success-btn m-auto"
+        //             >
+        //               Yes
+        //             </Button>
+        //             <Button
+        //               onPress={handleGoToDashboard}
+        //               className="danger-btn m-auto"
+        //             >
+        //               No
+        //             </Button>
+        //           </ModalFooter>
+        //         </>
+        //       )}
+        //     </ModalContent>
+        //   </Modal>
+        // </div>
       )}
       {/* modal for Ree Collect */}
       <Modal
@@ -657,7 +681,7 @@ const SecondStep = ({
           </div>
         </ModalContent>
       </Modal>
-      
+
       {/* modal for Points Preview */}
       <PointsModal
         isOpen={isPointsModalOpen}
@@ -665,7 +689,8 @@ const SecondStep = ({
         pointsPreview={pointsPreview}
         pointsLoading={pointsLoading}
         availableRules={availableRules}
-        onConfirm={handlePointsConfirm}/>
+        onConfirm={handlePointsConfirm}
+      />
     </>
   );
 };

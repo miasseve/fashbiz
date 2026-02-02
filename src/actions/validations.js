@@ -171,8 +171,8 @@ export const resetPasswordSchema = Yup.object().shape({
 });
 
 export const productSchema = Yup.object().shape({
-  collectionId: Yup.string().required("Category is required"),
-  shopifyCollectionId: Yup.string().optional(),
+  // collectionId: Yup.string().required("Category is required"),
+  // shopifyCollectionId: Yup.string().optional(),
   sku: Yup.string().required("SKU is required"),
   title: Yup.string().required("Title is required"),
   brand: Yup.string().required("Brand is required"),

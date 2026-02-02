@@ -37,6 +37,8 @@ const productSchema = new mongoose.Schema({
   sold: { type: Boolean, default: false },
   archived: { type: Boolean, default: false },
   wixProductId: { type: String, required: false },
+  shopifyProductId: { type: String, required: false },
+  // shopifyCollectionId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
   isDemo: {
     type: Boolean,

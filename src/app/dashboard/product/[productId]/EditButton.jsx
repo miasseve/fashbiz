@@ -68,7 +68,6 @@ const EditButton = ({ product }) => {
   }, []);
 
   const onSubmit = async (data) => {
-    console.log("Submitting data:", data);
     const response = await updateProduct(product._id, data);
     if (response.status === 200) {
       toast.success("Product updated successfully!");
