@@ -11,6 +11,8 @@ import {
   createShopifyProduct,
   deleteShopifyProduct,
 } from "./shopifyAction";
+import { postToInstagram } from "./instagramActions";
+import InstagramPostLog from "@/models/InstagramPostLogs";
 // import {
 //   createWixProduct,
 //   unlinkWixProduct,
@@ -21,6 +23,8 @@ import {
 // } from "./wixActions";
 
 export async function createProduct(formData) {
+  let createdShopifyProduct = false;
+  let shopifyProductId = null;
   try {
     const session = await auth();
 
@@ -50,7 +54,6 @@ export async function createProduct(formData) {
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
     let productId = null;
-    let shopifyProductId = null;
     let brandPrice = null;
     let isDemo = false;
     const sizesArray = Array.isArray(size) ? size : [size]; // ["S","M","L"] or [28,30]
@@ -101,6 +104,7 @@ export async function createProduct(formData) {
         });
         if (shopifyResponse.status === 200) {
           shopifyProductId = shopifyResponse.productId;
+          createdShopifyProduct = true;
         }
         // Create product in Wix
         // const wixResult = await createWixProduct({
@@ -165,29 +169,55 @@ export async function createProduct(formData) {
 
     await newProduct.save();
 
-    const user = await User.findById(session.user.id);
-    if (user) {
-      user.products.push(newProduct._id);
-      await user.save();
-    }
+    await User.findByIdAndUpdate(session.user.id, {
+      $push: { products: newProduct._id },
+    });
 
     const link =
       process.env.NODE_ENV === "development"
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
         : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+    //adding post to Instagram from Ree
+    const log = await InstagramPostLog.create({
+      productId: newProduct._id,
+      postType: images.length === 1 ? "single" : "carousel",
+    });
+    if (log && log._id) {
+      postToInstagram({
+        images: images.map((img) => img.url),
+        caption: `
+          ${title}
+          ${formattedPrice}DKK
 
+          ${description}
+
+          #lestores #preloved #sustainablefashion #secondhand
+          `.trim(),
+        logId: log._id,
+      }).catch((err) => {
+        console.error("Instagram post failed:", err.message);
+      });
+    }
     return {
       status: 200,
       message:
         collect === false
           ? "Product created successfully and added to collection"
-          : "Product saved successfully (Wix creation skipped)",
+          : "Product saved successfully (Shopify creation skipped)",
       data: {
         link,
         product: JSON.stringify(newProduct),
       },
     };
   } catch (error) {
+    if (createdShopifyProduct && shopifyProductId) {
+      try {
+        await deleteShopifyProduct(shopifyProductId);
+      } catch (rollbackError) {
+        // Log for manual cleanup
+        console.error("CRITICAL: Orphaned Shopify product", shopifyProductId);
+      }
+    }
     return { status: 500, error: error.message || "Failed to create product" };
   }
 }
@@ -423,34 +453,34 @@ export async function deleteProductByIdAndWix(
     if (dbProduct.userId.toString() !== session.user.id) {
       throw new Error("You do not have permission to delete this product.");
     }
-    
+
     if (deleteDb) {
       // Delete the product by ID
       await Product.deleteOne({ _id });
     }
 
-    // if (deleteWix && dbProduct?.wixProductId) { 
+    // if (deleteWix && dbProduct?.wixProductId) {
     //   try {
-    //     await deleteWixProduct({ wixProductId: dbProduct.wixProductId }); 
+    //     await deleteWixProduct({ wixProductId: dbProduct.wixProductId });
     //     await Product.updateOne({ _id }, { $unset: { wixProductId: "" } });
     //   } catch (error) {
     //     console.log(error, "error");
     //   }
     // }
-    
-    if (deleteShopify && dbProduct?.shopifyProductId) { 
+
+    if (deleteShopify && dbProduct?.shopifyProductId) {
       try {
-        await deleteShopifyProduct([dbProduct]); 
+        await deleteShopifyProduct([dbProduct]);
         await Product.updateOne({ _id }, { $unset: { shopifyProductId: "" } });
       } catch (error) {
         console.log(error, "error");
       }
     }
-    
+
     return {
       status: 200,
-      message: deleteWix
-        ? "Product deleted and unlinked from Wix"
+      message: deleteShopify
+        ? "Product deleted and unlinked from Shopify"
         : "Product deleted successfully",
     };
   } catch (error) {
