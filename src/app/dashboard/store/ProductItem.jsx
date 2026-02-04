@@ -98,7 +98,7 @@ const ProductItem = ({
                   : product.description}
               </p>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center items-center">
+              <div className="flex flex-col w-full gap-3 sm:flex-row sm:justify-between sm:items-center items-center">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                   {product.price > 1 && (
                     <p className="font-bold text-lg sm:text-xl lg:text-md flex items-center">
