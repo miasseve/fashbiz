@@ -5,6 +5,7 @@ import { Badge } from "@heroui/react";
 import { SiBookmyshow } from "react-icons/si";
 import { Card, Button, Checkbox } from "@heroui/react";
 import { CheckCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const ProductItem = ({
   product,
@@ -33,7 +34,7 @@ const ProductItem = ({
       {isGrid ? (
         <>
           <Card
-            className={`p-[10px] h-full w-full max-w-sm md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
+            className={`p-[10px] h-full w-full max-w-full md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
               isSelected ? "ring-2 ring-blue-500" : ""
             }`}
           >
@@ -70,7 +71,7 @@ const ProductItem = ({
                     <img
                       src={product.images[0].url}
                       alt={product.title}
-                      className="rounded-lg w-full lg:h-[250px] mx-auto object-cover mb-4 transition-transform duration-300 ease-in-out group-hover:scale-110"
+                      className="rounded-lg w-full h-[250px] mx-auto object-contain mb-4 transition-transform duration-300 ease-in-out group-hover:scale-110"
                     />
                   </div>
                 )}
@@ -87,16 +88,41 @@ const ProductItem = ({
               )
             )}
 
-            <div className="p-8">
-              <h2 className="text-[15px] font-semibold uppercase mb-[10px]">
+            <div className="p-8 w-full h-[250px] flex flex-col justify-around items-center">
+              <h2 className="text-[15px] font-semibold uppercase">
                 {product.title}
               </h2>
-              <p className="text-gray-600 text-2xl lg:text-md mb-[15px]">
+              <p className="text-gray-600 text-2xl lg:text-md">
                 {product.description.length > 30
                   ? product.description.slice(0, 90) + "..."
                   : product.description}
               </p>
-              {product.price > 1 && (
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                  {product.price > 1 && (
+                    <p className="font-bold text-lg sm:text-xl lg:text-md flex items-center">
+                      <span className="text-[17px] sm:text-[14px]">€{product.price.toFixed(2)}</span>
+                    </p>
+                  )}
+
+                  {product.pointsValue && (
+                    <p className="font-bold text-lg sm:text-xl lg:text-md flex items-center">
+                      <span className="text-[17px] sm:text-[14px]">Points: {product.pointsValue}</span>
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onPress={handleClick}
+                  className="w-full sm:w-auto text-white font-semibold bg-black rounded-[24px] sm:px-[14px]  sm:py-[18px] p-[22px] flex items-center justify-center gap-2"
+                >
+                  View Details <ArrowRight />
+                </Button>
+              </div>
+
+              {/* <div className="flex justify-between items-center">
+               {product.price > 1 && (
                 <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
                   <span> €{product.price.toFixed(2)}</span>
                 </p>
@@ -107,9 +133,10 @@ const ProductItem = ({
                 </p>
               )}
 
-              <Button onPress={handleClick} className="success-btn">
-                View Details
+              <Button onPress={handleClick} className="text-white font-semibold bg-black rounded-[24px] px-[14px] py-[18px]">
+                View Details <ArrowRight />
               </Button>
+             </div> */}
             </div>
           </Card>
         </>
@@ -170,7 +197,7 @@ const ProductItem = ({
             )
           )}
 
-          <div className="flex gap-[15px] flex-col">
+          <div className="flex gap-[15px] sm:gap-[40px] flex-col sm:w-full">
             <div className="flex-1 gap-3">
               <h2 className="text-[20px] font-semibold">{product.title}</h2>
               <p className="text-gray-600">
@@ -178,24 +205,30 @@ const ProductItem = ({
                   ? product.description.slice(0, 60) + "..."
                   : product.description}
               </p>
+            </div>
+
+           <div className="sm:flex sm:justify-between">
+             <div>
               {product.price > 1 && (
                 <p className="font-bold text-md mt-1">
                   €{product.price.toFixed(2)}
                 </p>
               )}
-              {
-                product.pointsValue && (
-                  <p className="font-bold text-md mt-1">
-                    Points: {product.pointsValue}
-                  </p>
-                )
-              }
+              {product.pointsValue && (
+                <p className="font-bold text-md mt-1">
+                  Points: {product.pointsValue}
+                </p>
+              )}
             </div>
             <div>
-              <Button onPress={handleClick} className="success-btn">
-                View Details
-              </Button>
+              <Button
+                  onPress={handleClick}
+                  className="w-full sm:w-auto text-white font-semibold bg-black rounded-[24px] sm:px-[14px]  sm:py-[18px] py-[22px] px-0 flex items-center justify-center gap-2"
+                >
+                  View Details <ArrowRight />
+                </Button>
             </div>
+           </div>
           </div>
         </div>
       )}

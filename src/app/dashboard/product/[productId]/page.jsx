@@ -33,7 +33,7 @@ const Page = async ({ params }) => {
           <ImageCarousel images={parsedProduct.images} />
         </div>
 
-        <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg p-[20px] bg-[#f6f6f6]">
+        <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg p-[20px] bg-[#f6f6f6] sm:mt-[0px] mt-[120px]">
           {/* Title and Price Section */}
           <div className="space-y-3">
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
@@ -142,7 +142,9 @@ const Page = async ({ params }) => {
                 <GenerateBarcode
                   barcode={parsedProduct.barcode}
                   price={parsedProduct.price > 1 ? parsedProduct.price : null}
-                  points={parsedProduct.pointsValue ? parsedProduct.pointsValue : null}
+                  points={
+                    parsedProduct.pointsValue ? parsedProduct.pointsValue : null
+                  }
                   size={parsedProduct.size}
                   currency="€"
                 />
