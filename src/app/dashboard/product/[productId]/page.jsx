@@ -28,12 +28,12 @@ const Page = async ({ params }) => {
 
   return (
     <div className="container mx-auto p-0 lg:p-12">
-      <div className="flex flex-col sm:flex-row gap-0 lg:shadow-lg bg-[#fff] p-[20px] rounded-lg p-6 lg:p-10">
+      <div className="flex flex-col sm:flex-row gap-0 lg:shadow-lg bg-[#fff] p-[20px] rounded-lg p-6 lg:p-10 sm:h-[730px]">
         <div className="w-full sm:w-1/2 flex justify-center">
           <ImageCarousel images={parsedProduct.images} />
         </div>
 
-        <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg p-[20px] bg-[#f6f6f6] sm:mt-[0px] mt-[120px]">
+        <div className="w-full h-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg p-[20px] bg-[#f6f6f6] sm:mt-[0px] mt-[20px]">
           {/* Title and Price Section */}
           <div className="space-y-3">
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">

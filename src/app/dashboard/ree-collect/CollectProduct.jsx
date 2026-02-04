@@ -54,7 +54,13 @@ export default function GetCollectProduct({ products, filters, userRole }) {
   return (
     <div className="p-4">
       {/* ---------------- Info Modal ---------------- */}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl">
+      <Modal
+        backdrop="blur"
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="2xl"
+        placement="center"
+      >
         <ModalContent>
           {(onClose) => (
             <>
@@ -155,7 +161,7 @@ export default function GetCollectProduct({ products, filters, userRole }) {
             >
               All
             </button>
-            
+
             {filters.map((name, idx) => (
               <button
                 key={idx}

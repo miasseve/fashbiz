@@ -100,6 +100,7 @@ const EditButton = ({ product }) => {
       </Button>
 
       <Modal
+        backdrop="blur"
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         size="2xl"

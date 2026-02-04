@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { Button } from "@heroui/react";
-import { SessionProvider} from "next-auth/react";
+import { SessionProvider } from "next-auth/react";
 import { LuLogOut } from "react-icons/lu";
 import { persistor } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,12 +30,13 @@ const Layout = ({ children }) => {
     }
   }, [pathname, currentStep]);
 
+  // LOCK BACKGROUND SCROLL
+  useEffect(() => {
+    document.body.style.overflow = isSidebarOpen ? "hidden" : "auto";
+  }, [isSidebarOpen]);
+
   const toggleSidebar = () => {
-    if (shadowClass == "") {
-      setShadowClass("sidebarOverlay");
-    } else {
-      setShadowClass("");
-    }
+    setShadowClass(isSidebarOpen ? "" : "sidebarOverlay");
     setIsSidebarOpen(!isSidebarOpen);
   };
 
@@ -66,37 +67,58 @@ const Layout = ({ children }) => {
   return (
     <SessionProvider>
       <div
-        className={`lg:grid lg:grid-cols-12 min-h-screen shadow-2 flex ${shadowClass}`}
+        className={`lg:grid lg:grid-cols-12 min-h-screen flex ${shadowClass}`}
       >
+        {/* OVERLAY */}
+        {isSidebarOpen && (
+          <div
+            onClick={toggleSidebar}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+
+        {/* SIDEBAR */}
         <div
-          className={`fixed lg:relative top-0 left-0 h-full bg-white transition-transform duration-300  border-r border-[#dedede] ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 lg:col-span-2 z-50`}
+          className={`fixed lg:relative top-0 left-0 h-full w-[280px] sm:w-full bg-white transition-transform duration-300 border-r border-[#dedede]
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 lg:col-span-2 z-50`}
         >
+          {/* CLOSE BUTTON TOP RIGHT */}
+          <button
+            onClick={toggleSidebar}
+            className="absolute top-4 right-4 lg:hidden"
+          >
+            <IoMdClose size={28} />
+          </button>
+
           <Sidebar
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={toggleSidebar}
           />
         </div>
 
+        {/* MAIN CONTENT */}
         <div
           ref={scrollRef}
-          className="lg:col-span-10   overflow-y-scroll w-full bg-[#F9F9F9] h-screen"
+          className="lg:col-span-10 overflow-y-scroll w-full bg-[#F9F9F9] h-screen"
         >
-          <Card className="overflow-hidden  w-full py-4 px-8 rounded-none sticky top-0 h-[71px] flex flex-row items-center justify-between lg:justify-end z-50  bg-none border-b-0 box-shadow-none">
+          {/* HEADER */}
+          <Card
+            className={`overflow-hidden w-full py-4 px-8 rounded-none sticky top-0 h-[71px] flex flex-row items-center justify-between lg:justify-end z-50 bg-none border-b-0 transition-opacity duration-200
+  ${
+    isSidebarOpen
+      ? "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto"
+      : "opacity-100"
+  }`}
+          >
             <button className="lg:hidden" onClick={toggleSidebar}>
-              {isSidebarOpen ? (
-                <IoMdClose size={25} />
-              ) : (
-                <GiHamburgerMenu size={25} />
-              )}
+              <GiHamburgerMenu size={25} />
             </button>
 
             <div className="cursor-pointer">
               <Button
                 isLoading={loading}
                 className="danger-btn"
-                // style={{ backgroundColor: 'black', color: 'white' }}
                 onPress={handleLogout}
               >
                 {loading ? "" : <LuLogOut />}
@@ -104,9 +126,8 @@ const Layout = ({ children }) => {
               </Button>
             </div>
           </Card>
-          <div
-            className={`max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px]  px-[15px] bg-fash-gradient min-h-screen h-auto`}
-          >
+
+          <div className="max-w-[100%] mx-auto lg:p-5 p-1 pt-[20px] px-[15px] bg-fash-gradient min-h-screen h-auto">
             {children}
           </div>
         </div>

@@ -100,15 +100,18 @@ const ProductItem = ({
 
               <div className="flex flex-col w-full gap-3 sm:flex-row sm:justify-between sm:items-center items-center">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  {product.price > 1 && (
-                    <p className="font-bold text-lg sm:text-xl lg:text-md flex items-center">
-                      <span className="text-[17px] sm:text-[14px]">€{product.price.toFixed(2)}</span>
-                    </p>
-                  )}
-
-                  {product.pointsValue && (
-                    <p className="font-bold text-lg sm:text-xl lg:text-md flex items-center">
-                      <span className="text-[17px] sm:text-[14px]">Points: {product.pointsValue}</span>
+                  {(product.price > 1 || product.pointsValue) && (
+                    <p className="font-bold text-lg sm:text-xl lg:text-lg flex items-center space-x-2">
+                      {product.price > 1 && (
+                        <span className="text-[17px] sm:text-[16px]">
+                          €{product.price.toFixed(2)}
+                        </span>
+                      )}
+                      {product.pointsValue != null && (
+                        <span className="text-[17px] sm:text-[16px]">
+                          Points: {product.pointsValue}
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -120,23 +123,6 @@ const ProductItem = ({
                   View Details <ArrowRight />
                 </Button>
               </div>
-
-              {/* <div className="flex justify-between items-center">
-               {product.price > 1 && (
-                <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
-                  <span> €{product.price.toFixed(2)}</span>
-                </p>
-              )}
-              {product.pointsValue && (
-                <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
-                  <span> Points: {product.pointsValue}</span>
-                </p>
-              )}
-
-              <Button onPress={handleClick} className="text-white font-semibold bg-black rounded-[24px] px-[14px] py-[18px]">
-                View Details <ArrowRight />
-              </Button>
-             </div> */}
             </div>
           </Card>
         </>
@@ -147,21 +133,22 @@ const ProductItem = ({
             isSelected ? "ring-2 ring-blue-500" : ""
           }`}
         >
-          {/* Selection Checkbox or Unlinked Indicator - Left Side */}
-          {selectionMode && (
+          {/* Unlinked Indicator - Top Left Corner (Absolute Position) */}
+          {selectionMode && !hasWixProductId && (
+            <div className="absolute -top-2 -left-2 z-20 bg-green-100 text-green-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+              <CheckCircle size={14} />
+              Unlinked
+            </div>
+          )}
+
+          {/* Selection Checkbox - Left Side (Only for linked products) */}
+          {selectionMode && hasWixProductId && (
             <div className="mr-4 flex items-center">
-              {hasWixProductId ? (
-                <Checkbox
-                  isSelected={isSelected}
-                  onValueChange={handleCheckboxChange}
-                  size="lg"
-                />
-              ) : (
-                <div className="bg-green-100 text-green-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1">
-                  <CheckCircle size={14} />
-                  Unlinked
-                </div>
-              )}
+              <Checkbox
+                isSelected={isSelected}
+                onValueChange={handleCheckboxChange}
+                size="lg"
+              />
             </div>
           )}
 
@@ -207,28 +194,28 @@ const ProductItem = ({
               </p>
             </div>
 
-           <div className="sm:flex sm:justify-between">
-             <div>
-              {product.price > 1 && (
-                <p className="font-bold text-md mt-1">
-                  €{product.price.toFixed(2)}
-                </p>
-              )}
-              {product.pointsValue && (
-                <p className="font-bold text-md mt-1">
-                  Points: {product.pointsValue}
-                </p>
-              )}
-            </div>
-            <div>
-              <Button
+            <div className="sm:flex sm:justify-between">
+              <div>
+                {product.price > 1 && (
+                  <p className="font-bold text-md mt-1">
+                    €{product.price.toFixed(2)}
+                  </p>
+                )}
+                {product.pointsValue && (
+                  <p className="font-bold text-md mt-1">
+                    Points: {product.pointsValue}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Button
                   onPress={handleClick}
                   className="w-full sm:w-auto text-white font-semibold bg-black rounded-[24px] sm:px-[14px]  sm:py-[18px] py-[22px] px-0 flex items-center justify-center gap-2"
                 >
                   View Details <ArrowRight />
                 </Button>
+              </div>
             </div>
-           </div>
           </div>
         </div>
       )}

@@ -326,9 +326,11 @@ export default function GenerateBarcode({
       </Button>
 
       <Modal
+        backdrop="blur"
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onClose={handleClose}
+        placement="center"
         size="2xl"
       >
         <ModalContent>
