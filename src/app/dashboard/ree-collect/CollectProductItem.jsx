@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, Button, user } from "@heroui/react";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { deleteProductById } from "@/actions/productActions";
+import { Dot } from "lucide-react";
 import { toast } from "react-toastify";
 import { FaEye } from "react-icons/fa";
 
@@ -39,126 +40,153 @@ const CollectProductItem = ({ product, isGrid, userRole }) => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <Card className="p-[10px] h-full w-full max-w-sm md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+          <Card className="p-[10px] h-full w-full max-w-full md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
             {product.images.length > 0 && (
               <div className="overflow-hidden rounded-lg">
                 <img
                   src={product.images[0].url}
                   alt={product.title}
-                  className="w-full lg:h-[250px] mx-auto object-cover mb-4 rounded-lg 
+                  className="w-full lg:h-[250px] mx-auto object-contain mb-4 rounded-lg 
                     transition-transform duration-300 ease-in-out group-hover:scale-110"
                 />
               </div>
             )}
 
-            <div className="p-8">
-              <h2 className="text-[15px] font-semibold uppercase mb-[10px]">
-                {product.title}
-              </h2>
-              <p className="text-pink-500 font-medium text-xl">
-                {userRole === "store" ? (
-                  <>
-                    Brand: <span className="font-bold">{product.brand}</span>
-                  </>
-                ) : (
-                  <>
-                    Store:{" "}
-                    <span className="font-bold">
-                      {product?.userId?.storename}
-                    </span>
-                  </>
-                )}
-              </p>
-              <p className="font-bold mt-2 text-2xl lg:text-md mb-[10px] flex items-center">
-                <span>{product.brandPrice} DKK</span>
-              </p>
-            </div>
-            {/* Action Buttons - List View */}
-            <div
-              className={`absolute bottom-4 right-4 flex gap-2 transition-opacity duration-200 opacity-100
-                `}
-            >
-              {/* ${isHovered ? "opacity-100" : "opacity-0"} */}
-              <button
-                onClick={() => handleEdit(product._id)}
-                className="text-gray-800 rounded-lg shadow-lg transition-all duration-200"
-                aria-label="Edit product"
-              >
-                {userRole === "store" ? (
-                  <MdModeEdit size={20} />
-                ) : (
-                  <FaEye size={20} title="Preview" />
-                )}
-              </button>
-              {userRole === "store" && (
-                <>
+            <div className="relative bg-white rounded-2xl overflow-hidden">
+              {/* Content */}
+              <div className="p-6 pb-0">
+                {/* Category / Brand */}
+                <p className="text-pink-500 uppercase font-semibold text-[12px] flex items-center gap-2 mb-2">
+                  {userRole === "store" ? (
+                    <>
+                      • Brand:{" "}
+                      <span className="font-bold">{product.brand}</span>
+                    </>
+                  ) : (
+                    <>
+                      Store:{" "}
+                      <span className="font-semibold text-gray-800">
+                        {product?.userId?.storename}
+                      </span>
+                    </>
+                  )}
+                </p>
+
+                {/* Product Title */}
+                <h2 className="text-2xl font-semibold text-gray-800 mb-3">
+                  I Don't Care T-Shirt
+                </h2>
+              </div>
+
+              {/* Store / Brand */}
+
+              <div className="flex justify-between items-center px-6">
+                {/* Price */}
+                <p className="text-[17px] sm:text-[16px] font-bold text-center">
+                  {product.brandPrice} DKK
+                </p>
+
+                {/* Action Buttons */}
+                <div className="bottom-4 right-4 flex gap-3">
                   <button
-                    onClick={() => handleDelete(product._id)}
-                    className="text-gray-800 p-2 rounded-lg shadow-lg transition-all duration-200"
-                    aria-label="Delete product"
+                    onClick={() => handleEdit(product._id)}
+                    className="rounded-lg bg-white border border-[#d4d4d4] px-[6px] py-[4px] hover:bg-black hover:text-white transition-all duration-300"
                   >
-                    <MdDelete size={20} />
+                    {userRole === "store" ? (
+                      <MdModeEdit size={21} />
+                    ) : (
+                      <FaEye size={21} />
+                    )}
                   </button>
-                </>
-              )}
+
+                  {userRole === "store" && (
+                    <button
+                      onClick={() => handleDelete(product._id)}
+                      className="rounded-lg bg-white border border-[#d4d4d4] px-[6px] py-[4px] hover:bg-black hover:text-white transition-all duration-300"
+                    >
+                      <MdDelete size={21} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </Card>
         </div>
       ) : (
         // Line (List) view layout
         <div
-          className="relative flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group"
+          className="flex bg-white p-[10px] rounded-[8px] mb-6 group"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
+          {/* Product Image */}
           {product.images.length > 0 && (
             <div className="overflow-hidden rounded-lg">
               <img
                 src={product.images[0].url}
                 alt={product.title}
-                className="w-[15rem] h-[15rem] rounded-lg me-[2rem] object-cover 
-                  transition-transform duration-300 ease-in-out group-hover:scale-110"
+                className="w-[15rem] h-[15rem] rounded-lg sm:me-[2rem] me-[1rem] object-contain
+        transition-transform duration-300 ease-in-out group-hover:scale-110"
               />
             </div>
           )}
 
-          <div className="flex gap-[15px] flex-col">
-            <div className="flex-1 gap-3">
-              <h2 className="text-[20px] font-semibold">{product.title}</h2>
-              <p className="text-pink-500 font-medium text-xl">
-                Brand: <span className="font-bold">{product.brand}</span>
+          {/* Right Content */}
+          <div className="flex flex-col flex-1 justify-between">
+            {/* Top Content */}
+            <div className="sm:pt-3 pt-2">
+              <p className="text-pink-500 uppercase font-semibold text-[12px] sm:text-[16px] flex items-center gap-2 mb-2">
+                {userRole === "store" ? (
+                  <>
+                    • Brand: <span className="font-bold">{product.brand}</span>
+                  </>
+                ) : (
+                  <>
+                    Store:
+                    <span className="font-semibold text-gray-800">
+                      {product?.userId?.storename}
+                    </span>
+                  </>
+                )}
               </p>
-              <p className="font-bold text-md mt-1">
-                {product.brandPrice.toFixed(2)} DKK
-              </p>
+
+              <h2 className="text-2xl sm:text-4xl font-semibold text-gray-800 mb-3">
+                I Don't Care T-Shirt
+              </h2>
             </div>
-          </div>
-          {/* Action Buttons - List View */}
-          <div
-            className={`absolute top-4 right-4 flex gap-2 transition-opacity duration-200 opacity-100
-                `}
-          >
-            {/* ${isHovered ? "opacity-100" : "opacity-0"} */}
-            <button
-              onClick={() => handleEdit(product?._id)}
-              className="text-gray-800 rounded-lg shadow-lg transition-all duration-200"
-              aria-label="Edit product"
-            >
-              {userRole === "store" ? (
-                <MdModeEdit size={20} />
-              ) : (
-                <FaEye size={20} title="Preview"/>
-              )}
-            </button>
-            {userRole === "store" && (
-              <button
-                onClick={() => handleDelete(product?._id)}
-                className="text-gray-800 p-2 rounded-lg shadow-lg transition-all duration-200"
-                aria-label="Delete product"
-              >
-                <MdDelete size={20} />
-              </button>
-            )}
+
+            {/* Bottom Section */}
+            <div className="flex justify-between items-center mt-4">
+              {/* Price */}
+              <p className="text-[17px] sm:text-[16px] font-bold">
+                {product.brandPrice} DKK
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleEdit(product._id)}
+                  className="rounded-lg bg-white border border-[#d4d4d4] px-[6px] py-[4px] 
+          hover:bg-black hover:text-white transition-all duration-300"
+                >
+                  {userRole === "store" ? (
+                    <MdModeEdit size={21} />
+                  ) : (
+                    <FaEye size={21} />
+                  )}
+                </button>
+
+                {userRole === "store" && (
+                  <button
+                    onClick={() => handleDelete(product._id)}
+                    className="rounded-lg bg-white border border-[#d4d4d4] px-[6px] py-[4px] 
+            hover:bg-black hover:text-white transition-all duration-300"
+                  >
+                    <MdDelete size={21} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

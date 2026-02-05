@@ -5,12 +5,12 @@ import dbConnect from "@/lib/db";
 
 const PLAN_CONFIG = {
   Starter: {
-    productLimit: 60,
+    productLimit: 300,
     maxUsers: 2,
     tagline: "Perfect for Repetitive",
     subtitle: "Ready barcode + Admin acess",
     modules: [
-      "Upload up to 5000 products per Month",
+      "Upload up to 300 products per Month",
       "Up to 2 users access",
       "AI automation ",
       "Ready barcode",
@@ -22,7 +22,7 @@ const PLAN_CONFIG = {
     bgColor: "bg-purple-200",
   },
   Pro: {
-    productLimit: 500,
+    productLimit: 1000,
     maxUsers: 3,
     tagline: "Visibility + automated workflow",
     subtitle: "Starter +",
@@ -36,7 +36,7 @@ const PLAN_CONFIG = {
     bgColor: "bg-gradient-to-br from-[#F2A187] via-[#ECCC91] to-[#F1D7F2]",
   },
   Business: {
-    productLimit: 1000,
+    productLimit: 5000,
     maxUsers: 10,
     tagline: "Automate all",
     subtitle: "Pro +",

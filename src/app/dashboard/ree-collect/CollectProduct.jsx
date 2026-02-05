@@ -10,7 +10,13 @@ import {
   Button,
   useDisclosure,
 } from "@heroui/react";
-import { GridIcon, ListIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  GridIcon,
+  ListIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import CollectProductItem from "./CollectProductItem";
 import { FaCircleInfo } from "react-icons/fa6";
 
@@ -109,87 +115,45 @@ export default function GetCollectProduct({ products, filters, userRole }) {
 
       {/* ---------------- Filter Bar with Arrows ---------------- */}
       {/* View Toggle Button */}
-      <div className="flex justify-end mb-4 lg:mt-5 mx-[15px] ">
-        {userRole === "store" && (
-          <Button
-            onPress={onOpen}
-            variant="ghost"
-            className="font-semibold p-7 border border-[#06cb03] rounded-[4px] mr-[10px] border border-white text-black bg-white"
-          >
-            Info
-            <FaCircleInfo className="ml-2" />
-          </Button>
-        )}
-        <Button
-          onPress={() => setIsGrid(!isGrid)}
-          variant="ghost"
-          className="font-semibold p-7 border border-[#06cb03] rounded-[4px] mr-[10px] border border-white text-black bg-white"
-        >
-          {isGrid ? <ListIcon size={20} /> : <GridIcon size={20} />}
-          {/* {isGrid ? "List View" : "Grid View"} */}
-        </Button>
-      </div>
-      <div className="relative w-full mb-4">
-        {/* Left Arrow */}
-        <button
-          onClick={() =>
-            scrollRef.current.scrollBy({ left: -200, behavior: "smooth" })
-          }
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white shadow rounded-full 
-            ${showLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        >
-          <ChevronLeft size={18} />
-        </button>
 
-        {/* Scrollable Row */}
-        <div
-          ref={scrollRef}
-          className="w-full overflow-x-auto no-scrollbar px-10"
-          onScroll={checkScrollPosition}
-        >
-          <div className="flex gap-3 whitespace-nowrap py-2">
-            {/* All Filter Button */}
-            <button
-              onClick={() => setSelectedFilter("All")}
-              className={` font-semibold px-4 py-2 rounded-[4px] border transition-all duration-200
-                ${
-                  selectedFilter === "All"
-                    ? "bg-black text-white border-red-700 border-black hover:bg-red-800"
-                    : "bg-white text-black border-gray-300 hover:bg-gray-100"
-                }
-              `}
-            >
-              All
-            </button>
+      <div className="sm:p-4 pb-8 rounded-2xl">
+        {/* Top Row */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Category Dropdown */}
+          <div className="relative w-[200px]">
+            <select className="w-full px-5 py-3 rounded-2xl bg-white text-black font-semibold outline-none appearance-none cursor-pointer shadow-sm focus:ring-2 focus:ring-pink-300">
+              <option>All Brands</option>
+              {filters.map((name, idx) => (
+                <option key={idx}>{name}</option>
+              ))}
+            </select>
 
-            {filters.map((name, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedFilter(name)}
-                className={` font-semibold px-4 py-2 rounded-[4px] border transition-all duration-200
-                  ${
-                    selectedFilter === name
-                      ? "bg-black text-white border-red-700 border-black hover:bg-red-800"
-                      : "bg-white text-black border-gray-300 hover:bg-gray-100"
-                  }
-                `}
+            {/* Custom dropdown arrow */}
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500">
+              <ChevronDown />
+            </div>
+          </div>
+
+          {/* Info Button */}
+          <div className="flex justify-center items-center sm:gap-8 gap-[5px]">
+            {userRole === "store" && (
+              <Button
+                onPress={onOpen}
+                className="p-8 bg-white rounded-xl shadow"
               >
-                {name.toLowerCase().replace(/^./, (ch) => ch.toUpperCase())}
-              </button>
-            ))}
+                <FaCircleInfo size={20} />
+              </Button>
+            )}
+
+            {/* Grid/List Toggle */}
+            <Button
+              onPress={() => setIsGrid(!isGrid)}
+              className="p-8 bg-white rounded-xl shadow"
+            >
+              {isGrid ? <ListIcon size={20} /> : <GridIcon size={20} />}
+            </Button>
           </div>
         </div>
-
-        {/* Right Arrow */}
-        <button
-          onClick={() =>
-            scrollRef.current.scrollBy({ left: 200, behavior: "smooth" })
-          }
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white shadow rounded-full 
-            ${showRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        >
-          <ChevronRight size={18} />
-        </button>
       </div>
 
       <div className="w-full">

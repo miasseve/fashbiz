@@ -288,7 +288,7 @@ export default function SubscriptionPlans({ user }) {
                   </p>
                 </div>
                 {activePlan ? (
-                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
+                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-md sm:text-xl text-left px-6">
                     {activePlan.features && activePlan.features.length > 0 ? (
                       activePlan.features.map((feature, index) => (
                         <li key={index}>{feature}</li>
@@ -298,7 +298,7 @@ export default function SubscriptionPlans({ user }) {
                     )}
                   </ul>
                 ) : (
-                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-xl text-left px-6">
+                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-md text-left px-6">
                     <li>Full access to premium features</li>
                     <li>Priority customer support</li>
                     <li>Unlimited product uploads</li>
@@ -323,7 +323,7 @@ export default function SubscriptionPlans({ user }) {
                         Cancel Subscription
                       </Button>
                     ) : (
-                      <div className="text-yellow-600 font-semibold text-lg mt-4">
+                      <div className="text-yellow-600 font-semibold text-md sm:text-xl mt-4">
                         ⏳ <span className="font-semibold">Note:</span> Your
                         subscription is locked for the first{" "}
                         <span className="font-bold">6 months</span>. You'll be
@@ -400,7 +400,7 @@ export default function SubscriptionPlans({ user }) {
                       </div>
                     )}
                     <CardHeader className="p-0 flex-col items-start">
-                      <span className="inline-block px-6 sm:px-8 py-3 rounded-full bg-[linear-gradient(270deg,_#FDFFE0_-3.38%,_#F5F300_45.33%,_#FFAB00_100%)] text-purple-700 font-semibold text-sm sm:text-[20px] w-fit">
+                      <span className="inline-block px-6 sm:px-8 py-3 rounded-full bg-[linear-gradient(270deg,_#FDFFE0_-3.38%,_#F5F300_45.33%,_#FFAB00_100%)] text-purple-700 font-bold text-md sm:text-[20px] w-fit">
                         {plan.name}
                       </span>
 
