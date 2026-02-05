@@ -2,8 +2,11 @@
 import React, { useState } from "react";
 import ProductItem from "./ProductItem";
 import { Button } from "@heroui/react";
-import { GridIcon, List, CheckSquare, X } from "lucide-react";
-import { unlinkProductFromWix } from "@/actions/productActions";
+import { GridIcon, List, CheckSquare, X, InstagramIcon } from "lucide-react";
+import {
+  unlinkProductFromWix,
+  createBulkInstagramPosts,
+} from "@/actions/productActions";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
@@ -12,6 +15,11 @@ const ProductList = ({ products }) => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
 
+  const [instagramMode, setInstagramMode] = useState(false);
+  const [selectedInstagramProducts, setSelectedInstagramProducts] = useState(
+    new Set(),
+  );
+  const [isCreatingPosts, setIsCreatingPosts] = useState(false);
   const handleSelectionChange = (productId, isSelected) => {
     const newSelection = new Set(selectedProducts);
     if (isSelected) {
@@ -20,6 +28,16 @@ const ProductList = ({ products }) => {
       newSelection.delete(productId);
     }
     setSelectedProducts(newSelection);
+  };
+
+  const handleInstagramSelectionChange = (productId, isSelected) => {
+    const newSelection = new Set(selectedInstagramProducts);
+    if (isSelected) {
+      newSelection.add(productId);
+    } else {
+      newSelection.delete(productId);
+    }
+    setSelectedInstagramProducts(newSelection);
   };
 
   const handleBulkUnlink = async () => {
@@ -47,16 +65,20 @@ const ProductList = ({ products }) => {
       // Replace with your actual API endpoint
       const response = await unlinkProductFromWix(productIds);
       if (response.status === 200) {
-         toast.success(`Successfully unlinked ${productIds.length} product${
+        toast.success(
+          `Successfully unlinked ${productIds.length} product${
             productIds.length > 1 ? "s" : ""
-          }`);
+          }`,
+        );
         setSelectedProducts(new Set());
         setSelectionMode(false);
         // Refresh your products list here
         window.location.reload(); // Or use a better state management approach
       } else {
         const error = await response.json();
-        toast.error(`Failed to unlink products: ${error.message || "Unknown error"}`);
+        toast.error(
+          `Failed to unlink products: ${error.message || "Unknown error"}`,
+        );
       }
     } catch (error) {
       console.error("Error unlinking products:", error);
@@ -64,34 +86,108 @@ const ProductList = ({ products }) => {
     }
   };
 
+  const handleBulkInstagramPost = async () => {
+    const productIds = Array.from(selectedInstagramProducts);
+
+    if (productIds.length === 0) {
+      toast.error("Please select at least one product to post");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: `Create Instagram posts for ${productIds.length} product${productIds.length > 1 ? "s" : ""}?`,
+      html: `
+        <p>Posts will be queued and processed automatically.</p>
+        <p style="margin-top:8px; font-size:13px; color:#666;">
+          ⏳ It may take up to <b>3 minutes</b> for the post to appear on Instagram.
+        </p>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, create posts!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      customClass: {
+        confirmButton: "btn-danger",
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setIsCreatingPosts(true);
+      const response = await createBulkInstagramPosts(productIds);
+
+      if (response.status === 200) {
+        toast.success(
+          `Successfully queued  Instagram post${
+            response.data.queued > 1 ? "s" : ""
+          }`,
+        );
+        setSelectedInstagramProducts(new Set());
+        setInstagramMode(false);
+        window.location.reload();
+      } else {
+        toast.error(
+          `Failed to create posts: ${response.error || "Unknown error"}`,
+        );
+      }
+    } catch (error) {
+      console.error("Error creating Instagram posts:", error);
+      toast.error("An error occurred while creating posts");
+    } finally {
+      setIsCreatingPosts(false);
+    }
+  };
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode);
     if (selectionMode) {
       setSelectedProducts(new Set());
     }
   };
+  const toggleInstagramMode = () => {
+    setInstagramMode(!instagramMode);
+    setSelectionMode(false);
+    if (instagramMode) {
+      setSelectedInstagramProducts(new Set());
+    }
+  };
 
   // Count products that can be selected (have wixProductId)
   const selectableProducts = products.filter(
-    (p) => p.wixProductId && p.wixProductId !== ""
+    (p) => p.wixProductId && p.wixProductId !== "",
   );
+
+  // Count products that can have Instagram posts (don't have existing posts)
+  const instagramEligibleProducts = products.filter((p) => !p.hasInstagramPost);
 
   return (
     <div className="w-full">
       {/* Control Bar */}
-      <div className="flex justify-between items-center mb-4 lg:mt-5 mx-[15px]">
+      <div className="flex justify-between items-center mb-4 lg:mt-5 mx-[15px] flex-wrap gap-3">
         {/* Selection Controls */}
-        <div className="flex gap-3 items-center">
-          {!selectionMode ? (
-            <Button
-              onPress={toggleSelectionMode}
-              className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-black bg-white"
-              isDisabled={selectableProducts.length === 0}
-            >
-              <CheckSquare size={20} />
-              Click to Unlink
-            </Button>
-          ) : (
+        <div className="flex gap-3 items-center flex-wrap">
+          {!selectionMode && !instagramMode ? (
+            <>
+              <Button
+                onPress={toggleSelectionMode}
+                className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-black bg-white"
+                isDisabled={selectableProducts.length === 0}
+              >
+                <CheckSquare size={20} />
+                Click to Unlink
+              </Button>
+
+              <Button
+                onPress={toggleInstagramMode}
+                className="font-semibold p-7 border border-blue-500 rounded-[4px] text-black bg-white"
+                isDisabled={instagramEligibleProducts.length === 0}
+              >
+                <InstagramIcon size={20} />
+                Create Instagram Posts
+              </Button>
+            </>
+          ) : selectionMode ? (
             <>
               <Button
                 onPress={toggleSelectionMode}
@@ -112,6 +208,28 @@ const ProductList = ({ products }) => {
                 </Button>
               )}
             </>
+          ) : (
+            <>
+              <Button
+                onPress={toggleInstagramMode}
+                variant="ghost"
+                className="font-semibold p-7 border border-gray-300 rounded-[4px] text-black bg-white"
+              >
+                <X size={20} />
+                Cancel
+              </Button>
+
+              {selectedInstagramProducts.size > 0 && (
+                <Button
+                  onPress={handleBulkInstagramPost}
+                  isLoading={isCreatingPosts}
+                  className="font-semibold p-7 rounded-[4px] text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <InstagramIcon size={20} />
+                  Post {selectedInstagramProducts.size} to Instagram
+                </Button>
+              )}
+            </>
           )}
         </div>
 
@@ -122,7 +240,6 @@ const ProductList = ({ products }) => {
           className="font-semibold p-7 border border-[#06cb03] rounded-[4px] border-white text-black bg-white"
         >
           {isGrid ? <List size={20} /> : <GridIcon size={20} />}
-          {/* {isGrid ? "List View" : "Grid View"} */}
         </Button>
       </div>
 
@@ -135,6 +252,23 @@ const ProductList = ({ products }) => {
             {selectableProducts.length < products.length && (
               <span className="ml-2 text-gray-600">
                 ({products.length - selectableProducts.length} already unlinked)
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Instagram Selection Info */}
+      {instagramMode && (
+        <div className="mx-[15px] mb-4 p-3 w-fit bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>{selectedInstagramProducts.size}</strong> of{" "}
+            <strong>{instagramEligibleProducts.length}</strong> products
+            selected for Instagram
+            {instagramEligibleProducts.length < products.length && (
+              <span className="ml-2 text-gray-600">
+                ({products.length - instagramEligibleProducts.length} already
+                posted)
               </span>
             )}
           </p>
@@ -155,8 +289,11 @@ const ProductList = ({ products }) => {
             product={product}
             isGrid={isGrid}
             selectionMode={selectionMode}
+            instagramMode={instagramMode}
             isSelected={selectedProducts.has(product._id)}
+            isInstagramSelected={selectedInstagramProducts.has(product._id)}
             onSelectionChange={handleSelectionChange}
+            onInstagramSelectionChange={handleInstagramSelectionChange}
           />
         ))}
       </div>

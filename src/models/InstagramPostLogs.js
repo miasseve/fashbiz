@@ -2,50 +2,58 @@ import mongoose from "mongoose";
 
 const InstagramPostLogSchema = new mongoose.Schema(
   {
-    productId: {
-      type: mongoose.Schema.Types.ObjectId, // or String if product ID is external
+    productIds: {
+      type:  [mongoose.Schema.Types.ObjectId],
+      ref: "Product",
       required: true,
       index: true,
     },
-
-    instagramPostId: {
-      type: String,
-      default: null,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
       index: true,
     },
-
-    carouselId: {
-      type: String,
-      default: null, // Only for carousel posts
-    },
-
     postType: {
       type: String,
       enum: ["single", "carousel"],
       required: true,
     },
-
     status: {
       type: String,
-      enum: ["pending", "success", "failed"],
+      enum: ["pending", "processing", "success", "failed"],
       default: "pending",
+      required: true,
       index: true,
     },
-
-    errorLog: {
-      type: mongoose.Schema.Types.Mixed,
+    instagramPostId: {
+      type: String,
       default: null,
+      comment: "Instagram post ID returned from API",
     },
-
     postedAt: {
       type: Date,
       default: null,
     },
+    errorLog: {
+      message: String,
+      meta: mongoose.Schema.Types.Mixed,
+    },
   },
   {
-    timestamps: true, // adds createdAt & updatedAt
-  },
+    timestamps: true,
+  }
 );
 
-export default mongoose.models.InstagramPostLog ||
+// Compound index for efficient querying
+InstagramPostLogSchema.index({ userId: 1, status: 1, createdAt: -1 });
+InstagramPostLogSchema.index({ productId: 1, status: 1 });
+
+// Prevent duplicate posts for the same product
+InstagramPostLogSchema.index({ productId: 1 }, { unique: false });
+
+const InstagramPostLog =
+  mongoose.models.InstagramPostLog ||
   mongoose.model("InstagramPostLog", InstagramPostLogSchema);
+
+export default InstagramPostLog;

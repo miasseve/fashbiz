@@ -44,6 +44,12 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // Flag to indicate if this product has been posted to Instagram
+   hasInstagramPost: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
 });
 
 const Product =

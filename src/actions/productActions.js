@@ -177,27 +177,7 @@ export async function createProduct(formData) {
       process.env.NODE_ENV === "development"
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
         : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
-    //adding post to Instagram from Ree
-    const log = await InstagramPostLog.create({
-      productId: newProduct._id,
-      postType: images.length === 1 ? "single" : "carousel",
-    });
-    if (log && log._id) {
-      postToInstagram({
-        images: images.map((img) => img.url),
-        caption: `
-          ${title}
-          ${formattedPrice}DKK
 
-          ${description}
-
-          #lestores #preloved #sustainablefashion #secondhand
-          `.trim(),
-        logId: log._id,
-      }).catch((err) => {
-        console.error("Instagram post failed:", err.message);
-      });
-    }
     return {
       status: 200,
       message:
@@ -222,6 +202,197 @@ export async function createProduct(formData) {
   }
 }
 
+export async function createBulkInstagramPosts(productIds) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return { status: 401, error: "User is not authenticated" };
+    }
+
+    await dbConnect();
+
+    // Validate input
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return { status: 400, error: "No products selected" };
+    }
+
+    // Fetch eligible products
+    const products = await Product.find({
+      _id: { $in: productIds },
+      userId: session.user.id,
+      hasInstagramPost: { $ne: true },
+    });
+
+    if (products.length === 0) {
+      return {
+        status: 400,
+        error:
+          "No eligible products found. They may already have Instagram posts or don't belong to you.",
+      };
+    }
+
+    /**
+     * Build images array (first image of each product)
+     */
+    const images = products
+      .map((product) => {
+        const originalUrl = product.images?.[0]?.url || product.images?.[0];
+        if (!originalUrl) return null;
+
+        // Best for quality + consistency (recommended)
+        return convertToInstagramCompatibleImage(originalUrl, {
+          quality: 90,
+          crop: "fill",
+          gravity: "auto",
+        });
+
+        // Or for no cropping (with white borders)
+        // return convertToInstagramCompatibleImage(originalUrl, {
+        //   quality: 90,
+        //   crop: 'pad',
+        //   background: 'white'
+        // });
+      })
+      .filter(Boolean);
+
+    if (images.length === 0) {
+      return {
+        status: 400,
+        error: "No valid images found for selected products",
+      };
+    }
+
+    /**
+     * Build combined caption
+     */
+    const caption = `
+        ${products
+          .map(
+            (product, index) => `
+        ${index + 1}. ${product.title}
+        ${product.price > 0 ? `€${product.price}` : ""}
+        `,
+          )
+          .join("\n")}
+
+          #lestores #preloved #sustainablefashion #secondhand
+    `.trim();
+
+    /**
+     * 3️⃣ Create ONE Instagram post log
+     */
+    const log = await InstagramPostLog.create({
+      productIds: products.map((p) => p._id),
+      userId: session.user.id,
+      postType: images.length > 1 ? "carousel" : "single",
+      status: "pending",
+    });
+
+    /**
+     * Queue Instagram post (background)
+     */
+    postToInstagram({ products, images, caption, logId: log._id }).catch(
+      (err) => {
+        console.error(`[Instagram] Failed to queue grouped post:`, err.message);
+      },
+    );
+
+    /**
+     * Mark all products as posted
+     */
+    await Product.updateMany(
+      { _id: { $in: products.map((p) => p._id) } },
+      { hasInstagramPost: true },
+    );
+    return {
+      status: 200,
+      message: `Successfully queued 1 Instagram post for ${products.length} products`,
+      data: {
+        productsQueued: products.length,
+        logId: log._id.toString(),
+      },
+    };
+  } catch (error) {
+    console.error("[createBulkInstagramPosts] Error:", error);
+    return {
+      status: 500,
+      error: error.message || "Failed to create Instagram posts",
+    };
+  }
+}
+
+/**
+ * Convert image to Instagram-compatible format with high quality
+ */
+function convertToInstagramCompatibleImage(imageUrl, options = {}) {
+  const {
+    quality = 90, // 90% quality (range: 1-100)
+    width = 1080, // Instagram recommended width
+    aspectRatio = "1:1", // Square by default
+    crop = "fill", // fill, pad, fit, limit
+    gravity = "auto", // auto, face, center
+    background = "white", // background color for padding
+  } = options;
+
+  if (imageUrl.includes("cloudinary.com")) {
+    let transformation = `f_jpg,q_${quality},c_${crop}`;
+
+    // Add aspect ratio for fill/pad modes
+    if (crop === "fill" || crop === "pad") {
+      transformation += `,ar_${aspectRatio}`;
+    }
+
+    // Add background for pad mode
+    if (crop === "pad") {
+      transformation += `,b_${background}`;
+    }
+
+    // Add gravity for fill mode
+    if (crop === "fill") {
+      transformation += `,g_${gravity}`;
+    }
+
+    // Add dimensions
+    transformation += `,w_${width}`;
+
+    return imageUrl.replace("/upload/", `/upload/${transformation}/`);
+  }
+
+  console.warn(`Non-Cloudinary image detected: ${imageUrl}`);
+  return imageUrl;
+}
+
+/**
+ * Check Instagram post status for products
+ */
+export async function getInstagramPostStatus(productIds) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return { status: 401, error: "User is not authenticated" };
+    }
+
+    await dbConnect();
+
+    const logs = await InstagramPostLog.find({
+      productIds: { $in: productIds },
+      userId: session.user.id,
+    }).select("productId status instagramPostId postedAt errorLog");
+
+    return {
+      status: 200,
+      data: logs,
+    };
+  } catch (error) {
+    console.error("[getInstagramPostStatus] Error:", error);
+    return {
+      status: 500,
+      error: error.message || "Failed to get post status",
+    };
+  }
+}
 export async function getUserProducts() {
   try {
     // Authenticate and get the session

@@ -4,20 +4,23 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@heroui/react";
 import { SiBookmyshow } from "react-icons/si";
 import { Card, Button, Checkbox } from "@heroui/react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, InstagramIcon } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 
 const ProductItem = ({
   product,
   isGrid,
   isSelected = false,
+  isInstagramSelected = false,
   onSelectionChange = () => {},
+  onInstagramSelectionChange = () => {},
   selectionMode = false,
+  instagramMode = false,
 }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    if (!selectionMode) {
+    if (!selectionMode && !instagramMode) {
       router.push(`/dashboard/product/${product._id}`);
     }
   };
@@ -26,8 +29,13 @@ const ProductItem = ({
     onSelectionChange(product._id, checked);
   };
 
+  const handleInstagramCheckboxChange = (checked) => {
+    onInstagramSelectionChange(product._id, checked);
+  };
+
   const hasWixProductId = product.wixProductId && product.wixProductId !== "";
   const isUnlinked = !hasWixProductId;
+  const hasInstagramPost = product.hasInstagramPost || false;
 
   return (
     <>
@@ -35,10 +43,10 @@ const ProductItem = ({
         <>
           <Card
             className={`p-[10px] h-full w-full max-w-full md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
-              isSelected ? "ring-2 ring-blue-500" : ""
+              isSelected || isInstagramSelected ? "ring-2 ring-blue-500" : ""
             }`}
           >
-            {/* Selection Checkbox or Unlinked Indicator - Top Left */}
+            {/* Selection Checkbox or Status Indicator - Top Left */}
             {selectionMode && (
               <div className="absolute top-4 left-4 z-10">
                 {hasWixProductId ? (
@@ -52,6 +60,25 @@ const ProductItem = ({
                   <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
                     <CheckCircle size={14} />
                     Unlinked
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Instagram Selection Checkbox or Status - Top Left */}
+            {instagramMode && (
+              <div className="absolute top-4 left-4 z-10">
+                {!hasInstagramPost ? (
+                  <Checkbox
+                    isSelected={isInstagramSelected}
+                    onValueChange={handleInstagramCheckboxChange}
+                    size="lg"
+                    className="bg-white rounded-md shadow-md"
+                  />
+                ) : (
+                  <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+                    <InstagramIcon size={14} />
+                    Posted
                   </div>
                 )}
               </div>
@@ -130,14 +157,22 @@ const ProductItem = ({
         // Line (List) view layout
         <div
           className={`flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group relative ${
-            isSelected ? "ring-2 ring-blue-500" : ""
+            isSelected || isInstagramSelected ? "ring-2 ring-blue-500" : ""
           }`}
         >
-          {/* Unlinked Indicator - Top Left Corner (Absolute Position) */}
+          {/* Unlinked Indicator - Top Left Corner */}
           {selectionMode && !hasWixProductId && (
             <div className="absolute -top-2 -left-2 z-20 bg-green-100 text-green-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
               <CheckCircle size={14} />
               Unlinked
+            </div>
+          )}
+
+          {/* Instagram Posted Indicator - Top Left Corner */}
+          {instagramMode && hasInstagramPost && (
+            <div className="absolute -top-2 -left-2 z-20 bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+              <InstagramIcon size={14} />
+              Posted
             </div>
           )}
 
@@ -147,6 +182,17 @@ const ProductItem = ({
               <Checkbox
                 isSelected={isSelected}
                 onValueChange={handleCheckboxChange}
+                size="lg"
+              />
+            </div>
+          )}
+
+          {/* Instagram Selection Checkbox - Left Side (Only for non-posted products) */}
+          {instagramMode && !hasInstagramPost && (
+            <div className="mr-4 flex items-center">
+              <Checkbox
+                isSelected={isInstagramSelected}
+                onValueChange={handleInstagramCheckboxChange}
                 size="lg"
               />
             </div>
