@@ -217,6 +217,12 @@ export async function createBulkInstagramPosts(productIds) {
       return { status: 400, error: "No products selected" };
     }
 
+    // Fetch user data for store name and city
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return { status: 404, error: "User not found" };
+    }
+
     // Fetch eligible products
     const products = await Product.find({
       _id: { $in: productIds },
@@ -264,19 +270,25 @@ export async function createBulkInstagramPosts(productIds) {
     }
 
     /**
-     * Build combined caption
+     * Build combined caption with store details
      */
-    const caption = `
-        ${products
-          .map(
-            (product, index) => `
-        ${index + 1}. ${product.title}
-        ${product.price > 0 ? `€${product.price}` : ""}
-        `,
-          )
-          .join("\n")}
+    const storeName = user.storename || user.firstname || "Store";
+    const storeCity = user.city || "";
 
-          #lestores #preloved #sustainablefashion #secondhand
+    const caption = `
+${products
+  .map(
+    (product, index) => `
+${index + 1}. ${product.title}
+📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
+📐 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
+💰 Price: ${product.price > 0 ? `€${product.price}` : "Contact for price"}
+🏷️ Category: ${product.category || "Fashion"}
+`,
+  )
+  .join("\n")}
+
+#lestores #preloved #sustainablefashion #secondhand
     `.trim();
 
     /**

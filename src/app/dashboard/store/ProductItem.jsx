@@ -16,6 +16,7 @@ const ProductItem = ({
   onInstagramSelectionChange = () => {},
   selectionMode = false,
   instagramMode = false,
+  instagramLimitReached = false,
 }) => {
   const router = useRouter();
 
@@ -74,6 +75,7 @@ const ProductItem = ({
                     onValueChange={handleInstagramCheckboxChange}
                     size="lg"
                     className="bg-white rounded-md shadow-md"
+                    isDisabled={instagramLimitReached && !isInstagramSelected}
                   />
                 ) : (
                   <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
@@ -194,6 +196,7 @@ const ProductItem = ({
                 isSelected={isInstagramSelected}
                 onValueChange={handleInstagramCheckboxChange}
                 size="lg"
+                isDisabled={instagramLimitReached && !isInstagramSelected}
               />
             </div>
           )}

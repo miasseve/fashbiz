@@ -33,6 +33,11 @@ const ProductList = ({ products }) => {
   const handleInstagramSelectionChange = (productId, isSelected) => {
     const newSelection = new Set(selectedInstagramProducts);
     if (isSelected) {
+      // Enforce maximum 10 products limit for Instagram
+      if (newSelection.size >= 10) {
+        toast.error("Maximum 10 products can be selected for Instagram posting");
+        return;
+      }
       newSelection.add(productId);
     } else {
       newSelection.delete(productId);
@@ -263,8 +268,7 @@ const ProductList = ({ products }) => {
         <div className="mx-[15px] mb-4 p-3 w-fit bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
             <strong>{selectedInstagramProducts.size}</strong> of{" "}
-            <strong>{instagramEligibleProducts.length}</strong> products
-            selected for Instagram
+            <strong>10 max</strong> products selected for Instagram
             {instagramEligibleProducts.length < products.length && (
               <span className="ml-2 text-gray-600">
                 ({products.length - instagramEligibleProducts.length} already
@@ -272,6 +276,11 @@ const ProductList = ({ products }) => {
               </span>
             )}
           </p>
+          {selectedInstagramProducts.size >= 10 && (
+            <p className="text-xs text-orange-600 mt-1">
+              ⚠️ Maximum limit reached (10 products)
+            </p>
+          )}
         </div>
       )}
 
@@ -294,6 +303,7 @@ const ProductList = ({ products }) => {
             isInstagramSelected={selectedInstagramProducts.has(product._id)}
             onSelectionChange={handleSelectionChange}
             onInstagramSelectionChange={handleInstagramSelectionChange}
+            instagramLimitReached={selectedInstagramProducts.size >= 10}
           />
         ))}
       </div>
