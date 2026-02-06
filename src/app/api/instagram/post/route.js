@@ -78,24 +78,23 @@ async function createSinglePost(imageUrl, caption) {
   try {
     const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
       params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-      timeout: 60000, // Increased to 60s
+      timeout: 60000,
     });
 
     const igAccountId = pageResponse.data.instagram_business_account.id;
 
     const mediaRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
       params: { image_url: imageUrl, caption, access_token: ACCESS_TOKEN },
-      timeout: 90000, // Increased to 90s for image upload
+      timeout: 90000,
     });
 
     const creationId = mediaRes.data.id;
     await waitForMediaReady(igAccountId, creationId);
 
-    const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
-      params: { creation_id: creationId, access_token: ACCESS_TOKEN },
-      timeout: 60000, // Increased to 60s
-    });
+    // Add a small delay before publishing to allow propagation
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
+    const publishRes = await publishWithRetry(igAccountId, creationId);
     return publishRes.data;
   } catch (error) {
     console.error("[Instagram API] Single post error:", error.response?.data || error.message);
@@ -107,7 +106,7 @@ async function createCarouselPost(images, caption) {
   try {
     const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
       params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-      timeout: 60000, // Increased to 60s
+      timeout: 60000,
     });
 
     const igAccountId = pageResponse.data.instagram_business_account.id;
@@ -118,7 +117,7 @@ async function createCarouselPost(images, caption) {
       console.log(`[Instagram API] Creating carousel item ${children.length + 1}/${images.length}`);
       const res = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
         params: { image_url: imageUrl, is_carousel_item: true, access_token: ACCESS_TOKEN },
-        timeout: 120000, // Increased to 120s (2 minutes) for image upload
+        timeout: 120000,
       });
       children.push(res.data.id);
     }
@@ -140,19 +139,21 @@ async function createCarouselPost(images, caption) {
         caption,
         access_token: ACCESS_TOKEN,
       },
-      timeout: 60000, // Increased to 60s
+      timeout: 60000,
     });
 
     const creationId = carouselRes.data.id;
     console.log("[Instagram API] Waiting for carousel to be ready...");
     await waitForMediaReady(igAccountId, creationId);
 
-    // Publish
+    // KEY FIX: Wait after FINISHED status before publishing
+    // Instagram's API often reports FINISHED before the media is fully propagated
+    console.log("[Instagram API] Carousel ready, waiting 5s for propagation...");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Publish with retry logic
     console.log("[Instagram API] Publishing carousel...");
-    const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
-      params: { creation_id: creationId, access_token: ACCESS_TOKEN },
-      timeout: 60000, // Increased to 60s
-    });
+    const publishRes = await publishWithRetry(igAccountId, creationId);
 
     console.log("[Instagram API] Carousel published successfully");
     return publishRes.data;
@@ -162,12 +163,44 @@ async function createCarouselPost(images, caption) {
   }
 }
 
+/**
+ * Publish with retry — handles the race condition where Instagram
+ * reports FINISHED but the media isn't actually ready to publish yet.
+ */
+async function publishWithRetry(igAccountId, creationId, maxRetries = 5) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
+        params: { creation_id: creationId, access_token: ACCESS_TOKEN },
+        timeout: 60000,
+      });
+      return publishRes;
+    } catch (error) {
+      const errorCode = error.response?.data?.error?.code;
+      const errorSubcode = error.response?.data?.error?.error_subcode;
+
+      // Only retry on "media not ready" errors (code 9007, subcode 2207027)
+      const isMediaNotReady = errorCode === 9007 || errorSubcode === 2207027;
+
+      if (isMediaNotReady && attempt < maxRetries) {
+        const waitTime = attempt * 5000; // 5s, 10s, 15s, 20s...
+        console.log(
+          `[Instagram API] Media not ready for publish (attempt ${attempt}/${maxRetries}), retrying in ${waitTime / 1000}s...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const statusRes = await axios.get(`${GRAPH_URL}/${creationId}`, {
         params: { fields: "status_code", access_token: ACCESS_TOKEN },
-        timeout: 30000, // Increased to 30s
+        timeout: 30000,
       });
 
       const statusCode = statusRes.data.status_code;

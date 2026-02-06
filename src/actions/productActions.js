@@ -275,16 +275,16 @@ export async function createBulkInstagramPosts(productIds) {
     const storeCity = user.city || "";
 
     const caption = `
-${products
-  .map(
-    (product, index) => `
-${index + 1}. ${product.title}
-📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
-📐 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
-💰 Price: ${product.price > 0 ? `€${product.price}` : "Contact for price"}
-🏷️ Category: ${product.category || "Fashion"}
-`,
-  )
+      ${products
+        .map(
+          (product, index) => `
+      ${index + 1}. ${product.title}
+      📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
+      👚 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
+      💰 Price: ${product.price > 0 ? `€${product.price}` : "Contact for price"}
+      🏷️ Category: ${product.category || "Fashion"}
+      `,
+    )
   .join("\n")}
 
 #lestores #preloved #sustainablefashion #secondhand
