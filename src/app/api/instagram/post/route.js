@@ -78,22 +78,14 @@ async function createSinglePost(imageUrl, caption) {
   try {
     const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
       params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-      timeout: 60000,
-=======
-      timeout: 6000, // Increased to 60s
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
+      timeout: 60000, // Increased to 60s
     });
 
     const igAccountId = pageResponse.data.instagram_business_account.id;
 
     const mediaRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
       params: { image_url: imageUrl, caption, access_token: ACCESS_TOKEN },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-      timeout: 90000,
-=======
       timeout: 90000, // Increased to 90s for image upload
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
     });
 
     const creationId = mediaRes.data.id;
@@ -101,11 +93,7 @@ async function createSinglePost(imageUrl, caption) {
 
     const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
       params: { creation_id: creationId, access_token: ACCESS_TOKEN },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-      timeout: 60000,
-=======
       timeout: 60000, // Increased to 60s
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
     });
 
     return publishRes.data;
@@ -119,11 +107,7 @@ async function createCarouselPost(images, caption) {
   try {
     const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
       params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-      timeout: 60000,
-=======
       timeout: 60000, // Increased to 60s
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
     });
 
     const igAccountId = pageResponse.data.instagram_business_account.id;
@@ -131,43 +115,24 @@ async function createCarouselPost(images, caption) {
     // Create child containers
     const children = [];
     for (const imageUrl of images) {
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
       console.log(`[Instagram API] Creating carousel item ${children.length + 1}/${images.length}`);
       const res = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
         params: { image_url: imageUrl, is_carousel_item: true, access_token: ACCESS_TOKEN },
-        timeout: 120000,
-=======
-      console.log(`[Instagram] Creating carousel item ${children.length + 1}/${images.length}`);
-      const res = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
-        params: { image_url: imageUrl, is_carousel_item: true, access_token: ACCESS_TOKEN },
         timeout: 120000, // Increased to 120s (2 minutes) for image upload
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
       });
       children.push(res.data.id);
     }
 
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
     console.log(`[Instagram API] All ${children.length} items created, waiting for processing...`);
 
     // Wait for all carousel items
     for (let i = 0; i < children.length; i++) {
       console.log(`[Instagram API] Waiting for item ${i + 1}/${children.length} to be ready...`);
-=======
-    console.log(`[Instagram] All ${children.length} items created, waiting for processing...`);
-
-    // Wait for all carousel items
-    for (let i = 0; i < children.length; i++) {
-      console.log(`[Instagram] Waiting for item ${i + 1}/${children.length} to be ready...`);
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
       await waitForMediaReady(igAccountId, children[i]);
     }
 
     // Create carousel container
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
     console.log("[Instagram API] Creating carousel container...");
-=======
-    console.log("[Instagram] Creating carousel container...");
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
     const carouselRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
       params: {
         media_type: "CAROUSEL",
@@ -175,8 +140,7 @@ async function createCarouselPost(images, caption) {
         caption,
         access_token: ACCESS_TOKEN,
       },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-      timeout: 60000,
+      timeout: 60000, // Increased to 60s
     });
 
     const creationId = carouselRes.data.id;
@@ -187,27 +151,10 @@ async function createCarouselPost(images, caption) {
     console.log("[Instagram API] Publishing carousel...");
     const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
       params: { creation_id: creationId, access_token: ACCESS_TOKEN },
-      timeout: 60000,
+      timeout: 60000, // Increased to 60s
     });
 
     console.log("[Instagram API] Carousel published successfully");
-=======
-      timeout: 60000, // Increased to 60s
-    });
-
-    const creationId = carouselRes.data.id;
-    console.log("[Instagram] Waiting for carousel to be ready...");
-    await waitForMediaReady(igAccountId, creationId);
-
-    // Publish
-    console.log("[Instagram] Publishing carousel...");
-    const publishRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media_publish`, null, {
-      params: { creation_id: creationId, access_token: ACCESS_TOKEN },
-      timeout: 60000, // Increased to 60s
-    });
-
-    console.log("[Instagram] Carousel published successfully");
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
     return publishRes.data;
   } catch (error) {
     console.error("[Instagram API] Carousel error:", error.response?.data || error.message);
@@ -220,8 +167,7 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
     try {
       const statusRes = await axios.get(`${GRAPH_URL}/${creationId}`, {
         params: { fields: "status_code", access_token: ACCESS_TOKEN },
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
-        timeout: 30000,
+        timeout: 30000, // Increased to 30s
       });
 
       const statusCode = statusRes.data.status_code;
@@ -229,16 +175,6 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
 
       if (statusCode === "FINISHED") {
         console.log(`[Instagram API] Media ready after ${attempt} attempts`);
-=======
-        timeout: 30000, // Increased to 30s
-      });
-
-      const statusCode = statusRes.data.status_code;
-      console.log("status code:",statusCode);
-
-      if (statusCode === "FINISHED") {
-        console.log(`[Instagram] Media ready after ${attempt} attempts`);
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
         return true;
       } else if (statusCode === "ERROR") {
         throw new Error("Media processing failed");
@@ -248,11 +184,7 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
       const waitTime = Math.min(3000 + Math.floor(attempt / 3) * 1000, 8000);
 
       if (attempt % 10 === 0) {
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
         console.log(`[Instagram API] Still waiting... (attempt ${attempt}/${maxAttempts}, status: ${statusCode})`);
-=======
-        console.log(`[Instagram] Still waiting... (attempt ${attempt}/${maxAttempts}, status: ${statusCode})`);
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
       }
 
       await new Promise((resolve) => setTimeout(resolve, waitTime));
@@ -263,11 +195,7 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
       const waitTime = Math.min(5000 + attempt * 500, 10000);
 
       if (attempt % 10 === 0) {
-<<<<<<< HEAD:src/app/api/instagram/post/route.js
         console.log(`[Instagram API] Status check error (attempt ${attempt}/${maxAttempts}), retrying...`);
-=======
-        console.log(`[Instagram] Status check error (attempt ${attempt}/${maxAttempts}), retrying...`);
->>>>>>> 8a7acf3a053679fc5b06f3574582293602a22846:src/actions/instagramActions.js
       }
 
       await new Promise((resolve) => setTimeout(resolve, waitTime));
