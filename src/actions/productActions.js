@@ -11,7 +11,6 @@ import {
   createShopifyProduct,
   deleteShopifyProduct,
 } from "./shopifyAction";
-import { postToInstagram } from "./instagramActions";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 // import {
 //   createWixProduct,
@@ -302,17 +301,29 @@ ${index + 1}. ${product.title}
     });
 
     /**
-     * Queue Instagram post (background)
+     * Queue Instagram post via API (background)
      */
-    postToInstagram({ products, images, caption, logId: log._id }).catch(
-      async (err) => {
-        console.error(`[Instagram] Failed to queue grouped post:`, err.message);
-        await Product.updateMany(
-          { _id: { $in: products.map((p) => p._id) } },
-          { hasInstagramPost: false },
-        );
-      },
-    );
+    const apiUrl =
+      process.env.NODE_ENV === "development"
+        ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/instagram/post`
+        : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/api/instagram/post`;
+
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        products: products.map((p) => ({ _id: p._id })),
+        images,
+        caption,
+        logId: log._id.toString(),
+      }),
+    }).catch(async (err) => {
+      console.error(`[Instagram] Failed to queue grouped post:`, err.message);
+      await Product.updateMany(
+        { _id: { $in: products.map((p) => p._id) } },
+        { hasInstagramPost: false },
+      );
+    });
 
     /**
      * Mark all products as posted
