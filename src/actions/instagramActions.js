@@ -155,6 +155,7 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 90) {
       });
 
       const statusCode = statusRes.data.status_code;
+      console.log("status code:",statusCode);
 
       if (statusCode === "FINISHED") {
         console.log(`[Instagram] Media ready after ${attempt} attempts`);
