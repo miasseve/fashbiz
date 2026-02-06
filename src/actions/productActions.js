@@ -292,10 +292,14 @@ export async function createBulkInstagramPosts(productIds) {
     /**
      * Queue Instagram post (background)
      */
-    console.log("images length",images.length());
     postToInstagram({ products, images, caption, logId: log._id }).catch(
-      (err) => {
+      async (err) => {
         console.error(`[Instagram] Failed to queue grouped post:`, err.message);
+
+        await Product.updateMany(
+          { _id: { $in: products.map((p) => p._id) } },
+          { hasInstagramPost: false },
+        );
       },
     );
 
