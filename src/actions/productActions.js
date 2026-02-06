@@ -295,7 +295,6 @@ export async function createBulkInstagramPosts(productIds) {
     postToInstagram({ products, images, caption, logId: log._id }).catch(
       async (err) => {
         console.error(`[Instagram] Failed to queue grouped post:`, err.message);
-
         await Product.updateMany(
           { _id: { $in: products.map((p) => p._id) } },
           { hasInstagramPost: false },
