@@ -280,7 +280,7 @@ export async function createBulkInstagramPosts(productIds) {
     `.trim();
 
     /**
-     * 3️⃣ Create ONE Instagram post log
+     * Create ONE Instagram post log
      */
     const log = await InstagramPostLog.create({
       productIds: products.map((p) => p._id),
@@ -292,6 +292,7 @@ export async function createBulkInstagramPosts(productIds) {
     /**
      * Queue Instagram post (background)
      */
+    console.log("images length",images.length());
     postToInstagram({ products, images, caption, logId: log._id }).catch(
       (err) => {
         console.error(`[Instagram] Failed to queue grouped post:`, err.message);

@@ -92,7 +92,7 @@ async function createSinglePost(imageUrl, caption) {
       },
     );
 
-    // console.log("Media container created:", mediaRes.data);
+    console.log("Media container created:", mediaRes.data);
     const creationId = mediaRes.data.id;
 
     // Step 3: Wait for media to be ready (poll status)
@@ -181,7 +181,7 @@ async function createCarouselPost(images, caption) {
       },
     );
 
-    // console.log("Carousel published successfully:", publishRes.data);
+    console.log("Carousel published successfully:", publishRes.data);
     return publishRes.data;
   } catch (error) {
     console.error(
@@ -196,7 +196,7 @@ async function createCarouselPost(images, caption) {
  * Poll the media status until it's ready to publish
  */
 async function waitForMediaReady(igAccountId, creationId, maxAttempts = 30) {
-  //   console.log(`Waiting for media ${creationId} to be ready...`);
+    console.log(`Waiting for media ${creationId} to be ready...`);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -208,10 +208,10 @@ async function waitForMediaReady(igAccountId, creationId, maxAttempts = 30) {
       });
 
       const statusCode = statusRes.data.status_code;
-      //   console.log(`Attempt ${attempt}: Status code = ${statusCode}`);
+        console.log(`Attempt ${attempt}: Status code = ${statusCode}`);
 
       if (statusCode === "FINISHED") {
-        // console.log("Media is ready!");
+        console.log("Media is ready!");
         return true;
       } else if (statusCode === "ERROR") {
         throw new Error("Media processing failed");
