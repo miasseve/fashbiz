@@ -1,4 +1,4 @@
-import { getUserProducts } from "@/actions/productActions";
+import { getUserProducts, getInstagramPendingStatus } from "@/actions/productActions";
 import React from "react";
 import ProductList from "./ProductList";
 export const dynamic = "force-dynamic";
@@ -8,7 +8,10 @@ export const metadata = {
 };
 
 const ProductStore = async () => {
-  const response = await getUserProducts();
+  const [response, pendingStatus] = await Promise.all([
+    getUserProducts(),
+    getInstagramPendingStatus(),
+  ]);
 
   if (response.status != 200) {
     throw new Error("Failed to fetch products");
@@ -28,7 +31,7 @@ const ProductStore = async () => {
   return (
     <>
       <div className="">
-        <ProductList products={products} />
+        <ProductList products={products} instagramPending={pendingStatus} />
       </div>
     </>
   );

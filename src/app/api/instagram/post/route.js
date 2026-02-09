@@ -16,6 +16,11 @@ export async function POST(request) {
 
     console.log(`[Instagram API] Starting post with ${images.length} images`);
 
+    // Mark as processing so new requests are blocked until this completes
+    if (logId) {
+      await InstagramPostLog.findByIdAndUpdate(logId, { status: "processing" });
+    }
+
     // Format caption with limit
     const formattedCaption = caption?.substring(0, 2200) || "";
 

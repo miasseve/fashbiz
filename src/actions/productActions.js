@@ -201,6 +201,39 @@ export async function createProduct(formData) {
   }
 }
 
+export async function getInstagramPendingStatus() {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { status: 401, hasPending: false };
+    }
+
+    await dbConnect();
+
+    const pendingPost = await InstagramPostLog.findOne({
+      userId: session.user.id,
+      status: { $in: ["pending", "processing"] },
+    }).select("status createdAt productIds");
+
+    if (pendingPost) {
+      return {
+        status: 200,
+        hasPending: true,
+        pendingPost: {
+          status: pendingPost.status,
+          createdAt: pendingPost.createdAt.toISOString(),
+          productCount: pendingPost.productIds?.length || 0,
+        },
+      };
+    }
+
+    return { status: 200, hasPending: false };
+  } catch (error) {
+    console.error("[getInstagramPendingStatus] Error:", error);
+    return { status: 200, hasPending: false };
+  }
+}
+
 export async function createBulkInstagramPosts(productIds) {
   try {
     const session = await auth();
@@ -213,7 +246,24 @@ export async function createBulkInstagramPosts(productIds) {
 
     // Validate input
     if (!Array.isArray(productIds) || productIds.length === 0) {
-      return { status: 400, error: "No products selected" };
+      return { status: 400, error: "Product limit exceeded" };
+    }
+
+    if(productIds.length > 5){
+      return {status:422,error:"not more than 5 products can be selected"}
+    }
+
+    // Block if there's already a post being processed
+    const pendingPost = await InstagramPostLog.findOne({
+      userId: session.user.id,
+      status: { $in: ["pending", "processing"] },
+    });
+
+    if (pendingPost) {
+      return {
+        status: 429,
+        error: "A previous Instagram post is still being processed. Please wait a few minutes and try again.",
+      };
     }
 
     // Fetch user data for store name and city
