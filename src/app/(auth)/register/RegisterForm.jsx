@@ -87,6 +87,15 @@ const RegisterForm = () => {
                   Login
                 </Link>
               </div>
+              <div className="text-[1.2rem] text-white text-center mt-3">
+                By signing up, you agree to our{" "}
+                <Link
+                  href="/privacy-policy"
+                  className="underline text-[#6e482d] hover:opacity-80"
+                >
+                  Privacy Policy
+                </Link>
+              </div>
             </div>
           </div>
         </div>

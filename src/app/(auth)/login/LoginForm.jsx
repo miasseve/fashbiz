@@ -39,7 +39,9 @@ const LoginForm = () => {
 
     const result = await res.json();
     if (result.status === 200) {
-      if (result.profileStatus) {
+      if (result.role === "admin") {
+        router.push("/admin");
+      } else if (result.profileStatus) {
         if (result.role == "store") {
           router.push("/dashboard/add-product");
         } else if(result.role == "brand"){
@@ -189,6 +191,15 @@ const LoginForm = () => {
                   className="hover:underline text-[#6e482d]"
                 >
                   Signup
+                </Link>
+              </div>
+              <div className="text-[1.2rem] text-white text-center mt-3">
+                By signing in, you agree to our{" "}
+                <Link
+                  href="/privacy-policy"
+                  className="underline text-[#6e482d] hover:opacity-80"
+                >
+                  Privacy Policy
                 </Link>
               </div>
             </div>

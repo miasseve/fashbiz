@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { IoQrCode } from "react-icons/io5";
 import { FaStore, FaUser, FaUsers } from "react-icons/fa";
-import { MdLocalGroceryStore } from "react-icons/md";
+import { MdLocalGroceryStore, MdSupportAgent } from "react-icons/md";
 import { PiStripeLogoFill } from "react-icons/pi";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -126,6 +126,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       href: "/dashboard/payment-history",
       label: "Payment History",
       icon: <FaHistory />,
+    },
+    {
+      href: "/dashboard/support",
+      label: "Support",
+      icon: <MdSupportAgent />,
     },
     session.data?.user?.role === "store" && {
       href: "/dashboard/items-sold",

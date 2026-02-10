@@ -61,6 +61,7 @@
     "react-redux": "^9.2.0",
     "react-responsive-carousel": "^3.2.23",
     "react-toastify": "^11.0.2",
+    "recharts": "^3.7.0",
     "redux-persist": "^6.0.0",
     "stripe": "^17.6.0",
     "sweetalert2": "^11.15.10",

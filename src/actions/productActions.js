@@ -332,7 +332,7 @@ export async function createBulkInstagramPosts(productIds) {
       📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
       👚 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
       💰 Price: ${product.price > 0 ? `€${product.price}` : "Contact for price"}
-      🏷️ Category: ${product.category || "Fashion"}
+      🏷️ Category: ${product.subcategory || "Fashion"}
       `,
     )
   .join("\n")}

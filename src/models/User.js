@@ -63,7 +63,7 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ["store", "consignor", "brand"],
+    enum: ["admin","brand","consignor","store"],
   },
   emailVerified: Date,
   subscriptionType: {
@@ -89,6 +89,6 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-});
+}, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);
