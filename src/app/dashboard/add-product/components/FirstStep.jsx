@@ -458,7 +458,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   };
 
   return (
-    <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem]">
+    <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]">
       <div className="text-center">
         {isCameraOpen && (
           <div className="camera-container relative">
