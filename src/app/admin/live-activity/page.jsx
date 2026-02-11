@@ -164,7 +164,7 @@ const LiveActivityPage = () => {
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Live Activity</h1>
+        <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Live Activity</h1>
         <span className="text-sm sm:text-base text-gray-500 font-medium">
           {sessions.length} active session{sessions.length !== 1 ? "s" : ""}
         </span>

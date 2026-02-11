@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
 import { usePathname } from "next/navigation";
+import ChatBot from "@/components/ChatBot";
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -132,6 +133,7 @@ const Layout = ({ children }) => {
           </div>
         </div>
       </div>
+      <ChatBot />
     </SessionProvider>
   );
 };

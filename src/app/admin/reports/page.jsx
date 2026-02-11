@@ -71,7 +71,7 @@ const AdminReportsPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Reports</h1>
+      <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Reports</h1>
       <div className="space-y-8">
         {reportSections.map((section) => (
           <div key={section.title} className="bg-white rounded-xl shadow-sm p-6">

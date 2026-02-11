@@ -180,7 +180,7 @@ const AdminProductsPage = () => {
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Products</h1>
+        <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Products</h1>
         {/* View toggle */}
         <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
           <button
@@ -210,8 +210,8 @@ const AdminProductsPage = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
         <div className="flex flex-col lg:flex-row gap-3 items-stretch">
           {/* Search */}
-          <div className="relative !w-[360px]">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none" />
+          <div className="relative sm:!w-[660px] w-full">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 text-xl pointer-events-none" />
 
             <input
               type="text"

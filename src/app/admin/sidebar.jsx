@@ -19,11 +19,15 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   useEffect(() => {
     const fetchUnread = async () => {
       try {
-        const res = await fetch("/api/admin/support/unread");
-        const data = await res.json();
-        setUnreadCount(data.count || 0);
+        const [supportRes, bugRes] = await Promise.all([
+          fetch("/api/admin/support/unread"),
+          fetch("/api/admin/bug-reports/unread"),
+        ]);
+        const supportData = await supportRes.json();
+        const bugData = await bugRes.json();
+        setUnreadCount((supportData.count || 0) + (bugData.count || 0));
       } catch (error) {
-        console.error("Failed to fetch unread count:", error);
+        console.error("Failed to fetch unread counts:", error);
       }
     };
     if (session.data?.user?.role === "admin") {
@@ -49,7 +53,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin/live-activity", label: "Live Activity", icon: <MdTimeline /> },
     { href: "/admin/stores-users", label: "Stores & Users", icon: <FaUsers /> },
     { href: "/admin/products", label: "Products", icon: <BiLogoProductHunt /> },
-    // { href: "/admin/support", label: "Support", icon: <MdSupportAgent /> },
+    { href: "/admin/support", label: "Support", icon: <MdSupportAgent /> },
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics /> },
   ];
 

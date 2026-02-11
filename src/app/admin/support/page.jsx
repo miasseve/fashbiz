@@ -3,10 +3,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Spinner } from "@heroui/react";
 import { FaSearch, FaReply, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const TABS = [
   { key: "public", label: "Public Messages" },
-  { key: "dashboard", label: "Dashboard Messages" },
+  { key: "bug_report", label: "Bug Reports" },
 ];
 
 const FILTERS = [
@@ -27,13 +28,22 @@ const AdminSupportPage = () => {
   const [submittingReply, setSubmittingReply] = useState(false);
   const perPage = 10;
 
+  const isBugTab = activeTab === "bug_report";
+
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`/api/admin/support?type=${activeTab}`);
-      const data = await res.json();
-      setAllTickets(data.tickets || []);
+      let res;
+      if (activeTab === "bug_report") {
+        res = await fetch("/api/admin/bug-reports");
+        const data = await res.json();
+        setAllTickets(data.reports || []);
+      } else {
+        res = await fetch(`/api/admin/support?type=${activeTab}`);
+        const data = await res.json();
+        setAllTickets(data.tickets || []);
+      }
     } catch (error) {
-      console.error("Failed to fetch support tickets:", error);
+      console.error("Failed to fetch tickets:", error);
     } finally {
       setLoading(false);
     }
@@ -41,72 +51,78 @@ const AdminSupportPage = () => {
 
   useEffect(() => {
     setLoading(true);
+    setReplyingTo(null);
+    setReplyText("");
     fetchTickets();
   }, [activeTab]);
 
-  // Reset page on filter/tab change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, statusFilter, search]);
 
-  // Client-side filtering for status + search
   const filteredTickets = useMemo(() => {
     let list = allTickets;
 
-    // Status filter
     if (statusFilter === "unread") {
       list = list.filter((t) => !t.isRead);
     } else if (statusFilter === "resolved") {
       list = list.filter((t) => t.status === "resolved");
     }
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.email.toLowerCase().includes(q) ||
-          (t.subject && t.subject.toLowerCase().includes(q)) ||
-          t.message.toLowerCase().includes(q) ||
-          (t.storename && t.storename.toLowerCase().includes(q))
-      );
+      list = list.filter((t) => {
+        const nameMatch = t.name?.toLowerCase().includes(q);
+        const emailMatch = t.email?.toLowerCase().includes(q);
+        const subjectMatch = t.subject?.toLowerCase().includes(q);
+        const storeMatch = t.storename?.toLowerCase().includes(q);
+        if (isBugTab) {
+          const msgMatch = t.messages?.some((m) =>
+            m.message.toLowerCase().includes(q),
+          );
+          return (
+            nameMatch || emailMatch || subjectMatch || storeMatch || msgMatch
+          );
+        }
+        const messageMatch = t.message?.toLowerCase().includes(q);
+        return (
+          nameMatch || emailMatch || subjectMatch || messageMatch || storeMatch
+        );
+      });
     }
 
     return list;
-  }, [allTickets, statusFilter, search]);
+  }, [allTickets, statusFilter, search, isBugTab]);
 
   const totalPages = Math.ceil(filteredTickets.length / perPage);
   const paginatedTickets = filteredTickets.slice(
     (currentPage - 1) * perPage,
-    currentPage * perPage
+    currentPage * perPage,
   );
 
-  // Counts for tab badges
-  const publicCount = useMemo(() => {
-    if (activeTab === "public") return allTickets.length;
-    return null;
-  }, [allTickets, activeTab]);
-
-  const dashboardCount = useMemo(() => {
-    if (activeTab === "dashboard") return allTickets.length;
-    return null;
-  }, [allTickets, activeTab]);
-
-  // Update a ticket locally after PATCH
   const updateTicketLocal = (ticketId, updates) => {
     setAllTickets((prev) =>
-      prev.map((t) => (t._id === ticketId ? { ...t, ...updates } : t))
+      prev.map((t) => (t._id === ticketId ? { ...t, ...updates } : t)),
     );
   };
 
+  // --- Support ticket handlers (public/dashboard) ---
   const handleMarkRead = async (ticketId) => {
     try {
-      const res = await fetch("/api/admin/support", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId, isRead: true }),
-      });
+      let res;
+      if (isBugTab) {
+        res = await fetch(`/api/admin/bug-reports/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markRead: true }),
+        });
+      } else {
+        res = await fetch("/api/admin/support", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticketId, isRead: true }),
+        });
+      }
       if (res.ok) {
         updateTicketLocal(ticketId, { isRead: true });
       }
@@ -117,11 +133,20 @@ const AdminSupportPage = () => {
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
-      const res = await fetch("/api/admin/support", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId, status: newStatus }),
-      });
+      let res;
+      if (isBugTab) {
+        res = await fetch(`/api/admin/bug-reports/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+      } else {
+        res = await fetch("/api/admin/support", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticketId, status: newStatus }),
+        });
+      }
       if (res.ok) {
         updateTicketLocal(ticketId, { status: newStatus });
         toast.success("Status updated");
@@ -135,24 +160,46 @@ const AdminSupportPage = () => {
     if (!replyText.trim()) return;
     setSubmittingReply(true);
     try {
-      const res = await fetch("/api/admin/support", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId, adminReply: replyText }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        updateTicketLocal(ticketId, {
-          adminReply: replyText,
-          repliedAt: new Date().toISOString(),
-          status: data.ticket?.status || "in_progress",
-          isRead: true,
+      let res;
+      if (isBugTab) {
+        res = await fetch(`/api/admin/bug-reports/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: replyText, markRead: true }),
         });
-        setReplyingTo(null);
-        setReplyText("");
-        toast.success("Reply sent");
+        const data = await res.json();
+        if (res.ok) {
+          updateTicketLocal(ticketId, {
+            messages: data.report.messages,
+            status: data.report.status,
+            isRead: true,
+          });
+          setReplyingTo(null);
+          setReplyText("");
+          toast.success("Reply sent");
+        } else {
+          toast.error(data.error || "Failed to send reply");
+        }
       } else {
-        toast.error(data.error || "Failed to send reply");
+        res = await fetch("/api/admin/support", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticketId, adminReply: replyText }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          updateTicketLocal(ticketId, {
+            adminReply: replyText,
+            repliedAt: new Date().toISOString(),
+            status: data.ticket?.status || "in_progress",
+            isRead: true,
+          });
+          setReplyingTo(null);
+          setReplyText("");
+          toast.success("Reply sent");
+        } else {
+          toast.error(data.error || "Failed to send reply");
+        }
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -162,19 +209,41 @@ const AdminSupportPage = () => {
   };
 
   const handleDelete = async (ticketId) => {
-    if (!window.confirm("Are you sure you want to delete this ticket?")) return;
+    const result = await Swal.fire({
+      title: `Are you sure you want to delete this ${isBugTab ? "bug report" : "ticket"}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, keep it",
+      reverseButtons: true,
+      customClass: {
+        confirmButton: "btn-danger",
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const res = await fetch("/api/admin/support", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId }),
-      });
+      let res;
+      if (isBugTab) {
+        res = await fetch("/api/admin/bug-reports", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportId: ticketId }),
+        });
+      } else {
+        res = await fetch("/api/admin/support", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticketId }),
+        });
+      }
       if (res.ok) {
         setAllTickets((prev) => prev.filter((t) => t._id !== ticketId));
-        toast.success("Ticket deleted");
+        toast.success("Deleted successfully");
       } else {
         const data = await res.json();
-        toast.error(data.error || "Failed to delete ticket");
+        toast.error(data.error || "Failed to delete");
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -203,6 +272,15 @@ const AdminSupportPage = () => {
     );
   };
 
+  const formatDate = (date) =>
+    new Date(date).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
@@ -213,27 +291,21 @@ const AdminSupportPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Support Tickets</h1>
+      <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Support Tickets</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-6 py-2.5 rounded-md text-base font-medium transition-all ${
+            className={`px-6 py-2.5 rounded-md text-[12px] font-medium transition-all ${
               activeTab === tab.key
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             {tab.label}
-            {((tab.key === "public" && publicCount !== null) ||
-              (tab.key === "dashboard" && dashboardCount !== null)) && (
-              <span className="ml-2 text-sm bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
-                {tab.key === "public" ? publicCount : dashboardCount}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -241,7 +313,6 @@ const AdminSupportPage = () => {
       {/* Filter bar + Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          {/* Status filter buttons */}
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
             {FILTERS.map((f) => (
               <button
@@ -258,15 +329,30 @@ const AdminSupportPage = () => {
             ))}
           </div>
 
-          {/* Search */}
-          <div className="relative flex-1">
-            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-base" />
+          <div className="relative w-full">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600 text-xl" />
             <input
               type="text"
               placeholder="Search by name, email, subject, message..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full
+      h-[48px]
+      !pl-12
+      pr-4
+      bg-gray-50
+      border
+      border-gray-300
+      rounded-lg
+      text-base
+      text-gray-900
+      placeholder-gray-400
+      leading-none
+      focus:outline-none
+      focus:ring-2
+      focus:ring-indigo-500
+      focus:border-indigo-500
+      focus:bg-white"
             />
           </div>
         </div>
@@ -277,15 +363,15 @@ const AdminSupportPage = () => {
         <div className="text-lg font-medium text-gray-600">
           Showing {(currentPage - 1) * perPage + 1}-
           {Math.min(currentPage * perPage, filteredTickets.length)} out of{" "}
-          {filteredTickets.length} tickets
+          {filteredTickets.length} {isBugTab ? "reports" : "tickets"}
         </div>
       ) : (
         <div className="text-lg font-medium text-gray-600">
-          No tickets found
+          No {isBugTab ? "bug reports" : "tickets"} found
         </div>
       )}
 
-      {/* Message Cards */}
+      {/* Cards */}
       <div className="space-y-4">
         {paginatedTickets.map((ticket) => (
           <div
@@ -294,10 +380,14 @@ const AdminSupportPage = () => {
               !ticket.isRead ? "border-l-4 border-l-blue-500" : ""
             }`}
           >
-            {/* Header: sender info + status */}
+            {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <span className={`text-[15px] text-gray-800 ${!ticket.isRead ? "font-bold" : "font-semibold"}`}>
+                <span
+                  className={`text-[15px] text-gray-800 ${
+                    !ticket.isRead ? "font-bold" : "font-semibold"
+                  }`}
+                >
                   {ticket.name}
                 </span>
                 {activeTab === "public" ? (
@@ -305,11 +395,23 @@ const AdminSupportPage = () => {
                     {ticket.email}
                   </span>
                 ) : (
-                  ticket.storename && (
-                    <span className="text-[14px] text-indigo-600 ml-2 font-medium">
-                      {ticket.storename}
-                    </span>
-                  )
+                  <>
+                    {ticket.email && (
+                      <span className="text-[14px] text-gray-500 ml-2">
+                        {ticket.email}
+                      </span>
+                    )}
+                    {ticket.storename && (
+                      <span className="text-[14px] text-indigo-600 ml-2 font-medium">
+                        {ticket.storename}
+                      </span>
+                    )}
+                  </>
+                )}
+                {isBugTab && ticket.role && (
+                  <span className="text-[12px] text-gray-400 ml-2 uppercase">
+                    ({ticket.role})
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -324,44 +426,72 @@ const AdminSupportPage = () => {
               </div>
             )}
 
-            {/* Message */}
-            <p className="text-[15px] text-gray-600 whitespace-pre-wrap">
-              {ticket.message}
-            </p>
+            {/* Message content — different for bug reports vs support tickets */}
+            {isBugTab ? (
+              /* Threaded messages for bug reports */
+              <div className="space-y-2 bg-gray-50 rounded-lg p-3 max-h-[300px] overflow-y-auto">
+                {ticket.messages?.map((msg, idx) => (
+                  <div
+                    key={msg._id || idx}
+                    className={`rounded-lg p-3 ${
+                      msg.sender === "user"
+                        ? "bg-white border border-gray-200"
+                        : "bg-indigo-50 border border-indigo-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`text-[12px] font-semibold ${
+                          msg.sender === "admin"
+                            ? "text-indigo-700"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {msg.sender === "admin" ? "Admin" : ticket.name}
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        {formatDate(msg.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[14px] text-gray-700 whitespace-pre-wrap">
+                      {msg.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Single message for support tickets */
+              <>
+                <p className="text-[15px] text-gray-600 whitespace-pre-wrap">
+                  {ticket.message}
+                </p>
+
+                {/* Existing admin reply */}
+                {ticket.adminReply && (
+                  <div className="bg-indigo-50 rounded-lg p-4">
+                    <div className="text-[13px] font-semibold text-indigo-700 mb-1">
+                      Admin Reply
+                    </div>
+                    <p className="text-[15px] text-gray-700 whitespace-pre-wrap">
+                      {ticket.adminReply}
+                    </p>
+                    {ticket.repliedAt && (
+                      <div className="text-[12px] text-gray-400 mt-2">
+                        {formatDate(ticket.repliedAt)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Timestamp */}
             <div className="text-[13px] text-gray-400">
-              {new Date(ticket.createdAt).toLocaleString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
+              {formatDate(ticket.createdAt)}
+              {isBugTab && (
+                <span> &middot; Updated: {formatDate(ticket.updatedAt)}</span>
+              )}
             </div>
-
-            {/* Existing admin reply */}
-            {ticket.adminReply && (
-              <div className="bg-indigo-50 rounded-lg p-4">
-                <div className="text-[13px] font-semibold text-indigo-700 mb-1">
-                  Admin Reply
-                </div>
-                <p className="text-[15px] text-gray-700 whitespace-pre-wrap">
-                  {ticket.adminReply}
-                </p>
-                {ticket.repliedAt && (
-                  <div className="text-[12px] text-gray-400 mt-2">
-                    {new Date(ticket.repliedAt).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
@@ -372,13 +502,13 @@ const AdminSupportPage = () => {
                     setReplyText("");
                   } else {
                     setReplyingTo(ticket._id);
-                    setReplyText(ticket.adminReply || "");
+                    setReplyText(isBugTab ? "" : ticket.adminReply || "");
                   }
                 }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
               >
                 <FaReply className="text-xs" />
-                {ticket.adminReply ? "Edit Reply" : "Reply"}
+                {!isBugTab && ticket.adminReply ? "Edit Reply" : "Reply"}
               </button>
 
               {!ticket.isRead && (
@@ -475,6 +605,7 @@ const AdminSupportPage = () => {
           </button>
         </div>
       )}
+
     </div>
   );
 };

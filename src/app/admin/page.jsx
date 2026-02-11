@@ -112,7 +112,7 @@ const AdminOverview = () => {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+      <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Dashboard Overview</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
