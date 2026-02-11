@@ -1,4 +1,4 @@
-import { getUserProducts, getInstagramPendingStatus } from "@/actions/productActions";
+import { getUserProducts, getInstagramPendingStatus, getUserSubscriptionType } from "@/actions/productActions";
 import React from "react";
 import ProductList from "./ProductList";
 export const dynamic = "force-dynamic";
@@ -8,9 +8,10 @@ export const metadata = {
 };
 
 const ProductStore = async () => {
-  const [response, pendingStatus] = await Promise.all([
+  const [response, pendingStatus, subscriptionType] = await Promise.all([
     getUserProducts(),
     getInstagramPendingStatus(),
+    getUserSubscriptionType(),
   ]);
 
   if (response.status != 200) {
@@ -31,7 +32,7 @@ const ProductStore = async () => {
   return (
     <>
       <div className="">
-        <ProductList products={products} instagramPending={pendingStatus} />
+        <ProductList products={products} instagramPending={pendingStatus} subscriptionType={subscriptionType} />
       </div>
     </>
   );

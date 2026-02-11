@@ -12,7 +12,8 @@ import {
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
-const ProductList = ({ products, instagramPending }) => {
+const ProductList = ({ products, instagramPending, subscriptionType }) => {
+  const canPostToInstagram = subscriptionType === "Pro" || subscriptionType === "Business";
   const hasPostInProgress = instagramPending?.hasPending || false;
   const [isGrid, setIsGrid] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -218,8 +219,8 @@ const ProductList = ({ products, instagramPending }) => {
             ) : null}
           </div>
 
-          {/* Bottom row: Instagram button (mobile bottom, desktop inline) */}
-          {!selectionMode && !instagramMode && (
+          {/* Bottom row: Instagram button (mobile bottom, desktop inline) - Pro and Business only */}
+          {canPostToInstagram && !selectionMode && !instagramMode && (
             <Button
               onPress={toggleInstagramMode}
               className="font-semibold p-7 border border-blue-500 rounded-[4px] text-black bg-white w-full sm:w-[30%]"
@@ -289,8 +290,8 @@ const ProductList = ({ products, instagramPending }) => {
         </div>
       </div>
 
-      {/* Instagram Processing Banner */}
-      {hasPostInProgress && !instagramMode && (
+      {/* Instagram Processing Banner - Pro and Business only */}
+      {canPostToInstagram && hasPostInProgress && !instagramMode && (
         <div className="mx-[15px] mb-4 p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2">
           <div className="animate-spin h-4 w-4 border-2 border-amber-600 border-t-transparent rounded-full" />
           <p className="text-sm text-amber-800">

@@ -234,6 +234,21 @@ export async function getInstagramPendingStatus() {
   }
 }
 
+export async function getUserSubscriptionType() {
+  try {
+    const session = await auth();
+    if (!session) {
+      return "free";
+    }
+    await dbConnect();
+    const user = await User.findById(session.user.id).select("subscriptionType");
+    return user?.subscriptionType || "free";
+  } catch (error) {
+    console.error("[getUserSubscriptionType] Error:", error);
+    return "free";
+  }
+}
+
 export async function createBulkInstagramPosts(productIds) {
   try {
     const session = await auth();
