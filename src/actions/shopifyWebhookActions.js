@@ -13,7 +13,7 @@ const shopify = axios.create({
 });
 
 export async function registerShopifyWebhooks() {
-  const webhookUrl = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/api/shopify/webhook`;
+  const webhookUrl = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL}/api/shopify/webhook`;
 
   const REGISTER_WEBHOOK = `
     mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
