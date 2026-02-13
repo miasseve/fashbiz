@@ -11,6 +11,10 @@ import RefferralDetails from "@/models/Referral";
 import { user } from "@heroui/theme";
 import { archiveProduct } from "@/actions/productActions";
 import { unarchiveProduct } from "@/actions/productActions";
+import {
+  bulkCreateShopifyProducts,
+  bulkRemoveShopifyProducts,
+} from "@/actions/shopifyAction";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -312,10 +316,23 @@ export async function POST(req, res) {
 
       const wasActive = user.isActive;
 
+      // Determine plan change for Shopify sync
+      const shopifyPlans = ["Pro", "Business"];
+      const oldSubType = user.subscriptionType;
+      const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
+      const product = await stripe.products.retrieve(price.product);
+      const newPlanName = price.nickname || product.name || "";
+
+      const wasShopifyPlan = shopifyPlans.includes(oldSubType);
+      const isShopifyPlan = shopifyPlans.includes(newPlanName);
+
       // Update User
       user.subscriptionStart = currentStart;
       user.subscriptionEnd = currentEnd;
       user.isActive = newStatus;
+      if (newPlanName) {
+        user.subscriptionType = newPlanName;
+      }
       await user.save();
 
       // Update Subscription collection
@@ -326,6 +343,7 @@ export async function POST(req, res) {
           startDate: currentStart,
           endDate: currentEnd,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
+          planName: newPlanName || undefined,
         }
       );
 
@@ -338,6 +356,17 @@ export async function POST(req, res) {
         await unarchiveProduct(user._id);
       }
 
+      // Shopify sync: upgrade → bulk create, downgrade → bulk remove
+      if (!wasShopifyPlan && isShopifyPlan && newStatus) {
+        bulkCreateShopifyProducts(user._id).catch((err) =>
+          console.error("Bulk Shopify create failed:", err.message),
+        );
+      } else if (wasShopifyPlan && !isShopifyPlan) {
+        bulkRemoveShopifyProducts(user._id).catch((err) =>
+          console.error("Bulk Shopify remove failed:", err.message),
+        );
+      }
+
       break;
     }
 
@@ -348,6 +377,8 @@ export async function POST(req, res) {
       if (!user) break;
 
       const wasActive = user.isActive;
+      const shopifyPlans = ["Pro", "Business"];
+      const hadShopifyPlan = shopifyPlans.includes(user.subscriptionType);
 
       // User is no longer active
       user.isActive = false;
@@ -365,6 +396,13 @@ export async function POST(req, res) {
       // Only archive products if user was previously active
       if (wasActive) {
         await archiveProduct(user._id);
+      }
+
+      // Remove products from Shopify if user had a Shopify-enabled plan
+      if (hadShopifyPlan) {
+        bulkRemoveShopifyProducts(user._id).catch((err) =>
+          console.error("Bulk Shopify remove on cancel failed:", err.message),
+        );
       }
 
       break;

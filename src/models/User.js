@@ -89,6 +89,23 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  soldNotifications: {
+    type: Boolean,
+    default: true,
+  },
+  branding: {
+    logoUrl: { type: String, default: "" },
+    logoPublicId: { type: String, default: "" },
+    primaryColor: { type: String, default: "#000000" },
+    secondaryColor: { type: String, default: "#ffffff" },
+    accentColor: { type: String, default: "#ff6b6b" },
+    storeDescription: { type: String, default: "" },
+    socialLinks: {
+      instagram: { type: String, default: "" },
+      facebook: { type: String, default: "" },
+      website: { type: String, default: "" },
+    },
+  },
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

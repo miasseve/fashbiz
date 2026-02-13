@@ -35,9 +35,12 @@ const productSchema = new mongoose.Schema({
   consignorEmail: { type: String },
   consignorAccount: { type: String },
   sold: { type: Boolean, default: false },
+  soldVia: { type: String, enum: ["ree", "shopify"], default: null },
   archived: { type: Boolean, default: false },
   wixProductId: { type: String, required: false },
   shopifyProductId: { type: String, required: false },
+  shopifyVariantId: { type: String, required: false },
+  shopifyInventoryItemId: { type: String, required: false },
   // shopifyCollectionId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
   isDemo: {

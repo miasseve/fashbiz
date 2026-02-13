@@ -7,7 +7,6 @@ import {
   soldProductsByIds,
 } from "@/actions/productActions";
 // import { deleteProductsFromWix } from "@/actions/wixActions";
-import {deleteShopifyProduct} from "@/actions/shopifyAction";
 import { removeMultipleProductsFromCart } from "@/features/cartSlice";
 import { toast } from "react-toastify";
 import { clearCartOnCheckout } from "@/actions/productActions";
@@ -147,8 +146,7 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
       // All payments succeeded - clean up cart and products
       try {
         // await deleteProductsFromWix(allProducts);
-        //delete from shopify can be added here similarly
-        await deleteShopifyProduct(allProducts);
+        // Shopify inventory is now set to 0 inside soldProductsByIds (preserves product for order history)
         await soldProductsByIds(allProductIds);
         dispatch(removeMultipleProductsFromCart(allProductIds));
         const clearRes = await clearCartOnCheckout();

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { Spinner } from "@heroui/react";
 import { FaSearch, FaReply, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -30,7 +30,9 @@ const AdminSupportPage = () => {
 
   const isBugTab = activeTab === "bug_report";
 
-  const fetchTickets = async () => {
+  const POLL_INTERVAL = 15000; // 15 seconds
+
+  const fetchTickets = useCallback(async ({ silent = false } = {}) => {
     try {
       let res;
       if (activeTab === "bug_report") {
@@ -45,16 +47,25 @@ const AdminSupportPage = () => {
     } catch (error) {
       console.error("Failed to fetch tickets:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, [activeTab]);
 
+  // Initial fetch on tab change
   useEffect(() => {
     setLoading(true);
     setReplyingTo(null);
     setReplyText("");
     fetchTickets();
-  }, [activeTab]);
+  }, [fetchTickets]);
+
+  // Auto-poll for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTickets({ silent: true });
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchTickets]);
 
   useEffect(() => {
     setCurrentPage(1);

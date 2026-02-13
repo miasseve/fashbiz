@@ -177,6 +177,11 @@ export async function createShopifyProduct(formData) {
     const existingVariants =
       existingRes.data?.data?.product?.variants?.edges || [];
 
+    // Capture first variant for REE product linking
+    const firstVariantNode = existingVariants[0]?.node;
+    const firstVariantId = firstVariantNode?.id || null;
+    const firstInventoryItemId = firstVariantNode?.inventoryItem?.id || null;
+
     // Build lookup map for existing variants
     const existingVariantMap = new Map();
 
@@ -519,17 +524,76 @@ export async function createShopifyProduct(formData) {
 
     if (formattedTags.length > 0) {
       const smartCollectionId = await findOrCreateSmartCollectionByTags(
-        formattedTags, 
+        formattedTags,
         subcategory
       );
-      // if (smartCollectionId) {
-      //   console.log("✅ Product will be auto-added to smart collection based on tags");
-      // }
     }
+
+    // Ensure Shopify order webhook is registered (idempotent)
+    try {
+      const { registerShopifyWebhooks } = await import("./shopifyWebhookActions");
+      await registerShopifyWebhooks();
+    } catch (webhookErr) {
+      console.error("Failed to register Shopify webhook:", webhookErr.message);
+    }
+
+    // Publish product to the Online Store sales channel
+    try {
+      const GET_PUBLICATIONS = `
+        query {
+          publications(first: 10) {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
+        }
+      `;
+
+      const pubRes = await shopify.post("", { query: GET_PUBLICATIONS });
+      const publications = pubRes.data?.data?.publications?.edges || [];
+      const onlineStore = publications.find(
+        ({ node }) =>
+          node.name === "Online Store" || node.name === "Online store",
+      );
+
+      if (onlineStore) {
+        const PUBLISH_PRODUCT = `
+          mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+            publishablePublish(id: $id, input: $input) {
+              publishable {
+                availablePublicationsCount {
+                  count
+                }
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `;
+
+        await shopify.post("", {
+          query: PUBLISH_PRODUCT,
+          variables: {
+            id: productId,
+            input: [{ publicationId: onlineStore.node.id }],
+          },
+        });
+      }
+    } catch (pubErr) {
+      console.error("Failed to publish product to Online Store:", pubErr.message);
+    }
+
     return {
       status: 200,
       message: "Product created successfully",
       productId,
+      variantId: firstVariantId,
+      inventoryItemId: firstInventoryItemId,
     };
   } catch (error) {
     return {
@@ -650,7 +714,7 @@ export async function updateInventory(inventoryItemId, locationId, quantity) {
       variables: {
         input: {
           reason: "correction",
-          name: "available",
+          name: "on_hand",
           ignoreCompareQuantity: true,
           quantities: [
             {
@@ -778,28 +842,44 @@ export async function deleteShopifyProduct(products) {
   }
 }
 
-// export async function disableShopifyProduct(productId) {
-//   const DISABLE_PRODUCT = `
-//     mutation productUpdate($input: ProductInput!) {
-//       productUpdate(input: $input) {
-//         product { id status }
-//         userErrors { field message }
-//       }
-//     }
-//   `;
+export async function disableShopifyProduct(productId) {
+  try {
+    const DISABLE_PRODUCT = `
+      mutation productUpdate($input: ProductInput!) {
+        productUpdate(input: $input) {
+          product { id status }
+          userErrors { field message }
+        }
+      }
+    `;
 
-//   await shopify.post("", {
-//     query: DISABLE_PRODUCT,
-//     variables: {
-//       input: {
-//         id: productId,
-//         status: "DRAFT",
-//       },
-//     },
-//   });
+    const response = await shopify.post("", {
+      query: DISABLE_PRODUCT,
+      variables: {
+        input: {
+          id: productId,
+          status: "DRAFT",
+        },
+      },
+    });
 
-//   return { success: true };
-// }
+    if (response.data?.errors) {
+      console.error("Error disabling Shopify product:", response.data.errors);
+      return { success: false, errors: response.data.errors };
+    }
+
+    const result = response.data?.data?.productUpdate;
+    if (result?.userErrors?.length) {
+      console.error("User errors disabling Shopify product:", result.userErrors);
+      return { success: false, userErrors: result.userErrors };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in disableShopifyProduct:", error.message);
+    return { success: false, error: error.message };
+  }
+}
 
 
 //  GET COLLECTION BY HANDLE/UUID
@@ -1102,6 +1182,103 @@ async function findCollectionByTags(tags) {
 //     return { success: false, error: error.message };
 //   }
 // }
+
+// BULK CREATE SHOPIFY PRODUCTS (on plan upgrade to Pro/Business)
+export async function bulkCreateShopifyProducts(userId) {
+  const mongoose = (await import("mongoose")).default;
+  const Product =
+    mongoose.models.Product ||
+    (await import("@/models/Product")).default;
+
+  const products = await Product.find({
+    userId,
+    shopifyProductId: { $exists: false },
+    collect: { $ne: true },
+    sold: { $ne: true },
+    archived: { $ne: true },
+    pointsValue: null,
+  });
+
+  const results = { successful: 0, failed: 0, errors: [] };
+
+  for (const product of products) {
+    try {
+      const shopifyResponse = await createShopifyProduct({
+        title: product.title,
+        sku: product.sku,
+        brand: product.brand,
+        description: product.description,
+        price: product.price,
+        images: product.images || [],
+        color: product.color?.name || "No Color",
+        size: product.size || [],
+        fabric: product.fabric || "",
+        subcategory: product.subcategory || "",
+        tags: [],
+        barcodeValue: product.barcode,
+      });
+
+      if (shopifyResponse.status === 200) {
+        await Product.findByIdAndUpdate(product._id, {
+          shopifyProductId: shopifyResponse.productId,
+          shopifyVariantId: shopifyResponse.variantId,
+          shopifyInventoryItemId: shopifyResponse.inventoryItemId,
+        });
+        results.successful++;
+      } else {
+        results.failed++;
+        results.errors.push({
+          productId: product._id,
+          error: shopifyResponse.error,
+        });
+      }
+    } catch (err) {
+      results.failed++;
+      results.errors.push({ productId: product._id, error: err.message });
+    }
+
+    // Rate limit: Shopify allows ~2 requests/second for GraphQL
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  return results;
+}
+
+// BULK REMOVE SHOPIFY PRODUCTS (on plan downgrade from Pro/Business)
+export async function bulkRemoveShopifyProducts(userId) {
+  const mongoose = (await import("mongoose")).default;
+  const Product =
+    mongoose.models.Product ||
+    (await import("@/models/Product")).default;
+
+  const products = await Product.find({
+    userId,
+    shopifyProductId: { $exists: true, $ne: null },
+  });
+
+  const results = { successful: 0, failed: 0 };
+
+  for (const product of products) {
+    try {
+      await deleteShopifyProduct([product]);
+      await Product.findByIdAndUpdate(product._id, {
+        $unset: {
+          shopifyProductId: "",
+          shopifyVariantId: "",
+          shopifyInventoryItemId: "",
+        },
+      });
+      results.successful++;
+    } catch (err) {
+      results.failed++;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  return results;
+}
+
 //  GET SHOPIFY LOCATIONS
 export async function getShopifyLocations() {
   try {
@@ -1130,6 +1307,46 @@ export async function getShopifyLocations() {
     return response.data.data.locations.edges.map((edge) => edge.node);
   } catch (error) {
     console.error("Error fetching locations:", error);
+    return [];
+  }
+}
+
+// GET ALL VARIANT INVENTORY ITEM IDS FOR A PRODUCT
+export async function getAllVariantInventoryIds(shopifyProductId) {
+  try {
+    const GET_VARIANTS = `
+      query getProductVariants($id: ID!) {
+        product(id: $id) {
+          variants(first: 100) {
+            edges {
+              node {
+                id
+                inventoryItem {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await shopify.post("", {
+      query: GET_VARIANTS,
+      variables: { id: shopifyProductId },
+    });
+
+    if (response.data.errors || !response.data.data?.product?.variants) {
+      console.error("Error fetching variant inventory IDs:", response.data.errors);
+      return [];
+    }
+
+    const variants = response.data.data.product.variants.edges || [];
+    return variants
+      .map(({ node }) => node.inventoryItem?.id)
+      .filter(Boolean);
+  } catch (error) {
+    console.error("Error in getAllVariantInventoryIds:", error);
     return [];
   }
 }

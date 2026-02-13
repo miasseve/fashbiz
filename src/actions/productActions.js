@@ -10,8 +10,12 @@ import {
   updateShopifyProduct,
   createShopifyProduct,
   deleteShopifyProduct,
+  getShopifyLocations,
+  updateInventory,
+  disableShopifyProduct,
 } from "./shopifyAction";
 import InstagramPostLog from "@/models/InstagramPostLogs";
+import Notification from "@/models/Notification";
 // import {
 //   createWixProduct,
 //   unlinkWixProduct,
@@ -24,6 +28,8 @@ import InstagramPostLog from "@/models/InstagramPostLogs";
 export async function createProduct(formData) {
   let createdShopifyProduct = false;
   let shopifyProductId = null;
+  let shopifyVariantId = null;
+  let shopifyInventoryItemId = null;
   try {
     const session = await auth();
 
@@ -93,8 +99,12 @@ export async function createProduct(formData) {
         : null;
     }
 
-    // Only create product in Wix if collect is false
-    if (collect === false && pointsValue == null) {
+    // Only sync to Shopify for Pro and Business plans
+    const userSubscription = await getUserSubscriptionType();
+    const canSyncToShopify =
+      userSubscription === "Pro" || userSubscription === "Business";
+
+    if (collect === false && pointsValue == null && canSyncToShopify) {
       try {
         // Create product in Shopify
         const shopifyResponse = await createShopifyProduct({
@@ -103,6 +113,8 @@ export async function createProduct(formData) {
         });
         if (shopifyResponse.status === 200) {
           shopifyProductId = shopifyResponse.productId;
+          shopifyVariantId = shopifyResponse.variantId;
+          shopifyInventoryItemId = shopifyResponse.inventoryItemId;
           createdShopifyProduct = true;
         }
         // Create product in Wix
@@ -164,6 +176,8 @@ export async function createProduct(formData) {
       barcode: barcodeValue,
       isDemo: isDemo,
       shopifyProductId: shopifyProductId,
+      shopifyVariantId: shopifyVariantId,
+      shopifyInventoryItemId: shopifyInventoryItemId,
     });
 
     await newProduct.save();
@@ -563,6 +577,7 @@ export async function getUserProductsSold() {
 
     // Connect to the database
     await dbConnect();
+
     let userProducts = [];
     // Fetch products for the authenticated user
     if (session.user.role == "store") {
@@ -580,9 +595,30 @@ export async function getUserProductsSold() {
         createdAt: -1,
       });
     }
+
+    // Fetch notifications for sold products (for Shopify order details)
+    const productIds = userProducts.map((p) => p._id);
+    const notifications = await Notification.find({
+      productId: { $in: productIds },
+      type: "sold",
+    }).lean();
+
+    // Create a map of productId -> notification orderDetails
+    const notifMap = {};
+    for (const n of notifications) {
+      notifMap[n.productId.toString()] = n.orderDetails || null;
+    }
+
+    // Attach orderDetails to each product
+    const productsWithDetails = userProducts.map((p) => {
+      const obj = p.toObject();
+      obj.orderDetails = notifMap[p._id.toString()] || null;
+      return obj;
+    });
+
     return {
       status: 200,
-      products: JSON.stringify(userProducts),
+      products: JSON.stringify(productsWithDetails),
     };
   } catch (error) {
     return {
@@ -878,10 +914,10 @@ export async function soldProductsByIds(productIds) {
       };
     }
 
-    // Delete the products with the given IDs
+    // Mark products as sold in database (sold on REE)
     const result = await Product.updateMany(
       { _id: { $in: productIds } },
-      { $set: { sold: true } },
+      { $set: { sold: true, soldVia: "ree" } },
     );
 
     if (result.modifiedCount === 0) {
@@ -890,6 +926,56 @@ export async function soldProductsByIds(productIds) {
         message: "No products were updated",
       };
     }
+
+    // Sync inventory to 0 on Shopify for ALL variants of sold products
+    const soldProducts = await Product.find({
+      _id: { $in: productIds },
+      shopifyProductId: { $exists: true, $ne: null },
+    });
+
+    if (soldProducts.length > 0) {
+      // Set inventory to 0 on Shopify
+      try {
+        const locations = await getShopifyLocations();
+        const activeLocation = locations.find((l) => l.isActive);
+        if (activeLocation) {
+          for (const product of soldProducts) {
+            try {
+              const { getAllVariantInventoryIds } = await import("./shopifyAction");
+              const inventoryItemIds = await getAllVariantInventoryIds(product.shopifyProductId);
+
+              if (inventoryItemIds.length > 0) {
+                for (const inventoryItemId of inventoryItemIds) {
+                  await updateInventory(inventoryItemId, activeLocation.id, 0);
+                }
+              } else if (product.shopifyInventoryItemId) {
+                await updateInventory(product.shopifyInventoryItemId, activeLocation.id, 0);
+              }
+            } catch (invErr) {
+              console.error(
+                `Failed to sync Shopify inventory for product ${product._id}:`,
+                invErr.message,
+              );
+            }
+          }
+        }
+      } catch (locErr) {
+        console.error("Failed to fetch Shopify locations:", locErr.message);
+      }
+
+      // Set products to DRAFT on Shopify to hide them from the store
+      for (const product of soldProducts) {
+        try {
+          await disableShopifyProduct(product.shopifyProductId);
+        } catch (draftErr) {
+          console.error(
+            `Failed to set Shopify product to DRAFT for product ${product._id}:`,
+            draftErr.message,
+          );
+        }
+      }
+    }
+
     return {
       status: 200,
       message: "Products status updated to sold successfully",

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -16,24 +16,35 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const POLL_INTERVAL = 15000; // 15 seconds
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const [supportRes, bugRes] = await Promise.all([
+        fetch("/api/admin/support/unread"),
+        fetch("/api/admin/bug-reports/unread"),
+      ]);
+      const supportData = await supportRes.json();
+      const bugData = await bugRes.json();
+      setUnreadCount((supportData.count || 0) + (bugData.count || 0));
+    } catch (error) {
+      console.error("Failed to fetch unread counts:", error);
+    }
+  }, []);
+
+  // Fetch on mount, pathname change
   useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const [supportRes, bugRes] = await Promise.all([
-          fetch("/api/admin/support/unread"),
-          fetch("/api/admin/bug-reports/unread"),
-        ]);
-        const supportData = await supportRes.json();
-        const bugData = await bugRes.json();
-        setUnreadCount((supportData.count || 0) + (bugData.count || 0));
-      } catch (error) {
-        console.error("Failed to fetch unread counts:", error);
-      }
-    };
     if (session.data?.user?.role === "admin") {
       fetchUnread();
     }
-  }, [session.data?.user?.role, pathname]);
+  }, [session.data?.user?.role, pathname, fetchUnread]);
+
+  // Auto-poll for real-time unread badge updates
+  useEffect(() => {
+    if (session.data?.user?.role !== "admin") return;
+    const interval = setInterval(fetchUnread, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [session.data?.user?.role, fetchUnread]);
 
   if (session.status === "loading") {
     return (

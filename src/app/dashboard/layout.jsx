@@ -15,6 +15,7 @@ import { clearConsignors, clearProductState } from "@/features/productSlice";
 import { clearCart } from "@/features/cartSlice";
 import { usePathname } from "next/navigation";
 import ChatBot from "@/components/ChatBot";
+import NotificationBell from "@/components/NotificationBell";
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -105,7 +106,7 @@ const Layout = ({ children }) => {
         >
           {/* HEADER */}
           <Card
-            className={`overflow-hidden w-full py-4 px-8 rounded-none sticky top-0 h-[71px] flex flex-row items-center justify-between lg:justify-end z-50 bg-none border-b-0 transition-opacity duration-200
+            className={`overflow-visible w-full py-4 px-8 rounded-none sticky top-0 h-[71px] flex flex-row items-center justify-between lg:justify-end z-50 bg-white border-b-0 transition-opacity duration-200
   ${
     isSidebarOpen
       ? "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto"
@@ -116,7 +117,8 @@ const Layout = ({ children }) => {
               <GiHamburgerMenu size={25} />
             </button>
 
-            <div className="cursor-pointer">
+            <div className="flex items-center gap-3">
+              <NotificationBell />
               <Button
                 isLoading={loading}
                 className="danger-btn"
