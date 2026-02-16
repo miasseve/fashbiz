@@ -16,5 +16,7 @@ export async function GET() {
     isRead: false,
   });
 
-  return NextResponse.json({ count }, { status: 200 });
+  const response = NextResponse.json({ count }, { status: 200 });
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  return response;
 }

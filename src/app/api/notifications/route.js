@@ -22,5 +22,7 @@ export async function GET(req) {
     .populate("productId", "title images sku price")
     .lean();
 
-  return NextResponse.json({ notifications }, { status: 200 });
+  const response = NextResponse.json({ notifications }, { status: 200 });
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  return response;
 }
