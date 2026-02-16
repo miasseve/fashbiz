@@ -7,27 +7,33 @@ export const dynamic = "force-dynamic";
 
 const NO_CACHE = "no-store, no-cache, must-revalidate";
 
+function noCache(res) {
+  res.headers.set("Cache-Control", NO_CACHE);
+  return res;
+}
+
 export async function GET() {
-  let session;
   try {
-    session = await auth();
-  } catch {
-    // auth() throws when cookie can't be decrypted (e.g., AUTH_SECRET changed)
+    let session;
+    try {
+      session = await auth();
+    } catch {
+      // auth() throws when cookie can't be decrypted
+    }
+    if (!session) {
+      return noCache(NextResponse.json({ count: 0 }, { status: 200 }));
+    }
+
+    await dbConnect();
+
+    const count = await Notification.countDocuments({
+      userId: session.user.id,
+      isRead: false,
+    });
+
+    return noCache(NextResponse.json({ count }, { status: 200 }));
+  } catch (err) {
+    console.error("Unread count API error:", err);
+    return noCache(NextResponse.json({ count: 0 }, { status: 200 }));
   }
-  if (!session) {
-    const res = NextResponse.json({ count: 0 }, { status: 200 });
-    res.headers.set("Cache-Control", NO_CACHE);
-    return res;
-  }
-
-  await dbConnect();
-
-  const count = await Notification.countDocuments({
-    userId: session.user.id,
-    isRead: false,
-  });
-
-  const response = NextResponse.json({ count }, { status: 200 });
-  response.headers.set("Cache-Control", NO_CACHE);
-  return response;
 }
