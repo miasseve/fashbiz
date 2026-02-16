@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import Notification from "@/models/Notification";
+import "@/models/Product"; // Required for .populate("productId")
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
