@@ -4,7 +4,12 @@ import Notification from "@/models/Notification";
 import { NextResponse } from "next/server";
 
 export async function PATCH(req, { params }) {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch {
+    // auth() throws when cookie can't be decrypted
+  }
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
