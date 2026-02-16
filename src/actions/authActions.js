@@ -19,7 +19,6 @@ import {
 import dayjs from "dayjs";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
 import ActiveUser from "@/models/Activeuser";
-import { getInternetIp } from "./getClientIp";
 
 export async function registerUser(data) {
   try {
@@ -113,11 +112,18 @@ export async function signOutUser({ callbackUrl = "/" } = {}) {
     const session = await auth();
     const userId = session?.user?.id;
     if (session?.user?.role === "store") {
-      const ipAddress = await getInternetIp();
-      if (userId && ipAddress) {
-        await ActiveUser.deleteOne({ userId, ipAddress });
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      const deviceId = cookieStore.get("ree-device-id")?.value;
+
+      if (userId && deviceId) {
+        await ActiveUser.deleteOne({ userId, deviceId });
       } else {
-        console.warn("Missing userId or IP address during logout");
+        // Fallback: if device cookie can't be read, delete all sessions for this user
+        if (userId) {
+          await ActiveUser.deleteMany({ userId });
+          console.warn("Could not determine deviceId during logout — cleared all sessions for user:", userId);
+        }
       }
     }
   } catch (error) {

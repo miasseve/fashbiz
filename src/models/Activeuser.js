@@ -8,19 +8,13 @@ const ActiveUserSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    // deviceId: {
-    //   type: String,
-    //   required: true,
-    //   index: true,
-    // },
-    ipAddress: {
+    deviceId: {
       type: String,
       required: true,
     },
     lastActiveAt: {
       type: Date,
       default: Date.now,
-      index: true,
     },
   },
   {
@@ -28,7 +22,11 @@ const ActiveUserSchema = new mongoose.Schema(
   }
 );
 
-ActiveUserSchema.index({ userId: 1, ipAddress: 1 }, { unique: true });
+ActiveUserSchema.index({ userId: 1, deviceId: 1 }, { unique: true });
+
+// Auto-expire stale sessions after 24 hours of inactivity
+// This handles cases where users close the browser without logging out
+ActiveUserSchema.index({ lastActiveAt: 1 }, { expireAfterSeconds: 86400 });
 
 export default mongoose.models.ActiveUser ||
   mongoose.model("ActiveUser", ActiveUserSchema);
