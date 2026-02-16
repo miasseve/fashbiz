@@ -36,6 +36,15 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Re-fetch when page becomes visible again (e.g., tab switch, window reopen)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [fetchNotifications]);
 
   const handleToggleRead = async (id, currentIsRead) => {
