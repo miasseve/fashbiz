@@ -18,6 +18,7 @@ const NotificationBell = () => {
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications/unread");
+      if (!res.ok) return;
       const data = await res.json();
       const newCount = data.count || 0;
 
@@ -28,7 +29,7 @@ const NotificationBell = () => {
       prevUnreadRef.current = newCount;
       setUnreadCount(newCount);
     } catch (err) {
-      console.error("Failed to fetch unread count:", err);
+      // Silently fail — polling will retry in 5s
     }
   }, [isOpen]);
 
@@ -42,10 +43,14 @@ const NotificationBell = () => {
     setLoading(true);
     try {
       const res = await fetch("/api/notifications?limit=20");
+      if (!res.ok) {
+        setNotifications([]);
+        return;
+      }
       const data = await res.json();
       setNotifications(data.notifications || []);
     } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+      // Silently fail
     } finally {
       setLoading(false);
     }

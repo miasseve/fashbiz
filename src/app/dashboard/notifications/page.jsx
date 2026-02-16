@@ -24,11 +24,15 @@ const NotificationsPage = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications?limit=100");
+      if (!res.ok) {
+        // Auth expired or server error — don't show toast, just show empty
+        setNotifications([]);
+        return;
+      }
       const data = await res.json();
       setNotifications(data.notifications || []);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
-      toast.error("Failed to load notifications");
     } finally {
       setLoading(false);
     }
