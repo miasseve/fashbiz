@@ -116,6 +116,13 @@ export async function createProduct(formData) {
           shopifyVariantId = shopifyResponse.variantId;
           shopifyInventoryItemId = shopifyResponse.inventoryItemId;
           createdShopifyProduct = true;
+        } else {
+          return {
+            status: 400,
+            error:
+              shopifyResponse.error ||
+              "Failed to create product on Shopify. Please try again.",
+          };
         }
         // Create product in Wix
         // const wixResult = await createWixProduct({

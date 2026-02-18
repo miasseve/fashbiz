@@ -291,11 +291,11 @@ const SecondStep = ({
         setFormData(null);
         setCollectSelection(null);
       } else {
-        setErrorMessage(response.error);
+        toast.error(response.error || "Failed to create product. Please try again.");
       }
     } catch (e) {
       console.log("Error in product creation:", e);
-      setErrorMessage("Failed to create product. Please try again.");
+      toast.error("Failed to create product. Please try again.");
     }
   };
 

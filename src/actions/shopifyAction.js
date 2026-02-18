@@ -1192,7 +1192,10 @@ export async function bulkCreateShopifyProducts(userId) {
 
   const products = await Product.find({
     userId,
-    shopifyProductId: { $exists: false },
+    $or: [
+      { shopifyProductId: { $exists: false } },
+      { shopifyProductId: null },
+    ],
     collect: { $ne: true },
     sold: { $ne: true },
     archived: { $ne: true },
