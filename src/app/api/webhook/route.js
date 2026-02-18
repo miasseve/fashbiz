@@ -318,15 +318,15 @@ export async function POST(req, res) {
 
       const wasActive = user.isActive;
 
-      // Determine plan change for Shopify sync
-      const shopifyPlans = ["Pro", "Business"];
+      // Determine plan change for branding (Pro/Business only feature)
+      const brandingPlans = ["Pro", "Business"];
       const oldSubType = user.subscriptionType;
       const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
       const product = await stripe.products.retrieve(price.product);
       const newPlanName = price.nickname || product.name || "";
 
-      const wasShopifyPlan = shopifyPlans.includes(oldSubType);
-      const isShopifyPlan = shopifyPlans.includes(newPlanName);
+      const wasOnBrandingPlan = brandingPlans.includes(oldSubType);
+      const isOnBrandingPlan = brandingPlans.includes(newPlanName);
 
       // Update User
       user.subscriptionStart = currentStart;
@@ -358,27 +358,27 @@ export async function POST(req, res) {
         await unarchiveProduct(user._id);
       }
 
-      // Shopify sync: upgrade → bulk create + apply branding, downgrade → bulk remove
-      if (!wasShopifyPlan && isShopifyPlan && newStatus) {
+      // Basic Shopify sync is available on ALL plans.
+      // Bulk create any missing Shopify products whenever a user becomes active.
+      if (!wasActive && newStatus) {
         bulkCreateShopifyProducts(user._id).catch((err) =>
           console.error("Bulk Shopify create failed:", err.message),
         );
-
-        // Apply store branding to Shopify theme if configured
-        if (user.branding?.logoUrl || user.branding?.primaryColor !== "#000000") {
-          applyBrandingToThemeForUser(user._id).catch((err) =>
-            console.error("Branding application failed:", err.message),
-          );
-        }
 
         // Register webhooks (ORDERS_CREATE + INVENTORY_LEVELS_SET)
         registerShopifyWebhooks().catch((err) =>
           console.error("Webhook registration failed:", err.message),
         );
-      } else if (wasShopifyPlan && !isShopifyPlan) {
-        bulkRemoveShopifyProducts(user._id).catch((err) =>
-          console.error("Bulk Shopify remove failed:", err.message),
-        );
+      }
+
+      // Shopify store branding is a Pro/Business-only feature.
+      // Apply branding only when upgrading into a branding plan.
+      if (!wasOnBrandingPlan && isOnBrandingPlan && newStatus) {
+        if (user.branding?.logoUrl || user.branding?.primaryColor !== "#000000") {
+          applyBrandingToThemeForUser(user._id).catch((err) =>
+            console.error("Branding application failed:", err.message),
+          );
+        }
       }
 
       break;
@@ -391,8 +391,6 @@ export async function POST(req, res) {
       if (!user) break;
 
       const wasActive = user.isActive;
-      const shopifyPlans = ["Pro", "Business"];
-      const hadShopifyPlan = shopifyPlans.includes(user.subscriptionType);
 
       // User is no longer active
       user.isActive = false;
@@ -412,12 +410,10 @@ export async function POST(req, res) {
         await archiveProduct(user._id);
       }
 
-      // Remove products from Shopify if user had a Shopify-enabled plan
-      if (hadShopifyPlan) {
-        bulkRemoveShopifyProducts(user._id).catch((err) =>
-          console.error("Bulk Shopify remove on cancel failed:", err.message),
-        );
-      }
+      // Remove products from Shopify for all plans — subscription has ended
+      bulkRemoveShopifyProducts(user._id).catch((err) =>
+        console.error("Bulk Shopify remove on cancel failed:", err.message),
+      );
 
       break;
     }

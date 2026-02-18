@@ -99,12 +99,7 @@ export async function createProduct(formData) {
         : null;
     }
 
-    // Only sync to Shopify for Pro and Business plans
-    const userSubscription = await getUserSubscriptionType();
-    const canSyncToShopify =
-      userSubscription === "Pro" || userSubscription === "Business";
-
-    if (collect === false && pointsValue == null && canSyncToShopify) {
+    if (collect === false && pointsValue == null) {
       try {
         // Create product in Shopify
         const shopifyResponse = await createShopifyProduct({

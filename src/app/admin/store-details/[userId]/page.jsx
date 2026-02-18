@@ -102,7 +102,7 @@ const StoreDetailPage = () => {
     return {
       icon: <MdCancel className="text-gray-400 text-xl" />,
       label: "Not Set Up",
-      sub: "No products added yet. Shopify sync happens when products are added on a Pro/Business plan.",
+      sub: "No products added yet. Products are synced to Shopify automatically when added.",
       badge: "bg-gray-50 border-gray-200 text-gray-600",
     };
   };
