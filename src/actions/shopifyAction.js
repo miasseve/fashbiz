@@ -537,55 +537,18 @@ export async function createShopifyProduct(formData) {
       console.error("Failed to register Shopify webhook:", webhookErr.message);
     }
 
-    // Publish product to the Online Store sales channel
+    // Publish product to the Online Store sales channel via REST API.
+    // This uses published:true which only requires write_products scope,
+    // avoiding the read_publications/write_publications scope requirement.
     try {
-      const GET_PUBLICATIONS = `
-        query {
-          publications(first: 10) {
-            edges {
-              node {
-                id
-                name
-              }
-            }
-          }
-        }
-      `;
-
-      const pubRes = await shopify.post("", { query: GET_PUBLICATIONS });
-      const publications = pubRes.data?.data?.publications?.edges || [];
-      const onlineStore = publications.find(
-        ({ node }) =>
-          node.name === "Online Store" || node.name === "Online store",
+      const numericProductId = productId.split("/").pop();
+      await axios.put(
+        `https://${shopifyStoreDomain}/admin/api/2024-10/products/${numericProductId}.json`,
+        { product: { id: numericProductId, published: true } },
+        { headers: { "X-Shopify-Access-Token": shopifyAccessToken, "Content-Type": "application/json" } },
       );
-
-      if (onlineStore) {
-        const PUBLISH_PRODUCT = `
-          mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
-            publishablePublish(id: $id, input: $input) {
-              publishable {
-                availablePublicationsCount {
-                  count
-                }
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        `;
-
-        await shopify.post("", {
-          query: PUBLISH_PRODUCT,
-          variables: {
-            id: productId,
-            input: [{ publicationId: onlineStore.node.id }],
-          },
-        });
-      }
     } catch (pubErr) {
-      console.error("Failed to publish product to Online Store:", pubErr.message);
+      console.error("Failed to publish product to Online Store:", pubErr.response?.data || pubErr.message);
     }
 
     return {
