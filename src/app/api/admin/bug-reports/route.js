@@ -5,7 +5,7 @@ import ContactSupport from "@/models/ContactSupport";
 export async function GET(req) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "admin") {
+    if (!session || session.user.role !== "admin" && session.user.role !== "developer") {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -54,7 +54,7 @@ export async function GET(req) {
 export async function DELETE(req) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "admin") {
+    if (!session || session.user.role !== "admin" && session.user.role !== "developer") {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

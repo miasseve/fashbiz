@@ -63,7 +63,7 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ["admin","brand","consignor","store"],
+    enum: ["admin", "brand", "consignor", "store", "developer"],
   },
   emailVerified: Date,
   subscriptionType: {
@@ -92,6 +92,10 @@ const UserSchema = new mongoose.Schema({
   soldNotifications: {
     type: Boolean,
     default: true,
+  },
+  shopifyStoreCreated: {
+    type: Boolean,
+    default: false,
   },
   branding: {
     logoUrl: { type: String, default: "" },

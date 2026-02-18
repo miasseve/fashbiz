@@ -37,6 +37,7 @@ export async function proxy(req) {
     "/admin/products",
     "/admin/support",
     "/admin/reports",
+    "/admin/developer",
   ];
 
   const isPublic = publicRoutes.includes(nextUrl.pathname);
@@ -47,7 +48,7 @@ export async function proxy(req) {
   const userRole = token?.role || null;
 
   if (isPublic && token) {
-    if (userRole === "admin") {
+    if (userRole === "admin" || userRole === "developer") {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
     return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
@@ -56,7 +57,7 @@ export async function proxy(req) {
     return NextResponse.next();
   }
   if (isAuthRoute && token) {
-    if (userRole === "admin") {
+    if (userRole === "admin" || userRole === "developer") {
       return NextResponse.redirect(new URL("/admin", req.url));
     } else if (userRole === "store") {
       return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
@@ -70,7 +71,7 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (isAdminRoute && userRole !== "admin") {
+  if (isAdminRoute && userRole !== "admin" && userRole !== "developer") {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 
@@ -78,8 +79,8 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Prevent admin from accessing regular dashboard routes
-  if (isProtected && userRole === "admin") {
+  // Prevent admin/developer from accessing regular dashboard routes
+  if (isProtected && (userRole === "admin" || userRole === "developer")) {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 

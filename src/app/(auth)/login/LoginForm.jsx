@@ -39,7 +39,7 @@ const LoginForm = () => {
 
     const result = await res.json();
     if (result.status === 200) {
-      if (result.role === "admin") {
+      if (result.role === "admin" || result.role === "developer") {
         router.push("/admin");
       } else if (result.profileStatus) {
         if (result.role == "store") {

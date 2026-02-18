@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
-import { MdDashboard, MdTimeline, MdSupportAgent } from "react-icons/md";
+import { MdDashboard, MdTimeline, MdSupportAgent, MdDeveloperMode } from "react-icons/md";
 import { FaUsers } from "react-icons/fa";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { TbReportAnalytics } from "react-icons/tb";
@@ -39,7 +39,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     }
   }, [session.data?.user?.role, pathname, fetchUnread]);
 
-  // Auto-poll for real-time unread badge updates
+  // Auto-poll for real-time unread badge updates (admin only)
   useEffect(() => {
     if (session.data?.user?.role !== "admin") return;
     const interval = setInterval(fetchUnread, POLL_INTERVAL);
@@ -54,19 +54,21 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     );
   }
 
-  if (session.data?.user?.role !== "admin") {
+  const userRole = session.data?.user?.role;
+  if (userRole !== "admin" && userRole !== "developer") {
     router.push("/login");
     return null;
   }
 
   const menuItems = [
-    { href: "/admin", label: "Overview", icon: <MdDashboard /> },
-    { href: "/admin/live-activity", label: "Live Activity", icon: <MdTimeline /> },
-    { href: "/admin/stores-users", label: "Stores & Users", icon: <FaUsers /> },
-    { href: "/admin/products", label: "Products", icon: <BiLogoProductHunt /> },
-    { href: "/admin/support", label: "Support", icon: <MdSupportAgent /> },
-    { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics /> },
-  ];
+    { href: "/admin", label: "Overview", icon: <MdDashboard />, roles: ["admin", "developer"] },
+    { href: "/admin/live-activity", label: "Live Activity", icon: <MdTimeline />, roles: ["admin", "developer"] },
+    { href: "/admin/stores-users", label: "Stores & Users", icon: <FaUsers />, roles: ["admin", "developer"] },
+    { href: "/admin/products", label: "Products", icon: <BiLogoProductHunt />, roles: ["admin", "developer"] },
+    { href: "/admin/support", label: "Support", icon: <MdSupportAgent />, roles: ["admin", "developer"] },
+    { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
+    { href: "/admin/developer", label: "Developer", icon: <MdDeveloperMode />, roles: ["developer"] },
+  ].filter((item) => item.roles.includes(userRole));
 
   return (
     <div>

@@ -35,38 +35,44 @@ export async function registerShopifyWebhooks() {
     }
   `;
 
-  try {
-    const response = await shopify.post("", {
-      query: REGISTER_WEBHOOK,
-      variables: {
-        topic: "ORDERS_CREATE",
-        webhookSubscription: {
-          callbackUrl: webhookUrl,
-          format: "JSON",
+  const topics = ["ORDERS_CREATE", "INVENTORY_LEVELS_SET"];
+  const results = [];
+
+  for (const topic of topics) {
+    try {
+      const response = await shopify.post("", {
+        query: REGISTER_WEBHOOK,
+        variables: {
+          topic,
+          webhookSubscription: {
+            callbackUrl: webhookUrl,
+            format: "JSON",
+          },
         },
-      },
-    });
+      });
 
-    const result = response.data?.data?.webhookSubscriptionCreate;
+      const result = response.data?.data?.webhookSubscriptionCreate;
 
-    if (result?.userErrors?.length) {
-      return {
-        status: 400,
-        error: result.userErrors.map((e) => e.message).join(", "),
-      };
+      if (result?.userErrors?.length) {
+        // "already exists" is expected and harmless
+        results.push({
+          topic,
+          status: "skipped",
+          error: result.userErrors.map((e) => e.message).join(", "),
+        });
+      } else {
+        results.push({
+          topic,
+          status: "registered",
+          webhookId: result?.webhookSubscription?.id,
+        });
+      }
+    } catch (error) {
+      results.push({ topic, status: "error", error: error.message });
     }
-
-    return {
-      status: 200,
-      message: "Webhook registered successfully",
-      webhookId: result?.webhookSubscription?.id,
-    };
-  } catch (error) {
-    return {
-      status: 500,
-      error: error.message,
-    };
   }
+
+  return { status: 200, results };
 }
 
 export async function listShopifyWebhooks() {

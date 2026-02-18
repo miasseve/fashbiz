@@ -8,7 +8,7 @@ import Subscription from "@/models/Subscription";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "admin") {
+    if (!session || session.user.role !== "admin" && session.user.role !== "developer") {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

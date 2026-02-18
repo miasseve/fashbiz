@@ -15,6 +15,8 @@ import {
   bulkCreateShopifyProducts,
   bulkRemoveShopifyProducts,
 } from "@/actions/shopifyAction";
+import { applyBrandingToThemeForUser } from "@/actions/shopifyThemeActions";
+import { registerShopifyWebhooks } from "@/actions/shopifyWebhookActions";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -356,10 +358,22 @@ export async function POST(req, res) {
         await unarchiveProduct(user._id);
       }
 
-      // Shopify sync: upgrade → bulk create, downgrade → bulk remove
+      // Shopify sync: upgrade → bulk create + apply branding, downgrade → bulk remove
       if (!wasShopifyPlan && isShopifyPlan && newStatus) {
         bulkCreateShopifyProducts(user._id).catch((err) =>
           console.error("Bulk Shopify create failed:", err.message),
+        );
+
+        // Apply store branding to Shopify theme if configured
+        if (user.branding?.logoUrl || user.branding?.primaryColor !== "#000000") {
+          applyBrandingToThemeForUser(user._id).catch((err) =>
+            console.error("Branding application failed:", err.message),
+          );
+        }
+
+        // Register webhooks (ORDERS_CREATE + INVENTORY_LEVELS_SET)
+        registerShopifyWebhooks().catch((err) =>
+          console.error("Webhook registration failed:", err.message),
         );
       } else if (wasShopifyPlan && !isShopifyPlan) {
         bulkRemoveShopifyProducts(user._id).catch((err) =>

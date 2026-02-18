@@ -3,6 +3,9 @@ import { stripe } from "@/lib/stripe";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
 import { emailService } from "@/mails/emailSubscription";
+import { createStore } from "@reduxjs/toolkit";
+import axios from "axios";
+import Product from "@/models/Product";
 
 export const subscriptionService = {
   // Get or create Stripe customer
@@ -22,6 +25,94 @@ export const subscriptionService = {
 
     return customer.id;
   },
+  // async checkStoreExists(userId) {
+  //   console.log("Checking for userId:", userId);
+  //   try {
+  //     const response = await axios.post(
+  //       "https://www.wixapis.com/wix-data/v2/items/query",
+  //       {
+  //         dataCollectionId: "Stores",
+  //         query: {
+  //           filter: {
+  //             externalStoreId: { $eq: userId },
+  //           },
+  //           limit: 1,
+  //         },
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+  //           "wix-site-id": process.env.WIX_SITE_ID,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     const storeExists = response.data.dataItems?.length > 0;
+  //     console.log(
+  //       "Wix Store Existence Check Response:",
+  //       storeExists ? response.data.dataItems[0] : "No store found"
+  //     );
+
+  //     return storeExists ? response.data.dataItems[0] : null;
+  //   } catch (error) {
+  //     console.error(
+  //       "Error checking store existence on Wix:",
+  //       error.response?.data || error.message
+  //     );
+  //     throw new Error("Failed to check store existence on Wix");
+  //   }
+  // },
+  // async createStoreonleStore(
+  //   userId,
+  //   storeEmail,
+  //   storeName,
+  //   storeUsername,
+  //   products = []
+  // ) {
+  //   try {
+  //     const existingStore = await this.checkStoreExists(userId);
+
+  //     if (existingStore) {
+  //       return existingStore;
+  //     }
+
+  //     const wixResponse = await axios.post(
+  //       "https://www.wixapis.com/wix-data/v2/items",
+  //       {
+  //         dataCollectionId: "Stores",
+  //         dataItem: {
+  //           data: {
+  //             externalStoreId: userId,
+  //             title: storeName,
+  //             shopOwnerName: storeUsername,
+  //             // url: storeUrl,
+  //             active: true,
+  //             contactEmail: storeEmail,
+  //             // businessHours: Date.now(),
+  //             // address: address,
+  //             productList: products,
+  //             // other: "",
+  //             // shopImage: imageUrl,
+  //           },
+  //         },
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${process.env.WIX_API_KEY}`,
+  //           "wix-site-id": process.env.WIX_SITE_ID,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     return wixResponse.data;
+  //   } catch (error) {
+  //     console.error(
+  //       "Wix Store Creation Failed:",
+  //       error.response?.data || error.message
+  //     );
+  //     throw new Error("Failed to create store in Wix");
+  //   }
+  // },
 
   async createSubscription(userId, priceId, paymentMethodId, referredBy) {
     const user = await User.findById(userId);
@@ -74,10 +165,35 @@ export const subscriptionService = {
     user.subscriptionEnd = new Date(
       stripeSubscription.current_period_end * 1000
     );
-    user.isActive = true; // optional: activate the user if required
+    user.isActive = true; 
     user.stripeCustomerId = customerId;
 
     await user.save();
+    // //Create the store on leestores
+    // if (
+    //   user.subscriptionType === "Pro" ||
+    //   user.subscriptionType === "Business"
+    // ) {
+    //   //check if the store is already on wix
+    //   const storeusername =
+    //     user.firstname.toLowerCase() + "-" + user.lastname.toLowerCase();
+    //   const products = await Product.find({
+    //     _id: { $in: user.products },
+    //   }).select("wixProductId");
+
+    //   const wixProductRefs = products
+    //     .filter((p) => p.wixProductId)
+    //     .map((p) => p.wixProductId);
+
+    //   //call the wix api to add the store name to the leestores
+    //   await this.createStoreonleStore(
+    //     userId,
+    //     user.email,
+    //     user.storename,
+    //     storeusername,
+    //     wixProductRefs
+    //   );
+    // }
 
     if (referredBy) {
       const referralUser = await User.findById(referredBy);

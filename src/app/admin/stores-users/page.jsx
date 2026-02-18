@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { Spinner } from "@heroui/react";
-import { FaDownload, FaSearch, FaFilter } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const TABS = [
@@ -492,6 +493,11 @@ const StoresUsersPage = () => {
                 <th className="text-left px-4 py-3.5 font-bold text-gray-700">
                   Joined
                 </th>
+                {activeTab === "stores" && (
+                  <th className="text-left px-4 py-3.5 font-bold text-gray-700">
+                    Details
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -570,6 +576,16 @@ const StoresUsersPage = () => {
                           })
                         : "-"}
                     </td>
+                    {activeTab === "stores" && (
+                      <td className="px-4 py-3.5">
+                        <Link
+                          href={`/admin/store-details/${user._id}`}
+                          className="inline-flex items-center gap-1.5 text-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
+                        >
+                          <FaEye className="text-md" /> View
+                        </Link>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
