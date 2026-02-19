@@ -4,6 +4,23 @@ import ImageCarousel from "../components/ImageCarousel";
 import AddToCart from "./AddToCart";
 import { redirect } from "next/navigation";
 import BackButton from "./BackButton";
+import { buildProductMetadata } from "@/lib/seo";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+
+export async function generateMetadata({ params }) {
+  const { productId } = await params;
+  const response = await getProductById(productId);
+
+  if (response.status !== 200) {
+    return { title: "Product Not Found" };
+  }
+
+  const parsedProduct = JSON.parse(response.data.product);
+  if (!parsedProduct) return { title: "Product Not Found" };
+
+  return buildProductMetadata(parsedProduct);
+}
+
 const ProductPage = async ({ params }) => {
   const { productId } = await params;
   const response = await getProductById(productId);
@@ -21,7 +38,14 @@ const ProductPage = async ({ params }) => {
   }
 
   return (
-    
+    <>
+      <ProductJsonLd product={parsedProduct} />
+      <BreadcrumbJsonLd
+        items={[
+          { label: "Home", href: "/" },
+          { label: parsedProduct.title, href: `/product/${parsedProduct._id}` },
+        ]}
+      />
     <div className="bg-fash-gradient  flex sm:flex-col lg:flex-row gap-8 w-full lg:gap-16 p-6 lg:p-12 m-auto item-center">
       <div className="w-full sm:w-[80%] m-auto sm:flex ">
       <div className="lg:w-1/2 flex flex-col items-center border border-[#ccc] p-4 max-h-max">
@@ -44,6 +68,7 @@ const ProductPage = async ({ params }) => {
       </div>
     </div>
     </div>
+    </>
   );
 };
 
