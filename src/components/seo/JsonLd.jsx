@@ -26,7 +26,7 @@ export function OrganizationJsonLd() {
       height: 60,
     },
     description:
-      "Ree is an AI-powered platform for secondhand and resale stores — automated product listing, smart POS, and instant webstore syncing.",
+      "Buy and sell secondhand fashion online. Ree is a resale and secondhand store platform with automated product listing and smart POS. Genbrugstøj og brugt tøj i Danmark.",
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer support",
@@ -53,7 +53,7 @@ export function WebSiteJsonLd() {
     name: SITE_NAME,
     url: BASE_URL,
     description:
-      "AI-powered platform for secondhand and resale stores. Sell instantly — auto-list & auto-sync your webstore.",
+      "Buy and sell secondhand fashion, genbrugstøj og brugt tøj online. Sell instantly with automated listing and smart POS.",
   };
 
   return (

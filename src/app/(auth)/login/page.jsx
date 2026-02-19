@@ -2,7 +2,8 @@ import React from "react";
 import LoginForm from "./LoginForm";
 
 export const metadata = {
-  title: 'Login',
+  title: 'Sign In — Sell & Buy Secondhand Fashion',
+  description: 'Log in to Ree and start selling or buying secondhand fashion. Automated product listing for resale and secondhand stores in Denmark.',
 }
 
 const Login = () => {

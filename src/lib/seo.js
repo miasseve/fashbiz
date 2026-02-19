@@ -11,7 +11,7 @@ export const BASE_URL =
 export const SITE_NAME = "Ree";
 
 export const DEFAULT_DESCRIPTION =
-  "Ree is an AI-powered platform for secondhand and resale stores — automated product listing, smart POS, and instant webstore syncing.";
+  "Ree — Buy and sell secondhand fashion online. Secondhand & resale store platform with automated product listing and smart POS. Genbrugstøj, brugt tøj og resale i Danmark.";
 
 export const DEFAULT_OG_IMAGE = `${BASE_URL}/reelogo.png`;
 
@@ -19,18 +19,26 @@ export const DEFAULT_OG_IMAGE = `${BASE_URL}/reelogo.png`;
 export const defaultMetadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    template: `%s | ${SITE_NAME}`,
-    default: SITE_NAME,
+    template: `%s | ${SITE_NAME} — Secondhand Store`,
+    default: `${SITE_NAME} — Secondhand & Resale Store | Genbrugstøj Online`,
   },
   description: DEFAULT_DESCRIPTION,
+  keywords: [
+    "secondhand", "resale", "genbrugstøj", "brugt tøj", "secondhand store",
+    "secondhand butik", "køb genbrugstøj", "used clothes", "secondhand fashion",
+    "resale store Denmark", "Ree", "re-e.dk",
+  ],
+  alternates: {
+    canonical: BASE_URL,
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    locale: "en_US",
+    locale: "da_DK",
     url: BASE_URL,
     title: {
-      template: `%s | ${SITE_NAME}`,
-      default: SITE_NAME,
+      template: `%s | ${SITE_NAME} — Secondhand Store`,
+      default: `${SITE_NAME} — Secondhand & Resale Store`,
     },
     description: DEFAULT_DESCRIPTION,
     images: [
@@ -38,7 +46,7 @@ export const defaultMetadata = {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — Secondhand Store Platform`,
+        alt: `${SITE_NAME} — Secondhand & Resale Store Denmark`,
       },
     ],
   },
