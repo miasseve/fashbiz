@@ -18,7 +18,7 @@ const montserrat = Montserrat({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={montserrat.className}>
+    <html lang="en-DK" className={montserrat.className}>
       <body suppressHydrationWarning >
         <OrganizationJsonLd />
         <WebSiteJsonLd />

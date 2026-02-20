@@ -68,16 +68,17 @@ const LoginForm = () => {
                 <div className="icon-text text-black relative pb-[2rem]">
                   <Link href="/">
                     {/* <img src="/fashlogo.svg" className="w-[37%] mb-[53px]" /> */}
-                     <img src="/reelogo.png" className="w-[92px] py-[12px]" />
+                     <img src="/reelogo.png" alt="Ree — Secondhand & Resale Store Platform" className="w-[92px] py-[12px]" />
                   </Link>
                 </div>
               </div>
 
               <div className="lg:pb-[5rem] sm:pb-[5rem]">
                 <div className="">
-                  <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
+                  <h1 className="sr-only">Ree | All-in-One Resale Platform for Secondhand Fashion Stores</h1>
+                  <p className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
                     14 DAYS FREE TO SELL INSTANTLY
-                  </div>
+                  </p>
                   {/* <p className="text-[18px] font-normal text-black m-0">
                     Your trusted marketplace to sell with ease.
                   </p> */}

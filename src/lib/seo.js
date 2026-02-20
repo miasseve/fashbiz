@@ -30,11 +30,17 @@ export const defaultMetadata = {
   ],
   alternates: {
     canonical: BASE_URL,
+    languages: {
+      "en": BASE_URL,
+      "da": BASE_URL,
+      "x-default": BASE_URL,
+    },
   },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     locale: "da_DK",
+    alternateLocale: "en_US",
     url: BASE_URL,
     title: {
       template: `%s | ${SITE_NAME} — Secondhand Store`,
