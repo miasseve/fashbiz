@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import dbConnect from "@/lib/db";
+import FabricOption from "@/models/FabricOption";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,6 +17,11 @@ export async function POST(req) {
       );
     }
 
+    // Fetch active fabric options from DB for AI prediction
+    await dbConnect();
+    const fabrics = await FabricOption.find({ active: true }).sort({ name: 1 });
+    const fabricNames = fabrics.map((f) => f.name);
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -28,7 +35,13 @@ export async function POST(req) {
             - "subcategory" (specific product type like "dress shirt", "biker jacket", "hoodie")
             - "description"
             - "color": { "name": string, "hex": string }
+            - "fabric": string (predicted fabric type)
             - "tags": array of 3-4 lowercase strings suitable for Shopify product tags
+
+            Fabric rules:
+            - Analyze the texture, sheen, drape, and visual appearance of the garment to predict the fabric
+            - You MUST pick exactly one value from the following list: ${JSON.stringify(fabricNames)}
+            - If you cannot determine the fabric with confidence, pick the most likely option based on the product type (e.g. jeans → "Denim", suit → "Wool", t-shirt → "Cotton")
 
             Tag rules:
             - Tags must be generic, reusable, and collection-friendly
@@ -57,7 +70,7 @@ export async function POST(req) {
         },
       ],
       temperature: 0.2,
-      max_tokens: 200,
+      max_tokens: 250,
     });
 
     let rawText = response.choices[0]?.message?.content?.trim();

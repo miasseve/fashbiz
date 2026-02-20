@@ -202,6 +202,7 @@ const SecondStep = ({
               color = {},
               subcategory = "",
               size = "",
+              fabric = "",
               tags = [],
             } = response.data;
             setValue("title", title);
@@ -211,6 +212,7 @@ const SecondStep = ({
             setValue("color.hex", color?.hex || "");
             setValue("subcategory", subcategory || "");
             setValue("size", size || "");
+            setValue("fabric", fabric || "");
             setValue("tags", tags || []);
             setColorHex(color?.hex);
           }
