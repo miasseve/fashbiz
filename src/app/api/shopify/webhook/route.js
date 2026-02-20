@@ -5,6 +5,7 @@ import Product from "@/models/Product";
 import User from "@/models/User";
 import Notification from "@/models/Notification";
 import ShopifyStore from "@/models/ShopifyStore";
+import Transaction from "@/models/Transaction";
 import { decrypt } from "@/actions/encryption";
 import {
   updateInventory,
@@ -149,6 +150,51 @@ export async function POST(req) {
           },
         });
         console.log(`[Shopify Webhook] Notification created: ${notification._id}`);
+
+        // Create transaction record
+        try {
+          const existingTx = await Transaction.findOne({
+            orderId: String(event.id),
+            productId: product._id,
+          });
+          if (!existingTx) {
+            await Transaction.create({
+              userId: product.userId,
+              productId: product._id,
+              channel: "shopify",
+              orderId: String(event.id),
+              customerName:
+                `${event.customer?.first_name || ""} ${event.customer?.last_name || ""}`.trim(),
+              customerEmail: event.customer?.email || "",
+              amount: Math.round(parseFloat(item.price || event.total_price) * 100),
+              currency: (event.currency || "DKK").toUpperCase(),
+              paymentMethod: event.payment_gateway_names?.[0] || "Shopify",
+              status: "completed",
+              shopifyOrderUrl: `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/orders/${event.id}`,
+              shopifyOrderNumber: String(event.order_number || event.id),
+              consignorName: product.consignorName || "",
+              consignorEmail: product.consignorEmail || "",
+              fulfillmentMethod:
+                event.shipping_lines?.length > 0 ? "shipping" : "pickup",
+              shippingAddress: event.shipping_address
+                ? {
+                    address1: event.shipping_address.address1,
+                    address2: event.shipping_address.address2,
+                    city: event.shipping_address.city,
+                    province: event.shipping_address.province,
+                    country: event.shipping_address.country,
+                    zip: event.shipping_address.zip,
+                  }
+                : undefined,
+            });
+            console.log(`[Shopify Webhook] Transaction created for product ${product._id}`);
+          }
+        } catch (txErr) {
+          console.error(
+            `[Shopify Webhook] Failed to create transaction for product ${product._id}:`,
+            txErr.message
+          );
+        }
       }
       break;
     }

@@ -185,6 +185,21 @@ export async function checkStripeIsConnected() {
           "Please connect your stripe account for secure payment processing.",
       };
     }
+
+    // If account has a valid Stripe accountId and is complete, allow access
+    if (account.accountId && account.isAccountComplete) {
+      // Ensure mode is updated to "live" if still in demo
+      if (account.mode === "demo") {
+        account.mode = "live";
+        await account.save();
+      }
+      return {
+        status: 200,
+        data: JSON.stringify(account),
+      };
+    }
+
+    // Check demo mode limits only when not fully connected to Stripe
     const demoProductCount = await Product.countDocuments({
       userId: session.user.id,
       isDemo: true,
@@ -195,7 +210,7 @@ export async function checkStripeIsConnected() {
         error: "Demo product limit exceeded. Please connect Stripe to continue.",
       };
     }
-    
+
     if (!account.isAccountComplete) {
       return {
         status: 400,

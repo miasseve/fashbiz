@@ -68,6 +68,7 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
       const allProductIds = [];
       const allProducts = [];
       let customerId = null; // Track customer ID for reusing payment method
+      let lastPaymentIntentId = null;
 
       for (let i = 0; i < consignorNames.length; i++) {
         const consignorName = consignorNames[i];
@@ -109,6 +110,11 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
           customerId = data.customer_id;
         }
 
+        // Track payment intent ID for transaction records
+        if (data.payment_intent_id) {
+          lastPaymentIntentId = data.payment_intent_id;
+        }
+
         if (data?.requires_action) {
           const { error: confirmError, paymentIntent } =
             await stripe.confirmCardPayment(data.client_secret, {
@@ -132,6 +138,11 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
             toast.error(`Payment not completed for ${consignorName}`);
             return;
           }
+
+          // Get payment intent ID from confirmation
+          if (paymentIntent.id) {
+            lastPaymentIntentId = paymentIntent.id;
+          }
         }
 
         // Show progress
@@ -147,7 +158,11 @@ const CheckoutForm = ({ storeUser, allConsignorProducts, grandTotal }) => {
       try {
         // await deleteProductsFromWix(allProducts);
         // Shopify inventory is now set to 0 inside soldProductsByIds (preserves product for order history)
-        await soldProductsByIds(allProductIds);
+        await soldProductsByIds(allProductIds, {
+          customerName,
+          customerEmail,
+          paymentIntentId: lastPaymentIntentId || "ree-checkout",
+        });
         dispatch(removeMultipleProductsFromCart(allProductIds));
         const clearRes = await clearCartOnCheckout();
         if (clearRes.status === 200) {

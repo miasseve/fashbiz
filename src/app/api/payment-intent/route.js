@@ -127,7 +127,8 @@ export async function POST(req) {
           {
             requires_action: true,
             client_secret: paymentIntent.client_secret,
-            customer_id: finalCustomerId, // Return customer ID for subsequent payments
+            customer_id: finalCustomerId,
+            payment_intent_id: paymentIntent.id,
           },
           { status: 200 }
         );
@@ -138,7 +139,8 @@ export async function POST(req) {
         return NextResponse.json(
           {
             success: true,
-            customer_id: finalCustomerId, // Return customer ID for subsequent payments
+            customer_id: finalCustomerId,
+            payment_intent_id: paymentIntent.id,
           },
           { status: 200 }
         );
@@ -183,6 +185,7 @@ export async function POST(req) {
               {
                 success: true,
                 customer_id: finalCustomerId,
+                payment_intent_id: paymentIntent.id,
               },
               { status: 200 }
             );

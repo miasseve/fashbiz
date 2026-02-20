@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { IoQrCode } from "react-icons/io5";
 import { FaStore, FaUser, FaUsers } from "react-icons/fa";
-import { MdLocalGroceryStore } from "react-icons/md";
+import { MdLocalGroceryStore, MdOutlineReceiptLong } from "react-icons/md";
 import { PiStripeLogoFill } from "react-icons/pi";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { RiProductHuntFill } from "react-icons/ri";
-import { FaHistory } from "react-icons/fa";
+
 import { FaHandHoldingUsd } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
@@ -124,8 +124,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     },
     {
       href: "/dashboard/payment-history",
-      label: "Payment History",
-      icon: <FaHistory />,
+      label: "Transaction History",
+      icon: <MdOutlineReceiptLong />,
     },
     session.data?.user?.role === "store" && {
       href: "/dashboard/items-sold",

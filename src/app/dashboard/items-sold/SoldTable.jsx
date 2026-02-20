@@ -141,7 +141,8 @@ const SoldTable = ({ products }) => {
               <TableCell>{product.consignorName || "Store Owner"}</TableCell>
               <TableCell>{product.consignorEmail || "Store Owner"}</TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-8">
+                  <div className="">
                   <Button
                     size="sm"
                     isDisabled={loading}
@@ -150,15 +151,19 @@ const SoldTable = ({ products }) => {
                   >
                     Delete
                   </Button>
+                  
+                </div>
+                <div className="">
                   {product.soldVia === "shopify" && product.orderDetails && (
                     <button
                       onClick={() => setSelectedOrder(product)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-md font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
                     >
                       <FiEye size={14} />
-                      View Details
+                      View
                     </button>
                   )}
+                </div>
                 </div>
               </TableCell>
             </TableRow>

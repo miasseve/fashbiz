@@ -16,6 +16,7 @@ import {
 } from "./shopifyAction";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
+import Transaction from "@/models/Transaction";
 // import {
 //   createWixProduct,
 //   unlinkWixProduct,
@@ -644,7 +645,8 @@ export async function getUserProductCount() {
       userId: session.user.id,
       mode: "demo",
     });
-    if (demoAccount) {
+    // Only treat as demo if mode is "demo" AND no valid Stripe accountId
+    if (demoAccount && !demoAccount.accountId) {
       const demoProductCount = await Product.countDocuments({
         userId: session.user.id,
         isDemo: true,
@@ -899,7 +901,7 @@ export async function updateProduct(productId, data) {
   }
 }
 
-export async function soldProductsByIds(productIds) {
+export async function soldProductsByIds(productIds, transactionData = {}) {
   try {
     const session = await auth();
     if (!session) {
@@ -927,6 +929,41 @@ export async function soldProductsByIds(productIds) {
         status: 400,
         message: "No products were updated",
       };
+    }
+
+    // Create transaction records for Ree sales
+    const { customerName, customerEmail, paymentIntentId } = transactionData;
+    if (paymentIntentId) {
+      try {
+        const allSoldProducts = await Product.find({ _id: { $in: productIds } });
+        for (const product of allSoldProducts) {
+          const existingTx = await Transaction.findOne({
+            orderId: paymentIntentId,
+            productId: product._id,
+          });
+          if (!existingTx) {
+            await Transaction.create({
+              userId: product.userId,
+              productId: product._id,
+              channel: "ree",
+              orderId: paymentIntentId,
+              customerName: customerName || "",
+              customerEmail: customerEmail || "",
+              amount: Math.round(product.price * 100),
+              currency: "DKK",
+              paymentMethod: "Stripe Card",
+              status: "completed",
+              stripePaymentIntentId: paymentIntentId,
+              consignorName: product.consignorName || "",
+              consignorEmail: product.consignorEmail || "",
+              fulfillmentMethod: "in-store",
+            });
+          }
+        }
+        console.log(`[Ree] Transactions created for ${productIds.length} products`);
+      } catch (txErr) {
+        console.error("[Ree] Failed to create transaction records:", txErr.message);
+      }
     }
 
     // Sync inventory to 0 on Shopify for ALL variants of sold products
