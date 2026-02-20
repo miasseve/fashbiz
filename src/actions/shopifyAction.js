@@ -1647,7 +1647,10 @@ export async function updateShopifyProduct(productId, formData) {
       query: `
         mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
           productVariantsBulkCreate(productId: $productId, variants: $variants) {
-            productVariants { id }
+            productVariants {
+              id
+              inventoryItem { id }
+            }
             userErrors { message field }
           }
         }
@@ -1660,20 +1663,58 @@ export async function updateShopifyProduct(productId, formData) {
 
     const createData = createRes.data?.data?.productVariantsBulkCreate;
     const createErrors = createData?.userErrors;
-    
+
     if (createErrors && createErrors.length > 0) {
       console.error("Variant creation errors:", createErrors);
       throw new Error(`Failed to create variants: ${createErrors.map(e => e.message).join(", ")}`);
     }
 
     const created = createData?.productVariants || [];
-    
+
     if (!created.length) {
       throw new Error("No variants were created");
     }
 
     // Wait for variants to be created
     await new Promise(r => setTimeout(r, 2000));
+
+    // Set inventory to 1 for each new variant (prevents inventory resetting to 0)
+    let locationId = null;
+    try {
+      const locations = await getShopifyLocations();
+      const activeLocation = locations.find((l) => l.isActive);
+      locationId = activeLocation?.id;
+    } catch (error) {
+      console.warn("Could not fetch locations for inventory update:", error.message);
+    }
+
+    if (locationId) {
+      for (const variant of created) {
+        try {
+          await shopify.post("", {
+            query: `
+              mutation inventoryItemUpdate($id: ID!, $input: InventoryItemInput!) {
+                inventoryItemUpdate(id: $id, input: $input) {
+                  inventoryItem { id tracked }
+                  userErrors { field message }
+                }
+              }
+            `,
+            variables: {
+              id: variant.inventoryItem.id,
+              input: { tracked: true },
+            },
+          });
+
+          await updateInventory(variant.inventoryItem.id, locationId, 1);
+        } catch (invError) {
+          console.error(
+            `Error setting inventory for variant ${variant.id}:`,
+            invError.message,
+          );
+        }
+      }
+    }
 
     /* STEP 8: DELETE THE OLD KEPT VARIANT */
 
