@@ -33,10 +33,10 @@ const RegisterForm = () => {
                     14 DAYS FREE TO SELL INSTANTLY
                   </div>
 
-                    {/* <p className="text-[18px] font-semibold text-black m-0 ">
+                  {/* <p className="text-[18px] font-semibold text-black m-0 ">
                      Your trusted marketplace to sell with ease
                     </p> */}
-                    <p className="text-[18px] font-normal text-black m-0 mb-[40px]">
+                  <p className="text-[18px] font-normal text-black m-0 mb-[40px]">
                     Trouble logging in?{" "}
                     <Link href="/contact-support" className="underline">
                       Contact support
@@ -54,12 +54,11 @@ const RegisterForm = () => {
           </div>
           <div className="sm:w-[50%] flex justify-center items-center pt-8 sm:pt-0">
             <div className="text-center m-auto md:w-[80%] w-[100%] rounded-[8px] p-4">
-              <div className="text-[24px] font-bold  leading-[4.2rem] mb-[1.5rem]">
-                Sign Up
-              </div>
-
               <Card className="w-full max-full">
                 <CardBody className="tabbutton p-[30px]">
+                  <h2 className="text-[2.8rem] font-semibold tracking-tight text-gray-900 mb-[1.5rem] text-center">
+                    SIGN UP
+                  </h2>
                   <Tabs
                     fullWidth
                     aria-label="Register Tabs"
@@ -101,7 +100,6 @@ const RegisterForm = () => {
         </div>
       </div>
     </section>
-
   );
 };
 

@@ -101,9 +101,9 @@ const LoginForm = () => {
           <div className="sm:w-[50%] flex justify-center items-center pt-8 sm:pt-0">
             <div className="text-center m-auto md:w-[80%] w-[100%] rounded-[8px] p-4">
               <Card className="p-8 bg-white shadow-lg rounded-[14px]">
-                <div className="text-[24px] font-bold  leading-[4.2rem] mb-[2rem]">
-                  Sign In
-                </div>
+                <h2 className="text-[2.8rem] font-semibold tracking-tight text-gray-900 mb-[2rem]">
+                  SIGN IN
+                </h2>
                 <form
                   className="w-full text-start"
                   onSubmit={handleSubmit(onSubmit)}
