@@ -47,6 +47,7 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  guestSessionId: { type: String, required: false, index: true },
   // Flag to indicate if this product has been posted to Instagram
    hasInstagramPost: {
     type: Boolean,

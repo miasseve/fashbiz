@@ -9,6 +9,7 @@ import AddToCart from "@/app/product/[productId]/AddToCart";
 import CopyLinkButton from "./CopyLinkButton";
 import GenerateBarcode from "./GenerateBarcode";
 import UnlinkProduct from "./UnlinkProduct";
+import ShopifyLink from "./ShopifyLink";
 
 export const metadata = {
   title: "Product",
@@ -22,18 +23,18 @@ const Page = async ({ params }) => {
     redirect("/");
   }
 
-  const { product, user, userRole } = response.data;
+  const { product, user, userRole, shopifyProductUrl } = response.data;
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
 
   return (
     <div className="container mx-auto p-0 lg:p-12">
       <div className="flex flex-col sm:flex-row gap-0 lg:shadow-lg bg-[#fff] p-[20px] rounded-lg p-6 lg:p-10 sm:h-[730px]">
-        <div className="w-full sm:w-1/2 flex justify-center">
+        <div className="w-full sm:w-1/2 flex justify-center sm:sticky sm:top-0 sm:self-start">
           <ImageCarousel images={parsedProduct.images} />
         </div>
 
-        <div className="w-full h-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg p-[20px] bg-[#f6f6f6] sm:mt-[0px] mt-[20px]">
+        <div className="w-full sm:w-1/2 flex flex-col gap-6 bg-white p-[20px] border-1 border-[#ccc] lg:shadow-none shadow-lg bg-[#f6f6f6] sm:mt-[0px] mt-[20px] sm:overflow-y-auto">
           {/* Title and Price Section */}
           <div className="space-y-3">
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
@@ -119,6 +120,9 @@ const Page = async ({ params }) => {
               </div>
             </div>
           )}
+
+          {/* Shopify Product Link */}
+          {shopifyProductUrl && <ShopifyLink url={shopifyProductUrl} />}
 
           {/* Action Buttons */}
           {/* Primary Action - Add to Cart */}

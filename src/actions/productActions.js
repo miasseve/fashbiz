@@ -13,6 +13,7 @@ import {
   getShopifyLocations,
   updateInventory,
   disableShopifyProduct,
+  getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
@@ -215,6 +216,225 @@ export async function createProduct(formData) {
       }
     }
     return { status: 500, error: error.message || "Failed to create product" };
+  }
+}
+
+export async function createGuestProduct(formData) {
+  let createdShopifyProduct = false;
+  let shopifyProductId = null;
+  let shopifyVariantId = null;
+  let shopifyInventoryItemId = null;
+  let shopifyProductHandle = null;
+  try {
+    const {
+      title,
+      sku,
+      brand,
+      description,
+      price,
+      images,
+      color,
+      subcategory,
+      size,
+      fabric,
+      guestSessionId,
+    } = formData;
+
+    await dbConnect();
+
+    // Find test store user to link guest products
+    let testUserId = process.env.TEST_STORE_USER_ID;
+    if (!testUserId) {
+      const testUser = await User.findOne({ role: "store" }).select("_id");
+      if (!testUser) {
+        return { status: 400, error: "No test store configured. Please contact support." };
+      }
+      testUserId = testUser._id.toString();
+    }
+
+    const formattedPrice = Number(parseFloat(price).toFixed(2));
+    const year = new Date().getFullYear().toString().slice(-2);
+    const brandCode = brand
+      ? brand.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 3)
+      : "XXX";
+    const barcodeValue = `REE-${brandCode}${sku}${year}`;
+
+    // Create on Shopify
+    try {
+      const shopifyResponse = await createShopifyProduct({
+        ...formData,
+        barcodeValue,
+      });
+      if (shopifyResponse.status === 200) {
+        shopifyProductId = shopifyResponse.productId;
+        shopifyVariantId = shopifyResponse.variantId;
+        shopifyInventoryItemId = shopifyResponse.inventoryItemId;
+        shopifyProductHandle = shopifyResponse.productHandle;
+        createdShopifyProduct = true;
+      } else {
+        return {
+          status: 400,
+          error: shopifyResponse.error || "Failed to create product on Shopify. Please try again.",
+        };
+      }
+    } catch (error) {
+      if (error.response) {
+        const { status, data } = error.response;
+        if (
+          status === 400 &&
+          data?.message === "requirement failed: product.sku is not unique"
+        ) {
+          return { status: 400, error: "SKU already exists" };
+        }
+        return { status: 400, error: data?.message };
+      }
+      return {
+        status: 400,
+        error: error.response?.data?.message || error?.message,
+      };
+    }
+
+    // Save in MongoDB
+    const newProduct = new Product({
+      sku,
+      title,
+      brand,
+      subcategory,
+      category: "Uncategorized",
+      description,
+      color,
+      price: formattedPrice,
+      images,
+      userId: testUserId,
+      consignorName: "Guest User",
+      consignorEmail: "",
+      consignorAccount: "",
+      collect: false,
+      size,
+      fabric,
+      barcode: barcodeValue,
+      isDemo: true,
+      guestSessionId: guestSessionId || null,
+      shopifyProductId,
+      shopifyVariantId,
+      shopifyInventoryItemId,
+    });
+
+    await newProduct.save();
+
+    await User.findByIdAndUpdate(testUserId, {
+      $push: { products: newProduct._id },
+    });
+
+    const link =
+      process.env.NODE_ENV === "development"
+        ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
+        : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
+
+    const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const shopifyProductUrl = shopifyProductHandle && shopifyStoreDomain
+      ? `https://${shopifyStoreDomain}/products/${shopifyProductHandle}`
+      : "";
+
+    return {
+      status: 200,
+      message: "Product created successfully",
+      data: {
+        link,
+        shopifyProductUrl,
+        product: JSON.stringify(newProduct),
+      },
+    };
+  } catch (error) {
+    if (createdShopifyProduct && shopifyProductId) {
+      try {
+        await deleteShopifyProduct(shopifyProductId);
+      } catch (rollbackError) {
+        console.error("CRITICAL: Orphaned Shopify product", shopifyProductId);
+      }
+    }
+    return { status: 500, error: error.message || "Failed to create product" };
+  }
+}
+
+export async function transferGuestProducts(guestSessionId, newUserId) {
+  try {
+    if (!guestSessionId || !newUserId) return { status: 400, transferred: 0 };
+
+    await dbConnect();
+
+    // Find all guest products with this session ID
+    const guestProducts = await Product.find({ guestSessionId });
+    if (guestProducts.length === 0) return { status: 200, transferred: 0 };
+
+    // Get the test store user ID from the first product (they all share the same)
+    const testUserId = guestProducts[0].userId;
+
+    // Fetch the new user to get store name for SKU generation
+    const newUser = await User.findById(newUserId);
+    if (!newUser) return { status: 400, error: "User not found", transferred: 0 };
+
+    const storeName = newUser.storename || newUser.firstname || "USR";
+    const storeCode = storeName.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3) || "USR";
+    const year = new Date().getFullYear().toString().slice(-2);
+    const userName = `${newUser.firstname || ""} ${newUser.lastname || ""}`.trim();
+    const userEmail = newUser.email || "";
+
+    // Get current product count for the new user to build sequential SKUs
+    const existingProductCount = await Product.countDocuments({ userId: newUserId });
+
+    // Update each product: new SKU, barcode, consignor info + sync Shopify
+    for (let i = 0; i < guestProducts.length; i++) {
+      const product = guestProducts[i];
+      const newSku = `${storeCode}${year}${existingProductCount + i + 1}`;
+      const brandCode = product.brand
+        ? product.brand.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 3)
+        : "XXX";
+      const newBarcode = `REE-${brandCode}${newSku}${year}`;
+
+      // Update MongoDB
+      await Product.findByIdAndUpdate(product._id, {
+        $set: {
+          userId: newUserId,
+          sku: newSku,
+          barcode: newBarcode,
+          consignorName: userName,
+          consignorEmail: userEmail,
+        },
+        $unset: { guestSessionId: "" },
+      });
+
+      // Update Shopify variant SKU + barcode if product exists on Shopify
+      if (product.shopifyProductId) {
+        try {
+          await updateShopifyProduct(product.shopifyProductId, {
+            sku: newSku,
+            barcodeValue: newBarcode,
+          });
+        } catch (shopifyErr) {
+          console.error(
+            `[transferGuestProducts] Shopify update failed for product ${product._id}:`,
+            shopifyErr.message,
+          );
+        }
+      }
+    }
+
+    // Move product refs from test store user to the new user
+    const productIds = guestProducts.map((p) => p._id);
+
+    await User.findByIdAndUpdate(testUserId, {
+      $pull: { products: { $in: productIds } },
+    });
+
+    await User.findByIdAndUpdate(newUserId, {
+      $push: { products: { $each: productIds } },
+    });
+
+    return { status: 200, transferred: guestProducts.length };
+  } catch (error) {
+    console.error("[transferGuestProducts] Error:", error);
+    return { status: 500, error: error.message, transferred: 0 };
   }
 }
 
@@ -716,6 +936,13 @@ export async function getProductById(productId) {
     // if (!user) {
     //   throw new Error("User related to the product not found");
     // }
+
+    // Get Shopify storefront URL if the product is linked to Shopify
+    let shopifyProductUrl = null;
+    if (product.shopifyProductId) {
+      shopifyProductUrl = await getShopifyProductStorefrontUrl(product.shopifyProductId);
+    }
+
     return {
       status: 200, // Success status code
       message: "Product fetched successfully",
@@ -723,6 +950,7 @@ export async function getProductById(productId) {
         product: JSON.stringify(product),
         user: JSON.stringify(user),
         userRole: session.user.role,
+        shopifyProductUrl,
       },
     }; // Return the product details
   } catch (error) {

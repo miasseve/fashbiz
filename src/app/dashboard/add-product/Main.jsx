@@ -64,7 +64,7 @@ const Main = ({
     !demoLimitReached;
   return (
     <div className="mx-auto lg:my-[10px] bg-white rounded-xl dark:bg-gray-900 transition-all ">
-        <ProgressBar currentStep={currentStep} steps={steps} />
+        <ProgressBar currentStep={currentStep} steps={steps} />
       {isInDemoMode && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -111,7 +111,7 @@ const Main = ({
           </div>
         </div>
       )}
-      {stripeResponse.status !== 200 ? (
+      {stripeResponse?.status !== 200 ? (
         <div className="flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
           {/* Main Heading */}
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 text-center px-4">

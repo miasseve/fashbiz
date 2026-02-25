@@ -19,6 +19,7 @@ import {
 import dayjs from "dayjs";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
 import ActiveUser from "@/models/Activeuser";
+import { transferGuestProducts } from "@/actions/productActions";
 
 export async function registerUser(data) {
   try {
@@ -91,6 +92,18 @@ export async function registerUser(data) {
     });
 
     const savedUser = await user.save();
+
+    // Transfer any guest products from demo mode to the new user
+    const guestSessionId = data.guestSessionId;
+    if (guestSessionId) {
+      try {
+        const result = await transferGuestProducts(guestSessionId, savedUser._id.toString());
+        console.log("[registerUser] Guest product transfer:", result);
+      } catch (transferErr) {
+        console.error("[registerUser] Guest product transfer error:", transferErr.message);
+      }
+    }
+
     return { status: 200, data: JSON.stringify(savedUser) };
   } catch (error) {
     if (error instanceof Yup.ValidationError) {

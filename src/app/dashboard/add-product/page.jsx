@@ -62,6 +62,7 @@ const base =
 
 const page = async () => {
   const session = await auth();
+
   const response = await getUserProductCount();
   const stripeResponse = await checkStripeIsConnected();
 

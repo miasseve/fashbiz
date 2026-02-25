@@ -37,10 +37,17 @@ const BrandForm = () => {
   const brandSubmit = async (data) => {
     setError("");
     try {
+      // Read guest session ID from cookie (set during try/demo mode)
+      const guestCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("ree_guest_session="));
+      const guestSessionId = guestCookie ? guestCookie.split("=")[1] : null;
+
       const payload = {
         ...data,
         email: data.email.toLowerCase(),
         role: "brand",
+        guestSessionId,
       };
 
       if (!isValidPhoneNumber(data.phone)) {

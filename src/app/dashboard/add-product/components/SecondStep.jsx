@@ -244,6 +244,7 @@ const SecondStep = ({
 
   const onSubmit = async (data) => {
     setErrorMessage("");
+
     //check if the product brand has Ree collect subscription
     try {
       if (pointsEnabled) {
@@ -276,11 +277,10 @@ const SecondStep = ({
   const handleFinalProductCreation = async (data) => {
     if (!data) return;
     try {
-      const response = await createProduct({
-        ...data,
-        ...consignorData,
-        collect: collectSelection ?? false,
-      });
+      const productPayload = { ...data, ...consignorData, collect: collectSelection ?? false };
+
+      const response = await createProduct(productPayload);
+
       if (response.status != 400 && response.data?.error) {
         toast.error(response.data.error);
         return;
@@ -307,6 +307,7 @@ const SecondStep = ({
     setShowConfirmation(false);
     dispatch(clearConsignors());
     dispatch(setCurrentStep(1));
+
     if (collectSelection) {
       router.push("/dashboard/ree-collect");
       return;

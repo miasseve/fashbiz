@@ -41,10 +41,17 @@ const ConsignorForm = () => {
     setError("");
 
     try {
+      // Read guest session ID from cookie (set during try/demo mode)
+      const guestCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("ree_guest_session="));
+      const guestSessionId = guestCookie ? guestCookie.split("=")[1] : null;
+
       const payload = {
         ...data,
         email: data.email.toLowerCase(),
         role: "consignor",
+        guestSessionId,
       };
       const result = await registerUser(payload);
       if (result.status === 200) {

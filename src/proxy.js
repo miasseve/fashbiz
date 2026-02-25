@@ -47,15 +47,21 @@ export async function proxy(req) {
 
   const userRole = token?.role || null;
 
+  // Public routes - logged-in users go to their dashboard
   if (isPublic && token) {
     if (userRole === "admin" || userRole === "developer") {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
     return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
   }
-  if (isPublic ){
+  // Public routes - visitors go to try mode
+  if (isPublic && nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/try/add-product", req.url));
+  }
+  if (isPublic) {
     return NextResponse.next();
   }
+
   if (isAuthRoute && token) {
     if (userRole === "admin" || userRole === "developer") {
       return NextResponse.redirect(new URL("/admin", req.url));
@@ -92,7 +98,7 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }
 
-  if(userRole === "brand" && 
+  if(userRole === "brand" &&
     ["/dashboard/consignors","/dashboard/add-product","/dashboard/items-sold","/dashboard/invite-store","/dashboard/qr"].includes(nextUrl.pathname)){
     return NextResponse.redirect(new URL("/dashboard/profile", req.url));
   }

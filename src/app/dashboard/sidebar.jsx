@@ -76,11 +76,25 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   }
 
   const menuItems = [
-    { href: "/dashboard/profile", label: "Profile", icon: <FaUser /> },
+    {
+      href: "/dashboard/profile",
+      label: "Profile",
+      icon: <FaUser />,
+    },
     session.data?.user?.role === "store" && {
       href: "/dashboard/store",
       label: "Store",
       icon: <FaStore />,
+    },
+    {
+      href: "/dashboard/add-product",
+      label: "Add Product",
+      icon: <BiLogoProductHunt />,
+    },
+    session.data?.user?.role === "store" && {
+      href: "/dashboard/items-sold",
+      label: "Items Sold",
+      icon: <MdLocalGroceryStore />,
     },
     session.data?.user?.role === "brand" && {
       href: "/dashboard/ree-collect",
@@ -92,19 +106,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "DKK Points",
       icon: <CiBoxList />,
     },
-    session.data?.user?.role === "store" && {
-      href: "/dashboard/add-product",
-      label: "Add Product",
-      icon: <BiLogoProductHunt />,
-    },
     session.data?.user?.role === "consignor" && {
       href: "/dashboard/qr",
       label: "QR code",
-      icon: <IoQrCode />,
-    },
-    session.data?.user?.role !== "consignor" && {
-      href: "/dashboard/subscription-plan",
-      label: "Subscription Plan",
       icon: <IoQrCode />,
     },
     session.data?.user?.role === "consignor" && {
@@ -122,24 +126,17 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "Stripe Connect",
       icon: <PiStripeLogoFill />,
     },
+    session.data?.user?.role !== "consignor" && {
+      href: "/dashboard/subscription-plan",
+      label: "Subscription Plan",
+      icon: <IoQrCode />,
+    },
     {
       href: "/dashboard/payment-history",
       label: "Transaction History",
       icon: <MdOutlineReceiptLong />,
     },
-    session.data?.user?.role === "store" && {
-      href: "/dashboard/items-sold",
-      label: "Items Sold",
-      icon: <MdLocalGroceryStore />,
-    },
   ].filter(Boolean);
-
-  const handleLinkClick = (href) => {
-    if (isSidebarOpen) {
-      toggleSidebar();
-    }
-    router.push(href);
-  };
 
   return (
     <div>
@@ -174,6 +171,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </Link>
         ))}
 
+        {/* Ree Collect and Invite Store - store role only */}
         {session.data?.user?.role === "store" && (
           <>
             {!session.data?.user?.points_mode && (

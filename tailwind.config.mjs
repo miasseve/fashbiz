@@ -15,6 +15,15 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+      },
+      animation: {
+        float: "float 3s ease-in-out infinite",
+      },
     },
   },
   plugins: [heroui()],

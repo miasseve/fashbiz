@@ -34,9 +34,12 @@ const FABRIC_OPTIONS = [
 
 // GET = Insert missing fabrics first, THEN return all
 export async function GET() {
-  const session = await auth();
-  if (!session || !session.user) {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+  // Auth is optional — allow guest/try mode to fetch fabric list
+  let session;
+  try {
+    session = await auth();
+  } catch (_) {
+    // ignore auth errors for guest access
   }
 
   await dbConnect();

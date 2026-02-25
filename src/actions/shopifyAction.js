@@ -60,6 +60,7 @@ export async function createShopifyProduct(formData) {
         productCreate(product: $product) {
           product {
             id
+            handle
             options {
               id
               name
@@ -139,6 +140,7 @@ export async function createShopifyProduct(formData) {
     }
 
     const productId = productCreate.product.id;
+    const productHandle = productCreate.product.handle;
 
     // Wait a moment for product to be fully created
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -555,6 +557,7 @@ export async function createShopifyProduct(formData) {
       status: 200,
       message: "Product created successfully",
       productId,
+      productHandle,
       variantId: firstVariantId,
       inventoryItemId: firstInventoryItemId,
     };
@@ -844,6 +847,41 @@ export async function disableShopifyProduct(productId) {
   }
 }
 
+
+// GET SHOPIFY PRODUCT STOREFRONT URL
+export async function getShopifyProductStorefrontUrl(shopifyProductId) {
+  try {
+    if (!shopifyProductId) return null;
+
+    const GET_PRODUCT_URL = `
+      query getProductUrl($id: ID!) {
+        product(id: $id) {
+          handle
+          onlineStoreUrl
+        }
+      }
+    `;
+
+    const response = await shopify.post("", {
+      query: GET_PRODUCT_URL,
+      variables: { id: shopifyProductId },
+    });
+
+    const product = response.data?.data?.product;
+    if (!product) return null;
+
+    if (product.onlineStoreUrl) return product.onlineStoreUrl;
+
+    if (product.handle && shopifyStoreDomain) {
+      return `https://${shopifyStoreDomain}/products/${product.handle}`;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error fetching Shopify product URL:", error.message);
+    return null;
+  }
+}
 
 //  GET COLLECTION BY HANDLE/UUID
 export async function getCollectionByHandle(handle) {

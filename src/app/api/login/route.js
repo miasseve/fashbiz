@@ -1,4 +1,5 @@
 import { signInUser } from "@/actions/authActions";
+import { transferGuestProducts } from "@/actions/productActions";
 import ActiveUser from "@/models/Activeuser";
 import User from "@/models/User";
 import { getSubscriptionPlans } from "@/actions/stripePlans";
@@ -25,6 +26,16 @@ export async function POST(req) {
       const user = await User.findOne({ email: payload.email });
       const subscriptionType = user?.subscriptionType;
       const userRole = user?.role;
+
+      // Transfer any guest products from demo mode to this user
+      const guestSessionId = req.cookies.get("ree_guest_session")?.value;
+      if (guestSessionId && user) {
+        try {
+          await transferGuestProducts(guestSessionId, user._id.toString());
+        } catch (transferErr) {
+          console.error("[login] Guest product transfer error:", transferErr.message);
+        }
+      }
 
       if (subscriptionType !== "free" && userRole === "store") {
         const data = await getSubscriptionPlans();
@@ -75,6 +86,15 @@ export async function POST(req) {
       headers: { "Content-Type": "application/json" },
     });
     response.headers.append("Set-Cookie", buildCookieHeader(deviceId));
+
+    // Clear the guest session cookie after successful login (transfer already done above)
+    if (result.status === 200 && req.cookies.get("ree_guest_session")?.value) {
+      response.headers.append(
+        "Set-Cookie",
+        "ree_guest_session=; Path=/; Max-Age=0; SameSite=Lax"
+      );
+    }
+
     return response;
   } catch (error) {
     console.error(error);
