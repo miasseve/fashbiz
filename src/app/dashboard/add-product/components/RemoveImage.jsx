@@ -50,7 +50,7 @@ const RemoveImage = ({
       className="danger-btn !m-0"
       onPress={() => handleRemoveImage(viewType, publicId)}
     >
-      Remove
+      Remove Photo
     </Button>
   );
 };

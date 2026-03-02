@@ -28,6 +28,8 @@ export async function createShopifyProduct(formData) {
       // shopifyCollectionId,
       tags = [],
       barcodeValue,
+      pointsValue = null,
+      storeName = "",
     } = formData;
 
     // Get location ID (with fallback if permissions are missing)
@@ -104,7 +106,12 @@ export async function createShopifyProduct(formData) {
       });
     }
 
-    const formattedTags = Array.isArray(tags) ? tags : [];
+    const formattedTags = Array.isArray(tags) ? [...tags] : [];
+
+    // Add points-product tag for points-based products
+    if (pointsValue != null) {
+      formattedTags.push("points-product");
+    }
 
     const productInput = {
       title,
@@ -115,6 +122,28 @@ export async function createShopifyProduct(formData) {
       productOptions: productOptions,
       tags: formattedTags,
     };
+
+    // Add metafields for points_value and store_label
+    const metafields = [];
+    if (pointsValue != null) {
+      metafields.push({
+        namespace: "custom",
+        key: "points_value",
+        value: String(pointsValue),
+        type: "number_integer",
+      });
+    }
+    if (storeName) {
+      metafields.push({
+        namespace: "custom",
+        key: "store_label",
+        value: storeName,
+        type: "single_line_text_field",
+      });
+    }
+    if (metafields.length > 0) {
+      productInput.metafields = metafields;
+    }
 
     const productRes = await shopify.post("", {
       query: CREATE_PRODUCT,
@@ -652,6 +681,137 @@ export async function updateProductPrice(productId, newPrice) {
     console.error("Error updating price:", error);
     return { success: false, error: error.message };
   }
+}
+
+// UPDATE PRODUCT METAFIELD
+export async function updateProductMetafield(productId, namespace, key, value, type) {
+  try {
+    const METAFIELDS_SET = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            key
+            value
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const response = await shopify.post("", {
+      query: METAFIELDS_SET,
+      variables: {
+        metafields: [
+          {
+            ownerId: productId,
+            namespace,
+            key,
+            value,
+            type,
+          },
+        ],
+      },
+    });
+
+    if (response.data?.data?.metafieldsSet?.userErrors?.length) {
+      console.error("Metafield update errors:", response.data.data.metafieldsSet.userErrors);
+      return { success: false, errors: response.data.data.metafieldsSet.userErrors };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating metafield:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// SYNC SINGLE PRODUCT METAFIELDS TO SHOPIFY
+export async function syncProductMetafieldsToShopify(product, storeName) {
+  try {
+    const { shopifyProductId, pointsValue } = product;
+    if (!shopifyProductId) return { success: false, error: "No shopifyProductId" };
+
+    const metafields = [];
+    if (pointsValue != null) {
+      metafields.push({
+        ownerId: shopifyProductId,
+        namespace: "custom",
+        key: "points_value",
+        value: String(pointsValue),
+        type: "number_integer",
+      });
+    }
+    if (storeName) {
+      metafields.push({
+        ownerId: shopifyProductId,
+        namespace: "custom",
+        key: "store_label",
+        value: storeName,
+        type: "single_line_text_field",
+      });
+    }
+    if (metafields.length === 0) return { success: false, error: "No metafields to sync" };
+
+    const METAFIELDS_SET = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields { id key value }
+          userErrors { field message }
+        }
+      }
+    `;
+
+    const response = await shopify.post("", {
+      query: METAFIELDS_SET,
+      variables: { metafields },
+    });
+
+    if (response.data?.data?.metafieldsSet?.userErrors?.length) {
+      return { success: false, errors: response.data.data.metafieldsSet.userErrors };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// BULK SYNC ALL PRODUCTS' METAFIELDS TO SHOPIFY
+export async function bulkSyncMetafieldsToShopify() {
+  const Product = (await import("@/models/Product")).default;
+  const dbConnect = (await import("@/lib/db")).default;
+  await dbConnect();
+
+  const products = await Product.find({
+    shopifyProductId: { $ne: null },
+  }).populate("userId", "storename brandname");
+
+  const results = { synced: 0, skipped: 0, failed: 0, errors: [] };
+
+  for (const product of products) {
+    try {
+      const storeName = product.userId?.storename || product.userId?.brandname || "";
+      const result = await syncProductMetafieldsToShopify(product, storeName);
+
+      if (result.success) {
+        results.synced++;
+      } else {
+        results.skipped++;
+      }
+
+      // Rate limit: 500ms between requests
+      await new Promise((r) => setTimeout(r, 500));
+    } catch (err) {
+      results.failed++;
+      results.errors.push({ title: product.title, error: err.message });
+    }
+  }
+
+  return results;
 }
 
 // UPDATE INVENTORY
@@ -1422,7 +1582,17 @@ export async function updateShopifyProduct(productId, formData) {
       subcategory,
       // shopifyCollectionId,
       barcodeValue,
+      pointsValue,
+      storeName,
     } = formData;
+
+    /* STEP 0: UPDATE METAFIELDS (points_value, store_label) if provided */
+    if (pointsValue !== undefined) {
+      await updateProductMetafield(productId, "custom", "points_value", String(pointsValue), "number_integer");
+    }
+    if (storeName) {
+      await updateProductMetafield(productId, "custom", "store_label", storeName, "single_line_text_field");
+    }
 
     /* STEP 1: FETCH PRODUCT */
 

@@ -101,11 +101,18 @@ export async function createProduct(formData) {
         : null;
     }
 
-    if (collect === false && pointsValue == null) {
+    if (collect === false) {
       try {
-        // Create product in Shopify
+        // Fetch store name for Shopify metafield
+        const storeUser = await User.findById(session.user.id).select("storename brandname");
+        const storeName = storeUser?.storename || storeUser?.brandname || "";
+
+        // Create product in Shopify (points products get price=0 + metafields)
         const shopifyResponse = await createShopifyProduct({
           ...formData,
+          ...(pointsValue != null ? { price: 0 } : {}),
+          pointsValue,
+          storeName,
           barcodeValue,
         });
         if (shopifyResponse.status === 200) {
@@ -1104,7 +1111,16 @@ export async function updateProduct(productId, data) {
     //update product in Shopify if shopifyProductId exists
     if (product?.shopifyProductId) {
       try {
-        await updateShopifyProduct(product.shopifyProductId, data);
+        // Fetch store name for Shopify metafield/description
+        const storeUser = await User.findById(session.user.id).select("storename brandname");
+        const storeName = storeUser?.storename || storeUser?.brandname || "";
+        // Merge pointsValue from update data or existing product
+        const pointsVal = data.pointsValue !== undefined ? data.pointsValue : product.pointsValue;
+        await updateShopifyProduct(product.shopifyProductId, {
+          ...data,
+          pointsValue: pointsVal,
+          storeName,
+        });
       } catch (error) {
         console.log(error, "error updating Shopify product");
       }

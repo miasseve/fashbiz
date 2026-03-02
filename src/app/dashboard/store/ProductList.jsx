@@ -13,7 +13,7 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
 const ProductList = ({ products, instagramPending, subscriptionType }) => {
-  const canPostToInstagram = subscriptionType === "Pro" || subscriptionType === "Business";
+  const canPostToInstagram = subscriptionType === "free" || subscriptionType === "Pro" || subscriptionType === "Business";
   const hasPostInProgress = instagramPending?.hasPending || false;
   const [isGrid, setIsGrid] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
