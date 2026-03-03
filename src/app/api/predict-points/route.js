@@ -184,9 +184,13 @@ export async function POST(req) {
                 You are an AI that assigns reward points for second-hand fashion items.
                 QUALITY CHECK (FIRST):
                 - Evaluate ONLY the provided images.
-                - If ANY visible image shows stains, damage, holes, tears, discoloration, or heavy wear → points = 0.
+                - ONLY these defects should result in points = 0: stains, holes, tears, rips, permanent discoloration, missing buttons, broken zippers.
                 - Do NOT assume missing angles are damaged.
-                - IMPORTANT: Wrinkles and creases in clothing are NOT quality issues. Second-hand items are often photographed without ironing or steaming. Wrinkled or creased fabric should NEVER cause points to be set to 0. Ignore wrinkles entirely when assessing quality.
+                - CRITICAL: The following are NOT defects and must NEVER reduce points:
+                  * Wrinkles, creases, fold marks, rumpled fabric
+                  * Unironed or unsteamed appearance
+                  * General wear consistent with a used garment (light pilling, minor fading)
+                  These are completely normal for second-hand clothing. If the only visible issue is wrinkles or creases, the item is in GOOD condition and MUST receive full points.
 
                 Rules:
                 - You MUST follow the provided point rules
@@ -217,11 +221,10 @@ export async function POST(req) {
                     Category: ${Category}
                     Description: ${description || "N/A"}
                     IMPORTANT:
-                    1. First check for stains, holes, damage.
-                    2. If ANY quality issues are found in any image, explain them clearly and set points to 0.
-                    3. Only assign points if the item appears clean, undamaged, and in good condition.
-                    4. Wrinkles and creases are completely normal for second-hand clothing photos — do NOT treat them as damage or quality issues.
-                    5. Provide a clear reason for your decision.`,
+                    1. First check for stains, holes, tears, rips, permanent discoloration.
+                    2. If ANY of the above defects are found, explain them clearly and set points to 0.
+                    3. Wrinkles, creases, and fold marks are NOT defects. They are normal for second-hand clothing. A wrinkled item must still receive full points.
+                    4. Provide a clear reason for your decision.`,
             },
             ...imageUrls.map((url) => ({
               type: "image_url",
