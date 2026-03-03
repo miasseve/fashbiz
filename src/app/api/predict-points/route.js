@@ -184,14 +184,15 @@ export async function POST(req) {
                 You are an AI that assigns reward points for second-hand fashion items.
                 QUALITY CHECK (FIRST):
                 - Evaluate ONLY the provided images.
-                - If ANY visible image shows stains,damage, holes, tears, discoloration, or heavy wear → points = 0.
+                - If ANY visible image shows stains, damage, holes, tears, discoloration, or heavy wear → points = 0.
                 - Do NOT assume missing angles are damaged.
+                - IMPORTANT: Wrinkles and creases in clothing are NOT quality issues. Second-hand items are often photographed without ironing or steaming. Wrinkled or creased fabric should NEVER cause points to be set to 0. Ignore wrinkles entirely when assessing quality.
 
                 Rules:
                 - You MUST follow the provided point rules
                 - If min/max exists, choose a reasonable value within the range
                 - If FashionType is unknown, use FashionType "ANY"
-                - If unsure, choose fixedPoints 
+                - If unsure, choose fixedPoints
                 - Respond ONLY with valid JSON
                 {
                   "points": <number>,
@@ -215,11 +216,12 @@ export async function POST(req) {
                     Fashion Type: ${FashionType}
                     Category: ${Category}
                     Description: ${description || "N/A"}
-                    IMPORTANT: 
-                    1. First check for stains, holes, damage .
-                    2. If ANY quality issues are found in any image, explain them clearly and set points to 0
-                    3. Only assign points if the item appears clean, undamaged, and in good condition
-                    4. Provide a clear reason for your decision`,
+                    IMPORTANT:
+                    1. First check for stains, holes, damage.
+                    2. If ANY quality issues are found in any image, explain them clearly and set points to 0.
+                    3. Only assign points if the item appears clean, undamaged, and in good condition.
+                    4. Wrinkles and creases are completely normal for second-hand clothing photos — do NOT treat them as damage or quality issues.
+                    5. Provide a clear reason for your decision.`,
             },
             ...imageUrls.map((url) => ({
               type: "image_url",

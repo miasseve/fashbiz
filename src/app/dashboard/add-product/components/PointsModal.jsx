@@ -25,6 +25,7 @@ const PointsModal = ({
   pointsLoading,
   availableRules,
   onConfirm,
+  isSubmitting = false,
 }) => {
   // Get the current applicable rule
   const currentRule = getPointRuleForProduct(
@@ -151,6 +152,7 @@ const PointsModal = ({
                     placeholder="Enter points"
                     className="text-2xl font-bold"
                     isInvalid={!!errors.points}
+                    isDisabled={isSubmitting}
                   />
                   {errors.points && (
                     <p className="text-sm text-red-600 mt-2">
@@ -163,16 +165,17 @@ const PointsModal = ({
           </ModalBody>
 
           <ModalFooter className="flex justify-between">
-            <Button variant="light" onPress={handleClose} type="button">
+            <Button variant="light" onPress={handleClose} type="button" isDisabled={isSubmitting}>
               Cancel
             </Button>
 
             <Button
               type="submit"
               className="success-btn"
-              isDisabled={pointsLoading || !isValid}
+              isDisabled={pointsLoading || !isValid || isSubmitting}
+              isLoading={isSubmitting}
             >
-              Confirm & Continue
+              {isSubmitting ? "Submitting..." : "Confirm & Continue"}
             </Button>
           </ModalFooter>
         </form>

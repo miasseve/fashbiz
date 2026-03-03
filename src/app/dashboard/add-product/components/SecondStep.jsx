@@ -327,13 +327,17 @@ const SecondStep = ({
   //     alert("Failed to copy link. Please try again.");
   //   }
   // };
+  const [pointsSubmitting, setPointsSubmitting] = useState(false);
+
   const handlePointsConfirm = async (confirmedPoints) => {
     const updatedData = {
       ...formData,
       pointsValue: confirmedPoints,
     };
 
+    setPointsSubmitting(true);
     await handleFinalProductCreation(updatedData);
+    setPointsSubmitting(false);
     setIsPointsModalOpen(false);
   };
 
@@ -693,6 +697,7 @@ const SecondStep = ({
         pointsLoading={pointsLoading}
         availableRules={availableRules}
         onConfirm={handlePointsConfirm}
+        isSubmitting={pointsSubmitting}
       />
     </>
   );
