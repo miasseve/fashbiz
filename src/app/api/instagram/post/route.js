@@ -9,10 +9,19 @@ const PAGE_ID = process.env.META_PAGE_ID;
 const ACCESS_TOKEN = process.env.META_IG_ACCESS_TOKEN;
 
 export async function POST(request) {
+  // Parse body once upfront so it's available in both success and error paths
+  // (request.json() can only be called once — the stream is consumed)
+  let body = {};
+  try {
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json({ status: 400, error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { products, images, caption, logId } = body;
+
   try {
     await dbConnect();
-
-    const { products, images, caption, logId } = await request.json();
 
     console.log(`[Instagram API] Starting post with ${images.length} images`);
 
@@ -48,8 +57,6 @@ export async function POST(request) {
   } catch (error) {
     console.error("[Instagram API] Post failed:", error.message);
 
-    const { logId, products } = await request.json().catch(() => ({}));
-
     // Update log with error
     if (logId) {
       await InstagramPostLog.findByIdAndUpdate(logId, {
@@ -61,7 +68,7 @@ export async function POST(request) {
       }).catch((e) => console.error("Failed to update log:", e));
     }
 
-    // Reset product flags
+    // Reset product flags so products can be reposted
     if (products && Array.isArray(products)) {
       await Product.updateMany(
         { _id: { $in: products.map((p) => p._id || p) } },

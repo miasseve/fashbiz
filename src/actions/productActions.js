@@ -460,6 +460,24 @@ export async function getInstagramPendingStatus() {
     }).select("status createdAt productIds");
 
     if (pendingPost) {
+      // Auto-expire stale posts stuck for more than 10 minutes
+      const ageMs = Date.now() - new Date(pendingPost.createdAt).getTime();
+      const TEN_MINUTES = 10 * 60 * 1000;
+
+      if (ageMs > TEN_MINUTES) {
+        console.warn(`[getInstagramPendingStatus] Expiring stale post ${pendingPost._id} (age: ${Math.round(ageMs / 1000)}s)`);
+        await InstagramPostLog.findByIdAndUpdate(pendingPost._id, {
+          status: "failed",
+          errorLog: { message: "Auto-expired: post stuck in pending/processing for over 10 minutes" },
+        });
+        // Reset product flags so they can be reposted
+        await Product.updateMany(
+          { _id: { $in: pendingPost.productIds } },
+          { hasInstagramPost: false },
+        );
+        return { status: 200, hasPending: false };
+      }
+
       return {
         status: 200,
         hasPending: true,
@@ -525,11 +543,12 @@ export async function createBulkInstagramPosts(productIds) {
       };
     }
 
-    // Fetch user data for store name and city
+    // Fetch user data for store name, city, and points_mode
     const user = await User.findById(session.user.id);
     if (!user) {
       return { status: 404, error: "User not found" };
     }
+    const isPointsMode = user.points_mode === true;
 
     // Fetch eligible products
     const products = await Product.find({
@@ -583,16 +602,43 @@ export async function createBulkInstagramPosts(productIds) {
     const storeName = user.storename || user.firstname || "Store";
     const storeCity = user.city || "";
 
+    // Fetch Shopify storefront URLs for all products
+    const shopifyUrls = await Promise.all(
+      products.map((product) =>
+        product.shopifyProductId
+          ? getShopifyProductStorefrontUrl(product.shopifyProductId)
+          : Promise.resolve(null)
+      )
+    );
+
     const caption = `
       ${products
         .map(
-          (product, index) => `
+          (product, index) => {
+            // For points_mode (DKK) stores, show DKK currency and points
+            let priceText;
+            if (isPointsMode) {
+              if (product.pointsValue != null && product.pointsValue > 0) {
+                priceText = `${product.pointsValue} Points`;
+              } else if (product.price > 0) {
+                priceText = `${product.price} DKK`;
+              } else {
+                priceText = "Contact for price";
+              }
+            } else {
+              priceText = product.price > 0 ? `€${product.price}` : "Contact for price";
+            }
+
+            const shopifyLink = shopifyUrls[index];
+
+            return `
       ${index + 1}. ${product.title}
       📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
       👚 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
-      💰 Price: ${product.price > 0 ? `€${product.price}` : "Contact for price"}
-      🏷️ Category: ${product.subcategory || "Fashion"}
-      `,
+      💰 Price: ${priceText}
+      🏷️ Category: ${product.subcategory || "Fashion"}${shopifyLink ? `\n      🛒 Shop: ${shopifyLink}` : ""}
+      `;
+          },
     )
   .join("\n")}
 
