@@ -92,7 +92,6 @@ const PLAN_CONFIG = {
     modules: [
       "All Add Basic features",
       "Instagram integration",
-      "Priority support",
     ],
     bgColor: "bg-gradient-to-br from-[#F2A187] via-[#ECCC91] to-[#F1D7F2]",
     type: "subscription",
@@ -150,7 +149,7 @@ const PLAN_CONFIG = {
     subtitle: "One-time setup fee",
     modules: [
       "Connect your existing webstore",
-      "All ADS features",
+      "webstore synchronized to all ADS features",
       "Full product sync",
       "No monthly fees",
     ],

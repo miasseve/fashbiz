@@ -503,11 +503,16 @@ export async function getUserSubscriptionType() {
       return "free";
     }
     await dbConnect();
-    const user = await User.findById(session.user.id).select("subscriptionType");
-    return user?.subscriptionType || "free";
+    const user = await User.findById(session.user.id).select("subscriptionType subscriptionEnd");
+    if (!user) return "expired";
+    // If subscription has expired, treat as expired
+    if (user.subscriptionEnd && new Date() > new Date(user.subscriptionEnd)) {
+      return "expired";
+    }
+    return user.subscriptionType || "expired";
   } catch (error) {
     console.error("[getUserSubscriptionType] Error:", error);
-    return "free";
+    return "expired";
   }
 }
 

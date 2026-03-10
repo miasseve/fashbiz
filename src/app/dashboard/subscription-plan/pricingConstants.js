@@ -12,7 +12,7 @@ export const RIGHT_CARD_STATIC = {
     rows: [
       { label: "Complete Adds", price: "10 DKK" },
       { label: "Instagram", price: "10 DKK" },
-      { label: "Vinted", price: "10 DKK" },
+      // { label: "Vinted", price: "10 DKK" },
     ],
   },
   Webstore: {

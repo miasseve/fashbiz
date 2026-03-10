@@ -388,28 +388,33 @@ export default function SubscriptionPlans({ user }) {
           </div>
         </div>
       ) : userRole === "store" ? (
-        <div className="pc pc--light pc-status" style={{ maxWidth: "min(720px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
-          <div className="pc__left pc-status__left" style={{ width: "clamp(130px, 20%, 180px)", justifyContent: "center", gap: 6 }}>
-            <div style={{ fontWeight: 800, fontSize: "clamp(9px, 1vw, 11px)", letterSpacing: "0.15em", textTransform: "uppercase", color: "#ef4444", marginBottom: 4 }}>
+        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
+          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
+            <div style={{
+              position: "absolute", top: 12, right: 12,
+              background: "#ef4444", color: "#fff",
+              fontWeight: 700, fontSize: 13, lineHeight: 1,
+              padding: "6px 16px", borderRadius: 999,
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
               INACTIVE
             </div>
-            <div className="pc__badge" style={{ fontSize: "clamp(16px, 2vw, 22px)" }}>NO PLAN</div>
-            <div className="pc__subtitles" style={{ marginBottom: 0 }}>SELECTED</div>
-          </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(16px,2vw,24px) clamp(14px,2vw,20px)", gap: 10 }}>
-            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
-              Subscribe to get started
+            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
+              No <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plan</span>
             </div>
-            <div className="pc__features" style={{ gap: 4 }}>
+            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Subscribe to get started.</div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
+            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
+              Choose a plan below to continue
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {["Instagram integration", "Shopify webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
-                <div key={i} className="pc__feature">
-                  <span className="pc__bullet">→</span>
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
+                  <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
                   {f}
                 </div>
               ))}
-            </div>
-            <div style={{ fontSize: "clamp(10px, 1.1vw, 12px)", color: "#6b7280", marginTop: 2 }}>
-              Choose a plan below to continue
             </div>
           </div>
         </div>
