@@ -14,6 +14,12 @@ import {
   getAllVariantInventoryIds,
 } from "@/actions/shopifyAction";
 
+// Platform transaction fee rates by subscription type
+const PLATFORM_FEE_RATES = {
+  "Webstore Basic": 0.04, // 4%
+  "Webstore Pro": 0.02,   // 2%
+};
+
 function verifyShopifyWebhook(body, hmacHeader, secret) {
   const generatedHmac = crypto
     .createHmac("sha256", secret)
@@ -151,13 +157,18 @@ export async function POST(req) {
         });
         console.log(`[Shopify Webhook] Notification created: ${notification._id}`);
 
-        // Create transaction record
+        // Create transaction record with platform fee
         try {
           const existingTx = await Transaction.findOne({
             orderId: String(event.id),
             productId: product._id,
           });
           if (!existingTx) {
+            // Calculate platform fee based on store owner's subscription
+            const feeRate = PLATFORM_FEE_RATES[owner.subscriptionType] || 0;
+            const saleAmount = Math.round(parseFloat(item.price || event.total_price) * 100);
+            const feeAmount = feeRate > 0 ? Math.round(saleAmount * feeRate) : 0;
+
             await Transaction.create({
               userId: product.userId,
               productId: product._id,
@@ -166,7 +177,7 @@ export async function POST(req) {
               customerName:
                 `${event.customer?.first_name || ""} ${event.customer?.last_name || ""}`.trim(),
               customerEmail: event.customer?.email || "",
-              amount: Math.round(parseFloat(item.price || event.total_price) * 100),
+              amount: saleAmount,
               currency: (event.currency || "DKK").toUpperCase(),
               paymentMethod: event.payment_gateway_names?.[0] || "Shopify",
               status: "completed",
@@ -186,8 +197,10 @@ export async function POST(req) {
                     zip: event.shipping_address.zip,
                   }
                 : undefined,
+              platformFeeRate: feeRate,
+              platformFeeAmount: feeAmount,
             });
-            console.log(`[Shopify Webhook] Transaction created for product ${product._id}`);
+            console.log(`[Shopify Webhook] Transaction created for product ${product._id} (fee: ${feeRate * 100}% = ${feeAmount})`);
           }
         } catch (txErr) {
           console.error(

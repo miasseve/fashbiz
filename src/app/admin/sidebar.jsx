@@ -9,6 +9,7 @@ import { MdDashboard, MdTimeline, MdSupportAgent, MdDeveloperMode } from "react-
 import { FaUsers } from "react-icons/fa";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { TbReportAnalytics } from "react-icons/tb";
+import { RiMoneyDollarCircleLine } from "react-icons/ri";
 
 const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
@@ -67,6 +68,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin/products", label: "Products", icon: <BiLogoProductHunt />, roles: ["admin", "developer"] },
     { href: "/admin/support", label: "Support", icon: <MdSupportAgent />, roles: ["admin", "developer"] },
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
+    { href: "/admin/platform-fees", label: "Platform Fees", icon: <RiMoneyDollarCircleLine />, roles: ["admin"] },
     { href: "/admin/developer", label: "Developer", icon: <MdDeveloperMode />, roles: ["developer"] },
   ].filter((item) => item.roles.includes(userRole));
 

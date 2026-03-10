@@ -51,6 +51,9 @@ const TransactionSchema = new mongoose.Schema(
       country: { type: String },
       zip: { type: String },
     },
+    platformFeeRate: { type: Number, default: 0 },   // e.g. 0.04 = 4%
+    platformFeeAmount: { type: Number, default: 0 },  // fee in smallest currency unit (øre)
+    platformFeePaid: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

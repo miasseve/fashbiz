@@ -511,6 +511,69 @@ export async function getUserSubscriptionType() {
   }
 }
 
+/**
+ * Look up a product in the Facebook/Instagram catalog using its Shopify product ID.
+ * Returns the catalog product ID needed for Instagram Shopping product tags.
+ */
+async function getCatalogProductId(shopifyProductId) {
+  try {
+    if (!shopifyProductId) return null;
+
+    const catalogId = process.env.META_CATALOG_ID;
+    if (!catalogId) {
+      console.warn("[Catalog] META_CATALOG_ID not set — skipping product tag");
+      return null;
+    }
+
+    const accessToken = process.env.META_IG_ACCESS_TOKEN;
+    const graphUrl = "https://graph.facebook.com/v19.0";
+
+    // Extract numeric Shopify ID from GID format (e.g. "gid://shopify/Product/12345" → "12345")
+    const numericId = shopifyProductId.includes("gid://")
+      ? shopifyProductId.split("/").pop()
+      : shopifyProductId;
+
+    // Search catalog by retailer_id (Shopify syncs products with their numeric ID as retailer_id)
+    const res = await axios.get(`${graphUrl}/${catalogId}/products`, {
+      params: {
+        filter: JSON.stringify({ retailer_id: { eq: numericId } }),
+        fields: "id,retailer_id,name",
+        access_token: accessToken,
+      },
+      timeout: 15000,
+    });
+
+    const catalogProduct = res.data?.data?.[0];
+    if (catalogProduct) {
+      console.log(`[Catalog] Found catalog product ${catalogProduct.id} for Shopify ID ${numericId}`);
+      return catalogProduct.id;
+    }
+
+    // Fallback: also try with the full shopify product ID string and the "shopify_" prefix
+    const prefixedId = `shopify_US_${numericId}`;
+    const fallbackRes = await axios.get(`${graphUrl}/${catalogId}/products`, {
+      params: {
+        filter: JSON.stringify({ retailer_id: { eq: prefixedId } }),
+        fields: "id,retailer_id,name",
+        access_token: accessToken,
+      },
+      timeout: 15000,
+    });
+
+    const fallbackProduct = fallbackRes.data?.data?.[0];
+    if (fallbackProduct) {
+      console.log(`[Catalog] Found catalog product ${fallbackProduct.id} via prefixed ID ${prefixedId}`);
+      return fallbackProduct.id;
+    }
+
+    console.warn(`[Catalog] No catalog product found for Shopify ID ${numericId}`);
+    return null;
+  } catch (error) {
+    console.error(`[Catalog] Error looking up product:`, error.message);
+    return null;
+  }
+}
+
 export async function createBulkInstagramPosts(productIds) {
   try {
     const session = await auth();
@@ -597,53 +660,76 @@ export async function createBulkInstagramPosts(productIds) {
     }
 
     /**
-     * Build combined caption with store details
+     * Build product tags by looking up each product in the Facebook/Instagram catalog.
+     * Each tag maps to a carousel slide so Instagram shows product info per slide.
+     */
+    const catalogProductIds = await Promise.all(
+      products.map((product) => getCatalogProductId(product.shopifyProductId))
+    );
+
+    const productTags = products.map((product, index) => {
+      const catalogProductId = catalogProductIds[index];
+      return catalogProductId ? { catalogProductId } : null;
+    });
+
+    const hasAnyTags = productTags.some(Boolean);
+
+    /**
+     * Build caption — when product tags are present, keep it short since
+     * each slide shows its own product name/price via Instagram Shopping.
+     * Fall back to the detailed caption when tags are not available.
      */
     const storeName = user.storename || user.firstname || "Store";
     const storeCity = user.city || "";
 
-    // Fetch Shopify storefront URLs for all products
-    const shopifyUrls = await Promise.all(
-      products.map((product) =>
-        product.shopifyProductId
-          ? getShopifyProductStorefrontUrl(product.shopifyProductId)
-          : Promise.resolve(null)
-      )
-    );
+    let caption;
+    if (hasAnyTags) {
+      // Short caption — product info is shown per-slide via Shopping tags
+      caption = `📍 ${storeName}${storeCity ? ` | ${storeCity}` : ""}
+Swipe to browse ${products.length} items 👉
 
-    const caption = `
+#lestores #preloved #sustainablefashion #secondhand`.trim();
+    } else {
+      // Fallback: detailed caption when catalog is not set up
+      const shopifyUrls = await Promise.all(
+        products.map((product) =>
+          product.shopifyProductId
+            ? getShopifyProductStorefrontUrl(product.shopifyProductId)
+            : Promise.resolve(null)
+        )
+      );
+
+      caption = `
       ${products
-        .map(
-          (product, index) => {
-            // For points_mode (DKK) stores, show DKK currency and points
-            let priceText;
-            if (isPointsMode) {
-              if (product.pointsValue != null && product.pointsValue > 0) {
-                priceText = `${product.pointsValue} Points`;
-              } else if (product.price > 0) {
-                priceText = `${product.price} DKK`;
-              } else {
-                priceText = "Contact for price";
-              }
+        .map((product, index) => {
+          let priceText;
+          if (isPointsMode) {
+            if (product.pointsValue != null && product.pointsValue > 0) {
+              priceText = `${product.pointsValue} Points`;
+            } else if (product.price > 0) {
+              priceText = `${product.price} DKK`;
             } else {
-              priceText = product.price > 0 ? `€${product.price}` : "Contact for price";
+              priceText = "Contact for price";
             }
+          } else {
+            priceText = product.price > 0 ? `€${product.price}` : "Contact for price";
+          }
 
-            const shopifyLink = shopifyUrls[index];
+          const shopifyLink = shopifyUrls[index];
 
-            return `
+          return `
       ${index + 1}. ${product.title}
       📍 Store: ${storeName}${storeCity ? ` | ${storeCity}` : ""}
       👚 Size: ${Array.isArray(product.size) ? product.size.join(", ") : product.size || "N/A"}
       💰 Price: ${priceText}
       🏷️ Category: ${product.subcategory || "Fashion"}${shopifyLink ? `\n      🛒 Shop: ${shopifyLink}` : ""}
       `;
-          },
-    )
-  .join("\n")}
+        })
+        .join("\n")}
 
 #lestores #preloved #sustainablefashion #secondhand
-    `.trim();
+      `.trim();
+    }
 
     /**
      * Create ONE Instagram post log
@@ -670,6 +756,7 @@ export async function createBulkInstagramPosts(productIds) {
         products: products.map((p) => ({ _id: p._id })),
         images,
         caption,
+        productTags: hasAnyTags ? productTags : undefined,
         logId: log._id.toString(),
       }),
     }).catch(async (err) => {

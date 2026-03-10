@@ -1,9 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
-  Card,
-  CardBody,
-  CardHeader,
   Button,
   Input,
   Checkbox,
@@ -22,6 +19,9 @@ import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
 import { archiveProduct } from "@/actions/productActions";
 import { Spinner } from "@heroui/react";
+import PRICING_CSS from "./pricingStyles";
+import { GROUP_DISPLAY } from "./pricingConstants";
+import PricingStack from "./PricingStack";
 
 export default function SubscriptionPlans({ user }) {
   const [plans, setPlans] = useState([]);
@@ -32,6 +32,7 @@ export default function SubscriptionPlans({ user }) {
   const [referralCode, setReferralCode] = useState("");
   const [userRole, setUserRole] = useState(user?.role || "");
   const [selectedPriceId, setSelectedPriceId] = useState(null);
+  const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const router = useRouter();
   const [terms, setTerms] = useState({
     term1: false,
@@ -41,11 +42,9 @@ export default function SubscriptionPlans({ user }) {
 
   const handleContinue = async () => {
     if (!allChecked) return;
-    //validate the refferal code
     const { status, message } = await checkvalidReferralCode(
       referralCode.trim(),
     );
-    // console.log("Referral code validation:", status, message);
     if (status != 200) {
       toast.error(message);
       return;
@@ -87,26 +86,45 @@ export default function SubscriptionPlans({ user }) {
       const res = await fetch("/api/stripe/plans");
       const data = await res.json();
 
-      const formattedPlans = data.map((plan) => ({
-        id: plan.id,
-        name: plan.product.name,
-        price: plan.unit_amount
-          ? `${(plan.unit_amount / 100).toFixed(
-              2,
-            )} ${plan.currency.toUpperCase()}`
-          : "0 DKK",
-        period: plan.recurring_interval || "month",
-        tagline: plan.tagline || "",
-        subtitle: plan.subtitle || "",
-        cardBgColor: plan.bgColor || "bg-white",
-        features: plan.features || ["✔ Basic access"],
-      }));
+      const formattedPlans = data.map((plan) => {
+        const fullName = plan.nickname || plan.product.name;
+        const words = fullName.split(" ");
+        const rawTier = words.length > 1 ? words.slice(1).join(" ") : fullName;
+        const TIER_RENAMES = { "Basic": "Basic", "Pro": "Pro" };
+        const tierName = TIER_RENAMES[rawTier] || rawTier;
+
+        return {
+          id: plan.id,
+          nickname: fullName,
+          productName: plan.product.name,
+          tierName,
+          name: plan.product.name,
+          price: plan.unit_amount
+            ? `${(plan.unit_amount / 100).toFixed(
+                2,
+              )} ${plan.currency.toUpperCase()}`
+            : "0 DKK",
+          period: plan.recurring?.interval || (plan.priceType === "one_time" ? "once" : "month"),
+          priceType: plan.priceType || "recurring",
+          tagline: plan.tagline || "",
+          subtitle: plan.subtitle || "",
+          cardBgColor: plan.bgColor || "bg-white",
+          features: plan.features || ["Basic access"],
+          productLimit: plan.productLimit,
+          maxUsers: plan.maxUsers,
+          transactionFee: plan.transactionFee || null,
+          requiresQuote: plan.requiresQuote || false,
+          planType: plan.planType || "subscription",
+        };
+      });
 
       setPlans(formattedPlans);
 
       if (hasActiveSubscription && user?.subscriptionType) {
         const matchedPlan = formattedPlans.find(
-          (p) => p.name.toLowerCase() === user.subscriptionType.toLowerCase(),
+          (p) =>
+            p.name.toLowerCase() === user.subscriptionType.toLowerCase() ||
+            p.nickname.toLowerCase() === user.subscriptionType.toLowerCase(),
         );
 
         if (matchedPlan) {
@@ -132,9 +150,6 @@ export default function SubscriptionPlans({ user }) {
     );
   }
 
-  // const activePlan = hasActiveSubscription ? user.subscriptionType : null;
-
-  //this redirect to the stripe default checkout page
   const handleSubscribe = async (plan) => {
     try {
       if (!allChecked) return;
@@ -163,15 +178,14 @@ export default function SubscriptionPlans({ user }) {
         encryptedReferral = data.encrypted;
       }
       setIsOpen(false);
-      // Send plan info and user ID to your backend API route
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          priceId: plan.id, // Stripe Price ID
-          userId: user._id, // assuming you have user._id or user.id
+          priceId: plan.id,
+          userId: user._id,
           referral: encryptedReferral || null,
         }),
       });
@@ -179,7 +193,6 @@ export default function SubscriptionPlans({ user }) {
       const data = await res.json();
 
       if (data.url) {
-        // Redirect user to Stripe Checkout
         window.location.href = data.url;
       } else {
         alert("Failed to start checkout session.");
@@ -195,7 +208,6 @@ export default function SubscriptionPlans({ user }) {
     setSelectedPriceId(priceId);
     if (userRole === "store") setIsOpen(true);
     if (userRole !== "store") {
-      // \app\checkout\page.jsx
       router.push(`/checkout?userId=${user._id}&priceId=${priceId}`);
     }
   };
@@ -217,7 +229,6 @@ export default function SubscriptionPlans({ user }) {
       },
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // setActionLoading('cancel');
         try {
           const res = await fetch("/api/stripe/subscription", {
             method: "POST",
@@ -226,287 +237,247 @@ export default function SubscriptionPlans({ user }) {
           });
           const data = await res.json();
           if (data.success) {
-            //archive all products of the user
             await archiveProduct(user._id);
             toast.success(
               data.message || "Subscription will cancel at period end",
             );
             router.refresh();
-            // await fetchData();
           } else {
             toast.error(`Error: ${data.error}`);
           }
         } catch (error) {
           console.log(error.message);
           toast.error("Error cancelling subscription");
-          // alert("Failed to cancel subscription");
-        } finally {
-          // setActionLoading(null);
         }
       }
     });
   };
 
+  // Filter plans by role
+  const filteredPlans = plans.filter(
+    (plan) =>
+      (userRole === "store" && plan.name !== "Brand Collect") ||
+      (userRole === "brand" && plan.name === "Brand Collect"),
+  );
+
+  const paidPlans = filteredPlans.filter(
+    (p) => p.price !== "0 DKK" && p.price !== "0.00 DKK",
+  );
+
+  // Group paid plans by stripping tier suffix (Basic/Pro) from product name
+  const getGroupName = (name) =>
+    name.replace(/\s+(Basic|Pro)$/i, "").trim();
+
+  const groupedPlans = paidPlans.reduce((acc, plan) => {
+    const key = getGroupName(plan.productName);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(plan);
+    return acc;
+  }, {});
+
+  // Build groups in explicit order: Add → Webstore → Plugin
+  const groupKeys = Object.keys(groupedPlans);
+  const findKey = (test) => groupKeys.find((k) => test(k.toLowerCase()));
+  const orderedKeys = [
+    findKey((n) => n === "add" || (n.includes("add") && !n.includes("webstore") && !n.includes("plug"))),
+    findKey((n) => n.includes("webstore")),
+    findKey((n) => n.includes("plug")),
+  ].filter(Boolean);
+  groupKeys.forEach((k) => { if (!orderedKeys.includes(k)) orderedKeys.push(k); });
+
+  const planGroups = orderedKeys.map((key) => ({
+    productName: key,
+    plans: groupedPlans[key].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
+  }));
+
   return (
     <section>
-      <div className="max-w-7xl mx-auto">
-        {hasActiveSubscription ? (
-          <div className="max-w-xl mx-auto mb-10">
-            <Card className="relative bg-gray-200 dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden p-10">
-              <div className="absolute top-4 right-4 bg-green-500 text-white font-bold px-5 py-2 rounded-lg shadow-lg text-2xl">
-                ACTIVE
+      <style>{PRICING_CSS}</style>
+
+      {/* ── Status card ── */}
+      {hasActiveSubscription ? (
+        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
+          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
+            <div style={{
+              position: "absolute", top: 12, right: 12,
+              background: "#22c55e", color: "#fff",
+              fontWeight: 700, fontSize: 13, lineHeight: 1,
+              padding: "6px 16px", borderRadius: 999,
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
+              ACTIVE
+            </div>
+            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
+              {activePlan?.name
+                ? (GROUP_DISPLAY[activePlan.name] || activePlan.name)
+                : "Free"}{" "}
+              <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plan</span>
+            </div>
+            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Your subscription is currently active.</div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
+            {/* Date row */}
+            <div style={{ display: "flex", gap: "clamp(16px, 3vw, 32px)", fontWeight: 700, fontSize: "clamp(14px, 1.5vw, 17px)" }}>
+              <div>
+                <span style={{ fontWeight: 700, color: "#111", fontSize: "clamp(13px, 1.3vw, 15px)" }}>Start: </span>
+                <span style={{ color: "#111", fontWeight: 600 }}>{dayjs(user.subscriptionStart).format("DD MMM YYYY")}</span>
               </div>
-              <CardHeader className="flex flex-col items-center pt-4">
-                <h3 className="text-5xl font-extrabold text-gray-900 dark:text-white mb-3">
-                  {activePlan?.name ? (
-                    <>
-                      {activePlan.name.charAt(0).toUpperCase() +
-                        activePlan.name.slice(1)}{" "}
-                      Plan
-                    </>
-                  ) : (
-                    "Free Plan"
-                  )}
-                </h3>
-                <p className="text-2xl text-gray-700 dark:text-gray-300 font-semibold">
-                  Your subscription is currently active
-                </p>
-              </CardHeader>
-              <CardBody className="text-center space-y-6 pt-6">
-                <div className="flex justify-around w-full text-gray-800 dark:text-gray-200 font-semibold text-xl">
-                  <p>
-                    <span className="font-bold">Start:</span>{" "}
-                    {dayjs(user.subscriptionStart).format("DD MMM YYYY")}
-                  </p>
-                  <p>
-                    <span className="font-bold">
-                      {user.subscriptionType !== "free"
-                        ? "Renews On:"
-                        : "Ends On:"}
-                    </span>{" "}
-                    {dayjs(user.subscriptionEnd).format("DD MMM YYYY")}
-                  </p>
-                </div>
-                {activePlan ? (
-                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-md sm:text-xl text-left px-6">
-                    {activePlan.features && activePlan.features.length > 0 ? (
-                      activePlan.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      ))
-                    ) : (
-                      <li>No features available for this plan.</li>
-                    )}
-                  </ul>
+              <div>
+                <span style={{ fontWeight: 700, color: "#111", fontSize: "clamp(13px, 1.3vw, 15px)" }}>
+                  {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
+                </span>
+                <span style={{ color: "#111", fontWeight: 600 }}>{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+              </div>
+            </div>
+            {/* Features */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {activePlan?.features?.length > 0 ? (
+                activePlan.features.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
+                    <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
+                    {f}
+                  </div>
+                ))
+              ) : (
+                (() => {
+                  const planName = (activePlan?.name || "").toLowerCase();
+                  const isBasic = planName.includes("basic");
+                  const isPro = planName.includes("pro");
+                  const isAdd = planName.includes("add");
+                  const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
+                  const users = isPro ? "5" : isBasic ? "2" : "1";
+                  const fallbackFeatures = [
+                    `Upload up to ${limit} products per month`,
+                    `Up to ${users} users access`,
+                    "Instagram integration",
+                    ...(!isAdd ? ["Shopify webstore synchronization"] : []),
+                  ];
+                  return fallbackFeatures.map((f, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
+                      <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
+                      {f}
+                    </div>
+                  ));
+                })()
+              )}
+            </div>
+            {/* Cancel / lock notice */}
+            {user.subscriptionType !== "free" &&
+              (() => {
+                const startDate = new Date(user.subscriptionStart);
+                const sixMonthsLater = new Date(startDate);
+                sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+                const now = new Date();
+                const canCancel = now >= sixMonthsLater;
+                return canCancel ? (
+                  <button style={{ alignSelf: "flex-start", background: "#ef4444", color: "#fff", border: "none", borderRadius: 999, padding: "8px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={handleCancelSubscription}>
+                    Cancel Subscription
+                  </button>
                 ) : (
-                  <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-md text-left px-6">
-                    <li>Full access to premium features</li>
-                    <li>Priority customer support</li>
-                    <li>Unlimited product uploads</li>
-                    <li>Advanced analytics & reports</li>
-                  </ul>
-                )}
-
-                {user.subscriptionType !== "free" &&
-                  (() => {
-                    const startDate = new Date(user.subscriptionStart);
-                    const sixMonthsLater = new Date(startDate);
-                    sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
-                    const now = new Date();
-
-                    const canCancel = now >= sixMonthsLater;
-
-                    return canCancel ? (
-                      <Button
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-10 py-4 rounded-xl shadow-xl text-xl transition-all duration-300"
-                        onPress={handleCancelSubscription}
-                      >
-                        Cancel Subscription
-                      </Button>
-                    ) : (
-                      <div className="text-yellow-600 font-semibold text-md sm:text-xl mt-4">
-                        ⏳ <span className="font-semibold">Note:</span> Your
-                        subscription is locked for the first{" "}
-                        <span className="font-bold">6 months</span>. You'll be
-                        able to cancel it after{" "}
-                        <span className="font-bold">
-                          {sixMonthsLater.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                        . Until then, enjoy uninterrupted access to your plan!
-                      </div>
-                    );
-                  })()}
-              </CardBody>
-            </Card>
+                  <div style={{ fontSize: 13, color: "#92400e", lineHeight: 1.6, marginTop: 4, background: "rgba(234,179,8,0.15)", borderRadius: 12, padding: "10px 14px", fontWeight: 500 }}>
+                    <span style={{ marginRight: 4 }}>&#9203;</span>
+                    <span style={{ fontWeight: 700 }}>Note:</span> Your subscription is locked for the first{" "}
+                    <span style={{ fontWeight: 700 }}>6 months</span>. You&apos;ll be able to cancel it after{" "}
+                    <span style={{ fontWeight: 700 }}>
+                      {sixMonthsLater.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                    . Until then, enjoy uninterrupted access to your plan!
+                  </div>
+                );
+              })()}
           </div>
-        ) : userRole === "store" ? (
-          <div className="max-w-xl mx-auto">
-            <Card className="bg-gray-200 dark:bg-gray-800 rounded-2xl text-gray-900 dark:text-white shadow-lg">
-              <CardHeader className="flex flex-col items-center pt-8 pb-4">
-                <h3 className="text-3xl sm:text-4xl font-extrabold text-red-600 mb-2">
-                  Subscription Required
-                </h3>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-700 dark:text-gray-300 text-center">
-                  Your plan has expired or you have not subscribed yet.
-                </p>
-              </CardHeader>
-              <CardBody className="text-center pb-8 px-6">
-                <ul className="text-gray-700 list-disc list-inside dark:text-gray-300 mb-6 space-y-3 text-lg text-left px-6">
-                  <li>Full access to premium features</li>
-                  <li>Priority customer support</li>
-                  <li>Unlimited product uploads</li>
-                  <li>Advanced analytics & reports</li>
-                </ul>
-
-                <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400">
-                  Please choose a plan below to continue enjoying our services.
-                </p>
-              </CardBody>
-            </Card>
+        </div>
+      ) : userRole === "store" ? (
+        <div className="pc pc--light pc-status" style={{ maxWidth: "min(720px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
+          <div className="pc__left pc-status__left" style={{ width: "clamp(130px, 20%, 180px)", justifyContent: "center", gap: 6 }}>
+            <div style={{ fontWeight: 800, fontSize: "clamp(9px, 1vw, 11px)", letterSpacing: "0.15em", textTransform: "uppercase", color: "#ef4444", marginBottom: 4 }}>
+              INACTIVE
+            </div>
+            <div className="pc__badge" style={{ fontSize: "clamp(16px, 2vw, 22px)" }}>NO PLAN</div>
+            <div className="pc__subtitles" style={{ marginBottom: 0 }}>SELECTED</div>
           </div>
-        ) : null}
-      </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(16px,2vw,24px) clamp(14px,2vw,20px)", gap: 10 }}>
+            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
+              Subscribe to get started
+            </div>
+            <div className="pc__features" style={{ gap: 4 }}>
+              {["Instagram integration", "Shopify webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
+                <div key={i} className="pc__feature">
+                  <span className="pc__bullet">→</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: "clamp(10px, 1.1vw, 12px)", color: "#6b7280", marginTop: 2 }}>
+              Choose a plan below to continue
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-      <h2 className="text-6xl font-bold text-center text-gray-900 text-white mb-5">
-        Get a Plan
+      <h2 className="text-3xl md:text-6xl font-bold text-center text-gray-900 text-white mb-5">
+        CHOOSE A PLAN
       </h2>
 
-      {/* Main Layout with Plans and Add-on Cards */}
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Subscription Plans Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-          {plans
-            .filter(
-              (plan) =>
-                (userRole === "store" && plan.name !== "Brand Collect") ||
-                (userRole === "brand" && plan.name === "Brand Collect"),
-            )
-            .map((plan, index) => {
-              const cardBgColor = plan.cardBgColor || "bg-white";
-              return (
-                <div key={plan.id} className="flex flex-col">
-                  <p className="min-h-[30px] text-[#ebf96d] font-semibold mb-6 text-md leading-tight mt-2">
-                    {plan.tagline}
-                  </p>
-                  <Card
-                    className={`flex-1 flex flex-col rounded-xl ${cardBgColor} p-6 sm:p-8 text-purple-700 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl hover:-translate-y-2 relative overflow-visible`}
-                  >
-                    {plan.popular && (
-                      <div className="absolute -top-3 -right-3 bg-yellow-400 text-black font-bold px-4 py-2 rounded-full text-sm shadow-lg z-10 animate-pulse">
-                        POPULAR
-                      </div>
-                    )}
-                    <CardHeader className="p-0 flex-col items-start">
-                      <span className="inline-block px-6 sm:px-8 py-3 rounded-full bg-[linear-gradient(270deg,_#FDFFE0_-3.38%,_#F5F300_45.33%,_#FFAB00_100%)] text-purple-700 font-bold text-md sm:text-[20px] w-fit">
-                        {plan.name}
-                      </span>
-
-                      <h3 className="mt-6 sm:mt-8 text-lg sm:text-xl font-bold text-[#6711a4]">
-                        {plan.subtitle}
-                      </h3>
-                    </CardHeader>
-
-                    <CardBody className="p-0 flex flex-col flex-1">
-                      <ul className="my-6 list-disc list-inside pl-5 space-y-2 sm:space-y-3 text-md text-purple-700">
-                        {plan.features.map((item, i) => (
-                          <li key={i} className="leading-relaxed">
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="border-t-[3px] border-white mt-auto pt-6">
-                        <p className="text-3xl sm:text-4xl font-bold text-purple-700">
-                          {plan.price}
-                        </p>
-                        <Button
-                          className={`w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg ${
-                            activePlan && activePlan?.name === plan.name
-                              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                              : plan.popular
-                                ? "bg-white text-[#6711a4] hover:bg-gray-100 hover:shadow-xl"
-                                : "bg-[#6711a4] text-white hover:bg-[#5a0d8a] hover:shadow-xl"
-                          }`}
-                          onPress={() => {
-                            if (activePlan && activePlan?.name === plan.name)
-                              return;
-                            handleCheckout(plan.id);
-                          }}
-                          disabled={
-                            activePlan && activePlan?.name === plan.name
-                          }
-                        >
-                          {activePlan?.name === plan.name
-                            ? "Subscribed"
-                            : plan.popular
-                              ? "Get Started"
-                              : "Subscribe Now"}
-                        </Button>
-                        {userRole === "store" && (
-                          <p className="mt-4 text-[1.4rem] font-semibold text-purple-600 text-center">
-                            🎁 Get{" "}
-                            <span className="font-bold">1 month free</span> by
-                            inviting a store!
-                          </p>
-                        )}
-                      </div>
-                    </CardBody>
-                  </Card>
-                </div>
-              );
-            })}
-        </div>
-
-        {/* Add-on Cards on the Right */}
-        <div className="lg:w-80 flex flex-col gap-6">
-          {/* Add-on Header */}
-          <div className="text-center lg:text-left">
-            <h3 className="text-3xl sm:text-4xl font-bold text-[#ebf96d] mb-2">
-              Add on
-            </h3>
+      {/* ─── MOBILE-ONLY: tier info ─── */}
+      <div className="pricing-mobile-info">
+        <div className="pricing-mobile-info__card">
+          <div className="pricing-mobile-info__row">
+            <div className="pricing-mobile-info__tier-name">BASIC</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 300 products per month</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 2 users acess</div>
           </div>
-
-          {/* Re-e Plug-in Card */}
-          <Card className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-6 sm:p-8 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-            <CardBody className="p-0 flex flex-col justify-between h-full">
-              <div>
-                <h4 className="text-2xl sm:text-3xl font-bold text-[#ebf96d] mb-4">
-                  Re-e plug-in to your site
-                </h4>
-                <p className="text-3xl sm:text-4xl font-extrabold text-white mb-6">
-                  3290 DKK
-                </p>
-              </div>
-              <Button className="w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg bg-white text-teal-700 hover:bg-gray-100 hover:shadow-xl">
-                Get Started
-              </Button>
-            </CardBody>
-          </Card>
-
-          {/* Custom Web Shop Card */}
-          <Card className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-2xl p-6 sm:p-8 shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-            <CardBody className="p-0 flex flex-col justify-between h-full">
-              <div>
-                <h4 className="text-2xl sm:text-3xl font-bold text-[#ebf96d] mb-4">
-                  You need your web shop?
-                </h4>
-                <h5 className="text-xl sm:text-2xl font-semibold text-[#ebf96d] mb-4">
-                  Contact us for a quote
-                </h5>
-                <p className="text-md sm:text-base text-white/90 leading-relaxed">
-                  We build all and connect REe and you have an automated web
-                  shop
-                </p>
-              </div>
-              <Button className="w-full mt-6 px-6 py-10 rounded-xl font-bold text-[18px] transition-all duration-300 shadow-lg bg-white text-teal-700 hover:bg-gray-100 hover:shadow-xl mb-6">
-                Contact Us
-              </Button>
-            </CardBody>
-          </Card>
+          <div className="pricing-mobile-info__divider" />
+          <div className="pricing-mobile-info__row">
+            <div className="pricing-mobile-info__tier-name">PRO</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 1000 products per month</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 5 users acess</div>
+          </div>
         </div>
       </div>
+
+      {/* Tier overview — desktop only */}
+      {planGroups.length > 0 && (() => {
+        const activeGroup = planGroups[activeGroupIndex] || planGroups[0];
+        return (
+          <div className="pricing-tier-overview">
+            <div className="pricing-tier-left-spacer" />
+            <div
+              className="pricing-tier-cols"
+              style={{ gridTemplateColumns: `repeat(${activeGroup.plans.length}, 1fr)` }}
+            >
+              {activeGroup.plans.map((plan) => (
+                <div key={plan.id} className="pricing-tier-col">
+                  <div className="pricing-tier-col__name">{plan.tierName}</div>
+                  {(plan.productLimit || plan.maxUsers) && (
+                    <div className="pricing-tier-col__info">
+                      {plan.productLimit ? `Up to ${plan.productLimit} products per month` : ""}
+                      {plan.productLimit && plan.maxUsers ? <br /> : ""}
+                      {plan.maxUsers ? `Up to ${plan.maxUsers} users` : ""}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="pricing-tier-col--right">
+              <div className="pricing-tier-col__name">NO SUBSCRIPTION</div>
+              <div className="pricing-tier-col__info">
+                FROM 10 DKK<br />PER PRODUCT
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Paid Plans — stacking scroll animation */}
+      {planGroups.length > 0 && (
+        <PricingStack
+          planGroups={planGroups}
+          activePlan={activePlan}
+          handleCheckout={handleCheckout}
+          onActiveChange={setActiveGroupIndex}
+        />
+      )}
 
       <Modal
         backdrop="blur"
@@ -555,7 +526,7 @@ export default function SubscriptionPlans({ user }) {
                       label: "text-black-700 text-xl",
                     }}
                   >
-                    I agree to the platform's Terms and Privacy Policy.
+                    I agree to the platform&apos;s Terms and Privacy Policy.
                   </Checkbox>
                 </div>
               </div>
