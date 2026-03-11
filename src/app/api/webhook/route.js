@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
+import AddOnPurchase from "@/models/AddOnPurchase";
 import { productPurchased } from "@/mails/ProductPurchased";
 import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
@@ -108,6 +109,19 @@ export async function POST(req, res) {
     case "checkout.session.completed": {
       const session = event.data.object;
       const userId = session.metadata.userId;
+
+      // Handle add-on purchases (one-time payments)
+      if (session.metadata.type === "addon_purchase") {
+        const purchaseId = session.metadata.purchaseId;
+        if (purchaseId) {
+          await AddOnPurchase.findByIdAndUpdate(purchaseId, {
+            status: "paid",
+            stripePaymentIntentId: session.payment_intent,
+            paidAt: new Date(),
+          });
+        }
+        break;
+      }
 
       // Get subscription details
       const subscriptionId = session.subscription;

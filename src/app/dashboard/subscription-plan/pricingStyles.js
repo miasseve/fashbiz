@@ -234,7 +234,7 @@ const PRICING_CSS = `
     flex-shrink: 0;
     position: sticky;
     top: 71px;
-    z-index: 50;
+    z-index: 10;
     padding: 12px clamp(8px, 1.5vw, 16px);
     box-sizing: border-box;
   }

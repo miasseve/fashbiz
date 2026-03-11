@@ -16,6 +16,7 @@ const Main = ({
   stripeResponse,
   isDemo,
   demoLimitReached,
+  addonPurchase,
 }) => {
   const currentStep = useSelector((state) => state.product.currentStep);
   const [count, setCount] = useState(productCount || 0);
@@ -64,7 +65,38 @@ const Main = ({
     !demoLimitReached;
   return (
     <div className="mx-auto lg:my-[10px] bg-white rounded-xl dark:bg-gray-900 transition-all ">
-        <ProgressBar currentStep={currentStep} steps={steps} />
+      <ProgressBar currentStep={currentStep} steps={steps} />
+      {addonPurchase && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-red-800 px-4 py-3">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-6 h-6 text-[#17C964]"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-md font-medium text-red-800 dark:text-red-300">
+                  Pay-Per-Product Mode
+                </span>
+              </div>
+              <span className="text-md text-blue-600 dark:text-blue-400 hidden sm:inline">
+                Add-ons:{" "}
+                {addonPurchase.addOns
+                  .map((a) => a.replace(/_/g, " "))
+                  .join(", ")}{" "}
+                ({addonPurchase.totalAmount / 100} DKK)
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {isInDemoMode && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -281,6 +313,7 @@ const Main = ({
               user={user}
               productCount={count}
               handleAddMoreProducts={handleAddMoreProducts}
+              addonPurchase={addonPurchase}
             />
           )}
         </>

@@ -34,6 +34,7 @@ const SecondStep = ({
   handleAddMoreProducts,
   user,
   productCount,
+  addonPurchase,
 }) => {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -286,8 +287,25 @@ const SecondStep = ({
         return;
       }
       if (response.status === 200) {
-        // setGeneratedLink(response.data.link);
-        setProductDetails(JSON.parse(response.data.product));
+        const createdProduct = JSON.parse(response.data.product);
+        setProductDetails(createdProduct);
+
+        // Link product to add-on purchase if applicable
+        if (addonPurchase?.id && createdProduct?._id) {
+          try {
+            await fetch("/api/stripe/addon-purchase", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                purchaseId: addonPurchase.id,
+                productId: createdProduct._id,
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to link add-on purchase:", err);
+          }
+        }
+
         setShowConfirmation(true);
         dispatch(clearProductState());
         setFormData(null);

@@ -77,25 +77,25 @@ const PlatformFeesPage = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="text-sm text-gray-500 mb-1">Total Sales</div>
+          <div className="text-[12px] text-gray-500 mb-1">Total Sales</div>
           <div className="text-2xl font-bold text-gray-800">
             {formatCurrency(totals.totalSales || 0)}
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="text-sm text-gray-500 mb-1">Total Fees Earned</div>
+          <div className="text-[12px] text-gray-500 mb-1">Total Fees Earned</div>
           <div className="text-2xl font-bold text-green-600">
             {formatCurrency(totals.totalFees || 0)}
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="text-sm text-gray-500 mb-1">Fees Collected</div>
+          <div className="text-[12px] text-gray-500 mb-1">Fees Collected</div>
           <div className="text-2xl font-bold text-blue-600">
             {formatCurrency(totals.paidFees || 0)}
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="text-sm text-gray-500 mb-1">Fees Outstanding</div>
+          <div className="text-[12px] text-gray-500 mb-1">Fees Outstanding</div>
           <div className="text-2xl font-bold text-red-600">
             {formatCurrency(totals.unpaidFees || 0)}
           </div>
@@ -112,7 +112,7 @@ const PlatformFeesPage = () => {
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all ${
               filter === tab.key
                 ? "bg-black text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -131,7 +131,7 @@ const PlatformFeesPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[12px]">
               <thead>
                 <tr className="bg-gray-50 border-b">
                   <th className="text-left px-4 py-3 font-semibold text-gray-600">Store</th>
@@ -154,7 +154,7 @@ const PlatformFeesPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-block px-2 py-1 rounded-full text-[12px] font-medium ${
                           store.subscriptionType?.includes("Pro")
                             ? "bg-purple-100 text-purple-700"
                             : store.subscriptionType?.includes("Basic")
@@ -190,7 +190,7 @@ const PlatformFeesPage = () => {
                         <button
                           onClick={() => handleMarkPaid(store.userId, store.storename)}
                           disabled={markingPaid === store.userId}
-                          className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all"
+                          className="px-3 py-1.5 bg-green-600 text-white text-[12px] font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all"
                         >
                           {markingPaid === store.userId ? "Marking..." : "Mark Paid"}
                         </button>
@@ -205,7 +205,7 @@ const PlatformFeesPage = () => {
       </div>
 
       {/* Info note */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-md text-amber-800">
         <strong>Note:</strong> Platform fees are calculated on Shopify webstore transactions.
         Webstore Basic stores pay 4% per transaction, Webstore Pro stores pay 2% per transaction.
         Use &quot;Mark Paid&quot; after collecting fees from a store owner.

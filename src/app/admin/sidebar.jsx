@@ -69,6 +69,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin/support", label: "Support", icon: <MdSupportAgent />, roles: ["admin", "developer"] },
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
     { href: "/admin/platform-fees", label: "Platform Fees", icon: <RiMoneyDollarCircleLine />, roles: ["admin"] },
+    { href: "/admin/addon-purchases", label: "Add-On Purchases", icon: <RiMoneyDollarCircleLine />, roles: ["admin","developer"] },
     { href: "/admin/developer", label: "Developer", icon: <MdDeveloperMode />, roles: ["developer"] },
   ].filter((item) => item.roles.includes(userRole));
 
