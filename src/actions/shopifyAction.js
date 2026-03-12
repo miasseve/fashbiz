@@ -582,6 +582,17 @@ export async function createShopifyProduct(formData) {
       console.error("Failed to publish product to Online Store:", pubErr.response?.data || pubErr.message);
     }
 
+    // Auto-publish to Facebook & Instagram sales channel so products
+    // are immediately available in the catalog without manual selection.
+    // Wait 3s first so Shopify has time to attach images before the catalog syncs.
+    setTimeout(async () => {
+      try {
+        await publishProductToFacebookInstagram(productId);
+      } catch (fbErr) {
+        console.error("Failed to publish product to Facebook & Instagram:", fbErr.message);
+      }
+    }, 3000);
+
     return {
       status: 200,
       message: "Product created successfully",
@@ -1007,6 +1018,77 @@ export async function disableShopifyProduct(productId) {
   }
 }
 
+
+// Cache the Facebook & Instagram publication ID so we only look it up once per process
+let _facebookPublicationId = null;
+
+/**
+ * Publish a product to the Facebook & Instagram sales channel automatically.
+ * Requires read_publications + write_publications scopes on the Shopify app.
+ */
+async function publishProductToFacebookInstagram(shopifyProductGid) {
+  // Get publication ID — from env (fast) or query Shopify (once per process)
+  if (!_facebookPublicationId) {
+    _facebookPublicationId = process.env.SHOPIFY_FACEBOOK_PUBLICATION_ID || null;
+  }
+
+  if (!_facebookPublicationId) {
+    // Query Shopify for the Facebook & Instagram publication ID
+    const pubRes = await shopify.post("", {
+      query: `query {
+        publications(first: 20) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }`,
+    });
+
+    const publications = pubRes.data?.data?.publications?.edges || [];
+    const fbPub = publications.find(
+      (e) =>
+        e.node.name.toLowerCase().includes("facebook") ||
+        e.node.name.toLowerCase().includes("instagram")
+    );
+
+    if (!fbPub) {
+      console.warn("[Shopify] Facebook & Instagram publication not found — skipping auto-publish");
+      return;
+    }
+
+    _facebookPublicationId = fbPub.node.id;
+    console.log(`[Shopify] Found Facebook & Instagram publication: ${_facebookPublicationId}`);
+  }
+
+  // Publish the product to the Facebook & Instagram channel
+  const publishRes = await shopify.post("", {
+    query: `mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+      publishablePublish(id: $id, input: $input) {
+        publishable {
+          publishedOnCurrentChannel
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }`,
+    variables: {
+      id: shopifyProductGid,
+      input: [{ publicationId: _facebookPublicationId }],
+    },
+  });
+
+  const errors = publishRes.data?.data?.publishablePublish?.userErrors;
+  if (errors?.length) {
+    console.error("[Shopify] Failed to publish to Facebook & Instagram:", errors);
+  } else {
+    console.log(`[Shopify] Product ${shopifyProductGid} published to Facebook & Instagram`);
+  }
+}
 
 // GET SHOPIFY PRODUCT STOREFRONT URL
 export async function getShopifyProductStorefrontUrl(shopifyProductId) {
