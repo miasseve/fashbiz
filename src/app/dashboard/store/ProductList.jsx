@@ -56,9 +56,9 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
     if (isCreatingPosts) return;
     const newSelection = new Set(selectedInstagramProducts);
     if (isSelected) {
-      // Enforce maximum 5 products limit for Instagram
-      if (newSelection.size >= 5) {
-        toast.error("Maximum 5 products can be selected for Instagram posting");
+      // Enforce maximum 20 products limit for Instagram carousel
+      if (newSelection.size >= 20) {
+        toast.error("Maximum 20 products can be selected for Instagram posting");
         return;
       }
       newSelection.add(productId);

@@ -220,7 +220,7 @@ const toggle = (key) => {
             )}
           </button>
           <p className="text-[12px] text-gray-400 text-center mt-3">
-            One-time payment per product. Secure checkout via Stripe.
+            One-time payment per product.  <br/> Secure checkout via Stripe.
           </p>
         </div>
       </div>

@@ -7,6 +7,7 @@ import Product from "@/models/Product";
 const GRAPH_URL = "https://graph.facebook.com/v19.0";
 const PAGE_ID = process.env.META_PAGE_ID;
 const ACCESS_TOKEN = process.env.META_IG_ACCESS_TOKEN;
+const CATALOG_ID = process.env.META_CATALOG_ID;
 
 export async function POST(request) {
   // Parse body once upfront so it's available in both success and error paths
@@ -18,7 +19,7 @@ export async function POST(request) {
     return NextResponse.json({ status: 400, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { products, images, caption, logId } = body;
+  const { products, images, caption, logId, productInfos } = body;
 
   try {
     await dbConnect();
@@ -33,11 +34,28 @@ export async function POST(request) {
     // Format caption with limit
     const formattedCaption = caption?.substring(0, 2200) || "";
 
+    // Get IG account ID once — used for posting and catalog lookups
+    const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
+      params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
+      timeout: 60000,
+    });
+    const igAccountId = pageResponse.data.instagram_business_account.id;
+
+    // Look up catalog product IDs via the IG account's own catalog search
+    // (/{ig-user-id}/catalog_product_search uses the IG token correctly)
+    let productTags = [];
+    if (productInfos?.length && CATALOG_ID) {
+      productTags = await Promise.all(
+        productInfos.map((info) => getCatalogProductIdForInstagram(igAccountId, info.title))
+      );
+      console.log(`[Instagram API] Resolved catalog tags:`, productTags);
+    }
+
     let result;
     if (images.length === 1) {
-      result = await createSinglePost(images[0], formattedCaption);
+      result = await createSinglePost(igAccountId, images[0], formattedCaption, productTags[0] || null);
     } else {
-      result = await createCarouselPost(images, formattedCaption);
+      result = await createCarouselPost(igAccountId, images, formattedCaption, productTags);
     }
 
     // Update log on success
@@ -86,17 +104,52 @@ export async function POST(request) {
   }
 }
 
-async function createSinglePost(imageUrl, caption) {
+/**
+ * Search the Instagram catalog for a product by title.
+ * Uses /{ig-user-id}/catalog_product_search which works with the IG access token.
+ */
+async function getCatalogProductIdForInstagram(igAccountId, productTitle) {
   try {
-    const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
-      params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-      timeout: 60000,
+    if (!CATALOG_ID || !productTitle) return null;
+
+    const res = await axios.get(`${GRAPH_URL}/${igAccountId}/catalog_product_search`, {
+      params: {
+        catalog_id: CATALOG_ID,
+        q: productTitle,
+        fields: "product_id,retailer_id,name",
+        access_token: ACCESS_TOKEN,
+      },
+      timeout: 15000,
     });
 
-    const igAccountId = pageResponse.data.instagram_business_account.id;
+    const product = res.data?.data?.[0];
+    if (product) {
+      console.log(`[Catalog] Found product_id ${product.product_id} for "${productTitle}"`);
+      return { catalogProductId: product.product_id };
+    }
+
+    console.warn(`[Catalog] No match found for "${productTitle}"`);
+    return null;
+  } catch (error) {
+    console.error(`[Catalog] Search error for "${productTitle}":`, error.response?.data || error.message);
+    return null;
+  }
+}
+
+async function createSinglePost(igAccountId, imageUrl, caption, productTag = null) {
+  try {
+    const mediaParams = { image_url: imageUrl, caption, access_token: ACCESS_TOKEN };
+
+    // Add product tag if available (Instagram Shopping)
+    if (productTag?.catalogProductId) {
+      mediaParams.product_tags = JSON.stringify([
+        { product_id: productTag.catalogProductId, x: 0.5, y: 0.8 },
+      ]);
+      console.log(`[Instagram API] Single post tagged with catalog product: ${productTag.catalogProductId}`);
+    }
 
     const mediaRes = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
-      params: { image_url: imageUrl, caption, access_token: ACCESS_TOKEN },
+      params: mediaParams,
       timeout: 90000,
     });
 
@@ -114,21 +167,31 @@ async function createSinglePost(imageUrl, caption) {
   }
 }
 
-async function createCarouselPost(images, caption) {
+async function createCarouselPost(igAccountId, images, caption, productTags = []) {
   try {
-    const pageResponse = await axios.get(`${GRAPH_URL}/${PAGE_ID}`, {
-      params: { fields: "instagram_business_account", access_token: ACCESS_TOKEN },
-      timeout: 60000,
-    });
-
-    const igAccountId = pageResponse.data.instagram_business_account.id;
-
-    // Create child containers
+    // Create child containers — each slide gets its own product tag
     const children = [];
-    for (const imageUrl of images) {
-      console.log(`[Instagram API] Creating carousel item ${children.length + 1}/${images.length}`);
+    for (let i = 0; i < images.length; i++) {
+      const imageUrl = images[i];
+      const tag = productTags[i];
+      console.log(`[Instagram API] Creating carousel item ${i + 1}/${images.length}`);
+
+      const childParams = {
+        image_url: imageUrl,
+        is_carousel_item: true,
+        access_token: ACCESS_TOKEN,
+      };
+
+      // Tag this slide with its specific product from the catalog
+      if (tag?.catalogProductId) {
+        childParams.product_tags = JSON.stringify([
+          { product_id: tag.catalogProductId, x: 0.5, y: 0.8 },
+        ]);
+        console.log(`[Instagram API] Slide ${i + 1} tagged with catalog product: ${tag.catalogProductId}`);
+      }
+
       const res = await axios.post(`${GRAPH_URL}/${igAccountId}/media`, null, {
-        params: { image_url: imageUrl, is_carousel_item: true, access_token: ACCESS_TOKEN },
+        params: childParams,
         timeout: 120000,
       });
       children.push(res.data.id);

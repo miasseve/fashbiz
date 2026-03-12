@@ -503,16 +503,11 @@ export async function getUserSubscriptionType() {
       return "free";
     }
     await dbConnect();
-    const user = await User.findById(session.user.id).select("subscriptionType subscriptionEnd");
-    if (!user) return "expired";
-    // If subscription has expired, treat as expired
-    if (user.subscriptionEnd && new Date() > new Date(user.subscriptionEnd)) {
-      return "expired";
-    }
-    return user.subscriptionType || "expired";
+    const user = await User.findById(session.user.id).select("subscriptionType");
+    return user?.subscriptionType || "free";
   } catch (error) {
     console.error("[getUserSubscriptionType] Error:", error);
-    return "expired";
+    return "free";
   }
 }
 
@@ -594,8 +589,8 @@ export async function createBulkInstagramPosts(productIds) {
       return { status: 400, error: "Product limit exceeded" };
     }
 
-    if(productIds.length > 5){
-      return {status:422,error:"not more than 5 products can be selected"}
+    if(productIds.length > 20){
+      return {status:422,error:"not more than 20 products can be selected"}
     }
 
     // Block if there's already a post being processed
@@ -664,38 +659,29 @@ export async function createBulkInstagramPosts(productIds) {
       };
     }
 
-    /**
-     * Build product tags by looking up each product in the Facebook/Instagram catalog.
-     * Each tag maps to a carousel slide so Instagram shows product info per slide.
-     */
-    const catalogProductIds = await Promise.all(
-      products.map((product) => getCatalogProductId(product.shopifyProductId))
-    );
-
-    const productTags = products.map((product, index) => {
-      const catalogProductId = catalogProductIds[index];
-      return catalogProductId ? { catalogProductId } : null;
-    });
-
-    const hasAnyTags = productTags.some(Boolean);
-
-    /**
-     * Build caption — when product tags are present, keep it short since
-     * each slide shows its own product name/price via Instagram Shopping.
-     * Fall back to the detailed caption when tags are not available.
-     */
     const storeName = user.storename || user.firstname || "Store";
     const storeCity = user.city || "";
+    const catalogReady = !!process.env.META_CATALOG_ID;
 
+    /**
+     * Product infos — passed to the API route which does the catalog lookup
+     * using /{ig-user-id}/catalog_product_search (correct endpoint for IG token).
+     */
+    const productInfos = catalogReady
+      ? products.map((p) => ({ title: p.title }))
+      : undefined;
+
+    /**
+     * Caption — short when catalog is configured (product info shown per-slide via tags),
+     * detailed fallback when catalog is not set up.
+     */
     let caption;
-    if (hasAnyTags) {
-      // Short caption — product info is shown per-slide via Shopping tags
+    if (catalogReady) {
       caption = `📍 ${storeName}${storeCity ? ` | ${storeCity}` : ""}
 Swipe to browse ${products.length} items 👉
 
 #lestores #preloved #sustainablefashion #secondhand`.trim();
     } else {
-      // Fallback: detailed caption when catalog is not set up
       const shopifyUrls = await Promise.all(
         products.map((product) =>
           product.shopifyProductId
@@ -761,7 +747,7 @@ Swipe to browse ${products.length} items 👉
         products: products.map((p) => ({ _id: p._id })),
         images,
         caption,
-        productTags: hasAnyTags ? productTags : undefined,
+        productInfos,
         logId: log._id.toString(),
       }),
     }).catch(async (err) => {
