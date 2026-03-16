@@ -1,4 +1,4 @@
-import { Montserrat, Playfair_Display } from "next/font/google";
+import { Montserrat, Playfair_Display, Lato, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
@@ -20,11 +20,23 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
+const lato = Lato({
+  subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  variable: "--font-lato",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+});
+
 
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-DK" className={`${montserrat.className} ${playfair.variable}`}>
+    <html lang="en-DK" className={`${montserrat.className} ${playfair.variable} ${lato.variable} ${spaceGrotesk.variable}`}>
       <body suppressHydrationWarning >
         <OrganizationJsonLd />
         <WebSiteJsonLd />

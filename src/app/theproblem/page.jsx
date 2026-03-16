@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import LandingHeader from "@/components/landing/LandingHeader";
 import VideoSection from "@/components/landing/VideoSection";
 import HeroSection from "@/components/landing/HeroSection";
@@ -10,13 +13,14 @@ import FAQSection from "@/components/landing/FAQSection";
 import CTASection from "@/components/landing/CTASection";
 import LandingFooter from "@/components/landing/LandingFooter";
 
-export const metadata = {
-  title: "REe — Retail Automation Consulting",
-  description:
-    "We automate what slows you down so you can grow. Retail, fashion, merchandising and software experts.",
-};
+export default function TheProblemPage() {
+  useEffect(() => {
+    const el = document.getElementById("problem");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
 
-export default function Home() {
   return (
     <div className="landing-page">
       <LandingHeader />

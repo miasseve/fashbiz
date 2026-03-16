@@ -402,9 +402,21 @@ const AdminSupportPage = () => {
                   {ticket.name}
                 </span>
                 {activeTab === "public" ? (
-                  <span className="text-[14px] text-gray-500 ml-2">
-                    {ticket.email}
-                  </span>
+                  <>
+                    <span className="text-[14px] text-gray-500 ml-2">
+                      {ticket.email}
+                    </span>
+                    {ticket.storename && (
+                      <span className="text-[12px] text-indigo-600 ml-2 font-medium">
+                        {ticket.storename}
+                      </span>
+                    )}
+                    {ticket.phone && (
+                      <span className="text-[12px] text-gray-400 ml-2">
+                        {ticket.phone}
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <>
                     {ticket.email && (
@@ -415,6 +427,11 @@ const AdminSupportPage = () => {
                     {ticket.storename && (
                       <span className="text-[14px] text-indigo-600 ml-2 font-medium">
                         {ticket.storename}
+                      </span>
+                    )}
+                    {ticket.phone && (
+                      <span className="text-[12px] text-gray-400 ml-2">
+                        {ticket.phone}
                       </span>
                     )}
                   </>

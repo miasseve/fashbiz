@@ -54,10 +54,6 @@ export async function proxy(req) {
     }
     return NextResponse.redirect(new URL("/dashboard/add-product", req.url));
   }
-  // Public routes - visitors go to try mode
-  if (isPublic && nextUrl.pathname === "/") {
-    return NextResponse.redirect(new URL("/try/add-product", req.url));
-  }
   if (isPublic) {
     return NextResponse.next();
   }

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 
 const ContactSupportPage = () => {
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", storename: "", email: "", phone: "", subject: "", message: "" });
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +28,7 @@ const ContactSupportPage = () => {
 
       if (result.status === 200) {
         setStatus({ type: "success", message: result.message });
-        setFormData({ name: "", email: "", message: "" });
+        setFormData({ name: "", storename: "", email: "", phone: "", subject: "", message: "" });
       } else {
         setStatus({ type: "error", message: result.error });
       }
@@ -41,7 +41,7 @@ const ContactSupportPage = () => {
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-fash-gradient py-12 px-4">
-      <div className="max-w-2xl w-full bg-white shadow-md rounded-xl p-8">
+      <div className="max-w-3xl w-full bg-white shadow-md rounded-xl p-8">
         <h1 className="text-4xl font-bold mb-4 text-center text-gray-800 uppercase">
           Contact Support
         </h1>
@@ -80,6 +80,21 @@ const ContactSupportPage = () => {
           </div>
 
           <div>
+            <label htmlFor="storename" className="block text-sm font-semibold text-gray-700 mb-1">
+              Store / Company
+            </label>
+            <input
+              id="storename"
+              name="storename"
+              type="text"
+              value={formData.storename}
+              onChange={handleChange}
+              placeholder="Enter your store or company name"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#06cb03] focus:border-transparent"
+            />
+          </div>
+
+          <div>
             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
               Email
             </label>
@@ -93,6 +108,44 @@ const ContactSupportPage = () => {
               placeholder="Enter your email"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#06cb03] focus:border-transparent"
             />
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-1">
+              Phone <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Enter your phone number"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#06cb03] focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-1">
+              What do you need?
+            </label>
+            <select
+              id="subject"
+              name="subject"
+              required
+              value={formData.subject}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#06cb03] focus:border-transparent bg-white"
+            >
+              <option value="" disabled>Select an option</option>
+              <option value="General Inquiry">General Inquiry</option>
+              <option value="Order Issue">Order Issue</option>
+              <option value="Technical Support">Technical Support</option>
+              <option value="Billing / Subscription">Billing / Subscription</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div>
@@ -121,12 +174,12 @@ const ContactSupportPage = () => {
         </form>
 
         <div className="mt-8 text-center space-y-2">
-          <p className="text-sm text-gray-500">
+          <p className="text-[12px] text-gray-500">
             We typically respond within 24 hours.
           </p>
           <Link
             href="/login"
-            className="text-sm text-[#6e482d] underline hover:opacity-80"
+            className="text-[12px] text-[#6e482d] underline hover:opacity-80"
           >
             Back to Login
           </Link>
