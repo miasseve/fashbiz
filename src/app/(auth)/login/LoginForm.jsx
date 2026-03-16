@@ -77,7 +77,7 @@ const LoginForm = () => {
                 <div className="">
                   <h1 className="sr-only">Ree | All-in-One Resale Platform for Secondhand Fashion Stores</h1>
                   <p className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
-                    14 DAYS FREE TO SELL INSTANTLY
+                    SELL YOUR PRELOVED ITEMS INSTANTLY
                   </p>
                   {/* <p className="text-[18px] font-normal text-black m-0">
                     Your trusted marketplace to sell with ease.

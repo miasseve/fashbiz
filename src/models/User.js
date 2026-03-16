@@ -68,17 +68,12 @@ const UserSchema = new mongoose.Schema({
   emailVerified: Date,
   subscriptionType: {
     type: String,
-    default: function () {
-      return this.role === "store" ? "free" : undefined;
-    },
   },
   subscriptionStart: { type: Date },
   subscriptionEnd: { type: Date },
   isActive: {
     type: Boolean,
-    default: function () {
-      return this.role === "store" ? true : undefined;
-    },
+    default: false,
   },
   isProfileComplete: { type: Boolean, default: false },
   resetPasswordToken: { type: String, default: null },

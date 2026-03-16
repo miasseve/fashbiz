@@ -16,7 +16,6 @@ import {
   loginSchema,
   resetPasswordSchema,
 } from "./validations";
-import dayjs from "dayjs";
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
 import ActiveUser from "@/models/Activeuser";
 import { transferGuestProducts } from "@/actions/productActions";
@@ -40,18 +39,6 @@ export async function registerUser(data) {
       businessNumber,
       phone,
     } = data;
-
-    let subscriptionData = {};
-    if (role === "store") {
-      const subscriptionStart = new Date();
-      const subscriptionEnd = dayjs(subscriptionStart).add(14, "day").toDate();
-      subscriptionData = {
-        subscriptionType: "free",
-        subscriptionStart,
-        subscriptionEnd,
-        isActive: true,
-      };
-    }
 
     await registerSchema.validate(data, { abortEarly: false });
 
@@ -78,7 +65,6 @@ export async function registerUser(data) {
       ...(role === "store" && {
         storename,
         businessNumber,
-        ...subscriptionData,
       }),
 
       // Brand fields

@@ -8,13 +8,42 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, CreditCard, PlusCircle } from "lucide-react";
 import { unarchiveProduct } from "@/actions/productActions";
 import { getUser } from "@/actions/authActions";
 
 const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 );
+
+const CARD_BRAND_COLORS = {
+  visa: "#1A1F71",
+  mastercard: "#EB001B",
+  amex: "#007BC1",
+  discover: "#FF6600",
+};
+
+function CardBadge({ brand }) {
+  const color = CARD_BRAND_COLORS[brand] || "#6B7280";
+  return (
+    <span
+      className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border"
+      style={{ color, borderColor: color }}
+    >
+      {brand}
+    </span>
+  );
+}
+
+// Deduplicate by card fingerprint, keep newest
+function deduplicateMethods(methods) {
+  const seen = new Map();
+  for (const m of methods) {
+    const fp = m.card?.fingerprint;
+    if (!seen.has(fp)) seen.set(fp, m);
+  }
+  return Array.from(seen.values());
+}
 
 function CheckoutForm({ plan, userId }) {
   const stripe = useStripe();
@@ -22,10 +51,25 @@ function CheckoutForm({ plan, userId }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [savedMethods, setSavedMethods] = useState([]);
+  const [selectedMethodId, setSelectedMethodId] = useState(null); // null = new card
+  const [loadingMethods, setLoadingMethods] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/stripe/payment-methods?userId=${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const methods = deduplicateMethods(data.paymentMethods || []);
+        setSavedMethods(methods);
+        if (methods.length > 0) setSelectedMethodId(methods[0].id);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMethods(false));
+  }, [userId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe) return;
 
     setLoading(true);
     setError(null);
@@ -34,34 +78,33 @@ function CheckoutForm({ plan, userId }) {
       const urlParams = new URL(window.location.href).searchParams;
       const encryptedReferral = urlParams.get("referral");
       const userResponse = await getUser(userId);
-      const userData = JSON.parse(userResponse?.data || "{}"); // parse JSON string
+      const userData = JSON.parse(userResponse?.data || "{}");
       const userRole = userData?.role || null;
 
       let referralCode = null;
       let referredBy = null;
       if (encryptedReferral) {
         const res = await fetch(
-          `/api/encryptreferral?referral=${encodeURIComponent(
-            encryptedReferral
-          )}`
+          `/api/encryptreferral?referral=${encodeURIComponent(encryptedReferral)}`,
         );
         const data = await res.json();
         referralCode = data.code || null;
         referredBy = data.userId || null;
-        // console.log("Decrypted referral code:", referralCode, "of", referredBy);
       }
-      const cardElement = elements.getElement(CardElement);
 
-      const { error: pmError, paymentMethod } =
-        await stripe.createPaymentMethod({
-          type: "card",
-          card: cardElement,
-        });
+      let paymentMethodId = selectedMethodId;
 
-      if (pmError) {
-        setError(pmError.message);
-        setLoading(false);
-        return;
+      if (!selectedMethodId) {
+        if (!elements) return;
+        const cardElement = elements.getElement(CardElement);
+        const { error: pmError, paymentMethod } =
+          await stripe.createPaymentMethod({ type: "card", card: cardElement });
+        if (pmError) {
+          setError(pmError.message);
+          setLoading(false);
+          return;
+        }
+        paymentMethodId = paymentMethod.id;
       }
 
       const res = await fetch("/api/stripe/subscription", {
@@ -71,8 +114,8 @@ function CheckoutForm({ plan, userId }) {
           action: "create",
           userId,
           priceId: plan.id,
-          paymentMethodId: paymentMethod.id,
-          referredBy: referredBy,
+          paymentMethodId,
+          referredBy,
         }),
       });
 
@@ -104,71 +147,151 @@ function CheckoutForm({ plan, userId }) {
     }
   };
 
+  const hasSaved = savedMethods.length > 0;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-        <h3 className="font-semibold text-lg mb-1">{plan.nickname}</h3>
-        <p className="text-3xl font-bold text-blue-600">
-          {(plan.unit_amount / 100).toFixed(2)} {plan.currency.toUpperCase()}
-          <span className="text-base text-gray-600 font-normal">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Plan summary */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-200">
+        <p className="text-[12px] text-gray-500 mb-1">Selected plan</p>
+        <h3 className="font-semibold text-xl text-gray-800">{plan.nickname}</h3>
+        <p className="text-3xl font-bold text-blue-600 mt-1">
+          {(plan.unit_amount / 100).toFixed(2)}{" "}
+          <span className="text-[12px] font-medium">
+            {plan.currency.toUpperCase()}
+          </span>
+          <span className="text-[12px] text-gray-500 font-normal">
             /{plan.recurring?.interval}
           </span>
         </p>
-        {plan.product?.description && (
-          <p className="text-sm text-gray-600 mt-2">
-            {plan.product.description}
-          </p>
-        )}
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
-          Card Information
-        </label>
-        <div className="border border-gray-300 rounded-lg p-4 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": { color: "#aab7c4" },
-                  fontFamily: "system-ui, -apple-system, sans-serif",
-                },
-                invalid: { color: "#dc2626" },
-              },
-            }}
-          />
+      {/* Payment method section */}
+      {loadingMethods ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-[12px] font-medium text-gray-700">
+            Payment method
+          </p>
+
+          {hasSaved && (
+            <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+              {savedMethods.map((method) => {
+                const isSelected = selectedMethodId === method.id;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSelectedMethodId(method.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                      isSelected ? "bg-blue-50" : "bg-white hover:bg-gray-50"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                        isSelected
+                          ? "border-blue-600 bg-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="w-full h-full rounded-full scale-50 bg-white" />
+                      )}
+                    </div>
+                    <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <CardBadge brand={method.card.brand} />
+                    <span className="text-[12px] text-gray-700 flex-1">
+                      •••• {method.card.last4}
+                    </span>
+                    <span className="text-[12px] text-gray-400">
+                      {method.card.exp_month}/{method.card.exp_year}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* New card option */}
+              <button
+                type="button"
+                onClick={() => setSelectedMethodId(null)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                  selectedMethodId === null
+                    ? "bg-blue-50"
+                    : "bg-white hover:bg-gray-50"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                    selectedMethodId === null
+                      ? "border-blue-600 bg-blue-600"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {selectedMethodId === null && (
+                    <div className="w-full h-full rounded-full scale-50 bg-white" />
+                  )}
+                </div>
+                <PlusCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="text-[12px] text-gray-700">
+                  Use a new card
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* New card input */}
+          {selectedMethodId === null && (
+            <div className="border border-gray-200 rounded-xl p-4 bg-white focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-300 transition">
+              <CardElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: "15px",
+                      color: "#374151",
+                      "::placeholder": { color: "#9CA3AF" },
+                      fontFamily: "system-ui, -apple-system, sans-serif",
+                    },
+                    invalid: { color: "#DC2626" },
+                  },
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       <button
         type="submit"
-        disabled={!stripe || loading}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+        disabled={!stripe || loading || loadingMethods}
+        className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
       >
         {loading ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            Processing Payment...
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Processing...
           </>
         ) : (
           <>
-            <Lock className="w-4 h-4 mr-2" />
+            <Lock className="w-4 h-4" />
             Subscribe Now
           </>
         )}
       </button>
 
-      <p className="text-xs text-gray-500 text-center">
-        🔒 Secure payment powered by Stripe. Your card details are never stored
-        on our servers.
+      <p className="text-[12px] text-gray-400 text-center flex items-center justify-center gap-1">
+        <span>
+          🔒Secure payment powered by Stripe. <br />
+          Your card details are never stored on our servers.
+        </span>
       </p>
     </form>
   );
@@ -193,11 +316,8 @@ export default function CheckoutPage() {
       .then((r) => r.json())
       .then((plans) => {
         const selectedPlan = plans.find((p) => p.id === priceId);
-        if (selectedPlan) {
-          setPlan(selectedPlan);
-        } else {
-          router.push("dashboard/subscription-plan");
-        }
+        if (selectedPlan) setPlan(selectedPlan);
+        else router.push("dashboard/subscription-plan");
       })
       .catch(() => router.push("dashboard/subscription-plan"))
       .finally(() => setLoading(false));
@@ -214,15 +334,18 @@ export default function CheckoutPage() {
   if (!plan) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center mb-6">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+      <div style={{ width: "359.99px" }}>
+        <div
+          className="bg-white rounded-2xl shadow-lg p-8"
+          style={{ width: "359.99px", minHeight: "398.96px" }}
+        >
+          <div className="mb-6 text-center">
             <h1 className="text-2xl font-bold text-gray-800">
               Complete Your Subscription
             </h1>
-            <p className="text-gray-600 text-sm mt-2">
-              Enter your payment details below
+            <p className="text-[12px] text-gray-500 mt-1">
+              Review your plan and confirm payment
             </p>
           </div>
 
@@ -232,7 +355,7 @@ export default function CheckoutPage() {
 
           <button
             onClick={() => router.push("dashboard/subscription-plan")}
-            className="w-full mt-4 text-gray-600 hover:text-gray-800 text-sm"
+            className="w-full mt-5 text-[12px] text-gray-400 hover:text-gray-600 transition"
           >
             ← Back to Plans
           </button>

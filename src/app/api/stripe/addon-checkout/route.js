@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import dbConnect from "@/lib/db";
 import AddOnPurchase from "@/models/AddOnPurchase";
+import User from "@/models/User";
 import { ADD_ONS, calculateTotal } from "@/lib/addOnConfig";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -69,6 +70,30 @@ export async function POST(req) {
     const totalDKK = calculateTotal(addOns);
     const totalOre = totalDKK * 100; // convert DKK to øre
 
+    // Get or create Stripe customer and attach the payment method so it's saved
+    const user = await User.findById(userId);
+    let customerId = user?.stripeCustomerId;
+    if (user && !customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: `${user.firstname} ${user.lastname}`,
+        metadata: { userId: user._id.toString() },
+      });
+      customerId = customer.id;
+      user.stripeCustomerId = customerId;
+      await user.save();
+    }
+    if (customerId) {
+      try {
+        await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+        await stripe.customers.update(customerId, {
+          invoice_settings: { default_payment_method: paymentMethodId },
+        });
+      } catch (_) {
+        // Already attached — safe to ignore
+      }
+    }
+
     // Create a pending purchase record
     const purchase = await AddOnPurchase.create({
       userId,
@@ -82,6 +107,7 @@ export async function POST(req) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalOre,
       currency: "dkk",
+      customer: customerId || undefined,
       payment_method: paymentMethodId,
       confirm: true,
       automatic_payment_methods: {

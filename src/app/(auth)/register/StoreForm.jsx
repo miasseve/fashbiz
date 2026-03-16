@@ -227,7 +227,7 @@ const StoreForm = () => {
           color="primary"
           className="auth-btn m-auto"
         >
-          Create Account - 14-day FREE
+          Create Account
         </Button>
       </form>
     </div>

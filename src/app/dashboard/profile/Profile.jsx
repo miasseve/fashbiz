@@ -740,7 +740,7 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
                 <p className="text-md font-semibold text-gray-700">
                   Sold Item Notifications
                 </p>
-                <p className="text-sm text-gray-600 mt-0.5">
+                <p className="text-[12px] text-gray-600 mt-0.5">
                   Get notified when a product is sold on Shopify
                 </p>
               </div>

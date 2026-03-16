@@ -30,7 +30,7 @@ const RegisterForm = () => {
               <div className="lg:pb-[5rem] pb-[5rem]">
                 <div className="">
                   <div className="text-[54px] font-bold uppercase leading-[60px] mb-[30px] text-[#06cb03]">
-                    14 DAYS FREE TO SELL INSTANTLY
+                    SELL YOUR PRELOVED ITEMS INSTANTLY
                   </div>
 
                   {/* <p className="text-[18px] font-semibold text-black m-0 ">
