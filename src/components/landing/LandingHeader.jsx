@@ -164,7 +164,7 @@ const LandingHeader = () => {
               <li className="cursor-pointer hover:text-black"><a href="/tools">Our tools</a></li>
               <li className="cursor-pointer hover:text-black">Pricing</li>
               <li className="cursor-pointer hover:text-black">
-                <a href="/faq">FAQ</a>
+                <a href="/#faq">FAQ</a>
               </li>
             </ul>
 
@@ -253,7 +253,7 @@ const LandingHeader = () => {
                 Pricing
               </li>
               <li className="list-none cursor-pointer hover:text-black">
-                <a href="/faq">FAQ</a>
+                <a href="/#faq">FAQ</a>
               </li>
               <button
                 onClick={() => {
