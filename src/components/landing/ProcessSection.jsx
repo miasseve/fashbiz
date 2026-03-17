@@ -35,11 +35,7 @@ export default function ProcessSection() {
   return (
     <section className="bg-white py-[48px] sm:py-[64px] md:py-[96px] px-[16px] sm:px-[24px] lg:mx-[64px] lg:my-[80px]">
       <div className="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[77%] mx-auto text-center">
-
-        <h2
-          className="text-[26px] sm:text-[32px] md:text-[40px] font-bold leading-[32px] sm:leading-[38px] md:leading-[43px] text-[#252525]"
-
-        >
+        <h2 className="text-[26px] sm:text-[32px] md:text-[40px] font-bold leading-[32px] sm:leading-[38px] md:leading-[43px] text-[#252525]">
           We come in. We find it. We fix it.
         </h2>
 
@@ -51,13 +47,15 @@ export default function ProcessSection() {
           {steps.map((item, index) => (
             <div
               key={index}
-              className="bg-white flex flex-col shadow-[0px_0px_5px_rgba(0,0,0,0.1)] w-full rounded-[20px] p-[24px] text-left"
+              className="bg-white flex flex-col w-full rounded-[20px] p-[24px] text-left transition-all duration-300 ease-out shadow-[0px_0px_5px_rgba(0,0,0,0.1)] hover:-translate-y-2 hover:shadow-[0px_8px_24px_rgba(255,79,75,0.3)] active:-translate-y-2 active:shadow-[0px_8px_24px_rgba(255,79,75,0.3)]"
             >
               <div>
                 <div className="w-[60px] h-[60px] flex items-center justify-center rounded-[15px] bg-red-50 mb-[16px]">
                   {item.icon}
                 </div>
-                <p className="text-[#FF4641] text-[16px] font-medium">{item.step}</p>
+                <p className="text-[#FF4641] text-[16px] font-medium">
+                  {item.step}
+                </p>
                 <h3 className="text-[18px] mt-[8px]">{item.title}</h3>
               </div>
               <div className="mt-[23px]">
@@ -76,16 +74,18 @@ export default function ProcessSection() {
         <div className="mt-[40px] sm:mt-[48px] w-full">
           <div
             className="border-l-8 border-red-500 px-[20px] sm:px-[32px] py-[16px] sm:py-[20px] text-gray-600 italic text-[16px] sm:text-[18px] font-medium w-full text-left"
-            style={{ background: "linear-gradient(to right, #fff1f2, #ffffff)" }}
+            style={{
+              background: "linear-gradient(to right, #fff1f2, #ffffff)",
+            }}
           >
-            &quot;If we don&apos;t hit the agreed target — we return until we do.&quot;
+            &quot;If we don&apos;t hit the agreed target — we return until we
+            do.&quot;
           </div>
         </div>
 
         <button className="mt-[24px] sm:mt-[32px] bg-red-500 hover:bg-red-600 cursor-pointer text-white px-[24px] sm:px-[32px] py-[12px] rounded-full font-medium transition">
           Start with an audit →
         </button>
-
       </div>
     </section>
   );

@@ -1,3 +1,29 @@
+"use client";
+
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+
+const RevealCard = ({ children, index, className = "" }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.15,
+        ease: [0.25, 0.1, 0.25, 1],
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 const PhoneMockup = ({ className = "" }) => (
   <div
     className={`relative rounded-[16px] overflow-hidden bg-gray-800 ${className}`}
@@ -30,11 +56,11 @@ const ToolsSection = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
           {/* Left Column */}
           <div className="flex flex-col gap-[16px]">
-            <div className="bg-white p-[20px] rounded-[16px] overflow-hidden h-[220px] sm:w-full sm:h-[323px]">
+            <RevealCard index={0} className="bg-white p-[20px] rounded-[16px] overflow-hidden h-[220px] sm:w-full sm:h-[323px]">
               <PhoneMockup className="h-full w-full" />
-            </div>
+            </RevealCard>
 
-            <div className="bg-white rounded-[16px] p-[20px] flex flex-col gap-[16px] sm:h-[473px]">
+            <RevealCard index={1} className="bg-white rounded-[16px] p-[20px] flex flex-col gap-[16px] sm:h-[473px]">
               <div className="flex gap-[16px] items-start">
                 <div className="flex-1 pl-[20px]">
                   <h3 className="pt-[10px] text-[21px] leading-[22px] font-medium text-[#000]">
@@ -47,9 +73,9 @@ const ToolsSection = () => {
                 </div>
               </div>
               <PhoneMockup className="h-[160px] sm:h-full w-full" />
-            </div>
+            </RevealCard>
 
-            <div className="bg-white rounded-[16px] p-[20px]">
+            <RevealCard index={2} className="bg-white rounded-[16px] p-[20px]">
               <div className="flex-1 pl-[20px]">
                 <h3 className="pt-[10px] text-[21px] leading-[22px] font-medium text-[#000]">
                   Custom Development (On Request)
@@ -62,12 +88,12 @@ const ToolsSection = () => {
                   Learn More
                 </button>
               </div>
-            </div>
+            </RevealCard>
           </div>
 
           {/* Right Column */}
           <div className="flex flex-col gap-[16px]">
-            <div className="bg-white rounded-[16px] p-[20px] flex flex-col gap-[16px] sm:h-[473px]">
+            <RevealCard index={1} className="bg-white rounded-[16px] p-[20px] flex flex-col gap-[16px] sm:h-[473px]">
               <div className="flex gap-[16px] items-start">
                 <div className="flex-1 pl-[20px]">
                   <h3 className="pt-[10px] text-[21px] leading-[22px] font-medium text-[#000]">
@@ -83,9 +109,9 @@ const ToolsSection = () => {
                 </div>
               </div>
               <PhoneMockup className="h-[160px] sm:h-full w-full" />
-            </div>
+            </RevealCard>
 
-            <div className="bg-white rounded-[16px] p-[20px]">
+            <RevealCard index={2} className="bg-white rounded-[16px] p-[20px]">
               <div className="flex-1 pl-[20px]">
                 <h3 className="pt-[10px] text-[21px] leading-[22px] font-medium text-[#000]">
                   Plugins & Integrations
@@ -98,11 +124,11 @@ const ToolsSection = () => {
                   Learn More
                 </button>
               </div>
-            </div>
+            </RevealCard>
 
-            <div className="bg-white p-[20px] rounded-[16px] overflow-hidden h-[220px] sm:w-full sm:h-[323px]">
+            <RevealCard index={3} className="bg-white p-[20px] rounded-[16px] overflow-hidden h-[220px] sm:w-full sm:h-[323px]">
               <PhoneMockup className="h-full w-full" />
-            </div>
+            </RevealCard>
           </div>
         </div>
       </div>
