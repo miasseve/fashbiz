@@ -26,7 +26,7 @@ export default function HeroSection() {
 
         >
           WE AUTOMATE WHAT SLOWS YOU DOWN.{" "}
-          <span className="text-[#FF4641]">SO YOU CAN GROW.</span>
+          <span className="landing-gradient-text">SO YOU CAN GROW.</span>
         </h1>
 
         {/* Sub-copy */}
@@ -37,10 +37,10 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-wrap justify-center gap-[clamp(10px,2vw,16px)] mb-[clamp(36px,6vw,60px)]">
-          <button className="bg-[#FF4641] py-[12px] px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer">
+          <button className="landing-gradient-btn py-[12px] px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer">
             Book a free audit →
           </button>
-          <button className="border-[1.5px] border-[#FF4641] py-[12px] px-[35px] rounded-[35px] text-[#FF4641] leading-[18px] font-medium cursor-pointer">
+          <button className="border-[1.5px] border-purple-600 py-[12px] px-[35px] rounded-[35px] text-purple-600 leading-[18px] font-medium cursor-pointer">
             How we work
           </button>
         </div>

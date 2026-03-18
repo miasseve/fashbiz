@@ -53,7 +53,7 @@ const ContactPanel = ({ isOpen, onClose }) => {
   };
 
   const inputClass =
-    "w-full border border-[#E0E0E0] rounded-[8px] px-[14px] py-[11px] text-[14px] text-[#252525] placeholder-[#AAAAAA] focus:outline-none focus:border-[#D90600] bg-white";
+    "w-full border border-[#E0E0E0] rounded-[8px] px-[14px] py-[11px] text-[14px] text-[#252525] placeholder-[#AAAAAA] focus:outline-none focus:border-purple-500 bg-white";
   const labelClass = "block text-[13px] font-semibold text-[#252525] mb-[6px]";
 
   return (
@@ -97,7 +97,7 @@ const ContactPanel = ({ isOpen, onClose }) => {
               className={`mb-[20px] px-[14px] py-[12px] rounded-[8px] text-[13px] font-medium ${
                 status.type === "success"
                   ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-[#D90600] border border-red-200"
+                  : "bg-purple-50 text-purple-700 border border-purple-200"
               }`}
             >
               {status.message}
@@ -200,7 +200,7 @@ const ContactPanel = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#D90600] hover:bg-[#B80500] text-white font-semibold py-[14px] rounded-[8px] text-[15px] flex items-center justify-center gap-[8px] transition-colors disabled:opacity-60 cursor-pointer mt-[4px]"
+              className="w-full landing-gradient-btn text-white font-semibold py-[14px] rounded-[8px] text-[15px] flex items-center justify-center gap-[8px] transition-colors disabled:opacity-60 cursor-pointer mt-[4px]"
             >
               {isSubmitting ? "Sending..." : <>Send →</>}
             </button>

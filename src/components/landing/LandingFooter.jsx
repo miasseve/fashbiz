@@ -5,8 +5,9 @@ const LandingFooter = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-start gap-[32px] sm:gap-[80px] pb-[32px]">
           <div className="min-w-[160px]">
-            <div className="text-white font-bold text-[36px] leading-none mb-[4px]">
-              RE<span className="text-red-500">e</span>
+            <div className="inline-block bg-white rounded-[8px] px-[12px] py-[8px] mb-[4px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/reelogo.png" alt="REe" className="!h-[34px] w-auto" />
             </div>
             <p className="text-[14px] leading-[35px] text-white">We built these tools because</p>
           </div>

@@ -6,28 +6,28 @@ const steps = [
     title: "Audit",
     desc: "We map manual work and lost time. We show the cost in time and money.",
     deliverable: "Automation opportunity map.",
-    icon: <Search size={25} className="text-red-400" />,
+    icon: <Search size={25} className="text-purple-500" />,
   },
   {
     step: "Step 2",
     title: "Recommend",
     desc: "We design the right automation setup. Ready tools when possible. Custom builds if needed.",
     deliverable: "Custom roadmap.",
-    icon: <Lightbulb size={25} className="text-red-400" />,
+    icon: <Lightbulb size={25} className="text-purple-500" />,
   },
   {
     step: "Step 3",
     title: "Build & Deploy",
     desc: "We implement everything.",
     deliverable: "Live automations.",
-    icon: <Rocket size={25} className="text-red-400" />,
+    icon: <Rocket size={25} className="text-purple-500" />,
   },
   {
     step: "Step 4",
     title: "Guarantee",
     desc: "We train your team and measure results. If we promise 60 hours saved — we verify it.",
     deliverable: "Performance report + support.",
-    icon: <BadgeCheck size={25} className="text-red-400" />,
+    icon: <BadgeCheck size={25} className="text-purple-500" />,
   },
 ];
 
@@ -47,13 +47,13 @@ export default function ProcessSection() {
           {steps.map((item, index) => (
             <div
               key={index}
-              className="bg-white flex flex-col w-full rounded-[20px] p-[24px] text-left transition-all duration-300 ease-out shadow-[0px_0px_5px_rgba(0,0,0,0.1)] hover:-translate-y-2 hover:shadow-[0px_8px_24px_rgba(255,79,75,0.3)] active:-translate-y-2 active:shadow-[0px_8px_24px_rgba(255,79,75,0.3)]"
+              className="bg-white flex flex-col w-full rounded-[20px] p-[24px] text-left transition-all duration-300 ease-out shadow-[0px_0px_5px_rgba(0,0,0,0.1)] hover:-translate-y-2 hover:shadow-[0px_8px_24px_rgba(124,58,237,0.25)] active:-translate-y-2 active:shadow-[0px_8px_24px_rgba(124,58,237,0.25)]"
             >
               <div>
-                <div className="w-[60px] h-[60px] flex items-center justify-center rounded-[15px] bg-red-50 mb-[16px]">
+                <div className="w-[60px] h-[60px] flex items-center justify-center rounded-[15px] bg-purple-50 mb-[16px]">
                   {item.icon}
                 </div>
-                <p className="text-[#FF4641] text-[16px] font-medium">
+                <p className="landing-gradient-text text-[16px] font-medium">
                   {item.step}
                 </p>
                 <h3 className="text-[18px] mt-[8px]">{item.title}</h3>
@@ -73,9 +73,9 @@ export default function ProcessSection() {
 
         <div className="mt-[40px] sm:mt-[48px] w-full">
           <div
-            className="border-l-8 border-red-500 px-[20px] sm:px-[32px] py-[16px] sm:py-[20px] text-gray-600 italic text-[16px] sm:text-[18px] font-medium w-full text-left"
+            className="border-l-8 border-purple-500 px-[20px] sm:px-[32px] py-[16px] sm:py-[20px] text-gray-600 italic text-[16px] sm:text-[18px] font-medium w-full text-left"
             style={{
-              background: "linear-gradient(to right, #fff1f2, #ffffff)",
+              background: "linear-gradient(to right, #f5f3ff, #ffffff)",
             }}
           >
             &quot;If we don&apos;t hit the agreed target — we return until we
@@ -83,7 +83,7 @@ export default function ProcessSection() {
           </div>
         </div>
 
-        <button className="mt-[24px] sm:mt-[32px] bg-red-500 hover:bg-red-600 cursor-pointer text-white px-[24px] sm:px-[32px] py-[12px] rounded-full font-medium transition">
+        <button className="mt-[24px] sm:mt-[32px] landing-gradient-btn cursor-pointer text-white px-[24px] sm:px-[32px] py-[12px] rounded-full font-medium transition">
           Start with an audit →
         </button>
       </div>

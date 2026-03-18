@@ -22,7 +22,7 @@ const RetailerCTA = () => {
           </p>
         </div>
 
-        <button className="bg-[#FF4641] py-[12px] px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer">
+        <button className="landing-gradient-btn py-[12px] px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer">
           Get a free audit →
         </button>
 

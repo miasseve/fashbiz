@@ -6,27 +6,23 @@ import ContactPanel from "./ContactPanel";
 
 const col1 = [
   {
-    title: "Marketplace",
-    desc: "Simply dummy text of the printing and typesetting",
+    title: "Automated Webstore",
+    desc: "Webstore and physical store connected in 1 day",
   },
   {
-    title: "Boutiques",
-    desc: "Simply dummy text of the printing and typesetting",
+    title: "Automatic Bulk Labelling",
+    desc: "",
   },
   {
-    title: "Enterprise",
-    desc: "Simply dummy text of the printing and typesetting",
+    title: "Solutions",
+    desc: "Explain your need; We solve your inefficiency by adding an automatic tool for it.",
   },
 ];
 const col2 = [
-  {
-    title: "Calculator",
-    desc: "Simply dummy text of the printing and typesetting",
-  },
-  {
-    title: "Pricing",
-    desc: "Simply dummy text of the printing and typesetting",
-  },
+  { title: "Automatic Product Ad", desc: "" },
+  { title: "Automatic Market-Ready", desc: "" },
+  { title: "Prices", desc: "" },
+  { title: "Calculate savings", desc: "" },
 ];
 const allItems = [...col1, ...col2];
 
@@ -104,57 +100,65 @@ const LandingHeader = () => {
                   />
                 </svg>
                 {retailOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[12px] w-[860px] bg-[#111111] rounded-[20px] shadow-[0px_8px_40px_rgba(0,0,0,0.35)] p-[32px] z-50 flex gap-[40px]">
-                    {/* Left white card placeholder */}
-                    <div className="w-[260px] flex-shrink-0 bg-white rounded-[24px] h-[300px] overflow-hidden">
+                  <div className="absolute top-full !left-[130px] -translate-x-1/2 mt-[12px] w-[860px] bg-[#111111] rounded-[20px] shadow-[0px_8px_40px_rgba(0,0,0,0.35)] p-[32px] z-50 flex gap-[40px]">
+                    {/* Left image */}
+                    <div className="w-[280px] h-[340px] flex-shrink-0 rounded-[16px] overflow-hidden">
                       <img
-                        src="/leestore_img.png"
-                        alt="Lee Store"
+                        src="/images/pink_bag.avif"
+                        alt="Fashion"
                         className="w-full h-full object-cover"
                       />
                     </div>
 
-                    {/* Two columns */}
-                    <div className="flex gap-[48px] flex-1">
-                      <div className="flex flex-col gap-[28px] flex-1">
-                        {col1.map((item) => (
-                          <a
-                            href="#"
-                            key={item.title}
-                            className="group block no-underline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setRetailOpen(false);
-                            }}
-                          >
-                            <p className="text-white font-semibold text-[16px] mb-[6px] group-hover:text-red-400 transition-colors">
-                              {item.title}
-                            </p>
-                            <p className="text-gray-400 text-[13px] leading-[1.5]">
-                              {item.desc}
-                            </p>
-                          </a>
-                        ))}
-                      </div>
-                      <div className="flex flex-col gap-[28px] flex-1">
-                        {col2.map((item) => (
-                          <a
-                            href="#"
-                            key={item.title}
-                            className="group block no-underline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setRetailOpen(false);
-                            }}
-                          >
-                            <p className="text-white font-semibold text-[16px] mb-[6px] group-hover:text-red-400 transition-colors">
-                              {item.title}
-                            </p>
-                            <p className="text-gray-400 text-[13px] leading-[1.5]">
-                              {item.desc}
-                            </p>
-                          </a>
-                        ))}
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col gap-[20px]">
+                      <p className="text-white font-bold text-[20px] tracking-[0.12em] uppercase leading-[1.3]">
+                        Large Volume Unique Product Handling
+                      </p>
+
+                      <div className="flex gap-[32px]">
+                        {/* Col 1 */}
+                        <div className="flex flex-col gap-[20px] flex-1">
+                          {col1.map((item) => (
+                            <a
+                              href="#"
+                              key={item.title}
+                              className="group block no-underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRetailOpen(false);
+                              }}
+                            >
+                              <p className="text-white font-semibold text-[15px] mb-[4px] group-hover:text-purple-400 transition-colors">
+                                {item.title}
+                              </p>
+                              {item.desc && (
+                                <p className="text-gray-400 text-[12px] leading-[1.5]">
+                                  {item.desc}
+                                </p>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+
+                        {/* Col 2 */}
+                        <div className="flex flex-col gap-[20px] flex-1">
+                          {col2.map((item) => (
+                            <a
+                              href="#"
+                              key={item.title}
+                              className="group block no-underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRetailOpen(false);
+                              }}
+                            >
+                              <p className="text-white font-semibold text-[15px] group-hover:text-purple-400 transition-colors">
+                                {item.title}
+                              </p>
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -171,7 +175,7 @@ const LandingHeader = () => {
             {/* Desktop button */}
             <button
               onClick={() => setContactOpen(true)}
-              className="hidden md:block bg-red-500 text-white px-[20px] py-[8px] rounded-full font-medium hover:bg-red-600 transition text-[16px] cursor-pointer"
+              className="hidden md:block landing-gradient-btn text-white px-[20px] py-[8px] rounded-full font-medium transition text-[16px] cursor-pointer"
             >
               Contact Us
             </button>
@@ -227,6 +231,9 @@ const LandingHeader = () => {
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${mobileRetailOpen ? "max-h-[400px] opacity-100 mt-[12px]" : "max-h-0 opacity-0"}`}
                 >
                   <div className="bg-[#1a1a1a] rounded-[12px] p-[16px] flex flex-col gap-[16px]">
+                    <p className="text-white font-bold text-[11px] tracking-[0.12em] uppercase pb-[4px] border-b border-white/10">
+                      Large Volume Unique Product Handling
+                    </p>
                     {allItems.map((item) => (
                       <a
                         href="#"
@@ -234,12 +241,14 @@ const LandingHeader = () => {
                         className="group block no-underline"
                         onClick={() => setMobileRetailOpen(false)}
                       >
-                        <p className="text-white font-semibold text-[14px] mb-[2px] group-hover:text-red-400 transition-colors">
+                        <p className="text-white font-semibold text-[14px] mb-[2px] group-hover:text-purple-400 transition-colors">
                           {item.title}
                         </p>
-                        <p className="text-gray-400 text-[12px] leading-[1.5]">
-                          {item.desc}
-                        </p>
+                        {item.desc && (
+                          <p className="text-gray-400 text-[12px] leading-[1.5]">
+                            {item.desc}
+                          </p>
+                        )}
                       </a>
                     ))}
                   </div>
@@ -260,7 +269,7 @@ const LandingHeader = () => {
                   setMenuOpen(false);
                   setContactOpen(true);
                 }}
-                className="bg-red-500 text-white px-[20px] py-[8px] rounded-full font-medium hover:bg-red-600 transition w-fit cursor-pointer"
+                className="landing-gradient-btn text-white px-[20px] py-[8px] rounded-full font-medium transition w-fit cursor-pointer"
               >
                 Contact Us
               </button>

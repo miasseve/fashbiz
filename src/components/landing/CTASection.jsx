@@ -12,7 +12,7 @@ const CTASection = () => {
                 Stop doing manually what a machine can do better. Start growing.
               </h2>
               <div className="flex items-center gap-[12px] sm:gap-[16px] flex-wrap">
-                <button className="bg-[#D90600] py-[12px] px-[28px] sm:px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer text-[14px] sm:text-[16px]">
+                <button className="landing-gradient-btn py-[12px] px-[28px] sm:px-[35px] rounded-[35px] text-white leading-[18px] font-medium cursor-pointer text-[14px] sm:text-[16px]">
                   Book a free audit →
                 </button>
                 <button className="bg-[#E6E6E6] py-[12px] px-[28px] sm:px-[35px] rounded-[35px] text-[#414141] leading-[18px] font-medium cursor-pointer text-[14px] sm:text-[16px]">

@@ -36,10 +36,10 @@ const slides = [
 ];
 
 const PhoneCard = ({ slide }) => (
-  <div className="flex-shrink-0 h-[639px] w-[401px] bg-gradient-to-b from-[#000000] to-[#2D0200] rounded-[22px]">
-    <div className="rounded-[16px] overflow-hidden w-full h-[445px]">
+  <div className="flex-shrink-0 h-[600px] w-[401px] bg-gradient-to-b from-[#000000] to-[#2D0200] rounded-[22px]">
+    <div className="rounded-tl-[16px] rounded-tr-[16px] overflow-hidden w-full h-[445px]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
+      <img src={slide.img} alt={slide.title} className="w-full h-full object-cover rounded-none" />
     </div>
     <div className="pt-[16px] pb-[12px] px-[8px] text-center">
       <h3 className="text-[22px] h-[52px] text-white font-medium leading-[22px]">{slide.title}</h3>

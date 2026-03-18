@@ -1,12 +1,12 @@
 import { ShoppingBag, RefreshCw, ShoppingCart, Code2, LayoutGrid, Users } from "lucide-react";
 
 const expertise = [
-  { icon: <ShoppingBag size={20} className="text-red-400" />, label: "Fashion retail" },
-  { icon: <RefreshCw size={20} className="text-red-400" />, label: "Secondhand commerce" },
-  { icon: <ShoppingCart size={20} className="text-red-400" />, label: "E-commerce" },
-  { icon: <Code2 size={20} className="text-red-400" />, label: "Software engineering" },
-  { icon: <LayoutGrid size={20} className="text-red-400" />, label: "Merchandising" },
-  { icon: <Users size={20} className="text-red-400" />, label: "Retail consulting" },
+  { icon: <ShoppingBag size={20} className="text-purple-500" />, label: "Fashion retail" },
+  { icon: <RefreshCw size={20} className="text-purple-500" />, label: "Secondhand commerce" },
+  { icon: <ShoppingCart size={20} className="text-purple-500" />, label: "E-commerce" },
+  { icon: <Code2 size={20} className="text-purple-500" />, label: "Software engineering" },
+  { icon: <LayoutGrid size={20} className="text-purple-500" />, label: "Merchandising" },
+  { icon: <Users size={20} className="text-purple-500" />, label: "Retail consulting" },
 ];
 
 const TeamSection = () => {
@@ -37,7 +37,7 @@ const TeamSection = () => {
                     key={i}
                     className="flex items-center gap-[8px] sm:gap-[12px] shadow-[0px_0px_5px_rgba(0,0,0,0.1)] rounded-[20px] px-[12px] sm:px-[16px] py-[12px] h-auto min-h-[80px] sm:min-h-[95px] lg:h-[107px]"
                   >
-                    <div className="w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px] flex-shrink-0 flex items-center justify-center rounded-[15px] bg-red-50">
+                    <div className="w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px] flex-shrink-0 flex items-center justify-center rounded-[15px] bg-purple-50">
                       {item.icon}
                     </div>
                     <span className="text-[13px] sm:text-[15px] lg:text-[18px] text-black font-semibold leading-tight">{item.label}</span>
@@ -60,8 +60,8 @@ const TeamSection = () => {
 
           <div className="pt-[16px] sm:pt-[20px]">
             <div
-              className="border-l-8 border-red-500 px-[16px] sm:px-[24px] lg:px-[32px] py-[16px] sm:py-[20px] text-gray-600 italic text-[16px] sm:text-[18px] font-medium w-full text-left"
-              style={{ background: "linear-gradient(to right, #fff1f2, #ffffff)" }}
+              className="border-l-8 border-purple-500 px-[16px] sm:px-[24px] lg:px-[32px] py-[16px] sm:py-[20px] text-gray-600 italic text-[16px] sm:text-[18px] font-medium w-full text-left"
+              style={{ background: "linear-gradient(to right, #f5f3ff, #ffffff)" }}
             >
               <p className="text-[17px] sm:text-[20px] lg:text-[24px] font-medium text-[#414141] w-full lg:w-[67%]">
                 &quot;We&apos;ve spent years on both sides — running retail stores and building software. We know what breaks and we know how to fix it.&quot;
