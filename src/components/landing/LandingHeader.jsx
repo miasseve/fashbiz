@@ -19,10 +19,10 @@ const col1 = [
   },
 ];
 const col2 = [
-  { title: "Automatic Product Ad", desc: "" },
-  { title: "Automatic Market-Ready", desc: "" },
-  { title: "Prices", desc: "" },
-  { title: "Calculate savings", desc: "" },
+  { title: "Automatic Product Ad", desc: "",href:"#" },
+  { title: "Automatic Market-Ready", desc: "",href:"#" },
+  { title: "Prices", desc: "" ,href:"/pricing"},
+  { title: "Calculate savings", desc: "",href:"#" },
 ];
 const allItems = [...col1, ...col2];
 
@@ -67,10 +67,10 @@ const LandingHeader = () => {
         <div className="landing-container">
           <nav className="w-full px-[32px] py-[12px] flex items-center justify-between">
             {/* Logo */}
-            <div>
+            <Link href="/">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/reelogo.png" alt="REe" className="!h-[34px] w-auto" />
-            </div>
+            </Link>
 
             {/* Desktop nav */}
             <ul className="hidden md:flex items-center gap-[40px] text-gray-800 font-medium text-[16px]">
@@ -145,7 +145,7 @@ const LandingHeader = () => {
                         <div className="flex flex-col gap-[20px] flex-1">
                           {col2.map((item) => (
                             <a
-                              href="#"
+                              href={item.href}
                               key={item.title}
                               className="group block no-underline"
                               onClick={(e) => {
@@ -166,7 +166,7 @@ const LandingHeader = () => {
               </li>
 
               <li className="cursor-pointer hover:text-black"><a href="/tools">Our tools</a></li>
-              <li className="cursor-pointer hover:text-black">Pricing</li>
+              <li className="cursor-pointer hover:text-black"><Link href="/pricing">Pricing</Link></li>
               <li className="cursor-pointer hover:text-black">
                 <a href="/#faq">FAQ</a>
               </li>
@@ -259,7 +259,7 @@ const LandingHeader = () => {
                 <a href="/tools">Our tools</a>
               </li>
               <li className="list-none cursor-pointer hover:text-black">
-                Pricing
+                <Link href="/pricing">Pricing</Link>
               </li>
               <li className="list-none cursor-pointer hover:text-black">
                 <a href="/#faq">FAQ</a>
