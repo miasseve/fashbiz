@@ -1,36 +1,5 @@
-import LandingHeader from "@/components/landing/LandingHeader";
-import VideoSection from "@/components/landing/VideoSection";
-import HeroSection from "@/components/landing/HeroSection";
-import RetailerCTA from "@/components/landing/RetailerCTA";
-import ProblemCarousel from "@/components/landing/ProblemCarousel";
-import ProcessSection from "@/components/landing/ProcessSection";
-import ToolsSection from "@/components/landing/ToolsSection";
-import TeamSection from "@/components/landing/TeamSection";
-import FAQSection from "@/components/landing/FAQSection";
-import CTASection from "@/components/landing/CTASection";
-import LandingFooter from "@/components/landing/LandingFooter";
-
-export const metadata = {
-  title: "REe — Retail Automation Consulting",
-  description:
-    "We automate what slows you down so you can grow. Retail, fashion, merchandising and software experts.",
-};
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <div className="landing-page">
-      <LandingHeader />
-      <div className="h-[56px]" />
-      <VideoSection />
-      <HeroSection />
-      <RetailerCTA />
-      <ProblemCarousel />
-      <ProcessSection />
-      <ToolsSection />
-      <TeamSection />
-      <FAQSection />
-      <CTASection />
-      <LandingFooter />
-    </div>
-  );
+  redirect("/try/add-product");
 }

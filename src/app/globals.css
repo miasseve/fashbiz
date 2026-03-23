@@ -38,33 +38,6 @@ html {
   font-size: 62.5%;
 }
 
-/* Landing page overrides — resets 62.5% html font-size and applies source fonts */
-.landing-page {
-  font-size: 16px;
-  font-family: var(--font-space-grotesk, "Space Grotesk", sans-serif);
-  background-color: #FDF6F0;
-}
-
-/* Gradient text utility */
-.landing-gradient-text {
-  background: linear-gradient(90deg, #7C3AED, #EC4899) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-}
-
-/* Gradient button utility */
-.landing-gradient-btn {
-  background: linear-gradient(90deg, #7C3AED, #EC4899) !important;
-}
-.landing-gradient-btn:hover {
-  opacity: 0.9;
-}
-
-.landing-container {
-  max-width: 1256px;
-  margin: auto;
-}
 
 body {
   /* color: var(--foreground); */
