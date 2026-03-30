@@ -59,11 +59,11 @@ import dbConnect from "@/lib/db";
 
 const PLAN_CONFIG = {
   Add_Basic: {
-    stripeProductName: "Add Basic",
+    stripeProductName: "Ads Basic",
     productLimit: 300,
     maxUsers: 2,
     billing: "monthly",
-    price: 990,
+    price: 390,
     currency: "DKK",
     tagline: "ADDS BARCODE INSTAGRAM",
     subtitle: "Core automation tools",
@@ -81,7 +81,7 @@ const PLAN_CONFIG = {
   },
 
   Add_Pro: {
-    stripeProductName: "Add Pro",
+    stripeProductName: "Ads Pro",
     productLimit: 1000,
     maxUsers: 5,
     billing: "monthly",
