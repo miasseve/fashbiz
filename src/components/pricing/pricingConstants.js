@@ -1,6 +1,6 @@
 /* ─── Pricing constants ─── */
 export const VARIANTS = ["light", "lime", "dark"];
-export const GROUP_DISPLAY = { "Add": "Add", "Webstore": "Webstore", "Plug-In": "Plugin" };
+export const GROUP_DISPLAY = { "Add": "Ads", "Ads": "Ads", "Webstore": "Webstore", "Plug-In": "Plugin" };
 export const CARD_H = 500;
 export const NUDGE = 18;
 
@@ -10,9 +10,16 @@ export const RIGHT_CARD_STATIC = {
     header: "FROM 10 DKK",
     subheader: "per product",
     rows: [
-      { label: "Complete Adds", price: "10 DKK" },
+      { label: "Complete Ads", price: "10 DKK" },
       { label: "Instagram", price: "10 DKK" },
-      // { label: "Vinted", price: "10 DKK" },
+    ],
+  },
+  Ads: {
+    header: "FROM 10 DKK",
+    subheader: "per product",
+    rows: [
+      { label: "Complete Ads", price: "10 DKK" },
+      { label: "Instagram", price: "10 DKK" },
     ],
   },
   Webstore: {

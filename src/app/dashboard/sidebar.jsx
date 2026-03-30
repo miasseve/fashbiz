@@ -106,6 +106,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "DKK Points",
       icon: <CiBoxList />,
     },
+    session.data?.user?.role === "store" && {
+      href: "/dashboard/review-queue",
+      label: "Review Queue",
+      icon: <MdOutlineReceiptLong />,
+    },
     session.data?.user?.role === "consignor" && {
       href: "/dashboard/qr",
       label: "QR code",

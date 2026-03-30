@@ -3,7 +3,7 @@ import { VARIANTS, GROUP_DISPLAY, CARD_H, NUDGE, getScrollParent } from "./prici
 import PricingCard from "./PricingCard";
 import PricingCardRight from "./PricingCardRight";
 
-export default function PricingStack({ planGroups, activePlan, handleCheckout, onActiveChange }) {
+export default function PricingStack({ planGroups, activePlan, handleCheckout, onActiveChange, readOnly, tryMode }) {
   const sectionRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const count = planGroups.length;
@@ -90,6 +90,7 @@ export default function PricingStack({ planGroups, activePlan, handleCheckout, o
                   variant={VARIANTS[i % VARIANTS.length]}
                   activePlan={activePlan}
                   handleCheckout={handleCheckout}
+                  readOnly={readOnly}
                 />
               </div>
             ))}
@@ -114,6 +115,7 @@ export default function PricingStack({ planGroups, activePlan, handleCheckout, o
                 <PricingCardRight
                   group={group}
                   variant={VARIANTS[i % VARIANTS.length]}
+                  tryMode={tryMode}
                 />
               </div>
             ))}

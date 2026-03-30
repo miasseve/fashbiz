@@ -1,6 +1,6 @@
 import { GROUP_DISPLAY } from "./pricingConstants";
 
-export default function PricingCard({ group, variant, activePlan, handleCheckout }) {
+export default function PricingCard({ group, variant, activePlan, handleCheckout, readOnly }) {
   const tierCount = group.plans.length;
 
   // Merge all unique features from every tier so the left panel shows the full set
@@ -55,6 +55,7 @@ export default function PricingCard({ group, variant, activePlan, handleCheckout
       <div className="pc__tiers">
         {group.plans.map((plan) => {
           const isSubscribed =
+            !readOnly &&
             activePlan &&
             (activePlan.nickname === plan.nickname ||
               activePlan.name === plan.name);
@@ -69,13 +70,19 @@ export default function PricingCard({ group, variant, activePlan, handleCheckout
               <button
                 className={`pc__cta ${
                   isSubscribed ? "pc__cta--subscribed" : ""
-                }`}
+                } ${readOnly ? "pc__cta--readonly" : ""}`}
                 onClick={() => {
-                  if (!isSubscribed) handleCheckout(plan.id);
+                  if (!readOnly && !isSubscribed) handleCheckout(plan.id);
                 }}
-                disabled={isSubscribed}
+                disabled={isSubscribed || readOnly}
               >
-                {isSubscribed ? "Subscribed" : plan.requiresQuote ? "Get a quote" : "Get Started"}
+                {isSubscribed
+                  ? "Subscribed"
+                  : readOnly
+                    ? "Sign up to subscribe"
+                    : plan.requiresQuote
+                      ? "Get a quote"
+                      : "Get Started"}
               </button>
             </div>
           );

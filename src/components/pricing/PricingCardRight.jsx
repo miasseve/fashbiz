@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { GROUP_DISPLAY, RIGHT_CARD_STATIC } from "./pricingConstants";
 
-export default function PricingCardRight({ group, variant }) {
+export default function PricingCardRight({ group, variant, tryMode }) {
   const displayName = GROUP_DISPLAY[group.productName] || group.productName;
   const staticData = RIGHT_CARD_STATIC[group.productName];
 
@@ -24,8 +24,9 @@ export default function PricingCardRight({ group, variant }) {
     );
   }
 
-  // "Add" style: header + subheader + rows with bullets & prices
+  // "Add/Ads" style: header + subheader + rows with bullets & prices
   if (staticData.rows) {
+    const payPerProductHref = tryMode ? "/try/add-product" : "/dashboard/add-product";
     return (
       <div className={`pcr pcr--${variant}`}>
         <div className="pcr__body" style={{ gap: 8 }}>
@@ -42,7 +43,7 @@ export default function PricingCardRight({ group, variant }) {
               <div className="pcr__row-price">{row.price}</div>
             </div>
           ))}
-          <Link href="/dashboard/add-product" style={{ textDecoration: "none", marginTop: 8, display: "block" }}>
+          <Link href={payPerProductHref} style={{ textDecoration: "none", marginTop: 8, display: "block" }}>
             <button className="pc__cta" style={{ width: "100%" }}>
               Pay Per Product
             </button>

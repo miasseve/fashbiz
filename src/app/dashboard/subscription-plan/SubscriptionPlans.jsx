@@ -19,18 +19,19 @@ import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
 import { archiveProduct } from "@/actions/productActions";
 import { Spinner } from "@heroui/react";
-import PRICING_CSS from "./pricingStyles";
-import { GROUP_DISPLAY } from "./pricingConstants";
-import PricingStack from "./PricingStack";
+import Link from "next/link";
+import PRICING_CSS from "@/components/pricing/pricingStyles";
+import { GROUP_DISPLAY } from "@/components/pricing/pricingConstants";
+import PricingStack from "@/components/pricing/PricingStack";
 
-export default function SubscriptionPlans({ user }) {
+export default function SubscriptionPlans({ user, readOnly = false }) {
   const [plans, setPlans] = useState([]);
   const [activePlan, setActivePlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [hasReferral, setHasReferral] = useState(false);
   const [referralCode, setReferralCode] = useState("");
-  const [userRole, setUserRole] = useState(user?.role || "");
+  const [userRole, setUserRole] = useState(user?.role || "store");
   const [selectedPriceId, setSelectedPriceId] = useState(null);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function SubscriptionPlans({ user }) {
   const allChecked = Object.values(terms).every(Boolean);
 
   const handleContinue = async () => {
-    if (!allChecked) return;
+    if (readOnly || !allChecked) return;
     const { status, message } = await checkvalidReferralCode(
       referralCode.trim(),
     );
@@ -74,10 +75,10 @@ export default function SubscriptionPlans({ user }) {
   };
 
   const hasActiveSubscription =
-    user?.subscriptionEnd && dayjs().isBefore(dayjs(user.subscriptionEnd));
+    !readOnly && user?.subscriptionEnd && dayjs().isBefore(dayjs(user.subscriptionEnd));
 
   useEffect(() => {
-    setUserRole(user?.role);
+    if (!readOnly) setUserRole(user?.role);
     fetchPlans();
   }, [hasActiveSubscription, user]);
 
@@ -85,6 +86,11 @@ export default function SubscriptionPlans({ user }) {
     try {
       const res = await fetch("/api/stripe/plans");
       const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        setPlans([]);
+        return;
+      }
 
       const formattedPlans = data.map((plan) => {
         const fullName = plan.nickname || plan.product.name;
@@ -126,12 +132,7 @@ export default function SubscriptionPlans({ user }) {
             p.name.toLowerCase() === user.subscriptionType.toLowerCase() ||
             p.nickname.toLowerCase() === user.subscriptionType.toLowerCase(),
         );
-
-        if (matchedPlan) {
-          setActivePlan(matchedPlan);
-        } else {
-          setActivePlan(null);
-        }
+        setActivePlan(matchedPlan || null);
       } else {
         setActivePlan(null);
       }
@@ -150,61 +151,8 @@ export default function SubscriptionPlans({ user }) {
     );
   }
 
-  const handleSubscribe = async (plan) => {
-    try {
-      if (!allChecked) return;
-      if (referralCode?.trim()) {
-        const { status, message } = await checkvalidReferralCode(
-          referralCode.trim(),
-        );
-
-        console.log("Referral code validation:", status, message);
-
-        if (status !== 200) {
-          toast.error(message);
-          return;
-        }
-      }
-
-      let encryptedReferral = null;
-      if (referralCode?.trim()) {
-        const res = await fetch("/api/encryptreferral", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: referralCode.trim() }),
-        });
-
-        const data = await res.json();
-        encryptedReferral = data.encrypted;
-      }
-      setIsOpen(false);
-      const res = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          priceId: plan.id,
-          userId: user._id,
-          referral: encryptedReferral || null,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Failed to start checkout session.");
-      }
-    } catch (error) {
-      console.error("Subscription error:", error);
-      alert("Something went wrong. Please try again.");
-    }
-  };
-
   const handleCheckout = async (priceId) => {
-    if (!user) return;
+    if (readOnly || !user) return;
     setSelectedPriceId(priceId);
     if (userRole === "store") setIsOpen(true);
     if (userRole !== "store") {
@@ -213,6 +161,7 @@ export default function SubscriptionPlans({ user }) {
   };
 
   const handleCancelSubscription = async () => {
+    if (readOnly) return;
     Swal.fire({
       title: "Are you sure?",
       text: "Do you want to cancel your subscription at the end of the current period?",
@@ -253,7 +202,7 @@ export default function SubscriptionPlans({ user }) {
     });
   };
 
-  // Filter plans by role
+  // Filter plans by role (readOnly defaults to "store" view)
   const filteredPlans = plans.filter(
     (plan) =>
       (userRole === "store" && plan.name !== "Brand Collect") ||
@@ -275,11 +224,11 @@ export default function SubscriptionPlans({ user }) {
     return acc;
   }, {});
 
-  // Build groups in explicit order: Add → Webstore → Plugin
+  // Build groups in explicit order: Ads → Webstore → Plugin
   const groupKeys = Object.keys(groupedPlans);
   const findKey = (test) => groupKeys.find((k) => test(k.toLowerCase()));
   const orderedKeys = [
-    findKey((n) => n === "add" || (n.includes("add") && !n.includes("webstore") && !n.includes("plug"))),
+    findKey((n) => n === "ads" || n === "add" || (n.includes("ad") && !n.includes("webstore") && !n.includes("plug"))),
     findKey((n) => n.includes("webstore")),
     findKey((n) => n.includes("plug")),
   ].filter(Boolean);
@@ -295,7 +244,46 @@ export default function SubscriptionPlans({ user }) {
       <style>{PRICING_CSS}</style>
 
       {/* ── Status card ── */}
-      {hasActiveSubscription ? (
+      {readOnly ? (
+        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
+          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
+            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
+              Preview <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plans</span>
+            </div>
+            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Sign up to subscribe to a plan.</div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
+            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
+              Create an account to unlock all features
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {["Instagram integration", "Shopify webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
+                  <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/register"
+              style={{
+                alignSelf: "flex-start",
+                background: "#22c55e",
+                color: "#fff",
+                border: "none",
+                borderRadius: 999,
+                padding: "8px 22px",
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: "none",
+                display: "inline-block",
+              }}
+            >
+              Sign Up to Subscribe
+            </Link>
+          </div>
+        </div>
+      ) : hasActiveSubscription ? (
         <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
           <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
             <div style={{
@@ -430,13 +418,13 @@ export default function SubscriptionPlans({ user }) {
           <div className="pricing-mobile-info__row">
             <div className="pricing-mobile-info__tier-name">BASIC</div>
             <div className="pricing-mobile-info__tier-detail">Up to 300 products per month</div>
-            <div className="pricing-mobile-info__tier-detail">Up to 2 users acess</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 2 users access</div>
           </div>
           <div className="pricing-mobile-info__divider" />
           <div className="pricing-mobile-info__row">
             <div className="pricing-mobile-info__tier-name">PRO</div>
             <div className="pricing-mobile-info__tier-detail">Up to 1000 products per month</div>
-            <div className="pricing-mobile-info__tier-detail">Up to 5 users acess</div>
+            <div className="pricing-mobile-info__tier-detail">Up to 5 users access</div>
           </div>
         </div>
       </div>
@@ -481,110 +469,115 @@ export default function SubscriptionPlans({ user }) {
           activePlan={activePlan}
           handleCheckout={handleCheckout}
           onActiveChange={setActiveGroupIndex}
+          readOnly={readOnly}
+          tryMode={readOnly}
         />
       )}
 
-      <Modal
-        backdrop="blur"
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        isDismissable={false}
-        placement="center"
-        size="2xl"
-        className="rounded-xl mx-6 sm:mx-8"
-      >
-        <ModalContent>
-          <ModalHeader className="flex justify-center items-center text-2xl font-semibold">
-            Referral Code
-          </ModalHeader>
+      {/* Referral modal — only for authenticated users */}
+      {!readOnly && (
+        <Modal
+          backdrop="blur"
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          isDismissable={false}
+          placement="center"
+          size="2xl"
+          className="rounded-xl mx-6 sm:mx-8"
+        >
+          <ModalContent>
+            <ModalHeader className="flex justify-center items-center text-2xl font-semibold">
+              Referral Code
+            </ModalHeader>
 
-          <ModalBody className="flex flex-col gap-4">
-            {!hasReferral ? (
-              <p className="text-center text-gray-600">
-                Do you have a referral code?
-              </p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">
-                  Enter your referral code
-                </label>
-                <Input
-                  placeholder="e.g. ABC123"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  fullWidth
-                  radius="md"
-                  size="lg"
-                  className="w-full"
-                />
+            <ModalBody className="flex flex-col gap-4">
+              {!hasReferral ? (
+                <p className="text-center text-gray-600">
+                  Do you have a referral code?
+                </p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-medium text-gray-700">
+                    Enter your referral code
+                  </label>
+                  <Input
+                    placeholder="e.g. ABC123"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    fullWidth
+                    radius="md"
+                    size="lg"
+                    className="w-full"
+                  />
 
-                <div className="flex flex-col gap-2 mt-3">
-                  <p className="text-lg font-medium text-gray-700 mb-1">
-                    Please agree to all terms & conditions:
-                  </p>
-                  <Checkbox
+                  <div className="flex flex-col gap-2 mt-3">
+                    <p className="text-lg font-medium text-gray-700 mb-1">
+                      Please agree to all terms & conditions:
+                    </p>
+                    <Checkbox
+                      color="danger"
+                      isSelected={terms.term1}
+                      onValueChange={(val) => setTerms({ ...terms, term1: val })}
+                      classNames={{
+                        wrapper: "scale-125 mr-2",
+                        label: "text-black-700 text-xl",
+                      }}
+                    >
+                      I agree to the platform&apos;s Terms and Privacy Policy.
+                    </Checkbox>
+                  </div>
+                </div>
+              )}
+            </ModalBody>
+
+            <ModalFooter className="flex justify-center gap-3">
+              {!hasReferral ? (
+                <>
+                  <Button
+                    auto
+                    flat
                     color="danger"
-                    isSelected={terms.term1}
-                    onValueChange={(val) => setTerms({ ...terms, term1: val })}
-                    classNames={{
-                      wrapper: "scale-125 mr-2",
-                      label: "text-black-700 text-xl",
+                    onPress={() => setHasReferral(true)}
+                  >
+                    Yes
+                  </Button>
+                  <Button
+                    auto
+                    className="bg-pink-100 text-pink-700 hover:bg-pink-200"
+                    onPress={() => {
+                      setIsOpen(false);
+                      router.push(
+                        `/checkout?userId=${user._id}&priceId=${selectedPriceId}`,
+                      );
                     }}
                   >
-                    I agree to the platform&apos;s Terms and Privacy Policy.
-                  </Checkbox>
-                </div>
-              </div>
-            )}
-          </ModalBody>
-
-          <ModalFooter className="flex justify-center gap-3">
-            {!hasReferral ? (
-              <>
-                <Button
-                  auto
-                  flat
-                  color="danger"
-                  onPress={() => setHasReferral(true)}
-                >
-                  Yes
-                </Button>
-                <Button
-                  auto
-                  className="bg-pink-100 text-pink-700 hover:bg-pink-200"
-                  onPress={() => {
-                    setIsOpen(false);
-                    router.push(
-                      `/checkout?userId=${user._id}&priceId=${selectedPriceId}`,
-                    );
-                  }}
-                >
-                  No
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  auto
-                  flat
-                  color="danger"
-                  onPress={() => setHasReferral(false)}
-                >
-                  Back
-                </Button>
-                <Button
-                  auto
-                  color="danger"
-                  isDisabled={!allChecked}
-                  onPress={handleContinue}
-                >
-                  Continue
-                </Button>
-              </>
-            )}
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+                    No
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    auto
+                    flat
+                    color="danger"
+                    onPress={() => setHasReferral(false)}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    auto
+                    color="danger"
+                    isDisabled={!allChecked}
+                    onPress={handleContinue}
+                  >
+                    Continue
+                  </Button>
+                </>
+              )}
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
     </section>
   );
 }

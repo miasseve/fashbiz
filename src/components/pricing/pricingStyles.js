@@ -203,12 +203,14 @@ const PRICING_CSS = `
     background: #d89ee8;
     transform: scale(1.04);
   }
-  .pc__cta--subscribed {
+  .pc__cta--subscribed,
+  .pc__cta--readonly {
     background: #9ca3af;
     color: #4b5563;
     cursor: not-allowed;
   }
-  .pc__cta--subscribed:hover {
+  .pc__cta--subscribed:hover,
+  .pc__cta--readonly:hover {
     background: #9ca3af;
     transform: none;
   }
@@ -474,7 +476,6 @@ const PRICING_CSS = `
      ── MOBILE RESPONSIVE ──
   ══════════════════════════════════════ */
   @media (max-width: 768px) {
-    /* ── Scroll section ── */
     .pricing-section {
       height: auto;
     }
@@ -485,8 +486,6 @@ const PRICING_CSS = `
       overflow: visible;
       padding-top: 12px;
     }
-
-    /* ── Row: stack vertically ── */
     .pricing-row {
       flex-direction: column;
       gap: 16px;
@@ -499,8 +498,6 @@ const PRICING_CSS = `
       height: auto;
       flex-shrink: unset;
     }
-
-    /* ── Card wrappers: no absolute stacking ── */
     .pricing-card-wrapper {
       position: relative !important;
       inset: auto !important;
@@ -508,8 +505,6 @@ const PRICING_CSS = `
       opacity: 1 !important;
       margin-bottom: 16px;
     }
-
-    /* ── Main card: vertical layout ── */
     .pc {
       flex-direction: column;
       height: auto;
@@ -523,89 +518,29 @@ const PRICING_CSS = `
     .pc--dark .pc__left-wrap {
       border-bottom: 1px solid rgba(255,255,255,0.07) !important;
     }
-    .pc__left {
-      padding: 18px 16px 12px;
-    }
-    .pc__badge {
-      font-size: 22px;
-    }
-    .pc__subtitles {
-      font-size: 13px;
-    }
-    .pc__feature {
-      font-size: 14px;
-    }
-
-    /* ── Tiers: stack vertically ── */
-    .pc__tiers {
-      grid-template-columns: 1fr !important;
-      width: 100%;
-    }
-    .pc__tier {
-      padding: 16px;
-      border-left: none !important;
-      border-top: 1px solid rgba(0,0,0,0.08);
-    }
-    .pc__tier:first-child {
-      border-top: none;
-    }
-    .pc--dark .pc__tier {
-      border-top-color: rgba(255,255,255,0.07);
-    }
-    .pc__tier-name {
-      font-size: 15px;
-    }
-    .pc__tier-header {
-      font-size: 12px;
-    }
-    .pc__price {
-      font-size: 20px;
-    }
-    .pc__period {
-      font-size: 13px;
-    }
-    .pc__cta {
-      padding: 10px 24px;
-      font-size: 14px;
-    }
-
-    /* ── Right compact cards: full width ── */
-    .pcr {
-      border-radius: 20px;
-      height: auto;
-    }
-    .pcr__header {
-      font-size: 12px;
-      padding: 14px 16px 8px;
-    }
-    .pcr__body {
-      padding: 16px;
-    }
-    .pcr__badge {
-      font-size: 22px;
-    }
-    .pcr__subtitles {
-      font-size: 13px;
-    }
-    .pcr__row {
-      font-size: 13px;
-    }
-    .pcr__row-price {
-      font-size: 15px;
-    }
-    .pcr__price-big {
-      font-size: 22px;
-    }
-    .pcr__price-sub {
-      font-size: 13px;
-    }
-
-    /* ── Tier overview: hide on mobile ── */
-    .pricing-tier-overview {
-      display: none;
-    }
-
-    /* ── Mobile-only info block ── */
+    .pc__left { padding: 18px 16px 12px; }
+    .pc__badge { font-size: 22px; }
+    .pc__subtitles { font-size: 13px; }
+    .pc__feature { font-size: 14px; }
+    .pc__tiers { grid-template-columns: 1fr !important; width: 100%; }
+    .pc__tier { padding: 16px; border-left: none !important; border-top: 1px solid rgba(0,0,0,0.08); }
+    .pc__tier:first-child { border-top: none; }
+    .pc--dark .pc__tier { border-top-color: rgba(255,255,255,0.07); }
+    .pc__tier-name { font-size: 15px; }
+    .pc__tier-header { font-size: 12px; }
+    .pc__price { font-size: 20px; }
+    .pc__period { font-size: 13px; }
+    .pc__cta { padding: 10px 24px; font-size: 14px; }
+    .pcr { border-radius: 20px; height: auto; }
+    .pcr__header { font-size: 12px; padding: 14px 16px 8px; }
+    .pcr__body { padding: 16px; }
+    .pcr__badge { font-size: 22px; }
+    .pcr__subtitles { font-size: 13px; }
+    .pcr__row { font-size: 13px; }
+    .pcr__row-price { font-size: 15px; }
+    .pcr__price-big { font-size: 22px; }
+    .pcr__price-sub { font-size: 13px; }
+    .pricing-tier-overview { display: none; }
     .pricing-mobile-info {
       display: flex;
       flex-direction: column;
@@ -624,102 +559,28 @@ const PRICING_CSS = `
       gap: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    .pricing-mobile-info__row {
-      padding: 14px 0;
-    }
-    .pricing-mobile-info__divider {
-      height: 1px;
-      background: #e5e7eb;
-    }
-    .pricing-mobile-info__tier-name {
-      font-weight: 800;
-      font-size: 17px;
-      text-transform: uppercase;
-      color: #111;
-      margin-bottom: 6px;
-      letter-spacing: 0.03em;
-    }
-    .pricing-mobile-info__tier-detail {
-      font-size: 14px;
-      color: #4b5563;
-      font-weight: 500;
-      line-height: 1.7;
-    }
-    .pricing-mobile-info__nosub-title {
-      font-weight: 800;
-      font-size: 18px;
-      text-transform: uppercase;
-      color: #111;
-      letter-spacing: 0.03em;
-    }
-    .pricing-mobile-info__nosub-card {
-      background: #f3e8ff;
-      border-radius: 16px;
-      padding: 16px 24px;
-      font-size: 15px;
-      color: #374151;
-      font-weight: 700;
-      text-align: center;
-      line-height: 1.6;
-      width: 100%;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .pricing-mobile-nosub {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-
-    /* ── Status card ── */
-    .pc-status {
-      flex-direction: column;
-      max-width: 95vw !important;
-    }
-    .pc-status__left {
-      width: 100% !important;
-      border-right: none !important;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      padding: 16px !important;
-    }
-
-    /* ── Dots ── */
-    .pricing-dots {
-      display: none;
-    }
-    .pricing-label {
-      display: none;
-    }
+    .pricing-mobile-info__row { padding: 14px 0; }
+    .pricing-mobile-info__divider { height: 1px; background: #e5e7eb; }
+    .pricing-mobile-info__tier-name { font-weight: 800; font-size: 17px; text-transform: uppercase; color: #111; margin-bottom: 6px; letter-spacing: 0.03em; }
+    .pricing-mobile-info__tier-detail { font-size: 14px; color: #4b5563; font-weight: 500; line-height: 1.7; }
+    .pricing-mobile-info__nosub-title { font-weight: 800; font-size: 18px; text-transform: uppercase; color: #111; letter-spacing: 0.03em; }
+    .pricing-mobile-info__nosub-card { background: #f3e8ff; border-radius: 16px; padding: 16px 24px; font-size: 15px; color: #374151; font-weight: 700; text-align: center; line-height: 1.6; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .pricing-mobile-nosub { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; }
+    .pc-status { flex-direction: column; max-width: 95vw !important; }
+    .pc-status__left { width: 100% !important; border-right: none !important; border-bottom: 1px solid rgba(0,0,0,0.08); padding: 16px !important; }
+    .pricing-dots { display: none; }
+    .pricing-label { display: none; }
   }
 
-  /* ── Small mobile tweaks ── */
   @media (max-width: 480px) {
-    .pc__badge {
-      font-size: 20px;
-    }
-    .pc__tier {
-      padding: 14px 12px;
-    }
-    .pc__price {
-      font-size: 18px;
-    }
-    .pc__feature {
-      font-size: 14px;
-    }
-    .pricing-mobile-info__tier-name {
-      font-size: 15px;
-    }
-    .pricing-mobile-info__tier-detail {
-      font-size: 12px;
-    }
-    .pricing-mobile-info__nosub-title {
-      font-size: 16px;
-    }
-    .pricing-mobile-info__nosub-card {
-      font-size: 13px;
-    }
+    .pc__badge { font-size: 20px; }
+    .pc__tier { padding: 14px 12px; }
+    .pc__price { font-size: 18px; }
+    .pc__feature { font-size: 14px; }
+    .pricing-mobile-info__tier-name { font-size: 15px; }
+    .pricing-mobile-info__tier-detail { font-size: 12px; }
+    .pricing-mobile-info__nosub-title { font-size: 16px; }
+    .pricing-mobile-info__nosub-card { font-size: 13px; }
   }
 `;
 

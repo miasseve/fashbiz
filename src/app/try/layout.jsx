@@ -58,7 +58,7 @@ const TryLayout = ({ children }) => {
       icon: <PiStripeLogoFill />,
       locked: true,
     },
-    { href: "#", label: "Subscription Plan", icon: <IoQrCode />, locked: true },
+    { href: "/try/subscription-plan", label: "Subscription Plan", icon: <IoQrCode />, locked: false },
     {
       href: "#",
       label: "Transaction History",
@@ -186,7 +186,7 @@ const TryLayout = ({ children }) => {
               }}
             >
               <DropdownTrigger>
-                <Button className="danger-btn flex items-center gap-1">
+                <Button className="danger-btn !rounded-full flex items-center gap-1">
                   Sign Up{" "}
                   {isDropdownOpen ? (
                     <FiChevronUp className="text-lg" />
