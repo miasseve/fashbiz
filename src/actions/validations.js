@@ -171,8 +171,6 @@ export const resetPasswordSchema = Yup.object().shape({
 });
 
 export const productSchema = Yup.object().shape({
-  // collectionId: Yup.string().required("Category is required"),
-  // shopifyCollectionId: Yup.string().optional(),
   sku: Yup.string().required("SKU is required"),
   title: Yup.string().required("Title is required"),
   brand: Yup.string().required("Brand is required"),
@@ -189,10 +187,15 @@ export const productSchema = Yup.object().shape({
     name: Yup.string().required("Color name is required"),
     hex: Yup.string(),
   }),
+  category: Yup.string().optional(),
   subcategory: Yup.string().required("Subcategory is required"),
   description: Yup.string().required("Description is required"),
   size: Yup.string().required("Size is required"),
   fabric: Yup.string().optional(),
+  condition_grade: Yup.string()
+    .oneOf(["A", "B", "C", ""], "Condition must be: A (Like New), B (Good), or C (Fair)")
+    .optional(),
+  condition_notes: Yup.string().optional(),
 });
 
 export const updateProductSchema = Yup.object().shape({

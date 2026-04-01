@@ -12,6 +12,7 @@ import { createGuestProduct } from "@/actions/productActions";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import GenerateBarcode from "../../dashboard/product/[productId]/GenerateBarcode";
+import ProductFormFields from "@/app/dashboard/add-product/components/ProductFormFields";
 
 // Get or create a guest session ID stored in a cookie
 function getGuestSessionId() {
@@ -38,6 +39,8 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
+  const [confidenceScore, setConfidenceScore] = useState(null);
+  const [aiMeta, setAiMeta] = useState(null);
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear().toString().slice(-2);
@@ -79,43 +82,43 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
     fetchFabricOptions();
   }, []);
 
-  // AI auto-fill from product image
+  // AI auto-fill — uses the full pipeline so demo users see what the real AI does
+  // No storeId passed: similarity search runs against the global dataset only,
+  // and no approved-product record is saved for guest sessions.
   useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
       const imagesFiltered = Object.values(reduxImages)
         .filter((image) => image !== null)
-        .map((image) => ({
-          url: image.url,
-          publicId: image.publicId,
-        }));
+        .map((image) => ({ url: image.url, publicId: image.publicId }));
 
       if (imagesFiltered.length > 0) {
         try {
-          const response = await axios.post("/api/google-vision", {
-            imageUrl: imagesFiltered[0]?.url ?? "",
+          const response = await axios.post("/api/ai/analyze-product", {
+            imageUrls: imagesFiltered.map((img) => img.url),
+            // no storeId — guest mode, skip store-specific retrieval
           });
           if (response.status === 200) {
-            const {
-              title = "",
-              brand = "",
-              description = "",
-              color = {},
-              subcategory = "",
-              size = "",
-              fabric = "",
-              tags = [],
-            } = response.data;
-            setValue("title", title);
-            setValue("brand", brand);
-            setValue("description", description || "");
-            setValue("color.name", color?.name || "");
-            setValue("color.hex", color?.hex || "");
-            setValue("subcategory", subcategory || "");
-            setValue("size", size || "");
-            setValue("fabric", fabric || "");
-            setValue("tags", tags || []);
-            setColorHex(color?.hex);
+            const data = response.data;
+            setConfidenceScore(data.confidence_score || 0);
+            setAiMeta(data._meta || null);
+
+            setValue("title", data.title || "");
+            setValue("brand", data.brand || "");
+            setValue("description", data.description || "");
+            setValue("subcategory", data.subcategory || "");
+            setValue("size", data.size || "");
+            setValue("category", data.category || "");
+
+            if (data.color?.name) {
+              setValue("color.name", data.color.name);
+              setValue("color.hex", data.color.hex || "");
+              setColorHex(data.color.hex || "");
+            }
+
+            if (Array.isArray(data.fabric) && data.fabric.length > 0) {
+              setValue("fabric", data.fabric[0] || "");
+            }
           }
         } catch (error) {
           console.error("Error fetching product details:", error);
@@ -307,7 +310,10 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
     <>
       {loading ? (
         <div className="flex flex-col justify-center items-center h-screen">
-          <Spinner size="lg" color="success" label="Loading..." />
+          <Spinner size="lg" color="success" label="AI is analyzing your product..." />
+          <p className="text-sm text-gray-500 mt-3">
+            Extracting details, detecting category, and normalizing...
+          </p>
         </div>
       ) : (
         <div className="flex justify-center">
@@ -317,181 +323,55 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
               className="p-3 sm:p-[11px] md:p-[12px] lg:p-[14px] xl:p-[12px]"
             >
               <div>
-                <h2 className="text-center font-semibold">
-                  Enter Product Info
-                </h2>
+                <h2 className="text-center font-semibold">Enter Product Info</h2>
+
+                {/* AI Confidence Indicator */}
+                {confidenceScore !== null && (
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <div
+                      className={`h-2 w-24 rounded-full overflow-hidden ${
+                        confidenceScore >= 0.7 ? "bg-green-100"
+                        : confidenceScore >= 0.4 ? "bg-yellow-100"
+                        : "bg-red-100"
+                      }`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          confidenceScore >= 0.7 ? "bg-green-500"
+                          : confidenceScore >= 0.4 ? "bg-yellow-500"
+                          : "bg-red-500"
+                        }`}
+                        style={{ width: `${confidenceScore * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[12px] text-gray-500">
+                      AI Confidence: {(confidenceScore * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+
+                {confidenceScore !== null && confidenceScore < 0.6 && (
+                  <p className="text-xs text-orange-600 text-center mt-1 bg-orange-50 rounded px-2 py-1">
+                    Low confidence — please review all fields carefully
+                  </p>
+                )}
               </div>
+
               <CardBody className="gap-[15px]">
                 {errorMessage && (
                   <span className="text-red-500 font-bold text-[12px]">
                     {errorMessage}
                   </span>
                 )}
-
-                <div>
-                  <label className="text-sm font-medium">Sub Category</label>
-                  <input
-                    placeholder="Sub Category"
-                    {...register("subcategory")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.subcategory && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.subcategory.message}
-                    </span>
-                  )}
-                </div>
-
-                <div className="h-full">
-                  <label className="text-sm font-medium">SKU</label>
-                  <input
-                    placeholder="Enter SKU"
-                    {...register("sku")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.sku && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.sku.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Title</label>
-                  <input
-                    placeholder="Title"
-                    {...register("title")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.title && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.title.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Brand</label>
-                  <input
-                    placeholder="Brand"
-                    {...register("brand")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.brand && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.brand.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">
-                    Size:
-                    <span className="text-s font-normal">
-                      <em>
-                        {" "}
-                        (Enter sizes separated by commas, e.g. S,M or 38,40)
-                      </em>
-                    </span>
-                  </label>
-                  <input
-                    placeholder="e.g. S, M, L, XL or 38, 40, 42"
-                    {...register("size")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.size && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.size.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Fabric</label>
-                  <select
-                    {...register("fabric")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="">Select Fabric</option>
-                    {fabricOptions.map((fabric) => (
-                      <option key={fabric} value={fabric}>
-                        {fabric}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.fabric && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.fabric.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Color</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="text"
-                      placeholder="white"
-                      {...register("color.name")}
-                      className="border border-gray-300 rounded-md px-3 py-2 w-full"
-                    />
-                    <input
-                      type="hidden"
-                      {...register("color.hex")}
-                      value={colorHex || ""}
-                    />
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "8px",
-                        border: "1px solid #D3D3D3",
-                        backgroundColor:
-                          colorHex && colorHex !== "transparent"
-                            ? colorHex
-                            : watch("color.name")?.trim()
-                              ? watch("color.name")
-                              : "transparent",
-                        transition: "background-color 0.3s ease",
-                      }}
-                    />
-                  </div>
-                  {errors.color && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.color.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Price</label>
-                  <input
-                    {...register("price")}
-                    type="text"
-                    placeholder="Price in DKK"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.price && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.price.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Description</label>
-                  <textarea
-                    rows="4"
-                    placeholder="Enter description"
-                    {...register("description")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.description && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.description.message}
-                    </span>
-                  )}
-                </div>
+                <ProductFormFields
+                  register={register}
+                  errors={errors}
+                  watch={watch}
+                  fabricOptions={fabricOptions}
+                  colorHex={colorHex}
+                  showPriceField
+                  showCategoryField
+                />
               </CardBody>
               <CardFooter className="flex justify-between">
                 <Button onPress={handleBackStep} className="auth-btn">

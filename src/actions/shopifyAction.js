@@ -116,7 +116,7 @@ export async function createShopifyProduct(formData) {
     const productInput = {
       title,
       descriptionHtml: description,
-      vendor: brand,
+      vendor: storeName || brand,
       productType: subcategory,
       status: "ACTIVE",
       productOptions: productOptions,
@@ -1115,7 +1115,8 @@ export async function getShopifyProductStorefrontUrl(shopifyProductId) {
     if (product.onlineStoreUrl) return product.onlineStoreUrl;
 
     if (product.handle && shopifyStoreDomain) {
-      return `https://${shopifyStoreDomain}/products/${product.handle}`;
+      const storefrontDomain = process.env.SHOPIFY_STOREFRONT_DOMAIN || shopifyStoreDomain;
+      return `https://${storefrontDomain}/products/${product.handle}`;
     }
 
     return null;

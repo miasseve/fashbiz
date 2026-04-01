@@ -171,7 +171,6 @@ const PLAN_CONFIG = {
       "Shopify webstore synchronization",
       "All Plugin Basic features",
       "Custom sync configuration",
-      "Dedicated onboarding",
     ],
     bgColor: "bg-[#1F1F2E] text-white",
     type: "one-time",

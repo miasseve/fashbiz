@@ -28,6 +28,7 @@ import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import PointsModal from "./PointsModal";
 import GenerateBarcode from "../../product/[productId]/GenerateBarcode";
+import ProductFormFields from "./ProductFormFields";
 
 const SecondStep = ({
   handleBackStep,
@@ -38,32 +39,33 @@ const SecondStep = ({
 }) => {
   const dispatch = useDispatch();
   const router = useRouter();
-  //for the points prediction
   const session = useSession();
   const pointsEnabled = session.data?.user?.points_mode || false;
   const [pointsPreview, setPointsPreview] = useState(null);
   const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
   const [pointsLoading, setPointsLoading] = useState(false);
-  const [availableRules, setAvailableRules] = useState([]); // Store fetched rules
-  //for product creation
+  const [availableRules, setAvailableRules] = useState([]);
+
   const consignorData = useSelector((state) => state.product.consignor);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [generatedLink, setGeneratedLink] = useState("");
   const [productDetails, setProductDetails] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const targetRef = React.useRef(null);
 
-  // const [collections, setCollections] = useState([]);
   const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
   const [isCollectOpen, setIsCollectOpen] = useState(false);
   const [collectSelection, setCollectSelection] = useState(null);
   const [formData, setFormData] = useState(null);
 
+  // ── AI response tracking for corrections ──
+  const [rawAiOutput, setRawAiOutput] = useState(null);
+  const [aiMeta, setAiMeta] = useState(null);
+  const [confidenceScore, setConfidenceScore] = useState(null);
+
   const reduxImages = useSelector((state) => state.product.uploadedImages);
-  // const currentYear = new Date().getFullYear();
   const currentYear = new Date().getFullYear().toString().slice(-2);
   const formattedStoreName = user.storename
     .toUpperCase()
@@ -87,12 +89,15 @@ const SecondStep = ({
           url: image.url,
           publicId: image.publicId,
         })),
+      category: "",
+      condition_grade: "",
+      condition_notes: "",
     },
   });
+
   useEffect(() => {
     const fetchPointRules = async () => {
       if (!pointsEnabled) return;
-
       try {
         const res = await fetch("/api/dkkpointsrule");
         const response = await res.json();
@@ -102,9 +107,9 @@ const SecondStep = ({
         toast.error("Failed to fetch point rules");
       }
     };
-
     fetchPointRules();
   }, [pointsEnabled]);
+
   const predictProductPoints = async (productData) => {
     setPointsLoading(true);
     try {
@@ -114,7 +119,6 @@ const SecondStep = ({
         subcategory: productData.subcategory,
         description: productData.description,
       });
-
       if (res.status === 200 && res.data?.success) {
         setPointsPreview(res.data.data);
         setIsPointsModalOpen(true);
@@ -133,28 +137,11 @@ const SecondStep = ({
       toast.error("Please select Yes or No");
       return;
     }
-
     if (formData) {
       await handleFinalProductCreation(formData);
       setIsCollectOpen(false);
     }
   };
-
-  // useEffect(() => {
-  //   const fetchCollections = async () => {
-  //     try {
-  //       const response = await axios.get("/api/wixCollections");
-  //       if (response.status !== 200) {
-  //         setErrorMessage("Failed to fetch categories.Please try again !!");
-  //       }
-  //       setCollections(response.data.collections);
-  //     } catch (error) {
-  //       setErrorMessage("Failed to fetch categories.Please try again !!");
-  //     }
-  //   };
-
-  //   fetchCollections();
-  // }, []);
 
   useEffect(() => {
     if (pointsEnabled) {
@@ -167,9 +154,7 @@ const SecondStep = ({
       try {
         const response = await axios.get("/api/fabric-options");
         if (response.status !== 200) {
-          setErrorMessage(
-            "Failed to fetch fabric options. Please try again !!",
-          );
+          setErrorMessage("Failed to fetch fabric options. Please try again !!");
         }
         const fabricsFromAPI = response.data.map((fabric) => fabric.name);
         setFabricOptions(fabricsFromAPI);
@@ -180,6 +165,7 @@ const SecondStep = ({
     fetchFabricOptions();
   }, []);
 
+  // ── Enhanced AI analysis using new pipeline ──
   useEffect(() => {
     const fetchProductDetails = async () => {
       setLoading(true);
@@ -192,36 +178,78 @@ const SecondStep = ({
 
       if (imagesFiltered.length > 0) {
         try {
-          const response = await axios.post("/api/google-vision", {
-            imageUrl: imagesFiltered[0]?.url ?? "",
+          const response = await axios.post("/api/ai/analyze-product", {
+            imageUrls: imagesFiltered.map((img) => img.url),
+            storeId: user.id,
           });
+
           if (response.status === 200) {
-            const {
-              title = "",
-              brand = "",
-              description = "",
-              color = {},
-              subcategory = "",
-              size = "",
-              fabric = "",
-              tags = [],
-            } = response.data;
-            setValue("title", title);
-            setValue("brand", brand);
-            setValue("description", description || "");
-            setValue("color.name", color?.name || "");
-            setValue("color.hex", color?.hex || "");
-            setValue("subcategory", subcategory || "");
-            setValue("size", size || "");
-            setValue("fabric", fabric || "");
-            setValue("tags", tags || []);
-            setColorHex(color?.hex);
+            const data = response.data;
+
+            // Store raw AI output for correction tracking
+            setRawAiOutput(data._meta?.rawVisionOutput || data);
+            setAiMeta(data._meta || null);
+            setConfidenceScore(data.confidence_score || 0);
+
+            // Populate form fields
+            setValue("title", data.title || "");
+            setValue("brand", data.brand || "");
+            setValue("description", data.description || "");
+            setValue("subcategory", data.subcategory || "");
+            setValue("size", data.size || "");
+            setValue("category", data.category || "");
+            setValue("condition_grade", data.condition_grade || "");
+            setValue("condition_notes", data.condition_notes || "");
+
+            // Handle color — normalize returns { name, hex }
+            if (data.color?.name) {
+              setValue("color.name", data.color.name);
+              setValue("color.hex", data.color.hex || "");
+              setColorHex(data.color.hex || "");
+            }
+
+            // Handle fabric — new format is array, form expects single string
+            if (Array.isArray(data.fabric) && data.fabric.length > 0) {
+              setValue("fabric", data.fabric[0] || "");
+            }
+
+            // Tags (sent to Shopify only — not stored on Product)
+            if (Array.isArray(data.shopify_tags)) {
+              setValue("tags", data.shopify_tags);
+            }
           }
         } catch (error) {
-          console.error("Error fetching product details:", error);
+          console.error("Enhanced AI analysis failed, falling back:", error);
+          // Fallback to old endpoint
+          try {
+            const fallback = await axios.post("/api/google-vision", {
+              imageUrl: imagesFiltered[0]?.url ?? "",
+            });
+            if (fallback.status === 200) {
+              const {
+                title = "", brand = "", description = "",
+                color = {}, subcategory = "", size = "",
+                fabric = "", tags = [],
+              } = fallback.data;
+              setValue("title", title);
+              setValue("brand", brand);
+              setValue("description", description || "");
+              setValue("color.name", color?.name || "");
+              setValue("color.hex", color?.hex || "");
+              setValue("subcategory", subcategory || "");
+              setValue("size", size || "");
+              setValue("fabric", fabric || "");
+              setValue("tags", tags || []);
+              setColorHex(color?.hex);
+            }
+          } catch (fbErr) {
+            console.error("Fallback vision also failed:", fbErr);
+          }
         } finally {
           setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
 
@@ -245,24 +273,16 @@ const SecondStep = ({
 
   const onSubmit = async (data) => {
     setErrorMessage("");
-
-    //check if the product brand has Ree collect subscription
     try {
       if (pointsEnabled) {
         const Productpoint = await predictProductPoints(data);
-        const updatedData = {
-          ...data,
-          pointsValue: Productpoint,
-        };
+        const updatedData = { ...data, pointsValue: Productpoint };
         setFormData(updatedData);
         return;
       } else {
         const collectResponse = await activateCollectSubscription(brandValue);
         if (collectResponse.status === 200 && collectResponse.data !== null) {
-          const updatedData = {
-            ...data,
-            brandPrice: collectResponse.data,
-          };
+          const updatedData = { ...data, brandPrice: collectResponse.data };
           setFormData(updatedData);
           setIsCollectOpen(true);
           return;
@@ -278,7 +298,15 @@ const SecondStep = ({
   const handleFinalProductCreation = async (data) => {
     if (!data) return;
     try {
-      const productPayload = { ...data, ...consignorData, collect: collectSelection ?? false };
+      const productPayload = {
+        ...data,
+        ...consignorData,
+        collect: collectSelection ?? false,
+        condition_grade: data.condition_grade || null,
+        condition_notes: data.condition_notes || "",
+        needsReview: confidenceScore !== null && confidenceScore < 0.6,
+        aiConfidenceScore: confidenceScore,
+      };
 
       const response = await createProduct(productPayload);
 
@@ -289,6 +317,39 @@ const SecondStep = ({
       if (response.status === 200) {
         const createdProduct = JSON.parse(response.data.product);
         setProductDetails(createdProduct);
+
+        // ── Save as gold example for future retrieval ──
+        try {
+          const imagesFiltered = Object.values(reduxImages)
+            .filter((image) => image !== null)
+            .map((image) => ({ url: image.url, publicId: image.publicId }));
+
+          const approvedOutput = {
+            title: data.title,
+            brand: data.brand,
+            size: data.size,
+            category: data.category || "Uncategorized",
+            subcategory: data.subcategory,
+            color: data.color?.name ? [data.color.name] : [],
+            fabric: data.fabric ? [data.fabric] : [],
+            description: data.description,
+            condition_grade: data.condition_grade || null,
+            condition_notes: data.condition_notes || "",
+            shopify_tags: data.shopify_tags || data.tags || [],
+            value_score: data.pointsValue || 0,
+          };
+
+          await axios.post("/api/ai/approve-product", {
+            productId: createdProduct._id,
+            storeId: user.id,
+            imageUrl: imagesFiltered[0]?.url || "",
+            rawAiOutput: rawAiOutput || {},
+            approvedOutput,
+          });
+        } catch (approveErr) {
+          // Non-blocking — don't fail product creation
+          console.error("Failed to save approved product:", approveErr);
+        }
 
         // Link product to add-on purchase if applicable
         if (addonPurchase?.id && createdProduct?._id) {
@@ -319,13 +380,10 @@ const SecondStep = ({
     }
   };
 
-  // Function to handle the action of navigating to the dashboard
   const handleGoToDashboard = () => {
-    // Set the state to hide the confirmation message
     setShowConfirmation(false);
     dispatch(clearConsignors());
     dispatch(setCurrentStep(1));
-
     if (collectSelection) {
       router.push("/dashboard/ree-collect");
       return;
@@ -333,26 +391,10 @@ const SecondStep = ({
     router.push("/dashboard/store");
   };
 
-  // const handleCopyLink = async () => {
-  //   if (!generatedLink) {
-  //     alert("No link to copy!");
-  //     return;
-  //   }
-
-  //   try {
-  //     await navigator.clipboard.writeText(generatedLink);
-  //   } catch (err) {
-  //     alert("Failed to copy link. Please try again.");
-  //   }
-  // };
   const [pointsSubmitting, setPointsSubmitting] = useState(false);
 
   const handlePointsConfirm = async (confirmedPoints) => {
-    const updatedData = {
-      ...formData,
-      pointsValue: confirmedPoints,
-    };
-
+    const updatedData = { ...formData, pointsValue: confirmedPoints };
     setPointsSubmitting(true);
     await handleFinalProductCreation(updatedData);
     setPointsSubmitting(false);
@@ -363,7 +405,10 @@ const SecondStep = ({
     <>
       {loading ? (
         <div className="flex flex-col justify-center items-center h-screen">
-          <Spinner size="lg" color="success" label="Loading..." />
+          <Spinner size="lg" color="success" label="AI is analyzing your product..." />
+          <p className="text-[12px] text-gray-500 mt-3">
+            Extracting details, searching similar products, and normalizing...
+          </p>
         </div>
       ) : (
         <div className="flex justify-center">
@@ -376,198 +421,69 @@ const SecondStep = ({
                 <h2 className="text-center font-semibold">
                   Enter Product Info
                 </h2>
+
+                {/* AI Confidence Indicator */}
+                {confidenceScore !== null && (
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <div
+                      className={`h-2 w-24 rounded-full overflow-hidden ${
+                        confidenceScore >= 0.7
+                          ? "bg-green-100"
+                          : confidenceScore >= 0.4
+                          ? "bg-yellow-100"
+                          : "bg-red-100"
+                      }`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          confidenceScore >= 0.7
+                            ? "bg-green-500"
+                            : confidenceScore >= 0.4
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                        style={{ width: `${confidenceScore * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[12px] text-gray-500">
+                      AI Confidence: {(confidenceScore * 100).toFixed(0)}%
+                    </span>
+                    {aiMeta?.imagesAnalyzed > 1 && (
+                      <span className="text-xs text-purple-500">
+                        {aiMeta.imagesAnalyzed} images analyzed
+                      </span>
+                    )}
+                    {aiMeta?.similarExamplesUsed > 0 && (
+                      <span className="text-xs text-blue-500">
+                        ({aiMeta.similarExamplesUsed} similar examples used)
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {confidenceScore !== null && confidenceScore < 0.6 && (
+                  <p className="text-xs text-orange-600 text-center mt-1 bg-orange-50 rounded px-2 py-1">
+                    Low confidence — please review all fields carefully
+                  </p>
+                )}
               </div>
+
               <CardBody className="gap-[15px]">
                 {errorMessage && (
                   <span className="text-red-500 font-bold text-[12px]">
                     {errorMessage}
                   </span>
                 )}
-                {/* wix Category */}
-                {/* <div>
-                  <label className="text-sm font-medium">Category</label>
-                  <select
-                    {...register("collectionId")}
-                    className="w-full border border-gray-300 rounded px-3 py-2"
-                  >
-                    <option value="">Select Category</option>
-                    {collections.map((collection) => (
-                      <option key={collection.id} value={collection.id}>
-                        {collection.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.collectionId && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.collectionId.message}
-                    </span>
-                  )}
-                </div> */}
-
-                <div>
-                  <label className="text-sm font-medium">Sub Category</label>
-                  <input
-                    placeholder="Sub Category"
-                    {...register("subcategory")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.subcategory && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.subcategory.message}
-                    </span>
-                  )}
-                </div>
-
-                <div className="h-full">
-                  <label className="text-sm font-medium">SKU</label>
-                  <input
-                    placeholder="Enter SKU"
-                    {...register("sku")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.sku && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.sku.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Title</label>
-                  <input
-                    placeholder="Title"
-                    {...register("title")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.title && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.title.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Brand</label>
-                  <input
-                    placeholder="Brand"
-                    {...register("brand")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.brand && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.brand.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">
-                    Size:
-                    <span className="text-s font-normal">
-                      <em>
-                        {" "}
-                        (Enter sizes separated by commas,e.g.S,M or 38,40)
-                      </em>
-                    </span>
-                  </label>
-                  <input
-                    placeholder="e.g. S, M, L, XL or 38, 40, 42"
-                    {...register("size")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.size && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.size.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Fabric</label>
-                  <select
-                    {...register("fabric")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="">Select Fabric</option>
-                    {fabricOptions.map((fabric) => (
-                      <option key={fabric} value={fabric}>
-                        {fabric}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.fabric && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.fabric.message}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Color</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="text"
-                      placeholder="white"
-                      {...register("color.name")}
-                      className="border border-gray-300 rounded-md px-3 py-2 w-full"
-                    />
-                    <input
-                      type="hidden"
-                      {...register("color.hex")}
-                      value={colorHex || ""}
-                    />
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "8px",
-                        border: "1px solid #D3D3D3",
-                        backgroundColor:
-                          colorHex && colorHex !== "transparent"
-                            ? colorHex
-                            : watch("color.name")?.trim()
-                              ? watch("color.name")
-                              : "transparent",
-                        transition: "background-color 0.3s ease",
-                      }}
-                    ></div>
-                  </div>
-                  {errors.color && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.color.message}
-                    </p>
-                  )}
-                </div>
-                {!session.data?.user?.points_mode && (
-                  <div>
-                    <label className="text-sm font-medium">Price</label>
-                    <input
-                      {...register("price")}
-                      type="text"
-                      placeholder="Price in EUR"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    />
-                    {errors.price && (
-                      <span className="text-red-500 font-bold text-[12px]">
-                        {errors.price.message}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-medium">Description</label>
-                  <textarea
-                    id="description"
-                    rows="4"
-                    placeholder="Enter description"
-                    {...register("description")}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  {errors.description && (
-                    <span className="text-red-500 font-bold text-[12px]">
-                      {errors.description.message}
-                    </span>
-                  )}
-                </div>
+                <ProductFormFields
+                  register={register}
+                  errors={errors}
+                  watch={watch}
+                  fabricOptions={fabricOptions}
+                  colorHex={colorHex}
+                  showPriceField={!session.data?.user?.points_mode}
+                  showConditionFields
+                  showCategoryField
+                />
               </CardBody>
               <CardFooter className="flex justify-between">
                 <Button onPress={handleBackStep} className="auth-btn">
@@ -587,7 +503,6 @@ const SecondStep = ({
       )}
 
       {showConfirmation && (
-        //Generated barcode modal
         <GenerateBarcode
           barcode={productDetails.barcode}
           price={
@@ -603,47 +518,8 @@ const SecondStep = ({
           autoOpen={true}
           onClose={handleGoToDashboard}
         />
-        //Modal for NFC tag Link copy - disabled for now
-        // <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 m-auto">
-        //   <Modal
-        //     ref={targetRef}
-        //     isOpen={showConfirmation}
-        //     onOpenChange={onOpenChange}
-        //     className="lg:max-w-xl w-full m-auto mt-[15rem]"
-        //   >
-        //     <ModalContent>
-        //       {(onClose) => (
-        //         <>
-        //           <ModalHeader className="flex flex-col gap-1 text-center">
-        //             Product Added Successfully
-        //             <input type="text" value={generatedLink} readOnly />
-        //             <Button onPress={handleCopyLink} className="dark-btn">
-        //               Copy Link
-        //             </Button>
-        //           </ModalHeader>
-        //           <ModalBody className="text-center">
-        //             <p>Do you want to add more products?</p>
-        //           </ModalBody>
-        //           <ModalFooter className="flex justify-center">
-        //             <Button
-        //               onPress={handleAddMoreProducts}
-        //               className="success-btn m-auto"
-        //             >
-        //               Yes
-        //             </Button>
-        //             <Button
-        //               onPress={handleGoToDashboard}
-        //               className="danger-btn m-auto"
-        //             >
-        //               No
-        //             </Button>
-        //           </ModalFooter>
-        //         </>
-        //       )}
-        //     </ModalContent>
-        //   </Modal>
-        // </div>
       )}
+
       {/* modal for Ree Collect */}
       <Modal
         backdrop="blur"

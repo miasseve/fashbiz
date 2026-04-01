@@ -31,6 +31,12 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   fabric: { type: String },
+  condition_grade: {
+    type: String,
+    enum: ["A", "B", "C", null],
+    default: null,
+  },
+  condition_notes: { type: String, default: "" },
   consignorName: { type: String },
   consignorEmail: { type: String },
   consignorAccount: { type: String },
@@ -53,6 +59,16 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
     index: true,
+  },
+  // AI confidence flag — true when confidence_score < 0.6
+  needsReview: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  aiConfidenceScore: {
+    type: Number,
+    default: null,
   },
 });
 

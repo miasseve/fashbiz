@@ -57,6 +57,11 @@ export async function createProduct(formData) {
       size,
       fabric,
       pointsValue = null,
+      category = "Uncategorized",
+      condition_grade = null,
+      condition_notes = "",
+      needsReview = false,
+      aiConfidenceScore = null,
     } = formData;
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
@@ -169,7 +174,7 @@ export async function createProduct(formData) {
       title,
       brand,
       subcategory,
-      category: "Uncategorized",
+      category: category || "Uncategorized",
       description,
       color,
       price: formattedPrice,
@@ -184,11 +189,15 @@ export async function createProduct(formData) {
       collect: collect ?? false,
       size,
       fabric,
+      condition_grade: condition_grade || null,
+      condition_notes: condition_notes || "",
       barcode: barcodeValue,
       isDemo: isDemo,
       shopifyProductId: shopifyProductId,
       shopifyVariantId: shopifyVariantId,
       shopifyInventoryItemId: shopifyInventoryItemId,
+      needsReview: needsReview || false,
+      aiConfidenceScore: aiConfidenceScore ?? null,
     });
 
     await newProduct.save();
@@ -325,6 +334,8 @@ export async function createGuestProduct(formData) {
       shopifyProductId,
       shopifyVariantId,
       shopifyInventoryItemId,
+      needsReview: false, // guest products don't go through review
+      aiConfidenceScore: null,
     });
 
     await newProduct.save();
@@ -338,7 +349,7 @@ export async function createGuestProduct(formData) {
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
         : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
-    const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const shopifyStoreDomain = process.env.SHOPIFY_STOREFRONT_DOMAIN || process.env.SHOPIFY_STORE_DOMAIN;
     const shopifyProductUrl = shopifyProductHandle && shopifyStoreDomain
       ? `https://${shopifyStoreDomain}/products/${shopifyProductHandle}`
       : "";

@@ -133,7 +133,7 @@ const ProductItem = ({
                     <p className="font-bold text-lg sm:text-xl lg:text-lg flex items-center space-x-2">
                       {product.price > 1 && (
                         <span className="text-[17px] sm:text-[16px]">
-                          €{product.price.toFixed(2)}
+                          {product.price.toFixed(2)} DKK
                         </span>
                       )}
                       {product.pointsValue != null && (
@@ -247,7 +247,7 @@ const ProductItem = ({
               <div>
                 {product.price > 1 && (
                   <p className="font-bold text-md mt-1">
-                    €{product.price.toFixed(2)}
+                    {product.price.toFixed(2)} DKK
                   </p>
                 )}
                 {product.pointsValue && (
