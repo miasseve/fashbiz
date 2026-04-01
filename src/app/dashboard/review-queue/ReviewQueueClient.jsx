@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, Button, Spinner, Chip } from "@heroui/react";
+import { GoShieldCheck } from "react-icons/go";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -53,19 +54,25 @@ const ReviewQueueClient = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
-        <Spinner size="lg" color="warning" label="Loading review queue..." />
+        <Spinner size="lg" color="success" label="Loading review queue..." />
       </div>
     );
   }
 
   if (products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-        <div className="text-5xl mb-4">&#10003;</div>
-        <h2 className="text-xl font-semibold mb-2">No Products Need Review</h2>
-        <p className="text-gray-500 text-sm">
-          All products have sufficient AI confidence. Products with confidence below 60% will appear here.
-        </p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white p-6 sm:p-8 md:p-10 rounded-lg shadow-lg sm:w-[50%] w-[100%] text-center">
+          <div className="flex justify-center mb-5">
+            <div className="bg-green-100 rounded-full p-5">
+              <GoShieldCheck className="text-green-500 text-4xl" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold mb-3">No products need review</h2>
+          <p className="text-base sm:text-2xl text-gray-700">
+            All products have sufficient AI confidence. Products with confidence below 60% will appear here for manual review.
+          </p>
+        </div>
       </div>
     );
   }

@@ -104,7 +104,7 @@ const DashboardContent = ({ children }) => {
       {/* MAIN CONTENT */}
       <div
         ref={scrollRef}
-        className="lg:col-span-10 overflow-y-scroll w-full bg-[#F9F9F9] h-screen"
+        className="lg:col-span-10 overflow-y-auto w-full bg-[#F9F9F9] h-screen"
       >
         {/* HEADER */}
         <Card
