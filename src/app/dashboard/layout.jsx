@@ -75,7 +75,7 @@ const DashboardContent = ({ children }) => {
   };
 
   return (
-    <div className={`lg:grid lg:grid-cols-12 min-h-screen flex ${shadowClass}`}>
+    <div className={`lg:grid lg:grid-cols-12 h-screen overflow-hidden flex ${shadowClass}`}>
       {/* OVERLAY */}
       {isSidebarOpen && (
         <div
