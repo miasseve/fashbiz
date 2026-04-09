@@ -462,7 +462,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]">
       <div className="text-center">
         {isCameraOpen && (
-          <div ref={cameraContainerRef} className="camera-container relative lg:w-[50%] w-full m-auto scroll-mt-4">
+          <div ref={cameraContainerRef} className="camera-container relative lg:w-[50%] w-full m-auto scroll-mt-36">
             {/* Video + overlay buttons wrapper */}
             <div className="relative">
               <video
