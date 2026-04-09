@@ -270,9 +270,9 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     setTimeout(() => {
       videoRef.current?.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "start",
       });
-    }, 100);
+    }, 300);
 
     // Detect cameras AFTER permission
     // await detectCameras();
@@ -461,49 +461,53 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]">
       <div className="text-center">
         {isCameraOpen && (
-          <div className="camera-container relative">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="border rounded-lg shadow-lg flex justify-center items-center lg:w-[50%] w-full m-auto"
-            />
+          <div className="camera-container relative lg:w-[50%] w-full m-auto">
+            {/* Video + overlay buttons wrapper */}
+            <div className="relative">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="border rounded-lg shadow-lg w-full max-h-[75vh] object-cover"
+              />
 
-            <div className="flex gap-3 justify-center items-center mt-5">
-              
-              {/* Flip Camera Button - only show if multiple cameras available */}
-              {availableCameras.length > 1 && (
-                <Button
-                  onPress={flipCamera}
-                  className="bg-gray-600 text-white p-2 rounded"
-                  aria-label="Flip camera"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-6 h-6"
+              {/* Overlay controls on the video feed */}
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-10">
+                {/* Flip Camera Button - only show if multiple cameras available */}
+                {availableCameras.length > 1 && (
+                  <Button
+                    onPress={flipCamera}
+                    isIconOnly
+                    className="bg-white/30 backdrop-blur-sm text-white rounded-full w-12 h-12 min-w-0 shadow-lg border border-white/40"
+                    aria-label="Flip camera"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-                    />
-                  </svg>
-                  Flip
-                </Button>
-              )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                      />
+                    </svg>
+                  </Button>
+                )}
 
-              {/* Capture Button */}
-              <Button
-                onPress={captureImage}
-                className="text-white p-2 rounded success-btn"
-              >
-                Capture
-              </Button>
+                {/* Capture Button - large shutter button */}
+                <button
+                  onClick={captureImage}
+                  className="w-16 h-16 rounded-full bg-white/40 backdrop-blur-sm border-4 border-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
+                  aria-label="Capture photo"
+                >
+                  <span className="w-12 h-12 rounded-full bg-white block" />
+                </button>
+              </div>
             </div>
 
             <canvas ref={canvasRef} className="hidden" />

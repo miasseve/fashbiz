@@ -97,12 +97,8 @@ const PRODUCT_RESPONSE_SCHEMA = {
 export async function POST(req) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json(
-        { errorMessage: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    // Allow unauthenticated requests for demo/try mode — the pipeline
+    // works without a storeId (similarity search uses global dataset only).
 
     const { imageUrl, imageUrls, storeId } = await req.json();
 
