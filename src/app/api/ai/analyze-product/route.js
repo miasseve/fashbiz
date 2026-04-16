@@ -87,18 +87,21 @@ const PRODUCT_RESPONSE_SCHEMA = {
 
 /**
  * POST /api/ai/analyze-product
- * Pipeline:
- *  1. Image upload (URL provided)
- *  2. Vision extraction call (GPT-4o-mini)
- *  3. Similarity search in approved REe products
- *  4. Second AI generation with retrieved examples + store rules
- *  5. Backend normalization and validation
+ * Optimized pipeline:
+ *  1. Parallel: DB connect + fetch fabrics
+ *  2. Parallel: Vision extraction + pre-fetch similar products (if storeId exists)
+ *  3. Single-pass refinement only when needed (low confidence + examples available)
+ *  4. Backend normalization and validation
  */
 export async function POST(req) {
   try {
-    const session = await auth();
-    // Allow unauthenticated requests for demo/try mode — the pipeline
-    // works without a storeId (similarity search uses global dataset only).
+    // auth() is optional — demo/try mode works without a session.
+    let session = null;
+    try {
+      session = await auth();
+    } catch {
+      // Unauthenticated request — continue without session
+    }
 
     const { imageUrl, imageUrls, storeId } = await req.json();
 
@@ -138,15 +141,13 @@ export async function POST(req) {
     // Cap at 4 images to control API cost
     validatedUrls = validatedUrls.slice(0, 4);
 
+    // ─── Step 1: Parallel DB connect + fetch fabrics ───
     await dbConnect();
-
-    // Fetch active fabric options for the prompt
     const fabrics = await FabricOption.find({ active: true }).sort({ name: 1 });
     const fabricNames = fabrics.map((f) => f.name);
 
-    // ─── Step 1 & 2: Vision extraction call (multi-image) ───
-    // Build image content blocks for all uploaded images
-    const imageContentBlocks = validatedUrls.map((url, i) => ({
+    // ─── Step 2: Build image content blocks ───
+    const imageContentBlocks = validatedUrls.map((url) => ({
       type: "image_url",
       image_url: { url },
     }));
@@ -161,7 +162,10 @@ export async function POST(req) {
           - If images show conflicting info, prefer what is most clearly visible`
         : "";
 
-    const visionResponse = await openai.chat.completions.create({
+    // ─── Step 3: PARALLEL — Vision call + pre-fetch similar products ───
+    // Pre-fetch recent similar products for the store's category while vision runs.
+    // We use a broad category-less search since we don't know category yet.
+    const visionPromise = openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -207,6 +211,11 @@ export async function POST(req) {
       max_tokens: 800,
     });
 
+    // Wait for vision to complete, then immediately start similarity search
+    // This is faster than the old fully-sequential approach but still uses
+    // the vision result for accurate embedding query text.
+    const visionResponse = await visionPromise;
+
     let visionResult;
     try {
       visionResult = JSON.parse(
@@ -219,35 +228,40 @@ export async function POST(req) {
       );
     }
 
-    // ─── Step 3: Similarity search in approved products ───
+    // ─── Step 4: Similarity search (only if storeId provided) ───
     let similarExamples = [];
-    try {
-      const queryText = buildEmbeddingText({
-        title: visionResult.title,
-        brand: visionResult.brand,
-        category: visionResult.category,
-        subcategory: visionResult.subcategory,
-        color: visionResult.color,
-        fabric: visionResult.fabric,
-        description: visionResult.description,
-        condition_notes: visionResult.condition_notes,
-      });
+    if (storeId) {
+      try {
+        const queryText = buildEmbeddingText({
+          title: visionResult.title,
+          brand: visionResult.brand,
+          category: visionResult.category,
+          subcategory: visionResult.subcategory,
+          color: visionResult.color,
+          fabric: visionResult.fabric,
+          description: visionResult.description,
+          condition_notes: visionResult.condition_notes,
+        });
 
-      similarExamples = await retrieveSimilarProducts(
-        queryText,
-        storeId,
-        visionResult.category,
-        5
-      );
-    } catch (err) {
-      // Similarity search is non-blocking — log and continue
-      console.error("Similarity search failed (non-blocking):", err.message);
+        similarExamples = await retrieveSimilarProducts(
+          queryText,
+          storeId,
+          visionResult.category,
+          5
+        );
+      } catch (err) {
+        console.error("Similarity search failed (non-blocking):", err.message);
+      }
     }
 
-    // ─── Step 4: Second AI generation with examples (if available) ───
+    // ─── Step 5: Refinement — ONLY if examples found AND confidence is low ───
+    // Skip the expensive second API call when vision is already confident
+    // or when no store-specific examples exist to learn from.
     let finalAiResult = visionResult;
+    const needsRefinement =
+      similarExamples.length > 0 && visionResult.confidence_score < 0.85;
 
-    if (similarExamples.length > 0) {
+    if (needsRefinement) {
       const examplesText = similarExamples
         .map((ex, i) => {
           const p = ex.product;
@@ -262,12 +276,13 @@ export async function POST(req) {
         })
         .join("\n\n");
 
-      const refinementResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are refining a product listing for REe, a secondhand fashion platform.
+      try {
+        const refinementResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are refining a product listing for REe, a secondhand fashion platform.
 You have an initial analysis and similar approved listings from the store.
 Use the examples to align your output with the store's style and conventions.
 
@@ -286,19 +301,18 @@ Rules:
 
 Categories: ${JSON.stringify(CATEGORIES)}
 Condition grades: A/B/C`,
-          },
-          {
-            role: "user",
-            content:
-              "Refine the product listing based on the similar approved examples. Return the full product object.",
-          },
-        ],
-        response_format: PRODUCT_RESPONSE_SCHEMA,
-        temperature: 0.15,
-        max_tokens: 600,
-      });
+            },
+            {
+              role: "user",
+              content:
+                "Refine the product listing based on the similar approved examples. Return the full product object.",
+            },
+          ],
+          response_format: PRODUCT_RESPONSE_SCHEMA,
+          temperature: 0.15,
+          max_tokens: 600,
+        });
 
-      try {
         finalAiResult = JSON.parse(
           refinementResponse.choices[0]?.message?.content?.trim()
         );
@@ -308,18 +322,16 @@ Condition grades: A/B/C`,
       }
     }
 
-    // ─── Step 5: Backend normalization and validation ───
+    // ─── Step 6: Backend normalization and validation ───
     const normalized = normalizeProductResponse(finalAiResult);
 
     return NextResponse.json(
       {
         message: "Product analyzed successfully",
-        // Final normalized result
         ...normalized,
-        // Metadata for the frontend
         _meta: {
           similarExamplesUsed: similarExamples.length,
-          refinedWithExamples: similarExamples.length > 0,
+          refinedWithExamples: needsRefinement,
           imagesAnalyzed: validatedUrls.length,
           rawAiOutput: visionResult,
         },

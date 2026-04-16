@@ -38,19 +38,38 @@ const RemoveImage = ({
     }
   };
 
-  return deleteImageLoader.index == viewType &&
-    deleteImageLoader.loading == true ? (
-    <span className="text-[2rem]">
-      {" "}
-      <Spinner size="sm" color="success" />
-    </span>
-  ) : (
+  const isLoading =
+    deleteImageLoader.index == viewType && deleteImageLoader.loading == true;
+
+  return (
     <Button
-      isDisabled={disabled}
-      className="danger-btn !m-0"
+      isIconOnly
+      isDisabled={disabled || isLoading}
+      className={`absolute right-5 !top-[-7px] z-10 !m-0 min-w-0 w-10 h-10 rounded-full text-white shadow-lg ${
+        disabled || isLoading
+          ? "bg-gray-400 cursor-not-allowed opacity-50"
+          : "bg-red-600 hover:bg-red-700"
+      }`}
       onPress={() => handleRemoveImage(viewType, publicId)}
     >
-      Remove Photo
+      {isLoading ? (
+        <Spinner size="sm" color="white" />
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          stroke="currentColor"
+          className="w-6 h-6"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      )}
     </Button>
   );
 };

@@ -36,6 +36,7 @@ const SecondStep = ({
   user,
   productCount,
   addonPurchase,
+  isDemo,
 }) => {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -47,7 +48,7 @@ const SecondStep = ({
   const [availableRules, setAvailableRules] = useState([]);
 
   const consignorData = useSelector((state) => state.product.consignor);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [productDetails, setProductDetails] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -64,6 +65,9 @@ const SecondStep = ({
   const [rawAiOutput, setRawAiOutput] = useState(null);
   const [aiMeta, setAiMeta] = useState(null);
   const [confidenceScore, setConfidenceScore] = useState(null);
+
+  // ── AI price suggestion ──
+  const [priceSuggestion, setPriceSuggestion] = useState(null);
 
   const reduxImages = useSelector((state) => state.product.uploadedImages);
   const currentYear = new Date().getFullYear().toString().slice(-2);
@@ -216,6 +220,27 @@ const SecondStep = ({
             // Tags (sent to Shopify only — not stored on Product)
             if (Array.isArray(data.shopify_tags)) {
               setValue("tags", data.shopify_tags);
+            }
+
+            // Fetch AI price suggestion based on store history (skip for demo)
+            if (!pointsEnabled && !isDemo && data.category) {
+              axios
+                .post("/api/ai/suggest-price", {
+                  storeId: user.id,
+                  category: data.category,
+                  subcategory: data.subcategory,
+                  brand: data.brand,
+                  condition_grade: data.condition_grade,
+                })
+                .then((res) => {
+                  console.log("Price suggestion response:", res.data); // TODO: remove debug log
+                  if (res.data) {
+                    setPriceSuggestion(res.data);
+                  }
+                })
+                .catch((err) => {
+                  console.error("Price suggestion error:", err); // TODO: remove debug log
+                });
             }
           }
         } catch (error) {
@@ -454,7 +479,7 @@ const SecondStep = ({
                       </span>
                     )}
                     {aiMeta?.similarExamplesUsed > 0 && (
-                      <span className="text-xs text-blue-500">
+                      <span className="text-sm text-blue-500">
                         ({aiMeta.similarExamplesUsed} similar examples used)
                       </span>
                     )}
@@ -478,11 +503,14 @@ const SecondStep = ({
                   register={register}
                   errors={errors}
                   watch={watch}
+                  setValue={setValue}
                   fabricOptions={fabricOptions}
                   colorHex={colorHex}
                   showPriceField={!session.data?.user?.points_mode}
                   showConditionFields
                   showCategoryField
+                  priceSuggestion={priceSuggestion}
+                  isDemo={isDemo}
                 />
               </CardBody>
               <CardFooter className="flex justify-between">

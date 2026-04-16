@@ -17,11 +17,14 @@ const ProductFormFields = ({
   register,
   errors,
   watch,
+  setValue,
   fabricOptions,
   colorHex,
   showPriceField = true,
   showConditionFields = false,
   showCategoryField = false,
+  priceSuggestion = null,
+  isDemo = false,
 }) => {
   return (
     <>
@@ -211,13 +214,59 @@ const ProductFormFields = ({
             {...register("price")}
             type="text"
             placeholder="Price in DKK"
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
+            className={`w-full border rounded-md px-3 py-2 ${
+              errors.price ? "border-red-400" : "border-gray-300"
+            }`}
           />
           {errors.price && (
             <span className="text-red-500 font-bold text-[12px]">
               {errors.price.message}
             </span>
           )}
+          {/* AI Price Suggestion */}
+          {priceSuggestion?.hasSuggestion ? (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] text-blue-700">
+                  <span className="font-medium">AI Suggested: </span>
+                  <span className="font-bold">{priceSuggestion.suggestedPrice} DKK</span>
+                  <span className="text-[12px] text-blue-500 ml-2">
+                    (range: {priceSuggestion.priceRange.low}–{priceSuggestion.priceRange.high} DKK)
+                  </span>
+                </div>
+                {setValue && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue("price", String(priceSuggestion.suggestedPrice), {
+                        shouldValidate: true,
+                      })
+                    }
+                    className="text-[12px] bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+              <p className="text-[12px] text-blue-400 mt-1">
+                Based on {priceSuggestion.stats.sampleSize} similar products from your store
+              </p>
+            </div>
+          ) : priceSuggestion?.eligible && !priceSuggestion?.hasSuggestion ? (
+            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-300 rounded-md">
+              <p className="text-[12px] text-yellow-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="inline-block w-4 h-4 text-yellow-500 align-text-bottom mr-1"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                {priceSuggestion.reason}
+              </p>
+            </div>
+          ) : !errors.price ? (
+            <p className="text-[12px] text-gray-600 mt-1.5 font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="inline-block w-5 h-5 text-blue-500 align-text-bottom mr-1"><path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+              {isDemo
+                ? "Not sure what to charge? AI suggestions unlock as you grow after signup."
+                : "Sell 300+ products or wait 2 months to unlock AI price suggestions."}
+            </p>
+          ) : null}
         </div>
       )}
 

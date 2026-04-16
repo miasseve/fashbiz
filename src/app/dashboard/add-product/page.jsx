@@ -9,6 +9,8 @@ import { getSubscriptionPlans } from "@/actions/stripePlans";
 import Link from "next/link";
 import dbConnect from "@/lib/db";
 import AddOnPurchase from "@/models/AddOnPurchase";
+import Subscription from "@/models/Subscription";
+import SubscriptionPlanDetails from "@/models/SubscriptionPlanDetails";
 
 export const metadata = {
   title: "Add Product",
@@ -46,33 +48,52 @@ const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => (
 );
 
 async function fetchactivesubscription(userId) {
-const base =
-  process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL
-    : process.env.NEXT_PUBLIC_FRONTEND_URL;
-
   try {
-    const res = await fetch(`${base}/api/stripe/subscription?userId=${userId}`);
-    const data = await res.json();
-    const subscription = data?.subscription || null;
+    await dbConnect();
 
-    if (subscription) {
-      const data = await getSubscriptionPlans();
-
-      const formattedPlans = data.map((plan) => ({
-        id: plan.id,
-        name: plan.product.name,
-        productLimit: plan.productLimit,
-        maxUsers: plan.maxUsers,
-      }));
-
-      const activePlan = formattedPlans.find(
-        (p) =>
-          p.id === subscription.planPriceId ||
-          p.name.toLowerCase() === subscription.planName?.toLowerCase()
-      );
-      return activePlan;
+    // Direct DB lookup instead of HTTP self-fetch
+    const subscription = await Subscription.findOne({ userId });
+    if (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) {
+      return null;
     }
+
+    // Try matching against Stripe plans
+    const plans = await getSubscriptionPlans();
+    const formattedPlans = plans.map((plan) => ({
+      id: plan.id,
+      name: plan.product.name,
+      productLimit: plan.productLimit,
+      maxUsers: plan.maxUsers,
+    }));
+
+    const activePlan = formattedPlans.find(
+      (p) =>
+        p.id === subscription.planPriceId ||
+        p.name.toLowerCase() === subscription.planName?.toLowerCase()
+    );
+
+    if (activePlan) return activePlan;
+
+    // Fallback: look up product limit from SubscriptionPlanDetails
+    const planDoc = await SubscriptionPlanDetails.findOne({
+      subscriptionPlanId: subscription.planPriceId,
+    });
+
+    if (planDoc) {
+      return {
+        id: subscription.planPriceId,
+        name: subscription.planName,
+        productLimit: planDoc.productLimit,
+        maxUsers: planDoc.maxUsers,
+      };
+    }
+
+    console.error(
+      "Could not match subscription plan:",
+      subscription.planName,
+      subscription.planPriceId
+    );
+    return null;
   } catch (error) {
     console.error("Error fetching subscription plan:", error);
     return null;
@@ -152,43 +173,45 @@ const page = async ({ searchParams }) => {
     );
   }
 
-  if(session?.user?.isActive === false){
+  // Always check isActive from the database (not the session token),
+  // because the JWT token is only set at login and can become stale
+  // if the user subscribes after logging in.
+  const res = await getUser();
+  const user = res?.data ? JSON.parse(res.data) : null;
+
+  if (user?.isActive === false) {
     return <SubscriptionMessage message="Your account is deactivated. Please contact support." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
   }
 
-  if (session?.user?.isActive === true) {
-    const res = await getUser();
-    const user = JSON.parse(res.data);
-    if (user) {
-      const now = new Date();
-      const start = new Date(user.subscriptionStart);
-      const end = new Date(user.subscriptionEnd);
-      if (user.subscriptionType === "free") {
-        if (now < start || now > end) {
-          return <SubscriptionMessage message="Your free plan has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
-        }
-        return (
-          <Main
-            user={session.user}
-            productCount={response.count}
-            stripeResponse={stripeResponse}
-            isDemo={response.isDemo}
-            demoLimitReached={response.demoLimitReached}
-          />
-        );
-      } else if ((now < start || now > end) && user.subscriptionType !== "free") {
-        return (
-          <SubscriptionMessage message="Your current subscription has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
-        );
-      } else {
-        const userId = session?.user?.id;
-        const activePlan = await fetchactivesubscription(userId);
+  if (user?.isActive === true) {
+    const now = new Date();
+    const start = new Date(user.subscriptionStart);
+    const end = new Date(user.subscriptionEnd);
+    if (user.subscriptionType === "free") {
+      if (now < start || now > end) {
+        return <SubscriptionMessage message="Your free plan has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
+      }
+      return (
+        <Main
+          user={session.user}
+          productCount={response.count}
+          stripeResponse={stripeResponse}
+          isDemo={response.isDemo}
+          demoLimitReached={response.demoLimitReached}
+        />
+      );
+    } else if ((now < start || now > end) && user.subscriptionType !== "free") {
+      return (
+        <SubscriptionMessage message="Your current subscription has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
+      );
+    } else {
+      const userId = session?.user?.id;
+      const activePlan = await fetchactivesubscription(userId);
 
-        if (!activePlan || activePlan.productLimit <= user.products.length) {
-          return (
-            <SubscriptionMessage message="You reached the product upload limit for the Current Plan" userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
-          );
-        }
+      if (!activePlan || activePlan.productLimit <= user.products.length) {
+        return (
+          <SubscriptionMessage message="You reached the product upload limit for the Current Plan" userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
+        );
       }
     }
   }

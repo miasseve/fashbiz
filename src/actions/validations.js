@@ -175,7 +175,7 @@ export const productSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
   brand: Yup.string().required("Brand is required"),
   price: Yup.number()
-    .typeError("Price must be a number")
+    .typeError("Enter a valid price to continue")
     .required("Price is required")
     .positive("Price must be greater than zero")
     .test(

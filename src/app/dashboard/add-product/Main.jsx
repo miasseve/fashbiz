@@ -314,6 +314,7 @@ const Main = ({
               productCount={count}
               handleAddMoreProducts={handleAddMoreProducts}
               addonPurchase={addonPurchase}
+              isDemo={isDemo}
             />
           )}
         </>

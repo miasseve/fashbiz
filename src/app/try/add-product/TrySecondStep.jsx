@@ -30,7 +30,7 @@ function getGuestSessionId() {
 
 const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [productDetails, setProductDetails] = useState(null);
   const [productLink, setProductLink] = useState("");
@@ -122,6 +122,7 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
           }
         } catch (error) {
           console.error("Error fetching product details:", error);
+          setErrorMessage("AI analysis failed. Please fill in the details manually.");
         } finally {
           setLoading(false);
         }
@@ -371,6 +372,7 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
                   colorHex={colorHex}
                   showPriceField
                   showCategoryField
+                  isDemo
                 />
               </CardBody>
               <CardFooter className="flex justify-between">

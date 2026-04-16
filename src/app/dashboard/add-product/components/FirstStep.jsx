@@ -402,7 +402,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       } catch (err) {
         console.error("Background removal failed", err);
         toast.error("Background removal failed");
-      } finally {
         setRemoveBackgroundLoader({});
       }
     } else {
@@ -563,7 +562,21 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                   <div className="mt-4 w-full">
                     <div className="border p-4 rounded bg-white">
                       <div className="flex justify-between">
-                        <div className="w-[49%] pr-[2rem] h-full">
+                        <div className="w-[49%] pr-[2rem] h-full relative">
+                          <RemoveImage
+                            viewType={viewType}
+                            disabled={
+                              Object.keys(removeBackgroundLoader).length >
+                                0 || false
+                            }
+                            publicId={imageData?.publicId}
+                            setDeleteImageLoader={setDeleteImageLoader}
+                            deleteImageLoader={deleteImageLoader}
+                            uploadedImagesWithView={uploadedImagesWithView}
+                            setUploadedImagesWithView={
+                              setUploadedImagesWithView
+                            }
+                          />
                           <Image
                             src={imageData.url}
                             alt={`${viewType} Image`}
@@ -571,6 +584,15 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                             height="300"
                             layout="intrinsic"
                             onError={(e) => handleImageError(e, viewType)}
+                            onLoad={() => {
+                              if (removeBackgroundLoader[viewType]?.loading) {
+                                setRemoveBackgroundLoader((prev) => {
+                                  const next = { ...prev };
+                                  delete next[viewType];
+                                  return next;
+                                });
+                              }
+                            }}
                             className="rounded"
                             unoptimized
                           />
@@ -655,22 +677,6 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                             </div>
                           </div>
 
-                          <div className="text-start">
-                            <RemoveImage
-                              viewType={viewType}
-                              disabled={
-                                Object.keys(removeBackgroundLoader).length >
-                                  0 || false
-                              }
-                              publicId={imageData?.publicId}
-                              setDeleteImageLoader={setDeleteImageLoader}
-                              deleteImageLoader={deleteImageLoader}
-                              uploadedImagesWithView={uploadedImagesWithView}
-                              setUploadedImagesWithView={
-                                setUploadedImagesWithView
-                              }
-                            />
-                          </div>
                         </div>
                       </div>
                     </div>
