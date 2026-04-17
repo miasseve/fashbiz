@@ -257,7 +257,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
               Create an account to unlock all features
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Instagram integration", "Shopify webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
+              {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
                   <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
                   {f}
@@ -338,7 +338,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                     `Upload up to ${limit} products per month`,
                     `Up to ${users} users access`,
                     "Instagram integration",
-                    ...(!isAdd ? ["Shopify webstore synchronization"] : []),
+                    ...(!isAdd ? ["SecondsToSee webstore synchronization"] : []),
                   ];
                   return fallbackFeatures.map((f, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
@@ -397,7 +397,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
               Choose a plan below to continue
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Instagram integration", "Shopify webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
+              {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
                   <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
                   {f}
