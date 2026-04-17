@@ -741,7 +741,7 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
                   Sold Item Notifications
                 </p>
                 <p className="text-[12px] text-gray-600 mt-0.5">
-                  Get notified when a product is sold on Shopify
+                  Get notified when a product is sold on SecondsToSee
                 </p>
               </div>
               <button

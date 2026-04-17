@@ -167,7 +167,7 @@ const DeveloperPage = () => {
           <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">
             Developer
           </h1>
-          <p className="text-base text-gray-600 px-1 -mt-4">Manage Shopify store credentials per store owner.</p>
+          <p className="text-base text-gray-600 px-1 -mt-4">Manage SecondsToSee store credentials per store owner.</p>
         </div>
         <button
           onClick={openAdd}

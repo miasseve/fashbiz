@@ -23,7 +23,7 @@ const ADD_ONS = [
   {
     key: "webstore",
     label: "Webstore (Pay Once)",
-    description: "List product on your Shopify webstore",
+    description: "List product on your SecondsToSee webstore",
     price: 4800,
     transactionNote: "4% per Transactions",
     required: false,

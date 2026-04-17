@@ -206,7 +206,7 @@ const PlatformFeesPage = () => {
 
       {/* Info note */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-md text-amber-800">
-        <strong>Note:</strong> Platform fees are calculated on Shopify webstore transactions.
+        <strong>Note:</strong> Platform fees are calculated on SecondsToSee webstore transactions.
         Webstore Basic stores pay 4% per transaction, Webstore Pro stores pay 2% per transaction.
         Use &quot;Mark Paid&quot; after collecting fees from a store owner.
       </div>

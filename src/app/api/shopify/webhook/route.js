@@ -179,7 +179,7 @@ export async function POST(req) {
               customerEmail: event.customer?.email || "",
               amount: saleAmount,
               currency: (event.currency || "DKK").toUpperCase(),
-              paymentMethod: event.payment_gateway_names?.[0] || "Shopify",
+              paymentMethod: event.payment_gateway_names?.[0] || "SecondsToSee",
               status: "completed",
               shopifyOrderUrl: `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/orders/${event.id}`,
               shopifyOrderNumber: String(event.order_number || event.id),
@@ -246,7 +246,7 @@ export async function POST(req) {
             productId: product._id,
             type: "sold",
             title: `"${product.title}" inventory set to 0`,
-            message: "Inventory was manually adjusted in Shopify",
+            message: "Inventory was manually adjusted in SecondsToSee",
           });
         }
       } else if (newQuantity > 0 && product.sold) {

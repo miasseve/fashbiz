@@ -96,7 +96,7 @@ const TransactionHistoryTable = ({ transactions }) => {
       t.customerEmail || "",
       (t.amount / 100).toFixed(2),
       (t.currency || "DKK").toUpperCase(),
-      t.channel === "shopify" ? "Web (Shopify)" : "Store (Ree)",
+      t.channel === "shopify" ? "Web (SecondsToSee)" : "Store (Ree)",
       t.status,
       t.paymentMethod || "",
       `"${t.consignorName || "Store Owner"}"`,
@@ -122,7 +122,7 @@ const TransactionHistoryTable = ({ transactions }) => {
 
   const tabs = [
     { key: "all", label: "View All", count: counts.all },
-    { key: "shopify", label: "Web (Shopify)", count: counts.shopify },
+    { key: "shopify", label: "Web (SecondsToSee)", count: counts.shopify },
     { key: "ree", label: "Store (Ree)", count: counts.ree },
   ];
 
@@ -321,7 +321,7 @@ const TransactionHistoryTable = ({ transactions }) => {
                             : "bg-blue-100 text-blue-700"
                         }`}
                       >
-                        {tx.channel === "shopify" ? "Shopify" : "Store"}
+                        {tx.channel === "shopify" ? "SecondsToSee" : "Store"}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -472,7 +472,7 @@ const TransactionHistoryTable = ({ transactions }) => {
                         }`}
                       >
                         {selectedTransaction?.channel === "shopify"
-                          ? "Web (Shopify)"
+                          ? "Web (SecondsToSee)"
                           : "Store (Ree)"}
                       </span>
                     </div>
@@ -581,7 +581,7 @@ const TransactionHistoryTable = ({ transactions }) => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-[12px] font-medium text-blue-600 hover:text-blue-700 hover:underline"
                     >
-                      View on Shopify <FiExternalLink size={14} />
+                      View on SecondsToSee <FiExternalLink size={14} />
                     </a>
                   )}
 

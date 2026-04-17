@@ -129,7 +129,7 @@ const PLAN_CONFIG = {
     subtitle: "Custom quote + 2% per transaction",
     requiresQuote: true,
     modules: [
-      "Shopify webstore synchronization",
+      "SecondsToSee webstore synchronization",
       "Fully ready Live Webstore",
       "All Add Basic features + logo",
       "Webstore synchronisation to all",
@@ -168,7 +168,7 @@ const PLAN_CONFIG = {
     subtitle: "Custom quote",
     requiresQuote: true,
     modules: [
-      "Shopify webstore synchronization",
+      "SecondsToSee webstore synchronization",
       "All Plugin Basic features",
       "Custom sync configuration",
     ],

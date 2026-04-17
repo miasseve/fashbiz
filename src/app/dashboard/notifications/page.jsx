@@ -231,7 +231,7 @@ const NotificationsPage = () => {
                           rel="noopener noreferrer"
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           onClick={(e) => e.stopPropagation()}
-                          title="View on Shopify"
+                          title="View on SecondsToSee"
                         >
                           <FiExternalLink size={18} />
                         </a>
@@ -369,7 +369,7 @@ const NotificationsPage = () => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-base font-medium text-blue-600 hover:text-blue-700 hover:underline"
                     >
-                      View on Shopify <FiExternalLink size={16} />
+                      View on SecondsToSee <FiExternalLink size={16} />
                     </a>
                   )}
                 </div>

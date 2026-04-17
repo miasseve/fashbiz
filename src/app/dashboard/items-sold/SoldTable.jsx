@@ -83,7 +83,7 @@ const SoldTable = ({ products }) => {
       p.sku,
       `"${p.title}"`,
       p.price,
-      p.soldVia === "shopify" ? "Shopify" : "REE",
+      p.soldVia === "shopify" ? "SecondsToSee" : "REE",
       p.consignorName || "Store Owner",
       p.consignorEmail || "Store Owner",
       p.orderDetails?.customerName || "",
@@ -135,7 +135,7 @@ const SoldTable = ({ products }) => {
                       : "bg-blue-100 text-blue-700"
                   }`}
                 >
-                  {product.soldVia === "shopify" ? "Shopify" : "REE"}
+                  {product.soldVia === "shopify" ? "SecondsToSee" : "REE"}
                 </span>
               </TableCell>
               <TableCell>{product.consignorName || "Store Owner"}</TableCell>
@@ -185,7 +185,7 @@ const SoldTable = ({ products }) => {
           {(onClose) => (
             <>
               <ModalHeader className="text-2xl font-bold text-gray-900">
-                Shopify Order Details
+                SecondsToSee Order Details
               </ModalHeader>
               <ModalBody>
                 <div className="space-y-5">
@@ -281,7 +281,7 @@ const SoldTable = ({ products }) => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-base font-medium text-blue-600 hover:text-blue-700 hover:underline"
                     >
-                      View on Shopify <FiExternalLink size={16} />
+                      View on SecondsToSee <FiExternalLink size={16} />
                     </a>
                   )}
                 </div>

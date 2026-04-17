@@ -141,7 +141,7 @@ export async function getTransactions() {
             customerEmail: notif?.orderDetails?.customerEmail || "",
             amount: Math.round((p.price || 0) * 100),
             currency: notif?.orderDetails?.currency?.toUpperCase() || "DKK",
-            paymentMethod: "Shopify",
+            paymentMethod: "SecondsToSee",
             status: "completed",
             consignorName: p.consignorName || "",
             consignorEmail: p.consignorEmail || "",

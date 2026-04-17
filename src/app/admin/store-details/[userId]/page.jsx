@@ -87,7 +87,7 @@ const StoreDetailPage = () => {
       return {
         icon: <MdCheckCircle className="text-green-500 text-xl" />,
         label: "Connected",
-        sub: `${productStats.shopifySynced} of ${productStats.total} products synced to Shopify`,
+        sub: `${productStats.shopifySynced} of ${productStats.total} products synced to SecondsToSee`,
         badge: "bg-green-50 border-green-200 text-green-700",
       };
     }
@@ -95,14 +95,14 @@ const StoreDetailPage = () => {
       return {
         icon: <MdWarning className="text-amber-500 text-xl" />,
         label: "Not Synced",
-        sub: `${productStats.total} products exist in REE but none are on Shopify yet`,
+        sub: `${productStats.total} products exist in REE but none are on SecondsToSee yet`,
         badge: "bg-amber-50 border-amber-200 text-amber-700",
       };
     }
     return {
       icon: <MdCancel className="text-gray-400 text-xl" />,
       label: "Not Set Up",
-      sub: "No products added yet. Products are synced to Shopify automatically when added.",
+      sub: "No products added yet. Products are synced to SecondsToSee automatically when added.",
       badge: "bg-gray-50 border-gray-200 text-gray-600",
     };
   };
@@ -260,7 +260,7 @@ const StoreDetailPage = () => {
 
       {/* Shopify Store Setup Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h3 className="text-[12px] font-bold text-gray-900 mb-1">Shopify Store Status</h3>
+        <h3 className="text-[12px] font-bold text-gray-900 mb-1">SecondsToSee Store Status</h3>
         <p className="text-[12px] text-gray-500 mb-4">Track the two-phase setup process for this store owner.</p>
 
         {/* Phase 1 — Developer Setup */}
@@ -280,7 +280,7 @@ const StoreDetailPage = () => {
                     : <span className="ml-2 text-[12px] font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">Pending</span>}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-0.5">
-                  A dedicated Shopify store has been created and connected to REE for this store owner.
+                  A dedicated SecondsToSee store has been created and connected to REE for this store owner.
                 </p>
               </div>
             </div>
@@ -323,7 +323,7 @@ const StoreDetailPage = () => {
             </div>
             <div className="text-center bg-green-50 rounded-lg py-3">
               <p className="text-2xl font-bold text-green-700">{productStats.shopifySynced}</p>
-              <p className="text-md text-gray-500 mt-0.5">Synced to Shopify</p>
+              <p className="text-md text-gray-500 mt-0.5">Synced to SecondsToSee</p>
             </div>
             <div className="text-center bg-red-50 rounded-lg py-3">
               <p className="text-2xl font-bold text-red-600">{productStats.sold}</p>

@@ -46,7 +46,7 @@ const ShopifyLink = ({ url }) => {
         className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
       >
         <FiExternalLink size={12} />
-        Open in Shopify
+        Open in SecondsToSee
       </a>
     </div>
   );
