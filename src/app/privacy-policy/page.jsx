@@ -3,14 +3,7 @@ import React from 'react';
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-500 via-pink-500 to-pink-400 p-8">
-      {/* Header with Logo */}
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-black mb-2">
-           <img src="/fashlogo.svg" className="w-[132px] mx-auto" />
-          </h1>
-        </div>
-
         {/* Main Content Card */}
         <div className="bg-white rounded-lg shadow-2xl p-8 md:p-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-6">Privacy Policy</h2>
