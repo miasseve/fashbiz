@@ -92,7 +92,7 @@ const TryLayout = ({ children }) => {
         <div>
           <div className="logo text-center border-b border-[#dedede]">
             <img
-              src="/reelogo.png"
+              src="/new_ree-logo.png"
               className="w-[92px] mx-auto py-[12px]"
               alt="REE"
             />

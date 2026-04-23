@@ -76,7 +76,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   return (
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
-        <img src="/reelogo.png" className="w-[92px] mx-auto py-[12px]" />
+        <img src="/new_ree-logo.png" className="w-[92px] mx-auto py-[12px]" />
         <div className="text-[1rem] text-gray-500 pb-2">Admin Panel</div>
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar">

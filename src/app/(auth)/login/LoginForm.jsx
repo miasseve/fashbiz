@@ -68,7 +68,7 @@ const LoginForm = () => {
                 <div className="icon-text text-black relative pb-[2rem]">
                   <Link href="/">
                     {/* <img src="/fashlogo.svg" className="w-[37%] mb-[53px]" /> */}
-                     <img src="/reelogo.png" alt="Ree — Secondhand & Resale Store Platform" className="w-[92px] py-[12px]" />
+                     <img src="/new_ree-logo.png" alt="Ree — Secondhand & Resale Store Platform" className="w-[92px] py-[12px]" />
                   </Link>
                 </div>
               </div>

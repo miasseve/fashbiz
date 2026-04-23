@@ -21,7 +21,7 @@ export function OrganizationJsonLd() {
     url: BASE_URL,
     logo: {
       "@type": "ImageObject",
-      url: `${BASE_URL}/reelogo.png`,
+      url: `${BASE_URL}/new_ree-logo.png`,
       width: 200,
       height: 60,
     },
