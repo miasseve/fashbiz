@@ -92,7 +92,7 @@ const TryLayout = ({ children }) => {
         <div>
           <div className="logo text-center border-b border-[#dedede]">
             <img
-              src="/new_ree-logo.png"
+              src="/new_ree_icon.png"
               className="w-[92px] mx-auto py-[12px]"
               alt="REE"
             />
@@ -150,6 +150,19 @@ const TryLayout = ({ children }) => {
               <FaLock className="ml-auto text-sm text-gray-300" />
             </Link>
           </nav>
+          <div className="sidebar-footer border-t border-[#dedede] py-[16px] flex justify-center">
+            <a
+              href="https://www.2hand2go.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="/2hand2go_logo.png"
+                alt="2hand2go"
+                className="w-[120px] mx-auto"
+              />
+            </a>
+          </div>
         </div>
       </div>
 

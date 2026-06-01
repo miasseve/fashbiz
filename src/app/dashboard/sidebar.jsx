@@ -147,7 +147,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     <div>
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
         {/* <img src="/fashlogo.svg" className="w-[132px] mx-auto" /> */}
-        <img src="/new_ree-logo.png" className="w-[92px] mx-auto py-[12px]" />
+        <img src="/new_ree_icon.png" className="w-[92px] mx-auto py-[12px]" />
         {session.data?.user?.role === "store" && (
           <input
             ref={barcodeInputRef}
@@ -211,6 +211,19 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </>
         )}
       </nav>
+      <div className="sidebar-footer border-t border-[#dedede] py-[16px] flex justify-center">
+        <a
+          href="https://www.2hand2go.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="/2hand2go_logo.png"
+            alt="2hand2go"
+            className="w-[120px] mx-auto"
+          />
+        </a>
+      </div>
     </div>
   );
 };

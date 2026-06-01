@@ -13,7 +13,7 @@ export const SITE_NAME = "Ree";
 export const DEFAULT_DESCRIPTION =
   "Ree — Buy and sell secondhand fashion online. Secondhand & resale store platform with automated product listing and smart POS. Genbrugstøj, brugt tøj og resale i Danmark.";
 
-export const DEFAULT_OG_IMAGE = `${BASE_URL}/new_ree-logo.png`;
+export const DEFAULT_OG_IMAGE = `${BASE_URL}/new_ree_icon.png`;
 
 // ─── Default metadata shared across all pages ────────────────────────────────
 export const defaultMetadata = {
@@ -80,8 +80,8 @@ export const defaultMetadata = {
     },
   },
   icons: {
-    icon: "/new_ree-logo.png",
-    apple: "/new_ree-logo.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
   // Verification tokens — fill in after connecting Search Console / Bing
   verification: {

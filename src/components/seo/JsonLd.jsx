@@ -21,9 +21,9 @@ export function OrganizationJsonLd() {
     url: BASE_URL,
     logo: {
       "@type": "ImageObject",
-      url: `${BASE_URL}/new_ree-logo.png`,
-      width: 200,
-      height: 60,
+      url: `${BASE_URL}/favicon.png`,
+      width: 512,
+      height: 512,
     },
     description:
       "Buy and sell secondhand fashion online. Ree is a resale and secondhand store platform with automated product listing and smart POS. Genbrugstøj og brugt tøj i Danmark.",

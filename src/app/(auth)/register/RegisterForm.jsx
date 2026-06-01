@@ -22,7 +22,7 @@ const RegisterForm = () => {
               <div className="w-full text-center">
                 <div className="icon-text text-black relative pb-[2rem]">
                   <Link href="/">
-                    <img src="/new_ree-logo.png" className="w-[92px] py-[12px]" />
+                    <img src="/new_ree_icon.png" className="w-[92px] py-[12px]" />
                   </Link>
                 </div>
               </div>
