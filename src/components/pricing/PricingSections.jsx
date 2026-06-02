@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import PRICING_V2_CSS from "./pricingV2Styles";
 
 /* ───────────────────────────────────────────────────────────────
    2hand2go-style pricing layout: three stacked sections, white
@@ -156,7 +155,6 @@ export default function PricingSections({
 
   return (
     <div className="p2-wrap">
-      <style>{PRICING_V2_CSS}</style>
 
       {planGroups.map((group) => {
         const meta = getSectionMeta(group.productName);

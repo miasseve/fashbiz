@@ -192,10 +192,105 @@ const PRICING_V2_CSS = `
   }
   .p2-cta--readonly { opacity: 0.9; }
 
+  /* ── Status banner (Preview Plans / No Plan) — matches the white cards ── */
+  .p2-status {
+    position: relative;
+    display: flex;
+    width: min(1120px, 94vw);
+    margin: 0 auto clamp(28px, 4vw, 44px);
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 20px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.16);
+    overflow: hidden;
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+  }
+  .p2-status__left {
+    width: clamp(180px, 26%, 260px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: clamp(22px, 2.6vw, 34px);
+  }
+  .p2-status__title {
+    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-weight: 400;
+    color: #111827;
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .p2-status__title em {
+    font-family: var(--font-playfair), Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    color: #ff2e7e;
+  }
+  .p2-status__sub { font-size: 14px; color: #6b7280; font-weight: 500; }
+  .p2-status__right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(20px, 4vw, 56px);
+    padding: clamp(20px, 2.6vw, 32px);
+    border-left: 1px solid #f1f1f1;
+    flex-wrap: wrap;
+  }
+  .p2-status__main {
+    flex: 1 1 340px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .p2-status__heading { font-weight: 700; font-size: clamp(14px, 1.6vw, 18px); color: #111827; line-height: 1.3; }
+  .p2-status__features {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px clamp(20px, 3vw, 40px);
+  }
+  .p2-status__feature { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #374151; line-height: 1.45; }
+  .p2-status__badge {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .p2-status__badge--inactive { background: #ff4d6d; }
+  .p2-status__cta {
+    flex-shrink: 0;
+    align-self: center;
+    width: auto;
+    margin-top: 0;
+    padding: 13px 30px;
+  }
+
   /* ── Responsive: collapse to a single column ── */
   @media (max-width: 860px) {
     .p2-grid { grid-template-columns: 1fr !important; }
     .p2-card__desc { min-height: 0; }
+  }
+  @media (max-width: 760px) {
+    .p2-status { flex-direction: column; }
+    .p2-status__left { width: 100%; }
+    .p2-status__right {
+      border-left: none;
+      border-top: 1px solid #f1f1f1;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .p2-status__features { grid-template-columns: 1fr; }
+    .p2-status__cta { align-self: flex-start; }
   }
 `;
 

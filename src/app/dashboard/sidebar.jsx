@@ -211,16 +211,19 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </>
         )}
       </nav>
-      <div className="sidebar-footer border-t border-[#dedede] py-[16px] flex justify-center">
+      <div className="sidebar-footer border-t border-[#dedede] py-[16px] text-center">
         <a
           href="https://www.2hand2go.com"
           target="_blank"
           rel="noopener noreferrer"
+          className="inline-block"
         >
           <img
             src="/2hand2go_logo.png"
             alt="2hand2go"
-            className="w-[120px] mx-auto"
+            width={120}
+            height={30}
+            className="w-[120px] h-auto max-w-none mx-auto object-contain"
           />
         </a>
       </div>

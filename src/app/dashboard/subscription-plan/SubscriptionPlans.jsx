@@ -24,6 +24,7 @@ import PRICING_CSS from "@/components/pricing/pricingStyles";
 import { GROUP_DISPLAY } from "@/components/pricing/pricingConstants";
 import PricingStack from "@/components/pricing/PricingStack";
 import PricingSections from "@/components/pricing/PricingSections";
+import PRICING_V2_CSS from "@/components/pricing/pricingV2Styles";
 
 // Toggle between the new 2hand2go-style stacked sections (true) and the
 // original scroll-stacking "CHOOSE A PLAN" design (false). The old design is
@@ -248,43 +249,30 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
   return (
     <section>
       <style>{PRICING_CSS}</style>
+      <style>{PRICING_V2_CSS}</style>
 
       {/* ── Status card ── */}
       {readOnly ? (
-        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
-          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
-            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
-              Preview <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plans</span>
+        <div className="p2-status">
+          <div className="p2-status__left">
+            <div className="p2-status__title">
+              Preview <em>Plans</em>
             </div>
-            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Sign up to subscribe to a plan.</div>
+            <div className="p2-status__sub">Sign up to subscribe to a plan.</div>
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
-            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
-              Create an account to unlock all features
+          <div className="p2-status__right">
+            <div className="p2-status__main">
+              <div className="p2-status__heading">Create an account to unlock all features</div>
+              <div className="p2-status__features">
+                {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
+                  <div key={i} className="p2-status__feature">
+                    <span className="p2-check">&#10003;</span>
+                    {f}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
-                  <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
-                  {f}
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/register"
-              style={{
-                alignSelf: "flex-start",
-                background: "#22c55e",
-                color: "#fff",
-                border: "none",
-                borderRadius: 999,
-                padding: "8px 22px",
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: "none",
-                display: "inline-block",
-              }}
-            >
+            <Link href="/register" className="p2-cta p2-status__cta">
               Sign Up to Subscribe
             </Link>
           </div>
@@ -382,33 +370,25 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
         </div>
       ) : userRole === "store" ? (
-        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
-          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
-            <div style={{
-              position: "absolute", top: 12, right: 12,
-              background: "#ef4444", color: "#fff",
-              fontWeight: 700, fontSize: 13, lineHeight: 1,
-              padding: "6px 16px", borderRadius: 999,
-              letterSpacing: "0.04em", textTransform: "uppercase",
-            }}>
-              INACTIVE
+        <div className="p2-status">
+          <div className="p2-status__badge p2-status__badge--inactive">Inactive</div>
+          <div className="p2-status__left">
+            <div className="p2-status__title">
+              No <em>Plan</em>
             </div>
-            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
-              No <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plan</span>
-            </div>
-            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Subscribe to get started.</div>
+            <div className="p2-status__sub">Subscribe to get started.</div>
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
-            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 1.6vw, 18px)", color: "#111", lineHeight: 1.3 }}>
-              Choose a plan below to continue
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
-                  <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
-                  {f}
-                </div>
-              ))}
+          <div className="p2-status__right">
+            <div className="p2-status__main">
+              <div className="p2-status__heading">Choose a plan below to continue</div>
+              <div className="p2-status__features">
+                {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
+                  <div key={i} className="p2-status__feature">
+                    <span className="p2-check">&#10003;</span>
+                    {f}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
