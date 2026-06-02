@@ -1,4 +1,4 @@
-import { Montserrat, Playfair_Display, Lato } from "next/font/google";
+import { Montserrat, Playfair_Display, Lato, Instrument_Serif, Bricolage_Grotesque } from "next/font/google";
 
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
@@ -16,7 +16,8 @@ const montserrat = Montserrat({
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["700", "900"],
+  weight: ["400", "700", "900"],
+  style: ["normal", "italic"],
   variable: "--font-playfair",
 });
 
@@ -26,10 +27,24 @@ const lato = Lato({
   variable: "--font-lato",
 });
 
+// 2hand2go pricing fonts
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-bricolage",
+});
+
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-DK" className={`${montserrat.className} ${playfair.variable} ${lato.variable}`}>
+    <html lang="en-DK" className={`${montserrat.className} ${playfair.variable} ${lato.variable} ${instrumentSerif.variable} ${bricolage.variable}`}>
       <body suppressHydrationWarning >
         <OrganizationJsonLd />
         <WebSiteJsonLd />

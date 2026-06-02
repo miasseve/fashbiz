@@ -23,6 +23,12 @@ import Link from "next/link";
 import PRICING_CSS from "@/components/pricing/pricingStyles";
 import { GROUP_DISPLAY } from "@/components/pricing/pricingConstants";
 import PricingStack from "@/components/pricing/PricingStack";
+import PricingSections from "@/components/pricing/PricingSections";
+
+// Toggle between the new 2hand2go-style stacked sections (true) and the
+// original scroll-stacking "CHOOSE A PLAN" design (false). The old design is
+// kept intact below so it can be switched back with this single flag.
+const USE_NEW_PRICING = true;
 
 export default function SubscriptionPlans({ user, readOnly = false }) {
   const [plans, setPlans] = useState([]);
@@ -283,7 +289,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             </Link>
           </div>
         </div>
-      ) : hasActiveSubscription ? (
+      ) : /* TEMP(UI work): active-subscription status banner hidden. Re-enable by removing `false &&` below. */ false && hasActiveSubscription ? (
         <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
           <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
             <div style={{
@@ -408,6 +414,19 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
         </div>
       ) : null}
 
+      {/* ── NEW: 2hand2go-style stacked pricing sections ── */}
+      {USE_NEW_PRICING ? (
+        planGroups.length > 0 && (
+          <PricingSections
+            planGroups={planGroups}
+            activePlan={activePlan}
+            handleCheckout={handleCheckout}
+            readOnly={readOnly}
+            tryMode={readOnly}
+          />
+        )
+      ) : (
+      <>
       <h2 className="text-3xl md:text-6xl font-bold text-center text-gray-900 text-white mb-5">
         CHOOSE A PLAN
       </h2>
@@ -472,6 +491,8 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           readOnly={readOnly}
           tryMode={readOnly}
         />
+      )}
+      </>
       )}
 
       {/* Referral modal — only for authenticated users */}
