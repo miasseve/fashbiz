@@ -255,8 +255,7 @@ const PRICING_V2_CSS = `
   .p2-status__badge {
     position: absolute;
     top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 16px;
     font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.08em;
