@@ -25,6 +25,13 @@ const PAYG = {
   ],
 };
 
+// Per-card descriptions for the Resale Ecommerce Engine (Ads) section,
+// matching the 2hand2go copy. Keyed by tier name; falls back to plan data.
+const AD_DESC = {
+  Basic: "Up to 300 items per month. The sweet spot for growing stores.",
+  Pro: "Up to 1,000 items per month. For established multi-channel stores.",
+};
+
 // Section headings/subtitles, matched to a plan group by its productName.
 function getSectionMeta(productName = "") {
   const n = productName.toLowerCase();
@@ -84,7 +91,9 @@ export default function PricingSections({
   const renderCard = (plan, { isAds }) => {
     const popular = isAds && (plan.tierName || "").toLowerCase() === "basic";
     const { num, unit, fee } = formatPrice(plan);
-    const desc = plan.isPayg ? plan.desc : plan.subtitle || plan.tagline || "";
+    const desc = plan.isPayg
+      ? plan.desc
+      : (isAds && AD_DESC[plan.tierName]) || plan.subtitle || plan.tagline || "";
     const features = plan.features || [];
 
     // ── Button: behaviour & labels preserved from the old PricingCard ──
