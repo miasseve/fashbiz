@@ -235,6 +235,10 @@ export async function createProduct(formData) {
   }
 }
 
+// Max products a not-logged-in guest can upload per browser session
+// (identified by the ree_guest_session cookie -> guestSessionId).
+const GUEST_PRODUCT_LIMIT = 2;
+
 export async function createGuestProduct(formData) {
   let createdShopifyProduct = false;
   let shopifyProductId = null;
@@ -257,6 +261,22 @@ export async function createGuestProduct(formData) {
     } = formData;
 
     await dbConnect();
+
+    // Guest upload cap: a not-logged-in user (identified by the ree_guest_session
+    // cookie -> guestSessionId) may upload at most GUEST_PRODUCT_LIMIT demo products.
+    if (guestSessionId) {
+      const guestProductCount = await Product.countDocuments({
+        isDemo: true,
+        guestSessionId,
+      });
+      if (guestProductCount >= GUEST_PRODUCT_LIMIT) {
+        return {
+          status: 403,
+          limitReached: true,
+          error: `You've reached the ${GUEST_PRODUCT_LIMIT}-product free limit. Please sign up to upload more.`,
+        };
+      }
+    }
 
     // Find test store user to link guest products
     let testUserId = process.env.TEST_STORE_USER_ID;
