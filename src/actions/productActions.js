@@ -237,7 +237,7 @@ export async function createProduct(formData) {
 
 // Max products a not-logged-in guest can upload per browser session
 // (identified by the ree_guest_session cookie -> guestSessionId).
-const GUEST_PRODUCT_LIMIT = 2;
+const GUEST_PRODUCT_LIMIT = 25;
 
 export async function createGuestProduct(formData) {
   let createdShopifyProduct = false;
