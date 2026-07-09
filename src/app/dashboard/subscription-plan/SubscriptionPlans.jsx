@@ -277,7 +277,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             </Link>
           </div>
         </div>
-      ) : /* TEMP(UI work): active-subscription status banner hidden. Re-enable by removing `false &&` below. */ false && hasActiveSubscription ? (
+      ) : hasActiveSubscription ? (
         <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
           <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
             <div style={{
