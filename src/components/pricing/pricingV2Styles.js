@@ -273,6 +273,45 @@ const PRICING_V2_CSS = `
     margin-top: 0;
     padding: 13px 30px;
   }
+  .p2-status__badge--active { background: #22c55e; }
+
+  /* Active-subscription banner extras */
+  .p2-status__dates {
+    display: flex;
+    gap: clamp(16px, 3vw, 32px);
+    flex-wrap: wrap;
+  }
+  .p2-status__date-label { font-weight: 700; color: #111827; font-size: 14px; }
+  .p2-status__date-val { font-weight: 600; color: #111827; font-size: 14px; }
+  .p2-status__note {
+    font-size: 13px;
+    color: #92400e;
+    line-height: 1.6;
+    background: rgba(234, 179, 8, 0.15);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .p2-status__cancel {
+    align-self: flex-start;
+    margin-top: 2px;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 26px;
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: #ef4444;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+  }
+  .p2-status__cancel:hover {
+    background: #dc2626;
+    box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35);
+    transform: translateY(-1px);
+  }
 
   /* ── Responsive: collapse to a single column ── */
   @media (max-width: 860px) {

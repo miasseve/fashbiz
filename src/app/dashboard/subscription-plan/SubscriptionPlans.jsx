@@ -278,95 +278,89 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
         </div>
       ) : hasActiveSubscription ? (
-        <div className="pc pc--light pc-status" style={{ maxWidth: "min(960px, 95vw)", margin: "0 auto 24px", height: "auto", borderRadius: 26 }}>
-          <div className="pc__left pc-status__left" style={{ width: "clamp(150px, 22%, 200px)", justifyContent: "center", gap: 10, position: "relative" }}>
-            <div style={{
-              position: "absolute", top: 12, right: 12,
-              background: "#22c55e", color: "#fff",
-              fontWeight: 700, fontSize: 13, lineHeight: 1,
-              padding: "6px 16px", borderRadius: 999,
-              letterSpacing: "0.04em", textTransform: "uppercase",
-            }}>
-              ACTIVE
-            </div>
-            <div style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111", lineHeight: 1.1 }}>
+        <div className="p2-status">
+          <div className="p2-status__badge p2-status__badge--active">Active</div>
+          <div className="p2-status__left">
+            <div className="p2-status__title">
               {activePlan?.name
                 ? (GROUP_DISPLAY[activePlan.name] || activePlan.name)
                 : "Free"}{" "}
-              <span style={{ fontWeight: 800, fontSize: "clamp(24px, 3.2vw, 36px)", color: "#111" }}>Plan</span>
+              <em>Plan</em>
             </div>
-            <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>Your subscription is currently active.</div>
+            <div className="p2-status__sub">Your subscription is currently active.</div>
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(18px,2.5vw,28px) clamp(16px,2.5vw,24px)", gap: 14 }}>
-            {/* Date row */}
-            <div style={{ display: "flex", gap: "clamp(16px, 3vw, 32px)", fontWeight: 700, fontSize: "clamp(14px, 1.5vw, 17px)" }}>
-              <div>
-                <span style={{ fontWeight: 700, color: "#111", fontSize: "clamp(13px, 1.3vw, 15px)" }}>Start: </span>
-                <span style={{ color: "#111", fontWeight: 600 }}>{dayjs(user.subscriptionStart).format("DD MMM YYYY")}</span>
+          <div className="p2-status__right">
+            <div className="p2-status__main">
+              {/* Dates */}
+              <div className="p2-status__dates">
+                <div>
+                  <span className="p2-status__date-label">Start: </span>
+                  <span className="p2-status__date-val">{dayjs(user.subscriptionStart).format("DD MMM YYYY")}</span>
+                </div>
+                <div>
+                  <span className="p2-status__date-label">
+                    {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
+                  </span>
+                  <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+                </div>
               </div>
-              <div>
-                <span style={{ fontWeight: 700, color: "#111", fontSize: "clamp(13px, 1.3vw, 15px)" }}>
-                  {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
-                </span>
-                <span style={{ color: "#111", fontWeight: 600 }}>{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
-              </div>
-            </div>
-            {/* Features */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {activePlan?.features?.length > 0 ? (
-                activePlan.features.map((f, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
-                    <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
-                    {f}
-                  </div>
-                ))
-              ) : (
-                (() => {
-                  const planName = (activePlan?.name || "").toLowerCase();
-                  const isBasic = planName.includes("basic");
-                  const isPro = planName.includes("pro");
-                  const isAdd = planName.includes("add");
-                  const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
-                  const users = isPro ? "5" : isBasic ? "2" : "1";
-                  const fallbackFeatures = [
-                    `Upload up to ${limit} products per month`,
-                    `Up to ${users} users access`,
-                    "Instagram integration",
-                    ...(!isAdd ? ["SecondsToSee webstore synchronization"] : []),
-                  ];
-                  return fallbackFeatures.map((f, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "#374151", fontWeight: 500, lineHeight: 1.5 }}>
-                      <span style={{ color: "#9ca3af", fontSize: 14, flexShrink: 0 }}>&#8226;</span>
+              {/* Features */}
+              <div className="p2-status__features">
+                {activePlan?.features?.length > 0 ? (
+                  activePlan.features.map((f, i) => (
+                    <div key={i} className="p2-status__feature">
+                      <span className="p2-check">&#10003;</span>
                       {f}
                     </div>
-                  ));
-                })()
-              )}
-            </div>
-            {/* Cancel / lock notice */}
-            {user.subscriptionType !== "free" &&
-              (() => {
-                const startDate = new Date(user.subscriptionStart);
-                const sixMonthsLater = new Date(startDate);
-                sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
-                const now = new Date();
-                const canCancel = now >= sixMonthsLater;
-                return canCancel ? (
-                  <button style={{ alignSelf: "flex-start", background: "#ef4444", color: "#fff", border: "none", borderRadius: 999, padding: "8px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer" }} onClick={handleCancelSubscription}>
-                    Cancel Subscription
-                  </button>
+                  ))
                 ) : (
-                  <div style={{ fontSize: 13, color: "#92400e", lineHeight: 1.6, marginTop: 4, background: "rgba(234,179,8,0.15)", borderRadius: 12, padding: "10px 14px", fontWeight: 500 }}>
-                    <span style={{ marginRight: 4 }}>&#9203;</span>
-                    <span style={{ fontWeight: 700 }}>Note:</span> Your subscription is locked for the first{" "}
-                    <span style={{ fontWeight: 700 }}>6 months</span>. You&apos;ll be able to cancel it after{" "}
-                    <span style={{ fontWeight: 700 }}>
-                      {sixMonthsLater.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </span>
-                    . Until then, enjoy uninterrupted access to your plan!
-                  </div>
-                );
-              })()}
+                  (() => {
+                    const planName = (activePlan?.name || "").toLowerCase();
+                    const isBasic = planName.includes("basic");
+                    const isPro = planName.includes("pro");
+                    const isAdd = planName.includes("add");
+                    const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
+                    const users = isPro ? "5" : isBasic ? "2" : "1";
+                    const fallbackFeatures = [
+                      `Upload up to ${limit} products per month`,
+                      `Up to ${users} users access`,
+                      "Instagram integration",
+                      ...(!isAdd ? ["SecondsToSee webstore synchronization"] : []),
+                    ];
+                    return fallbackFeatures.map((f, i) => (
+                      <div key={i} className="p2-status__feature">
+                        <span className="p2-check">&#10003;</span>
+                        {f}
+                      </div>
+                    ));
+                  })()
+                )}
+              </div>
+              {/* Cancel / lock notice */}
+              {user.subscriptionType !== "free" &&
+                (() => {
+                  const startDate = new Date(user.subscriptionStart);
+                  const sixMonthsLater = new Date(startDate);
+                  sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+                  const now = new Date();
+                  const canCancel = now >= sixMonthsLater;
+                  return canCancel ? (
+                    <button className="p2-status__cancel" onClick={handleCancelSubscription}>
+                      Cancel Subscription
+                    </button>
+                  ) : (
+                    <div className="p2-status__note">
+                      <span style={{ marginRight: 4 }}>&#9203;</span>
+                      <span style={{ fontWeight: 700 }}>Note:</span> Your subscription is locked for the first{" "}
+                      <span style={{ fontWeight: 700 }}>6 months</span>. You&apos;ll be able to cancel it after{" "}
+                      <span style={{ fontWeight: 700 }}>
+                        {sixMonthsLater.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                      . Until then, enjoy uninterrupted access to your plan!
+                    </div>
+                  );
+                })()}
+            </div>
           </div>
         </div>
       ) : userRole === "store" ? (
