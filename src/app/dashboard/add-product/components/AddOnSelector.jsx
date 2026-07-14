@@ -3,6 +3,13 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { Spinner } from "@heroui/react";
 import { useRouter } from "next/navigation";
+import ADDON_V2_CSS from "./addOnStyles";
+
+// Toggle between the new pricing-card-style "Pay Per Product" card (true) and
+// the ORIGINAL dark-header / green-checkbox card (false). The old design is
+// kept fully intact below (inside `if (!USE_NEW_ADDON_UI)`) so it can be
+// switched back with this single flag — nothing was deleted.
+const USE_NEW_ADDON_UI = true;
 
 const ADD_ONS = [
   {
@@ -82,7 +89,13 @@ const toggle = (key) => {
     );
   };
 
-  return (
+  /* ═══════════════════════════════════════════════════════════════════════
+     OLD UI — the original dark-header "Pay Per Product" card.
+     NOT deleted: flip USE_NEW_ADDON_UI to false at the top of this file to
+     bring it straight back. All the logic above is shared by both designs.
+     ═══════════════════════════════════════════════════════════════════════ */
+  if (!USE_NEW_ADDON_UI) {
+    return (
     <div className="max-w-lg mx-auto mt-8 mb-10 px-4">
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         {/* Header */}
@@ -225,5 +238,119 @@ const toggle = (key) => {
         </div>
       </div>
     </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     NEW UI — same card, restyled to match the "Basic / Most Popular" plan
+     card on /dashboard/subscription-plan (white rounded card, Playfair
+     italic title, pink ticks, pink pill CTA). Every add-on stays selectable
+     and the checkout call is unchanged.
+     ═══════════════════════════════════════════════════════════════════════ */
+  const selectableAddOns = ADD_ONS.filter((a) => !paidOneTimeAddOns.includes(a.key));
+  const selectAllTotal = selectableAddOns.reduce((s, a) => s + a.price, 0);
+  const showSelectAll = selectableAddOns.some((a) => !selected.includes(a.key));
+
+  return (
+    <>
+      <style>{ADDON_V2_CSS}</style>
+
+      <div className="ap-wrap">
+        <div className="ap-card">
+          <div className="ap-badge">Pay As You Go</div>
+
+          <div className="ap-name">Pay Per Product</div>
+          <p className="ap-desc">
+            No subscription needed. Select the features you want for this
+            product upload.
+          </p>
+
+          {/* Live total, styled like the plan card's price */}
+          <div className="ap-price">
+            <span className="ap-price__num">{total.toLocaleString("en-US")}</span>
+            <span className="ap-price__unit">DKK / product</span>
+          </div>
+
+          {/* Selectable feature rows */}
+          <div className="ap-features">
+            {ADD_ONS.map((addon) => {
+              const isAlreadyPaid = paidOneTimeAddOns.includes(addon.key);
+              const isSelected = selected.includes(addon.key);
+              const isTicked = isSelected || isAlreadyPaid;
+              const isLocked = addon.required || isAlreadyPaid;
+
+              return (
+                <button
+                  key={addon.key}
+                  type="button"
+                  onClick={() => toggle(addon.key)}
+                  disabled={isAlreadyPaid}
+                  className={`ap-feature${isLocked ? " ap-feature--locked" : ""}${
+                    isAlreadyPaid ? " ap-feature--paid" : ""
+                  }`}
+                >
+                  <span className={`ap-check${isTicked ? "" : " ap-check--off"}`}>
+                    {isTicked ? "✓" : ""}
+                  </span>
+
+                  <span className="ap-feature__body">
+                    <span className="ap-feature__top">
+                      <span className="ap-feature__label">{addon.label}</span>
+                      {addon.required && (
+                        <span className="ap-pill ap-pill--required">Required</span>
+                      )}
+                      {isAlreadyPaid && (
+                        <span className="ap-pill ap-pill--paid">Paid</span>
+                      )}
+                    </span>
+                    <span className="ap-feature__note">{addon.description}</span>
+                  </span>
+
+                  <span className="ap-feature__price">
+                    <span
+                      className={`ap-feature__amount${
+                        isAlreadyPaid ? " ap-feature__amount--paid" : ""
+                      }`}
+                    >
+                      {addon.price.toLocaleString("en-US")} DKK
+                    </span>
+                    {addon.transactionNote && (
+                      <span className="ap-feature__fee">{addon.transactionNote}</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {showSelectAll && (
+            <button type="button" onClick={selectAll} className="ap-selectall">
+              Select all features ({selectAllTotal.toLocaleString("en-US")} DKK)
+            </button>
+          )}
+
+          <button
+            onClick={handleCheckout}
+            disabled={loading || selected.length === 0}
+            className="ap-cta"
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" color="white" />
+                Processing...
+              </>
+            ) : (
+              <>Pay &amp; Upload Product</>
+            )}
+          </button>
+
+          <p className="ap-note">
+            One-time payment per product.
+            <br />
+            Secure checkout via Stripe.
+          </p>
+        </div>
+      </div>
+    </>
   );
 }
