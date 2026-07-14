@@ -11,6 +11,7 @@ import dbConnect from "@/lib/db";
 import AddOnPurchase from "@/models/AddOnPurchase";
 import Subscription from "@/models/Subscription";
 import SubscriptionPlanDetails from "@/models/SubscriptionPlanDetails";
+import ADDON_V2_CSS from "./components/addOnStyles";
 
 export const metadata = {
   title: "Add Product",
@@ -19,33 +20,92 @@ export const metadata = {
 // Add-ons that can only be purchased once per user
 const ONE_TIME_ADDONS = ["webstore", "plugin"];
 
-const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => (
-  <div className="min-h-screen flex flex-col items-center justify-start pt-10 px-4">
-    <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg text-center mb-6">
-      <h2 className="text-2xl font-bold mb-4">Subscription Required</h2>
-      <p className="text-gray-700">{message}</p>
-      <p className="mt-4 text-gray-700">
-        Please <span className="font-semibold">renew or upgrade</span> your plan
-        to continue adding products.
-      </p>
-      <Link href="/dashboard/subscription-plan">
-        <button className="mt-6 bg-[#EF4444] text-white px-6 py-2 rounded hover:bg-[#DC2626] transition">
-          Subscribe Now
-        </button>
-      </Link>
-    </div>
+// Toggle between the new pricing-card-style "Subscription Required" screen
+// (true) and the ORIGINAL plain white box (false). The old design is kept
+// fully intact below inside `if (!USE_NEW_SUBSCRIPTION_MESSAGE)` — nothing
+// was deleted, flip this one flag to switch back.
+const USE_NEW_SUBSCRIPTION_MESSAGE = true;
 
-    {/* Divider */}
-    <div className="flex items-center gap-4 w-full max-w-lg my-2">
-      <div className="flex-1 h-px bg-gray-200"></div>
-      <span className="text-md text-gray-500 font-medium">OR</span>
-      <div className="flex-1 h-px bg-gray-200"></div>
-    </div>
+// Shown when the account simply has no plan yet (isActive === false).
+// The previous copy said "Your account is deactivated. Please contact support."
+// which is wrong for a brand-new signup — they were never deactivated, they
+// just haven't subscribed. Old wording kept here for reference:
+//   const NO_PLAN_MESSAGE = "Your account is deactivated. Please contact support.";
+const NO_PLAN_MESSAGE =
+  "You don't have an active plan yet. Subscribe to start adding products.";
 
-    {/* Add-on pay-per-product option */}
-    {userId && <AddOnSelector userId={userId} paidOneTimeAddOns={paidOneTimeAddOns} />}
-  </div>
-);
+const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
+  /* ═══════════════════════════════════════════════════════════════════════
+     OLD UI — the original plain white "Subscription Required" box.
+     NOT deleted: flip USE_NEW_SUBSCRIPTION_MESSAGE to false to bring it back.
+     ═══════════════════════════════════════════════════════════════════════ */
+  if (!USE_NEW_SUBSCRIPTION_MESSAGE) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start pt-10 px-4">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg text-center mb-6">
+          <h2 className="text-2xl font-bold mb-4">Subscription Required</h2>
+          <p className="text-gray-700">{message}</p>
+          <p className="mt-4 text-gray-700">
+            Please <span className="font-semibold">renew or upgrade</span> your plan
+            to continue adding products.
+          </p>
+          <Link href="/dashboard/subscription-plan">
+            <button className="mt-6 bg-[#EF4444] text-white px-6 py-2 rounded hover:bg-[#DC2626] transition">
+              Subscribe Now
+            </button>
+          </Link>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 w-full max-w-lg my-2">
+          <div className="flex-1 h-px bg-gray-200"></div>
+          <span className="text-md text-gray-500 font-medium">OR</span>
+          <div className="flex-1 h-px bg-gray-200"></div>
+        </div>
+
+        {/* Add-on pay-per-product option */}
+        {userId && <AddOnSelector userId={userId} paidOneTimeAddOns={paidOneTimeAddOns} />}
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     NEW UI — matches the plan cards on /dashboard/subscription-plan:
+     white rounded card on the gradient, Instrument Serif heading with a
+     Playfair italic accent, pink pill CTA. Same content, same link.
+     ═══════════════════════════════════════════════════════════════════════ */
+  return (
+    <>
+      <style>{ADDON_V2_CSS}</style>
+
+      <div className="ap-page">
+        <div className="ap-req">
+          <div className="ap-req__eyebrow">Subscription</div>
+          <h2 className="ap-req__title">
+            Subscription <em>Required.</em>
+          </h2>
+
+          <p className="ap-req__msg">{message}</p>
+          <p className="ap-req__msg">
+            Please <strong>renew or upgrade</strong> your plan to continue adding
+            products.
+          </p>
+
+          <Link href="/dashboard/subscription-plan" className="ap-req__cta">
+            Subscribe Now
+          </Link>
+        </div>
+
+        <div className="ap-or">
+          <span>Or</span>
+        </div>
+
+        {/* Add-on pay-per-product option */}
+        {userId && <AddOnSelector userId={userId} paidOneTimeAddOns={paidOneTimeAddOns} />}
+      </div>
+    </>
+  );
+};
 
 async function fetchactivesubscription(userId) {
   try {
@@ -180,7 +240,7 @@ const page = async ({ searchParams }) => {
   const user = res?.data ? JSON.parse(res.data) : null;
 
   if (user?.isActive === false) {
-    return <SubscriptionMessage message="Your account is deactivated. Please contact support." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
+    return <SubscriptionMessage message={NO_PLAN_MESSAGE} userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
   }
 
   if (user?.isActive === true) {

@@ -14,8 +14,105 @@
    style the white box, never the page background.
    ─────────────────────────────────────────────────────────────── */
 const ADDON_V2_CSS = `
+  /* ── Page shell: centres the "Subscription Required" card, the OR
+        divider and the Pay Per Product card in one column ── */
+  .ap-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 0;
+  }
+
+  /* ── "Subscription Required" card (mirrors .p2-card) ── */
+  .ap-req {
+    width: min(420px, 94vw);
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 20px;
+    padding: clamp(26px, 3vw, 34px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+    text-align: center;
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+  }
+  .ap-req__eyebrow {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ff2e7e;
+    margin-bottom: 10px;
+  }
+  .ap-req__title {
+    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-weight: 400;
+    color: #111827;
+    font-size: clamp(26px, 3.2vw, 34px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .ap-req__title em {
+    font-family: var(--font-playfair), Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    color: #ff2e7e;
+  }
+  .ap-req__msg {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #6b7280;
+  }
+  .ap-req__msg strong { color: #374151; font-weight: 700; }
+  .ap-req__cta {
+    margin-top: 22px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 13px 22px;
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid #ff2e7e;
+    background: #ff2e7e;
+    color: #fff;
+    transition: box-shadow 0.18s, transform 0.12s;
+  }
+  .ap-req__cta:hover {
+    box-shadow: 0 8px 22px rgba(255, 46, 126, 0.35);
+    transform: translateY(-1px);
+  }
+
+  /* ── OR divider (sits on the gradient → light text) ── */
+  .ap-or {
+    width: min(420px, 94vw);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 26px 0 4px;
+  }
+  .ap-or::before,
+  .ap-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .ap-or span {
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ffffff;
+  }
+
   .ap-wrap {
-    width: min(520px, 94vw);
+    width: min(420px, 94vw);
     margin: 0 auto;
     padding: 26px 0 40px;
   }
@@ -80,7 +177,31 @@ const ADDON_V2_CSS = `
   }
   .ap-price__unit { font-size: 14px; font-weight: 600; color: #6b7280; }
 
-  /* ── Selectable feature rows ── */
+  /* ── Static checklist (mirrors .p2-features on the Basic plan card) ── */
+  .ap-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+  .ap-list__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #374151;
+  }
+  .ap-list__check {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #ff2e7e;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  /* ── Selectable feature rows (used by the pick-your-add-ons variant) ── */
   .ap-features {
     margin-top: 22px;
     display: flex;

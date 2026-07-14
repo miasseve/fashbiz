@@ -11,6 +11,30 @@ import ADDON_V2_CSS from "./addOnStyles";
 // switched back with this single flag — nothing was deleted.
 const USE_NEW_ADDON_UI = true;
 
+// Within the new design, choose how the add-ons are presented:
+//   true  → PLAIN CHECKLIST. Reads exactly like the "Basic" plan card: a
+//           static pink-tick list, no checkboxes, one fixed price. The user
+//           buys the base "Complete Adds" upload only (BASE_ADD_ON below).
+//           The paid extras (Instagram / Webstore / Plug In) are NOT offered
+//           on this screen.
+//   false → PICK-YOUR-ADD-ONS. Every add-on is a clickable row with its own
+//           price and the total updates live (the design shipped previously).
+// Both variants are fully built below — flip this one flag to switch.
+const ADDON_PLAIN_CHECKLIST = true;
+
+// The add-on the plain checklist charges for. Its price drives the headline
+// number, so the card can never show a price the checkout doesn't match.
+const BASE_ADD_ON = "complete_adds";
+
+// What the plain checklist advertises. One place to edit the copy.
+const PLAIN_FEATURES = [
+  "AI-generated product details",
+  "Barcode label with size and price",
+  "Product linked to consignor",
+  "Auto split payments",
+  "No subscription required",
+];
+
 const ADD_ONS = [
   {
     key: "complete_adds",
@@ -242,10 +266,74 @@ const toggle = (key) => {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     NEW UI — same card, restyled to match the "Basic / Most Popular" plan
-     card on /dashboard/subscription-plan (white rounded card, Playfair
-     italic title, pink ticks, pink pill CTA). Every add-on stays selectable
-     and the checkout call is unchanged.
+     NEW UI (A) — PLAIN CHECKLIST.
+     Reads exactly like the "Basic" plan card on /dashboard/subscription-plan:
+     one price, a static pink-tick list, one pink pill button. Checkout buys
+     BASE_ADD_ON only (that is already the default value of `selected`, so
+     handleCheckout below needs no change).
+     ═══════════════════════════════════════════════════════════════════════ */
+  const basePlan = ADD_ONS.find((a) => a.key === BASE_ADD_ON);
+
+  if (ADDON_PLAIN_CHECKLIST) {
+    return (
+      <>
+        <style>{ADDON_V2_CSS}</style>
+
+        <div className="ap-wrap">
+          <div className="ap-card">
+            <div className="ap-badge">Pay As You Go</div>
+
+            <div className="ap-name">Pay Per Product</div>
+            <p className="ap-desc">
+              No subscription needed. Pay only for the products you upload.
+            </p>
+
+            <div className="ap-price">
+              <span className="ap-price__num">
+                {(basePlan?.price ?? 0).toLocaleString("en-US")}
+              </span>
+              <span className="ap-price__unit">DKK / product</span>
+            </div>
+
+            <div className="ap-list">
+              {PLAIN_FEATURES.map((feature) => (
+                <div key={feature} className="ap-list__row">
+                  <span className="ap-list__check">&#10003;</span>
+                  {feature}
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleCheckout}
+              disabled={loading || selected.length === 0}
+              className="ap-cta"
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" color="white" />
+                  Processing...
+                </>
+              ) : (
+                <>Pay &amp; Upload Product</>
+              )}
+            </button>
+
+            <p className="ap-note">
+              One-time payment per product.
+              <br />
+              Secure checkout via Stripe.
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     NEW UI (B) — PICK YOUR ADD-ONS.
+     Same card, but every add-on is a clickable row with its own price and a
+     live-updating total. Set ADDON_PLAIN_CHECKLIST to false to use this.
      ═══════════════════════════════════════════════════════════════════════ */
   const selectableAddOns = ADD_ONS.filter((a) => !paidOneTimeAddOns.includes(a.key));
   const selectAllTotal = selectableAddOns.reduce((s, a) => s + a.price, 0);
