@@ -698,7 +698,7 @@ const StoresUsersPage = () => {
           onClick={() => !deleting && setDeleteTarget(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
