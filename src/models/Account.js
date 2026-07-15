@@ -40,7 +40,7 @@ const AccountSchema = new mongoose.Schema({
   },
   demoProductLimit: {
     type: Number,
-    default: 50,
+    default: 200,
   },
 });
 
