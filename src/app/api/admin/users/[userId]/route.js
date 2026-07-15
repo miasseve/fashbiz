@@ -33,11 +33,7 @@ import Referral from "@/models/Referral";
  * Products are also removed from Shopify (best-effort — a Shopify failure does
  * NOT block the DB deletion).
  *
- * Before deleting, a full snapshot of the user + all their related documents is
- * assembled and returned as `backup` so the admin UI can download a recovery
- * file. The password hash is deliberately excluded from the snapshot.
- *
- * This is IRREVERSIBLE in the database. Admin/developer only.
+ * This is IRREVERSIBLE — there is no backup. Admin/developer only.
  */
 export async function DELETE(request, { params }) {
   try {
@@ -68,71 +64,15 @@ export async function DELETE(request, { params }) {
       return json({ error: "Admin accounts cannot be deleted here." }, 403);
     }
 
-    // ── 1. Gather everything owned by this user (for the backup snapshot
-    //       and for the Shopify cleanup below) ──
-    const [
-      products,
-      accounts,
-      addOnPurchases,
-      carts,
-      contactSupport,
-      instagramLogs,
-      notifications,
-      sessions,
-      shopifyStores,
-      subscriptions,
-      transactions,
-      pointRules,
-      storeReferralCodes,
-      approvedProducts,
-      referrals,
-    ] = await Promise.all([
-      Product.find({ userId }).lean(),
-      Account.find({ userId }).lean(),
-      AddOnPurchase.find({ userId }).lean(),
-      Cart.find({ userId }).lean(),
-      ContactSupport.find({ userId }).lean(),
-      InstagramPostLogs.find({ userId }).lean(),
-      Notification.find({ userId }).lean(),
-      Session.find({ userId }).lean(),
-      ShopifyStore.find({ userId }).lean(),
-      Subscription.find({ userId }).lean(),
-      Transaction.find({ userId }).lean(),
-      PointRule.find({ storeUserId: userId }).lean(),
-      StoreReferralCode.find({ user_id: userId }).lean(),
-      ApprovedProduct.find({ storeId: userId }).lean(),
-      Referral.find({
-        $or: [{ referredByuser_id: userId }, { referredTouser_id: userId }],
-      }).lean(),
-    ]);
-
-    // Build the recovery snapshot (password intentionally stripped).
-    const { password, ...safeUser } = user;
-    const backup = {
-      exportedAt: new Date().toISOString(),
-      note: "Recovery snapshot taken immediately before deletion. Password hash omitted for security.",
-      user: safeUser,
-      related: {
-        products,
-        accounts,
-        addOnPurchases,
-        carts,
-        contactSupport,
-        instagramLogs,
-        notifications,
-        sessions,
-        shopifyStores,
-        subscriptions,
-        transactions,
-        pointRules,
-        storeReferralCodes,
-        approvedProducts,
-        referrals,
-      },
-    };
-
-    // ── 2. Best-effort Shopify removal for any synced products ──
-    const shopifyProducts = products.filter((p) => p?.shopifyProductId);
+    // ── 1. Best-effort Shopify removal for any synced products ──
+    //    We only need the products that are linked to Shopify so we can remove
+    //    them there before wiping them from the DB.
+    const shopifyProducts = await Product.find({
+      userId,
+      shopifyProductId: { $exists: true, $ne: "" },
+    })
+      .select("shopifyProductId")
+      .lean();
     let shopifyResult = { attempted: shopifyProducts.length, error: null };
     if (shopifyProducts.length > 0) {
       try {
@@ -144,7 +84,7 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    // ── 3. Cascade delete every related collection, then the user ──
+    // ── 2. Cascade delete every related collection, then the user ──
     const deletions = await Promise.all([
       Product.deleteMany({ userId }),
       Account.deleteMany({ userId }),
@@ -191,7 +131,6 @@ export async function DELETE(request, { params }) {
       {
         success: true,
         message: `Deleted ${user.firstname} ${user.lastname} and all associated data.`,
-        backup,
         summary: {
           user: 1,
           products: dProducts.deletedCount,

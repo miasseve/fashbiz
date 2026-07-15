@@ -242,30 +242,7 @@ const StoresUsersPage = () => {
     setDateTo("");
   };
 
-  // Trigger a browser download of the recovery snapshot returned by the API.
-  const downloadBackup = (backup, user) => {
-    try {
-      const safeName = `${user.firstname || "user"}-${user.lastname || ""}`
-        .trim()
-        .replace(/\s+/g, "-")
-        .toLowerCase();
-      const blob = new Blob([JSON.stringify(backup, null, 2)], {
-        type: "application/json;charset=utf-8;",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `deleted-${safeName}-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Failed to download backup:", err);
-    }
-  };
-
-  // Hard-delete the user + all their data, after downloading a recovery file.
+  // Hard-delete the user + all their associated data. No backup — delete means delete.
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -279,9 +256,6 @@ const StoresUsersPage = () => {
         toast.error(data.error || "Failed to delete user.");
         return;
       }
-
-      // Save the recovery snapshot before we lose the reference.
-      if (data.backup) downloadBackup(data.backup, deleteTarget);
 
       // Remove from the in-memory list so the table updates immediately.
       setAllUsers((prev) => prev.filter((u) => u._id !== deleteTarget._id));
@@ -724,8 +698,7 @@ const StoresUsersPage = () => {
               <span className="font-semibold">all associated data</span> —
               products (also from Shopify), subscriptions, transactions,
               notifications and more. This{" "}
-              <span className="font-semibold">cannot be undone</span>. A recovery
-              backup file will download automatically before deletion.
+              <span className="font-semibold">cannot be undone</span>.
             </div>
 
             <div className="mt-8 flex justify-end gap-3">
