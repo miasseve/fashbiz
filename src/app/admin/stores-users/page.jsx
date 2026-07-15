@@ -698,18 +698,18 @@ const StoresUsersPage = () => {
           onClick={() => !deleting && setDeleteTarget(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8"
+            className="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-10"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <FaTrash className="text-red-600 text-lg" />
+            <div className="flex items-start gap-5">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <FaTrash className="text-red-600 text-2xl" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-3xl font-bold text-gray-900">
                   Delete this {deleteTarget.role === "store" ? "store" : "user"}?
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-2 text-lg text-gray-600 leading-relaxed">
                   You're about to permanently delete{" "}
                   <span className="font-semibold text-gray-900">
                     {deleteTarget.firstname} {deleteTarget.lastname}
@@ -719,7 +719,7 @@ const StoresUsersPage = () => {
               </div>
             </div>
 
-            <div className="mt-4 rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-700">
+            <div className="mt-6 rounded-xl bg-red-50 border border-red-100 p-5 text-lg text-red-700 leading-relaxed">
               This removes the account and{" "}
               <span className="font-semibold">all associated data</span> —
               products (also from Shopify), subscriptions, transactions,
@@ -728,7 +728,7 @@ const StoresUsersPage = () => {
               backup file will download automatically before deletion.
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-8 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
