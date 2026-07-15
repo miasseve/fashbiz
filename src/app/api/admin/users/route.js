@@ -18,7 +18,9 @@ export async function GET() {
       .select(
         "firstname lastname email role storename brandname isActive isProfileComplete phone country city businessNumber products createdAt"
       )
-      .sort({ _id: -1 })
+      // Newest first. Sort by createdAt (what the "Joined" column shows),
+      // tie-broken by _id so records without a createdAt still order sensibly.
+      .sort({ createdAt: -1, _id: -1 })
       .lean();
 
     // Add productCount from the products array length

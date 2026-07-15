@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
-import { FaDownload, FaSearch, FaFilter, FaEye } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const TABS = [
@@ -34,6 +35,10 @@ const StoresUsersPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
+
+  // Delete flow state
+  const [deleteTarget, setDeleteTarget] = useState(null); // the user pending deletion
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -235,6 +240,59 @@ const StoresUsersPage = () => {
     setFilterCity("");
     setDateFrom("");
     setDateTo("");
+  };
+
+  // Trigger a browser download of the recovery snapshot returned by the API.
+  const downloadBackup = (backup, user) => {
+    try {
+      const safeName = `${user.firstname || "user"}-${user.lastname || ""}`
+        .trim()
+        .replace(/\s+/g, "-")
+        .toLowerCase();
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: "application/json;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `deleted-${safeName}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download backup:", err);
+    }
+  };
+
+  // Hard-delete the user + all their data, after downloading a recovery file.
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${deleteTarget._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete user.");
+        return;
+      }
+
+      // Save the recovery snapshot before we lose the reference.
+      if (data.backup) downloadBackup(data.backup, deleteTarget);
+
+      // Remove from the in-memory list so the table updates immediately.
+      setAllUsers((prev) => prev.filter((u) => u._id !== deleteTarget._id));
+      toast.success(data.message || "User deleted.");
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error("Delete request failed:", err);
+      toast.error("Something went wrong while deleting.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const hasActiveFilters =
@@ -493,11 +551,9 @@ const StoresUsersPage = () => {
                 <th className="text-left px-4 py-3.5 font-bold text-gray-700">
                   Joined
                 </th>
-                {activeTab === "stores" && (
-                  <th className="text-left px-4 py-3.5 font-bold text-gray-700">
-                    Details
-                  </th>
-                )}
+                <th className="text-left px-4 py-3.5 font-bold text-gray-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -576,16 +632,24 @@ const StoresUsersPage = () => {
                           })
                         : "-"}
                     </td>
-                    {activeTab === "stores" && (
-                      <td className="px-4 py-3.5">
-                        <Link
-                          href={`/admin/store-details/${user._id}`}
-                          className="inline-flex items-center gap-1.5 text-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        {activeTab === "stores" && (
+                          <Link
+                            href={`/admin/store-details/${user._id}`}
+                            className="inline-flex items-center gap-1.5 text-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
+                          >
+                            <FaEye className="text-md" /> View
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => setDeleteTarget(user)}
+                          className="inline-flex items-center gap-1.5 text-md font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-3 py-1.5 transition-colors"
                         >
-                          <FaEye className="text-md" /> View
-                        </Link>
-                      </td>
-                    )}
+                          <FaTrash className="text-sm" /> Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -624,6 +688,73 @@ const StoresUsersPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !deleting && setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <FaTrash className="text-red-600 text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Delete this {deleteTarget.role === "store" ? "store" : "user"}?
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  You're about to permanently delete{" "}
+                  <span className="font-semibold text-gray-900">
+                    {deleteTarget.firstname} {deleteTarget.lastname}
+                  </span>{" "}
+                  ({deleteTarget.email}).
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-700">
+              This removes the account and{" "}
+              <span className="font-semibold">all associated data</span> —
+              products (also from Shopify), subscriptions, transactions,
+              notifications and more. This{" "}
+              <span className="font-semibold">cannot be undone</span>. A recovery
+              backup file will download automatically before deletion.
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {deleting ? (
+                  <>
+                    <Spinner size="sm" color="white" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaTrash className="text-sm" />
+                    Delete permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
