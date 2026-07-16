@@ -207,10 +207,10 @@ const Main = ({
             disabled={demoLimitReached}
             className="w-full max-w-xs sm:max-w-sm px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold text-base sm:text-lg border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-200 dark:disabled:hover:border-gray-700 relative"
           >
-            {/* Expired Badge */}
+            {/* Limit-reached Badge */}
             {demoLimitReached && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-md font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
-                Expired
+                Limit reached
               </span>
             )}
             <svg
@@ -243,11 +243,11 @@ const Main = ({
             </p>
           )}
 
-          {/* Show different message when expired */}
+          {/* Show different message when the free demo limit is reached */}
           {demoLimitReached && (
             <p className="text-sm sm:text-md text-orange-600 dark:text-orange-400 text-center max-w-xs sm:max-w-md mt-4 sm:mt-6 leading-relaxed px-4 py-2 bg-orange-100 dark:bg-orange-900/40 rounded-md font-semibold">
-              Your demo period has ended. Connect Stripe above to start
-              accepting real payments.
+              You've reached your free demo limit. Subscribe to a plan to upload
+              more products and go live.
             </p>
           )}
 

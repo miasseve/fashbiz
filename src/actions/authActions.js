@@ -198,15 +198,18 @@ export async function checkStripeIsConnected() {
       };
     }
 
-    // Check demo mode limits only when not fully connected to Stripe
+    // Check demo mode limits only when not fully connected to Stripe AND the
+    // user has NOT subscribed. Once subscribed (isActive), the plan limit
+    // governs, so the free demo cap no longer blocks them.
     const demoProductCount = await Product.countDocuments({
       userId: session.user.id,
       isDemo: true,
     });
-    if(account.mode === "demo" && (demoProductCount >= account?.demoProductLimit)){
+    const dbUser = await User.findById(session.user.id).select("isActive");
+    if(account.mode === "demo" && !dbUser?.isActive && (demoProductCount >= account?.demoProductLimit)){
       return {
         status: 400,
-        error: "Demo product limit exceeded. Please connect Stripe to continue.",
+        error: "You've reached your free demo limit. Subscribe to a plan to upload more products and go live.",
       };
     }
 

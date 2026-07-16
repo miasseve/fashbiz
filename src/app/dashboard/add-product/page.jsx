@@ -20,6 +20,19 @@ export const metadata = {
 // Add-ons that can only be purchased once per user
 const ONE_TIME_ADDONS = ["webstore", "plugin"];
 
+// Client-requested journey: guest (25) → FREE demo test (up to the demo limit,
+// e.g. 200) → subscribe (300/1000) → connect Stripe → live.
+//
+// When TRUE, a logged-in store with NO plan (isActive === false) drops into the
+// existing demo-mode flow instead of hitting the hard "Subscription Required"
+// wall — so they can test-upload up to Account.demoProductLimit for free before
+// paying. The demo cap is still enforced (createProduct + checkStripeIsConnected),
+// and once they hit it (or want to go live) they're pushed to subscribe/connect
+// Stripe.
+//
+// Flip to FALSE to restore the strict paywall (no plan = 0 uploads).
+const ALLOW_FREE_DEMO_WITHOUT_PLAN = true;
+
 // Toggle between the new pricing-card-style "Subscription Required" screen
 // (true) and the ORIGINAL plain white box (false). The old design is kept
 // fully intact below inside `if (!USE_NEW_SUBSCRIPTION_MESSAGE)` — nothing
@@ -240,6 +253,23 @@ const page = async ({ searchParams }) => {
   const user = res?.data ? JSON.parse(res.data) : null;
 
   if (user?.isActive === false) {
+    // No plan yet. Either send them into free demo mode (client-requested flow)
+    // or show the strict "Subscription Required" wall — controlled by the flag.
+    if (ALLOW_FREE_DEMO_WITHOUT_PLAN) {
+      // Render the normal add-product flow. With no Stripe account connected,
+      // Main shows the "Connect Stripe / Demo Mode" screen; entering demo mode
+      // lets them upload up to Account.demoProductLimit for free. The cap is
+      // enforced downstream, and hitting it nudges them to subscribe.
+      return (
+        <Main
+          user={session.user}
+          productCount={response.count}
+          stripeResponse={stripeResponse}
+          isDemo={response.isDemo}
+          demoLimitReached={response.demoLimitReached}
+        />
+      );
+    }
     return <SubscriptionMessage message={NO_PLAN_MESSAGE} userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
   }
 

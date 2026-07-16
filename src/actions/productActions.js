@@ -83,16 +83,23 @@ export async function createProduct(formData) {
       mode: "demo",
     });
     if (demoAccount) {
-      const demoProductCount = await Product.countDocuments({
-        userId: session.user.id,
-        isDemo: true,
-      });
       isDemo = true;
-      if (demoProductCount >= demoAccount?.demoProductLimit) {
-        return {
-          status: 400,
-          error: `Demo product limit of ${demoAccount.demoProductLimit} reached.`,
-        };
+      // The demo cap only applies to NO-PLAN (free) users. Once subscribed
+      // (isActive), the plan limit governs instead — enforced on the
+      // add-product page — so subscribing lifts the demo cap even before
+      // Stripe is connected.
+      const subscriber = await User.findById(session.user.id).select("isActive");
+      if (!subscriber?.isActive) {
+        const demoProductCount = await Product.countDocuments({
+          userId: session.user.id,
+          isDemo: true,
+        });
+        if (demoProductCount >= demoAccount?.demoProductLimit) {
+          return {
+            status: 400,
+            error: `Demo product limit of ${demoAccount.demoProductLimit} reached.`,
+          };
+        }
       }
     }
 
@@ -1027,8 +1034,11 @@ export async function getUserProductCount() {
       userId: session.user.id,
       mode: "demo",
     });
-    // Only treat as demo if mode is "demo" AND no valid Stripe accountId
-    if (demoAccount && !demoAccount.accountId) {
+    // Treat as demo only when: mode is "demo", no Stripe accountId, AND the
+    // user has NOT subscribed. Once subscribed (isActive), the plan limit
+    // governs, so we stop reporting demo state / the demo cap.
+    const dbUser = await User.findById(session.user.id).select("isActive");
+    if (demoAccount && !demoAccount.accountId && !dbUser?.isActive) {
       const demoProductCount = await Product.countDocuments({
         userId: session.user.id,
         isDemo: true,
