@@ -47,7 +47,13 @@ const USE_NEW_SUBSCRIPTION_MESSAGE = true;
 const NO_PLAN_MESSAGE =
   "You don't have an active plan yet. Subscribe to start adding products.";
 
-const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
+const SubscriptionMessage = ({
+  message,
+  userId,
+  paidOneTimeAddOns,
+  heading, // optional — overrides the default "Subscription Required" title
+  ctaLabel = "Subscribe Now", // optional — button text (e.g. "Upgrade Your Plan")
+}) => {
   /* ═══════════════════════════════════════════════════════════════════════
      OLD UI — the original plain white "Subscription Required" box.
      NOT deleted: flip USE_NEW_SUBSCRIPTION_MESSAGE to false to bring it back.
@@ -56,7 +62,7 @@ const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-start pt-10 px-4">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg text-center mb-6">
-          <h2 className="text-2xl font-bold mb-4">Subscription Required</h2>
+          <h2 className="text-2xl font-bold mb-4">{heading || "Subscription Required"}</h2>
           <p className="text-gray-700">{message}</p>
           <p className="mt-4 text-gray-700">
             Please <span className="font-semibold">renew or upgrade</span> your plan
@@ -64,7 +70,7 @@ const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
           </p>
           <Link href="/dashboard/subscription-plan">
             <button className="mt-6 bg-[#EF4444] text-white px-6 py-2 rounded hover:bg-[#DC2626] transition">
-              Subscribe Now
+              {ctaLabel}
             </button>
           </Link>
         </div>
@@ -95,7 +101,11 @@ const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
         <div className="ap-req">
           <div className="ap-req__eyebrow">Subscription</div>
           <h2 className="ap-req__title">
-            Subscription <em>Required.</em>
+            {heading || (
+              <>
+                Subscription <em>Required.</em>
+              </>
+            )}
           </h2>
 
           <p className="ap-req__msg">{message}</p>
@@ -105,7 +115,7 @@ const SubscriptionMessage = ({ message, userId, paidOneTimeAddOns }) => {
           </p>
 
           <Link href="/dashboard/subscription-plan" className="ap-req__cta">
-            Subscribe Now
+            {ctaLabel}
           </Link>
         </div>
 
@@ -300,7 +310,13 @@ const page = async ({ searchParams }) => {
 
       if (!activePlan || activePlan.productLimit <= user.products.length) {
         return (
-          <SubscriptionMessage message="You reached the product upload limit for the Current Plan" userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
+          <SubscriptionMessage
+            message="You've reached the product upload limit for your current plan."
+            heading="Plan Limit Reached"
+            ctaLabel="Upgrade Your Plan"
+            userId={session?.user?.id}
+            paidOneTimeAddOns={paidOneTimeAddOns}
+          />
         );
       }
     }

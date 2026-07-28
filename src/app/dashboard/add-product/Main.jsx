@@ -243,12 +243,33 @@ const Main = ({
             </p>
           )}
 
-          {/* Show different message when the free demo limit is reached */}
+          {/* Show different message + upgrade CTA when the free demo limit is reached */}
           {demoLimitReached && (
-            <p className="text-sm sm:text-md text-orange-600 dark:text-orange-400 text-center max-w-xs sm:max-w-md mt-4 sm:mt-6 leading-relaxed px-4 py-2 bg-orange-100 dark:bg-orange-900/40 rounded-md font-semibold">
-              You've reached your free demo limit. Subscribe to a plan to upload
-              more products and go live.
-            </p>
+            <>
+              <p className="text-sm sm:text-md text-orange-600 dark:text-orange-400 text-center max-w-xs sm:max-w-md mt-4 sm:mt-6 leading-relaxed px-4 py-2 bg-orange-100 dark:bg-orange-900/40 rounded-md font-semibold">
+                You've reached your free demo limit. Subscribe to a plan to upload
+                more products and go live.
+              </p>
+              <Link
+                href="/dashboard/subscription-plan"
+                className="mt-4 w-full max-w-xs sm:max-w-sm px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
+                </svg>
+                Upgrade Now — Subscribe to Go Live
+              </Link>
+            </>
           )}
 
           {/* Optional: Feature badges */}

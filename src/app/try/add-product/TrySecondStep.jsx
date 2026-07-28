@@ -37,6 +37,8 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
   const [shopifyProductUrl, setShopifyProductUrl] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  // True once the guest hits the free upload limit — drives the "sign up" prompt.
+  const [limitReached, setLimitReached] = useState(false);
   const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
   const [confidenceScore, setConfidenceScore] = useState(null);
@@ -167,6 +169,10 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
         setShopifyProductUrl(response.data.shopifyProductUrl || "");
         setShowConfirmation(true);
         dispatch(clearProductState());
+      } else if (response.limitReached) {
+        // Guest hit the free upload limit — show a lasting "sign up" prompt
+        // instead of a toast that disappears.
+        setLimitReached(true);
       } else {
         toast.error(
           response.error || "Failed to create product. Please try again.",
@@ -197,6 +203,33 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
       toast.error("Failed to copy link");
     }
   };
+
+  if (limitReached) {
+    return (
+      <div className="flex justify-center py-12">
+        <Card className="lg:w-[50%] md:w-[60%] w-[90%] text-center p-8">
+          <div className="text-5xl mb-4">🚀</div>
+          <h2 className="text-2xl font-bold mb-2">You've hit the free limit</h2>
+          <p className="text-gray-600 mb-6">
+            You've uploaded the maximum number of free products. Sign up for a
+            free account to keep adding more.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/register">
+              <button className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                Sign Up to Add More
+              </button>
+            </Link>
+            <Link href="/login">
+              <button className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-gray-700 border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                Log In
+              </button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (showConfirmation) {
     return (
