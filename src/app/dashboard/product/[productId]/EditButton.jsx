@@ -19,12 +19,17 @@ import { updateProduct } from "@/actions/productActions";
 import { useDispatch } from "react-redux";
 import { updateProductInCart } from "@/features/cartSlice";
 import { FiEdit2 } from "react-icons/fi";
+import { FaTimes, FaPlus, FaSpinner } from "react-icons/fa";
+import axios from "axios";
 
 const EditButton = ({ product }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const router = useRouter();
   const dispatch = useDispatch();
   const [fabricOptions, setFabricOptions] = useState([]);
+  const [images, setImages] = useState(product?.images || []);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [deletingPublicId, setDeletingPublicId] = useState(null);
 
   const {
     register,
@@ -68,7 +73,7 @@ const EditButton = ({ product }) => {
   }, []);
 
   const onSubmit = async (data) => {
-    const response = await updateProduct(product._id, data);
+    const response = await updateProduct(product._id, { ...data, images });
     if (response.status === 200) {
       toast.success("Product updated successfully!");
       dispatch(
@@ -76,6 +81,7 @@ const EditButton = ({ product }) => {
           _id: product._id,
           updatedData: {
             ...data,
+            images,
             price: Number(data.price),
           },
         }),
@@ -91,6 +97,38 @@ const EditButton = ({ product }) => {
     console.log("Form errors:", errors);
     toast.error("Error in Updating the Product details.");
   }
+
+  const handleAddImage = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await axios.post("/api/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const { url, publicId } = response.data;
+      setImages((prev) => [...prev, { url, publicId }]);
+    } catch (err) {
+      toast.error("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async (publicId) => {
+    setDeletingPublicId(publicId);
+    try {
+      await axios.delete(`/api/upload?publicId=${encodeURIComponent(publicId)}`);
+      setImages((prev) => prev.filter((img) => img.publicId !== publicId));
+    } catch (err) {
+      toast.error("Failed to remove image");
+    } finally {
+      setDeletingPublicId(null);
+    }
+  };
 
   return (
     <>
@@ -122,6 +160,52 @@ const EditButton = ({ product }) => {
               </ModalHeader>
 
               <ModalBody className="overflow-y-auto flex-grow px-6">
+                <div className="mb-4">
+                  <label className="text-sm font-medium block mb-2">
+                    Photos
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {images.map((img) => (
+                      <div
+                        key={img.publicId}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border"
+                      >
+                        <img
+                          src={img.url}
+                          alt="Product"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(img.publicId)}
+                          disabled={deletingPublicId === img.publicId}
+                          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white text-[10px] hover:bg-red-600 disabled:opacity-50"
+                        >
+                          {deletingPublicId === img.publicId ? (
+                            <FaSpinner className="animate-spin" size={10} />
+                          ) : (
+                            <FaTimes size={10} />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                    <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer text-gray-400 hover:text-gray-600 hover:border-gray-400">
+                      {uploadingImage ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaPlus />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAddImage}
+                        disabled={uploadingImage}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium block mb-1">
