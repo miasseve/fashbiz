@@ -692,6 +692,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                     <div className="flex  items-center justify-center mt-4  gap-2">
                       <Button
                         type="button"
+                        isDisabled={!!croppingImage || uploadImageLoader}
                         onPress={() => handleCameraClick(viewType)}
                         className="dark-btn"
                       >
@@ -700,6 +701,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                       <span>/</span>
                       <Button
                         type="button"
+                        isDisabled={!!croppingImage || uploadImageLoader}
                         onPress={() => handleGalleryClick(viewType)}
                         className="dark-btn"
                       >
@@ -719,7 +721,13 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 uploadImageLoader ||
                 Object.keys(removeBackgroundLoader).length > 0
               }
-              onPress={handleBackStep}
+              onPress={() => {
+                // Previously only "Next" committed uploads to Redux, so
+                // going Back (this step unmounts) silently dropped any
+                // photos uploaded since the last "Next".
+                dispatch(setUploadedImagesOfProduct(uploadedImagesWithView));
+                handleBackStep();
+              }}
               className="auth-btn"
             >
               Back

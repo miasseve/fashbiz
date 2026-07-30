@@ -33,12 +33,6 @@ const productSlice = createSlice({
       state.currentStep = 1;
       state.consignor = {};
     },
-    removeUploadedImagesByIndex: (state, action) => {
-      const index = action.payload; // Get the index from the payload
-      if (index >= 0 && index < state.uploadedImages.length) {
-        state.uploadedImages = state.uploadedImages.splice(index, 1); // Remove the object at the specified index
-      }
-    },
   },
 });
 
@@ -47,7 +41,6 @@ export const {
   clearProductState,
   setConsignors,
   clearConsignors,
-  removeUploadedImagesByIndex,
   setCurrentStep
 } = productSlice.actions;
 
