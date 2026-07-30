@@ -3,6 +3,15 @@ import axios from "axios";
 import { Cropper } from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import { Button } from "@heroui/button";
+import { toast } from "react-toastify";
+
+// Phone photos (iPhones especially) are routinely 3-8MB+ at full resolution.
+// Vercel's serverless functions hard-reject request bodies over ~4.5MB, and
+// nothing before this capped the upload size — capping the cropped output's
+// dimensions keeps uploads fast and comfortably under that ceiling.
+const MAX_CROPPED_DIMENSION = 1600;
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 const CropImage = ({
   cropImage,
   setCroppingImage,
@@ -27,32 +36,60 @@ const CropImage = ({
 
   const handleCrop = async () => {
     const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
 
-    if (cropper) {
-      const croppedDataURL = cropper.getCroppedCanvas().toDataURL("image/jpeg");
-      const croppedFile = dataURLToFile(croppedDataURL, "cropped-image.jpeg");
+    // Downscale to a sane max dimension before re-encoding — product photos
+    // don't need full 12MP+ phone-camera resolution, and this is what keeps
+    // the upload fast and under the platform's request size limit.
+    const cropBox = cropper.getData();
+    let targetWidth = cropBox.width;
+    let targetHeight = cropBox.height;
+    const longestSide = Math.max(targetWidth, targetHeight);
+    if (longestSide > MAX_CROPPED_DIMENSION) {
+      const scale = MAX_CROPPED_DIMENSION / longestSide;
+      targetWidth = Math.round(targetWidth * scale);
+      targetHeight = Math.round(targetHeight * scale);
+    }
 
-      await handleUpload(croppedFile);
-      // Reset croppingImage to allow the next file to be cropped
+    const croppedDataURL = cropper
+      .getCroppedCanvas({ width: targetWidth, height: targetHeight })
+      .toDataURL("image/jpeg", 0.85);
+    const croppedFile = dataURLToFile(croppedDataURL, "cropped-image.jpeg");
+
+    const uploaded = await handleUpload(croppedFile);
+    // Only dismiss the crop screen once the upload actually succeeded, so a
+    // failure lets the person retry instead of losing the photo silently.
+    if (uploaded) {
       setCroppingImage(null);
     }
   };
 
   const handleUpload = async (file) => {
-    if (!file) return alert("Please select an image.");
+    if (!file) {
+      toast.error("Please select an image.");
+      return false;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(
+        "This image is too large to upload. Please try a different photo.",
+      );
+      return false;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("isProfileImage", false);
 
+    setError(null);
+    setUploadImageLoader(true);
     try {
-      setUploadImageLoader(true);
       const response = await axios.post("/api/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        timeout: 30000,
       });
-      setUploadImageLoader(false);
 
       setUploadedImagesWithView((prevImages) => ({
         ...prevImages,
@@ -66,8 +103,21 @@ const CropImage = ({
           originalPublicId: response.data.publicId,
         },
       }));
+      return true;
     } catch (error) {
-      setError(error.message);
+      const message =
+        error.code === "ECONNABORTED"
+          ? "Upload timed out. Please check your connection and try again."
+          : error.response?.data?.error ||
+            error.message ||
+            "Failed to upload image.";
+      setError(message);
+      toast.error(message);
+      return false;
+    } finally {
+      // Previously only cleared on success — a failed upload left the
+      // "Uploading, please wait..." spinner stuck on screen forever.
+      setUploadImageLoader(false);
     }
   };
 
@@ -81,6 +131,56 @@ const CropImage = ({
         guides={false}
         ref={cropperRef}
       />
+      {/*
+        cropperjs's default corner handles shrink to a ~5px hit target on
+        larger breakpoints and rely on the browser's native touch-scroll
+        being disabled to drag smoothly — on iPhone this makes the corner
+        "grab" point tiny and the drag fight with page scroll/zoom. Force a
+        consistently large, visible handle at every screen size and disable
+        native touch gestures on the crop box so dragging a corner tracks
+        the finger instead of the page.
+      */}
+      <style jsx global>{`
+        .cropper-point {
+          width: 22px !important;
+          height: 22px !important;
+          opacity: 0.9 !important;
+          background-color: #3b82f6 !important;
+          border-radius: 4px;
+        }
+        .cropper-point.point-se {
+          bottom: -11px !important;
+          right: -11px !important;
+        }
+        .cropper-point.point-ne {
+          top: -11px !important;
+          right: -11px !important;
+        }
+        .cropper-point.point-sw {
+          bottom: -11px !important;
+          left: -11px !important;
+        }
+        .cropper-point.point-nw {
+          top: -11px !important;
+          left: -11px !important;
+        }
+        .cropper-point.point-n,
+        .cropper-point.point-s {
+          left: 50% !important;
+          margin-left: -11px !important;
+        }
+        .cropper-point.point-e,
+        .cropper-point.point-w {
+          top: 50% !important;
+          margin-top: -11px !important;
+        }
+        .cropper-crop-box,
+        .cropper-face,
+        .cropper-line,
+        .cropper-point {
+          touch-action: none !important;
+        }
+      `}</style>
       <Button
         isDisabled={uploadImageLoader}
         onPress={handleCrop}
