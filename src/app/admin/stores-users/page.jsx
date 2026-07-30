@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaTrash, FaUpload } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const CSV_TEMPLATE_HEADERS = [
@@ -732,18 +732,29 @@ const StoresUsersPage = () => {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         {activeTab === "stores" && (
-                          <Link
-                            href={`/admin/store-details/${user._id}`}
-                            className="inline-flex items-center gap-1.5 text-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
-                          >
-                            <FaEye className="text-md" /> View
-                          </Link>
+                          <>
+                            <Link
+                              href={`/admin/store-details/${user._id}`}
+                              title="View"
+                              className="inline-flex items-center justify-center w-9 h-9 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                            >
+                              <FaEye className="text-md" />
+                            </Link>
+                            <Link
+                              href={`/admin/store-details/${user._id}?edit=true`}
+                              title="Edit"
+                              className="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors"
+                            >
+                              <FaEdit className="text-md" />
+                            </Link>
+                          </>
                         )}
                         <button
                           onClick={() => setDeleteTarget(user)}
-                          className="inline-flex items-center gap-1.5 text-md font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-3 py-1.5 transition-colors"
+                          title="Delete"
+                          className="inline-flex items-center justify-center w-9 h-9 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
                         >
-                          <FaTrash className="text-sm" /> Delete
+                          <FaTrash className="text-sm" />
                         </button>
                       </div>
                     </td>

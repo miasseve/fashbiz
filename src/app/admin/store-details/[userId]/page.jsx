@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEdit } from "react-icons/fa";
 import { MdCheckCircle, MdCancel, MdWarning, MdToggleOn, MdToggleOff } from "react-icons/md";
@@ -25,6 +25,7 @@ const PLAN_COLORS = {
 const StoreDetailPage = () => {
   const { userId } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,6 +52,15 @@ const StoreDetailPage = () => {
     };
     if (userId) fetchDetails();
   }, [userId]);
+
+  // Support the "Edit" action from the Stores & Users list jumping straight
+  // into edit mode via ?edit=true, instead of View -> Edit as two clicks.
+  useEffect(() => {
+    if (data && searchParams.get("edit") === "true" && !editingLocation) {
+      startEditingLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const handleToggleShopifyCreated = async () => {
     const newValue = !shopifyCreated;
