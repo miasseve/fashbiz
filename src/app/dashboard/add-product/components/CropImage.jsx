@@ -51,8 +51,16 @@ const CropImage = ({
       targetHeight = Math.round(targetHeight * scale);
     }
 
+    // fillColor: without this, any sliver of canvas cropperjs doesn't paint
+    // over (a well-known float-rounding edge case in getCroppedCanvas) stays
+    // transparent — and since JPEG has no alpha channel, that transparency
+    // flattens to BLACK on export. This is the "black line on one edge" bug.
     const croppedDataURL = cropper
-      .getCroppedCanvas({ width: targetWidth, height: targetHeight })
+      .getCroppedCanvas({
+        width: targetWidth,
+        height: targetHeight,
+        fillColor: "#ffffff",
+      })
       .toDataURL("image/jpeg", 0.85);
     const croppedFile = dataURLToFile(croppedDataURL, "cropped-image.jpeg");
 
