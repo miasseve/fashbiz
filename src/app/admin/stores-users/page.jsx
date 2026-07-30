@@ -594,12 +594,47 @@ const StoresUsersPage = () => {
         )}
       </div>
 
-      {/* Results count */}
-      <div className="text-lg font-medium text-gray-600">
-        Showing {(currentPage - 1) * perPage + 1}-
-        {Math.min(currentPage * perPage, filteredUsers.length)} out of{" "}
-        {filteredUsers.length} {activeTab === "stores" ? "store" : "user"}
-        {filteredUsers.length !== 1 ? "s" : ""}
+      {/* Results count + quick verification filter */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="text-lg font-medium text-gray-600">
+          Showing {(currentPage - 1) * perPage + 1}-
+          {Math.min(currentPage * perPage, filteredUsers.length)} out of{" "}
+          {filteredUsers.length} {activeTab === "stores" ? "store" : "user"}
+          {filteredUsers.length !== 1 ? "s" : ""}
+        </div>
+
+        {activeTab === "stores" && (
+          <div className="flex gap-2">
+            <button
+              onClick={() =>
+                setFilterVerification((prev) =>
+                  prev === "verified" ? "" : "verified",
+                )
+              }
+              className={`px-4 py-2 rounded-lg text-md font-semibold border transition-colors ${
+                filterVerification === "verified"
+                  ? "bg-green-600 border-green-600 text-white"
+                  : "bg-white border-green-200 text-green-700 hover:bg-green-50"
+              }`}
+            >
+              Verified
+            </button>
+            <button
+              onClick={() =>
+                setFilterVerification((prev) =>
+                  prev === "unverified" ? "" : "unverified",
+                )
+              }
+              className={`px-4 py-2 rounded-lg text-md font-semibold border transition-colors ${
+                filterVerification === "unverified"
+                  ? "bg-amber-600 border-amber-600 text-white"
+                  : "bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
+              }`}
+            >
+              Not Verified
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Table */}
