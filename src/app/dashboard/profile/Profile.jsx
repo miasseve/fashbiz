@@ -293,6 +293,8 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
         });
         if (stripeResponse.status != 200) {
           router.push("/dashboard/stripe-connect");
+        } else if (isStore) {
+          router.push("/dashboard/store");
         }
       } else {
         setError(response.error);
@@ -825,7 +827,7 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
               color="success"
               className="success-btn"
             >
-              Save
+              Update
             </Button>
           </div>
           {error && <span className="text-red-500 text-xs">{error}</span>}

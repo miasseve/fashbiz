@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@heroui/react";
+import { toast } from "react-toastify";
 import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEdit } from "react-icons/fa";
 import { MdCheckCircle, MdCancel, MdWarning, MdToggleOn, MdToggleOff } from "react-icons/md";
 
@@ -111,6 +112,8 @@ const StoreDetailPage = () => {
       if (!res.ok) throw new Error(json.error || "Failed to save");
       setData((prev) => ({ ...prev, user: { ...prev.user, ...json } }));
       setEditingLocation(false);
+      toast.success("Information updated successfully!");
+      router.push("/admin/stores-users");
     } catch (err) {
       setLocationError(err.message);
     } finally {
@@ -339,7 +342,7 @@ const StoreDetailPage = () => {
                     disabled={savingLocation}
                     className="text-[12px] font-semibold px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                   >
-                    {savingLocation ? "Saving..." : "Save"}
+                    {savingLocation ? "Updating..." : "Update"}
                   </button>
                   <button
                     onClick={() => setEditingLocation(false)}
