@@ -848,8 +848,9 @@ const StoresUsersPage = () => {
               Bulk Upload Stores from CSV
             </h3>
             <p className="text-gray-600 mb-4">
-              Upload a spreadsheet of stores. Duplicates are checked by CVR/business
-              number first, then store name. Imported stores are added as{" "}
+              Upload a spreadsheet of stores. Matched by store name first, then
+              CVR/business number — a match updates that store's info instead of
+              creating a duplicate. New stores are added as{" "}
               <span className="font-semibold">Not Verified</span>.
             </p>
 
@@ -890,9 +891,9 @@ const StoresUsersPage = () => {
                   </div>
                   <div className="flex-1 text-center bg-amber-50 border border-amber-200 rounded-lg py-3">
                     <p className="text-2xl font-bold text-amber-700">
-                      {bulkResult.skippedCount}
+                      {bulkResult.updatedCount}
                     </p>
-                    <p className="text-md text-gray-600">Duplicates skipped</p>
+                    <p className="text-md text-gray-600">Matched &amp; updated</p>
                   </div>
                   <div className="flex-1 text-center bg-red-50 border border-red-200 rounded-lg py-3">
                     <p className="text-2xl font-bold text-red-600">
