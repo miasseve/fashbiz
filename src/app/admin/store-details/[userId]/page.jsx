@@ -2,8 +2,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
-import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify } from "react-icons/fa";
+import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEdit } from "react-icons/fa";
 import { MdCheckCircle, MdCancel, MdWarning, MdToggleOn, MdToggleOff } from "react-icons/md";
+
+const LOCATION_EDIT_FIELDS = [
+  { key: "address", label: "Address" },
+  { key: "city", label: "City" },
+  { key: "state", label: "State" },
+  { key: "zipcode", label: "Zipcode" },
+  { key: "businessNumber", label: "CVR/Business Number" },
+  { key: "latitude", label: "Latitude", type: "number" },
+  { key: "longitude", label: "Longitude", type: "number" },
+];
 
 const PLAN_COLORS = {
   Pro: "bg-indigo-100 text-indigo-700",
@@ -20,6 +30,10 @@ const StoreDetailPage = () => {
   const [error, setError] = useState(null);
   const [shopifyCreated, setShopifyCreated] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [locationForm, setLocationForm] = useState({});
+  const [savingLocation, setSavingLocation] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -52,6 +66,45 @@ const StoreDetailPage = () => {
       console.error("Failed to update shopify status:", err);
     } finally {
       setToggling(false);
+    }
+  };
+
+  const startEditingLocation = () => {
+    setLocationForm({
+      address: data.user.address || "",
+      city: data.user.city || "",
+      state: data.user.state || "",
+      zipcode: data.user.zipcode || "",
+      businessNumber: data.user.businessNumber || "",
+      latitude: data.user.latitude ?? "",
+      longitude: data.user.longitude ?? "",
+      isVerified: data.user.isVerified !== false,
+    });
+    setLocationError(null);
+    setEditingLocation(true);
+  };
+
+  const handleLocationFieldChange = (key, value) => {
+    setLocationForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveLocation = async () => {
+    setSavingLocation(true);
+    setLocationError(null);
+    try {
+      const res = await fetch(`/api/admin/store-details/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(locationForm),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to save");
+      setData((prev) => ({ ...prev, user: { ...prev.user, ...json } }));
+      setEditingLocation(false);
+    } catch (err) {
+      setLocationError(err.message);
+    } finally {
+      setSavingLocation(false);
     }
   };
 
@@ -173,6 +226,19 @@ const StoreDetailPage = () => {
               >
                 {user.isActive ? "Active" : "Inactive"}
               </span>
+              {user.isVerified === false && (
+                <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  Not Verified
+                </span>
+              )}
+              {!editingLocation && (
+                <button
+                  onClick={startEditingLocation}
+                  className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <FaEdit /> Edit
+                </button>
+              )}
             </div>
 
             {user.storename && (
@@ -193,18 +259,26 @@ const StoreDetailPage = () => {
                   <span className="text-gray-800">{user.phone}</span>
                 </div>
               )}
-              {(user.country || user.city) && (
+              {!editingLocation && (user.country || user.city || user.address) && (
                 <div>
                   <span className="font-semibold text-gray-600">Location: </span>
                   <span className="text-gray-800">
-                    {[user.city, user.country].filter(Boolean).join(", ")}
+                    {[user.address, user.city, user.state, user.zipcode, user.country]
+                      .filter(Boolean)
+                      .join(", ")}
                   </span>
                 </div>
               )}
-              {user.businessNumber && (
+              {!editingLocation && user.businessNumber && (
                 <div>
                   <span className="font-semibold text-gray-600">CVR/VAT: </span>
                   <span className="text-gray-800">{user.businessNumber}</span>
+                </div>
+              )}
+              {!editingLocation && (user.latitude || user.longitude) && (
+                <div>
+                  <span className="font-semibold text-gray-600">Coordinates: </span>
+                  <span className="text-gray-800">{user.latitude}, {user.longitude}</span>
                 </div>
               )}
               <div>
@@ -218,6 +292,55 @@ const StoreDetailPage = () => {
                 </div>
               )}
             </div>
+
+            {editingLocation && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {LOCATION_EDIT_FIELDS.map(({ key, label, type }) => (
+                    <div key={key}>
+                      <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                        {label}
+                      </label>
+                      <input
+                        type={type || "text"}
+                        step={type === "number" ? "any" : undefined}
+                        value={locationForm[key] ?? ""}
+                        onChange={(e) => handleLocationFieldChange(key, e.target.value)}
+                        className="w-full text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2 mt-3 text-[12px] font-semibold text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={!!locationForm.isVerified}
+                    onChange={(e) => handleLocationFieldChange("isVerified", e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Verified
+                </label>
+                {locationError && (
+                  <p className="text-red-500 text-[12px] mt-2">{locationError}</p>
+                )}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleSaveLocation}
+                    disabled={savingLocation}
+                    className="text-[12px] font-semibold px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {savingLocation ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setEditingLocation(false)}
+                    disabled={savingLocation}
+                    className="text-[12px] font-semibold px-4 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

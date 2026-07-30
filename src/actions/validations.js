@@ -116,6 +116,16 @@ export const profileSchema = Yup.object({
   }),
   state: Yup.string().trim().required("State is required"),
   country: Yup.string().trim().required("Country is required"),
+  latitude: Yup.number()
+    .transform((value, original) => (original === "" ? undefined : value))
+    .min(-90, "Latitude must be between -90 and 90")
+    .max(90, "Latitude must be between -90 and 90")
+    .nullable(),
+  longitude: Yup.number()
+    .transform((value, original) => (original === "" ? undefined : value))
+    .min(-180, "Longitude must be between -180 and 180")
+    .max(180, "Longitude must be between -180 and 180")
+    .nullable(),
   contactTitle: Yup.string().when("role", {
     is: "brand",
     then: () => Yup.string().required("Contact Title is required"),

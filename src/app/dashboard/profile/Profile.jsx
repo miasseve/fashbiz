@@ -124,6 +124,16 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
     }),
     state: Yup.string().trim().required("State is required"),
     country: Yup.string().trim().required("Country is required"),
+    latitude: Yup.number()
+      .transform((value, original) => (original === "" ? undefined : value))
+      .min(-90, "Latitude must be between -90 and 90")
+      .max(90, "Latitude must be between -90 and 90")
+      .nullable(),
+    longitude: Yup.number()
+      .transform((value, original) => (original === "" ? undefined : value))
+      .min(-180, "Longitude must be between -180 and 180")
+      .max(180, "Longitude must be between -180 and 180")
+      .nullable(),
   });
 
   const {
@@ -154,6 +164,8 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
       zipcode: user?.zipcode || "",
       state: user?.state || "",
       country: user?.country || "DK",
+      latitude: user?.latitude ?? "",
+      longitude: user?.longitude ?? "",
       role: user?.role || "",
     },
   });
@@ -733,6 +745,44 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
               )}
             </div>
           </div>
+          {isStore && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  {...register("latitude")}
+                  placeholder="e.g., 55.6761"
+                  className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
+                />
+                {errors.latitude && (
+                  <span className="text-red-500 font-medium text-xs">
+                    {errors.latitude.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  {...register("longitude")}
+                  placeholder="e.g., 12.5683"
+                  className="mt-2 w-full border border-gray-300 rounded px-3 py-2"
+                />
+                {errors.longitude && (
+                  <span className="text-red-500 font-medium text-xs">
+                    {errors.longitude.message}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           {/* Notification Preferences */}
           {isStore && (
             <div className="flex items-center justify-between border border-gray-200 rounded-lg p-4">

@@ -3,8 +3,21 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaTrash } from "react-icons/fa";
+import Papa from "papaparse";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaTrash, FaUpload } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+
+const CSV_TEMPLATE_HEADERS = [
+  "storename",
+  "businessNumber",
+  "address",
+  "city",
+  "state",
+  "zipcode",
+  "country",
+  "latitude",
+  "longitude",
+];
 
 const TABS = [
   { key: "stores", label: "Stores" },
@@ -30,6 +43,7 @@ const StoresUsersPage = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [filterCountry, setFilterCountry] = useState("");
   const [filterCity, setFilterCity] = useState("");
+  const [filterVerification, setFilterVerification] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -40,18 +54,25 @@ const StoresUsersPage = () => {
   const [deleteTarget, setDeleteTarget] = useState(null); // the user pending deletion
   const [deleting, setDeleting] = useState(false);
 
+  // CSV bulk upload state
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
+  const [bulkError, setBulkError] = useState(null);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      setAllUsers(data.users || []);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch("/api/admin/users");
-        const data = await res.json();
-        setAllUsers(data.users || []);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUsers();
   }, []);
 
@@ -112,6 +133,13 @@ const StoresUsersPage = () => {
       list = list.filter((u) => u.city === filterCity);
     }
 
+    // Verification filter (stores only — isVerified is false for CSV/unclaimed stores)
+    if (filterVerification === "unverified") {
+      list = list.filter((u) => u.isVerified === false);
+    } else if (filterVerification === "verified") {
+      list = list.filter((u) => u.isVerified !== false);
+    }
+
     // Date range filter
     if (dateFrom) {
       const from = new Date(dateFrom);
@@ -167,6 +195,7 @@ const StoresUsersPage = () => {
     sortBy,
     filterCountry,
     filterCity,
+    filterVerification,
     dateFrom,
     dateTo,
   ]);
@@ -174,7 +203,7 @@ const StoresUsersPage = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, search, sortBy, filterCountry, filterCity, dateFrom, dateTo]);
+  }, [activeTab, search, sortBy, filterCountry, filterCity, filterVerification, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(filteredUsers.length / perPage);
   const paginatedUsers = filteredUsers.slice(
@@ -233,11 +262,64 @@ const StoresUsersPage = () => {
     URL.revokeObjectURL(url);
   };
 
+  const downloadCsvTemplate = () => {
+    const blob = new Blob([CSV_TEMPLATE_HEADERS.join(",") + "\n"], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "store-import-template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvFileSelected = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setBulkError(null);
+    setBulkResult(null);
+    setBulkUploading(true);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (parsed) => {
+        try {
+          if (!parsed.data.length) {
+            setBulkError("The CSV file has no rows.");
+            return;
+          }
+          const res = await fetch("/api/admin/stores/bulk-import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rows: parsed.data }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || "Import failed");
+          setBulkResult(json);
+          fetchUsers();
+        } catch (err) {
+          setBulkError(err.message);
+        } finally {
+          setBulkUploading(false);
+        }
+      },
+      error: (err) => {
+        setBulkError(err.message);
+        setBulkUploading(false);
+      },
+    });
+    // Allow re-selecting the same file again later
+    e.target.value = "";
+  };
+
   const clearFilters = () => {
     setSearch("");
     setSortBy("newest");
     setFilterCountry("");
     setFilterCity("");
+    setFilterVerification("");
     setDateFrom("");
     setDateTo("");
   };
@@ -273,6 +355,7 @@ const StoresUsersPage = () => {
     search ||
     filterCountry ||
     filterCity ||
+    filterVerification ||
     dateFrom ||
     dateTo ||
     sortBy !== "newest";
@@ -298,13 +381,28 @@ const StoresUsersPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Stores & Users</h1>
-        <button
-          onClick={downloadCSV}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
-        >
-          <FaDownload className="text-sm" />
-          Download CSV
-        </button>
+        <div className="flex items-center gap-3">
+          {activeTab === "stores" && (
+            <button
+              onClick={() => {
+                setBulkResult(null);
+                setBulkError(null);
+                setShowBulkUpload(true);
+              }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+            >
+              <FaUpload className="text-sm" />
+              Upload CSV
+            </button>
+          )}
+          <button
+            onClick={downloadCSV}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+          >
+            <FaDownload className="text-sm" />
+            Download CSV
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -438,6 +536,24 @@ const StoresUsersPage = () => {
                 </select>
               </div>
 
+              {/* Verification (stores only) */}
+              {activeTab === "stores" && (
+                <div>
+                  <label className="block text-base font-semibold text-gray-600 mb-1.5">
+                    Verification
+                  </label>
+                  <select
+                    value={filterVerification}
+                    onChange={(e) => setFilterVerification(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">All</option>
+                    <option value="verified">Verified</option>
+                    <option value="unverified">Not Verified</option>
+                  </select>
+                </div>
+              )}
+
               {/* Date From */}
               <div>
                 <label className="block text-base font-semibold text-gray-600 mb-1.5">
@@ -539,7 +655,14 @@ const StoresUsersPage = () => {
                     className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
                   >
                     <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">
-                      {user.firstname} {user.lastname}
+                      <div className="flex items-center gap-2">
+                        {user.firstname} {user.lastname}
+                        {user.role === "store" && user.isVerified === false && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                            Not Verified
+                          </span>
+                        )}
+                      </div>
                       {(user.storename || user.brandname) && (
                         <div className="text-[13px] text-gray-400 font-normal mt-0.5">
                           {user.storename || user.brandname}
@@ -662,6 +785,98 @@ const StoresUsersPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* CSV bulk upload modal */}
+      {showBulkUpload && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !bulkUploading && setShowBulkUpload(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+              Bulk Upload Stores from CSV
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Upload a spreadsheet of stores. Duplicates are checked by CVR/business
+              number first, then store name. Imported stores are added as{" "}
+              <span className="font-semibold">Not Verified</span>.
+            </p>
+
+            <button
+              onClick={downloadCsvTemplate}
+              className="text-indigo-600 hover:text-indigo-800 text-md font-semibold underline mb-4"
+            >
+              Download CSV template
+            </button>
+
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCsvFileSelected}
+                disabled={bulkUploading}
+                className="w-full"
+              />
+              {bulkUploading && (
+                <div className="flex justify-center mt-3">
+                  <Spinner size="sm" />
+                </div>
+              )}
+            </div>
+
+            {bulkError && (
+              <p className="text-red-500 text-md mt-4">{bulkError}</p>
+            )}
+
+            {bulkResult && (
+              <div className="mt-5 space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex-1 text-center bg-green-50 border border-green-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-green-700">
+                      {bulkResult.createdCount}
+                    </p>
+                    <p className="text-md text-gray-600">Added</p>
+                  </div>
+                  <div className="flex-1 text-center bg-amber-50 border border-amber-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-amber-700">
+                      {bulkResult.skippedCount}
+                    </p>
+                    <p className="text-md text-gray-600">Duplicates skipped</p>
+                  </div>
+                  <div className="flex-1 text-center bg-red-50 border border-red-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-red-600">
+                      {bulkResult.errorCount}
+                    </p>
+                    <p className="text-md text-gray-600">Errors</p>
+                  </div>
+                </div>
+
+                {bulkResult.errors.length > 0 && (
+                  <div className="max-h-32 overflow-y-auto text-md text-red-600 bg-red-50 rounded-lg p-3">
+                    {bulkResult.errors.map((e, i) => (
+                      <div key={i}>
+                        Row {e.row}: {e.reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowBulkUpload(false)}
+                className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

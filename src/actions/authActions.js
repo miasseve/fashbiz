@@ -263,10 +263,21 @@ export async function updateUser(updatedData) {
     // Connect to the database
     await dbConnect();
 
+    // Coordinates are optional — avoid Mongoose CastError on "" and don't
+    // clobber a previously saved value when the field is left untouched.
+    const dataToSave = { ...updatedData };
+    for (const key of ["latitude", "longitude"]) {
+      if (dataToSave[key] === "" || dataToSave[key] === undefined || dataToSave[key] === null) {
+        delete dataToSave[key];
+      } else {
+        dataToSave[key] = Number(dataToSave[key]);
+      }
+    }
+
     // Update the user by ID
     const updatedUser = await User.findByIdAndUpdate(
       session.user.id,
-      { ...updatedData, isProfileComplete: true },
+      { ...dataToSave, isProfileComplete: true },
       {
         new: true, // Return the updated document instead of the original
         runValidators: true, // Ensure validation is run on the updated data

@@ -20,6 +20,8 @@ const UserSchema = new mongoose.Schema({
   city: { type: String },
   state: { type: String },
   zipcode: { type: String },
+  latitude: { type: Number },
+  longitude: { type: Number },
   country: {
     type: String,
     required: function () {
@@ -76,6 +78,9 @@ const UserSchema = new mongoose.Schema({
     default: false,
   },
   isProfileComplete: { type: Boolean, default: false },
+  // false only for stores added via CSV bulk import or an unrecognized store name during
+  // upload — not yet claimed/confirmed by the real business. Real signups default to true.
+  isVerified: { type: Boolean, default: true },
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: String, default: null },
   stripeCustomerId: { type: String },
