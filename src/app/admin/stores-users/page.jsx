@@ -604,17 +604,17 @@ const StoresUsersPage = () => {
         </div>
 
         {activeTab === "stores" && (
-          <div className="flex gap-2">
+          <div className="inline-flex border border-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() =>
                 setFilterVerification((prev) =>
                   prev === "verified" ? "" : "verified",
                 )
               }
-              className={`px-4 py-2 rounded-lg text-md font-semibold border transition-colors ${
+              className={`px-4 py-2 text-md font-semibold transition-colors ${
                 filterVerification === "verified"
-                  ? "bg-green-600 border-green-600 text-white"
-                  : "bg-white border-green-200 text-green-700 hover:bg-green-50"
+                  ? "bg-green-600 text-white"
+                  : "bg-white text-green-700 hover:bg-green-50"
               }`}
             >
               Verified
@@ -625,10 +625,10 @@ const StoresUsersPage = () => {
                   prev === "unverified" ? "" : "unverified",
                 )
               }
-              className={`px-4 py-2 rounded-lg text-md font-semibold border transition-colors ${
+              className={`px-4 py-2 text-md font-semibold border-l border-gray-200 transition-colors ${
                 filterVerification === "unverified"
-                  ? "bg-amber-600 border-amber-600 text-white"
-                  : "bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
+                  ? "bg-amber-600 text-white"
+                  : "bg-white text-amber-700 hover:bg-amber-50"
               }`}
             >
               Not Verified
