@@ -21,6 +21,10 @@ import CropImage from "./CropImage";
 import RemoveImage from "./RemoveImage";
 import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
 
+// Fixed order the 4 view slots fill in when bulk-selecting multiple photos
+// at once — 1st photo picked -> frontView, 2nd -> sideView, etc.
+const VIEW_ORDER = ["frontView", "sideView", "backView", "detailView"];
+
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
   const [availableCameras, setAvailableCameras] = useState([]);
@@ -54,6 +58,9 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   }, []);
 
   const [croppingImage, setCroppingImage] = useState(null);
+  // Remaining {viewType, fileUrl} pairs still waiting for their turn in the
+  // crop screen during a bulk (multi-select) upload. Empty outside of that.
+  const [uploadQueue, setUploadQueue] = useState([]);
 
   //loading and error handling
   const [imageUploadError, setImageUploadError] = useState([]);
@@ -457,6 +464,76 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     e.target.value = "";
   };
 
+  // Bulk path: user selects multiple photos at once instead of picking one
+  // box at a time. Still reuses the exact same crop screen and per-box
+  // upload logic — just queues the rest and walks through them one by one.
+  const handleBulkFileSelection = (e) => {
+    const files = Array.from(e.target.files);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    const invalidFile = files.some((file) => {
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+      return ["mp4", "avi", "mov", "mkv", "webm", "gif"].includes(
+        fileExtension,
+      );
+    });
+    if (invalidFile) {
+      toast.error("Please upload images only.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const emptyViews = VIEW_ORDER.filter(
+      (viewType) => !uploadedImagesWithView[viewType],
+    );
+
+    if (emptyViews.length === 0) {
+      toast.error("All 4 photo slots are already filled.");
+      return;
+    }
+
+    const filesToUse = files.slice(0, emptyViews.length);
+    if (files.length > emptyViews.length) {
+      toast.warn(
+        `Only ${emptyViews.length} photo slot${emptyViews.length > 1 ? "s" : ""} available — added the first ${filesToUse.length}.`,
+      );
+    }
+
+    const queue = filesToUse.map((file, i) => ({
+      viewType: emptyViews[i],
+      fileUrl: URL.createObjectURL(file),
+    }));
+
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+
+    const [first, ...rest] = queue;
+    setSelectedView(first.viewType);
+    setCroppingImage(first.fileUrl);
+    setUploadQueue(rest);
+  };
+
+  // Passed to CropImage in place of the raw setCroppingImage setter. It
+  // always gets called with `null` on a successful crop+upload — outside a
+  // bulk sequence that just closes the crop screen as before; mid-sequence
+  // it instead advances to the next queued photo automatically.
+  const handleCropScreenClose = () => {
+    setUploadQueue((prevQueue) => {
+      if (prevQueue.length === 0) {
+        setCroppingImage(null);
+        return prevQueue;
+      }
+      const [next, ...rest] = prevQueue;
+      setSelectedView(next.viewType);
+      setCroppingImage(next.fileUrl);
+      return rest;
+    });
+  };
+
   return (
     <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]">
       <div className="text-center">
@@ -522,10 +599,38 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           className="w-full text-[1.4rem] hidden"
           isClearable
         />
+        <Input
+          type="file"
+          id="bulkFileInput"
+          accept="image/*"
+          multiple
+          onChange={handleBulkFileSelection}
+          className="w-full text-[1.4rem] hidden"
+        />
         <p className="lg:text-[1.4rem] text-[2rem]">Add product image</p>
         <p className="text-[1.2rem] text-gray-500 mt-0">
           ( User can upload up to 4 images for each product )
         </p>
+        <div className="mt-2">
+          <Button
+            type="button"
+            isDisabled={
+              !!croppingImage ||
+              uploadImageLoader ||
+              Object.values(uploadedImagesWithView).every((v) => v !== null)
+            }
+            onPress={() => document.getElementById("bulkFileInput").click()}
+            className="auth-btn"
+          >
+            Upload Multiple Photos
+          </Button>
+        </div>
+        {uploadQueue.length > 0 && (
+          <p className="text-[1.2rem] text-gray-500 mt-2">
+            {uploadQueue.length} more photo{uploadQueue.length > 1 ? "s" : ""}{" "}
+            waiting after this one
+          </p>
+        )}
 
         {croppingImage && (
           <div className="text-center">
@@ -533,10 +638,15 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
               cropImage={croppingImage}
               selectedView={selectedView}
               uploadImageLoader={uploadImageLoader}
-              setCroppingImage={setCroppingImage}
+              setCroppingImage={handleCropScreenClose}
               setUploadImageLoader={setUploadImageLoader}
               setUploadedImagesWithView={setUploadedImagesWithView}
             />
+            {uploadQueue.length > 0 && (
+              <p className="text-[1.2rem] text-gray-500 mt-2">
+                {uploadQueue.length} more to go after this one
+              </p>
+            )}
           </div>
         )}
 
