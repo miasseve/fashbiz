@@ -210,8 +210,8 @@ const StoreDetailPage = () => {
         <div className="flex items-start gap-5">
           {/* Avatar */}
           <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xl flex-shrink-0 overflow-hidden">
-            {user.profileImage ? (
-              <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
+            {user.profileImage?.url ? (
+              <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover" />
             ) : (
               initials
             )}
