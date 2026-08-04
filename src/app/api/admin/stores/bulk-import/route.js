@@ -43,24 +43,6 @@ function getField(row, canonicalKey) {
   return "";
 }
 
-// Repairs the classic "UTF-8 text mis-decoded as Windows-1252/Latin-1"
-// corruption (e.g. "Nødhjælp" -> "NÃ¸dhjÃ¦lp") that shows up when data was
-// copy-pasted from an already-corrupted source before ever reaching us —
-// re-exporting as UTF-8 CSV doesn't fix this, since the cell content itself
-// is already wrong. Only attempts the fix when the tell-tale byte pattern
-// is present, so correctly-encoded text is never touched.
-function repairMojibake(str) {
-  if (!str) return str;
-  if (!/[ÃÂ][\x80-\xBF‘-‟]/.test(str)) return str;
-  try {
-    const repaired = Buffer.from(str, "latin1").toString("utf8");
-    if (!repaired.includes("�")) return repaired;
-  } catch {
-    // fall through to original on any decode failure
-  }
-  return str;
-}
-
 export async function POST(request) {
   try {
     const session = await auth();
@@ -109,7 +91,7 @@ export async function POST(request) {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rowNum = i + 2; // account for the CSV header row
-      const storename = repairMojibake(getField(row, "storename"));
+      const storename = getField(row, "storename");
       const country = getField(row, "country");
 
       if (!storename) {
@@ -123,9 +105,9 @@ export async function POST(request) {
 
       const businessNumber = getField(row, "businessNumber");
       const normalizedName = normalizeName(storename);
-      const address = repairMojibake(getField(row, "address"));
-      const city = repairMojibake(getField(row, "city"));
-      const state = repairMojibake(getField(row, "state"));
+      const address = getField(row, "address");
+      const city = getField(row, "city");
+      const state = getField(row, "state");
       const zipcode = getField(row, "zipcode");
 
       // Name first (per Mia's request), CVR as fallback. Note: matching by
