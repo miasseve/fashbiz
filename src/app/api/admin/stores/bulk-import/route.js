@@ -13,6 +13,54 @@ function normalizeName(name) {
     .trim();
 }
 
+// Real-world CSV exports (Google Sheets, official registries, etc.) don't
+// all use our exact column names — accept common alternates instead of
+// forcing every source to be manually renamed first.
+const FIELD_ALIASES = {
+  storename: ["storename", "name", "store_name", "business_name"],
+  address: ["address", "full_address", "street_address"],
+  city: ["city"],
+  state: ["state", "region"],
+  zipcode: ["zipcode", "postal_code", "postcode", "zip"],
+  country: ["country"],
+  businessNumber: ["businessnumber", "cvr", "cvr_number", "cvrnumber", "vat", "vat_number"],
+  latitude: ["latitude", "lat"],
+  longitude: ["longitude", "lng", "lon", "long"],
+};
+
+function getField(row, canonicalKey) {
+  const aliases = FIELD_ALIASES[canonicalKey] || [canonicalKey];
+  for (const alias of aliases) {
+    for (const key of Object.keys(row)) {
+      if (key.trim().toLowerCase() === alias) {
+        const value = row[key];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+          return String(value).trim();
+        }
+      }
+    }
+  }
+  return "";
+}
+
+// Repairs the classic "UTF-8 text mis-decoded as Windows-1252/Latin-1"
+// corruption (e.g. "Nødhjælp" -> "NÃ¸dhjÃ¦lp") that shows up when data was
+// copy-pasted from an already-corrupted source before ever reaching us —
+// re-exporting as UTF-8 CSV doesn't fix this, since the cell content itself
+// is already wrong. Only attempts the fix when the tell-tale byte pattern
+// is present, so correctly-encoded text is never touched.
+function repairMojibake(str) {
+  if (!str) return str;
+  if (!/[ÃÂ][\x80-\xBF‘-‟]/.test(str)) return str;
+  try {
+    const repaired = Buffer.from(str, "latin1").toString("utf8");
+    if (!repaired.includes("�")) return repaired;
+  } catch {
+    // fall through to original on any decode failure
+  }
+  return str;
+}
+
 export async function POST(request) {
   try {
     const session = await auth();
@@ -61,8 +109,8 @@ export async function POST(request) {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rowNum = i + 2; // account for the CSV header row
-      const storename = String(row.storename || row.name || "").trim();
-      const country = String(row.country || "").trim();
+      const storename = repairMojibake(getField(row, "storename"));
+      const country = getField(row, "country");
 
       if (!storename) {
         errors.push({ row: rowNum, reason: "Missing store name" });
@@ -73,8 +121,12 @@ export async function POST(request) {
         continue;
       }
 
-      const businessNumber = String(row.businessNumber || row.cvr || "").trim();
+      const businessNumber = getField(row, "businessNumber");
       const normalizedName = normalizeName(storename);
+      const address = repairMojibake(getField(row, "address"));
+      const city = repairMojibake(getField(row, "city"));
+      const state = repairMojibake(getField(row, "state"));
+      const zipcode = getField(row, "zipcode");
 
       // Name first (per Mia's request), CVR as fallback. Note: matching by
       // name carries more risk of merging two unrelated stores that happen
@@ -87,12 +139,14 @@ export async function POST(request) {
       const match = matchByName || matchByCvr;
 
       let latitude, longitude;
-      if (row.latitude !== undefined && row.latitude !== "" && row.latitude !== null) {
-        const lat = Number(row.latitude);
+      const latRaw = getField(row, "latitude");
+      const lngRaw = getField(row, "longitude");
+      if (latRaw !== "") {
+        const lat = Number(latRaw);
         if (!Number.isNaN(lat) && lat >= -90 && lat <= 90) latitude = lat;
       }
-      if (row.longitude !== undefined && row.longitude !== "" && row.longitude !== null) {
-        const lng = Number(row.longitude);
+      if (lngRaw !== "") {
+        const lng = Number(lngRaw);
         if (!Number.isNaN(lng) && lng >= -180 && lng <= 180) longitude = lng;
       }
 
@@ -100,10 +154,10 @@ export async function POST(request) {
         // Only overwrite fields the row actually provides — a blank CSV
         // cell should never erase existing good data.
         const update = {};
-        if (String(row.address || "").trim()) update.address = String(row.address).trim();
-        if (String(row.city || "").trim()) update.city = String(row.city).trim();
-        if (String(row.state || "").trim()) update.state = String(row.state).trim();
-        if (String(row.zipcode || "").trim()) update.zipcode = String(row.zipcode).trim();
+        if (address) update.address = address;
+        if (city) update.city = city;
+        if (state) update.state = state;
+        if (zipcode) update.zipcode = zipcode;
         if (country) update.country = country;
         if (businessNumber) update.businessNumber = businessNumber;
         if (latitude !== undefined) update.latitude = latitude;
@@ -134,10 +188,10 @@ export async function POST(request) {
         password: placeholderPassword,
         role: "store",
         country,
-        city: String(row.city || "").trim(),
-        state: String(row.state || "").trim(),
-        zipcode: String(row.zipcode || "").trim(),
-        address: String(row.address || "").trim(),
+        city,
+        state,
+        zipcode,
+        address,
         businessNumber: businessNumber || undefined,
         latitude,
         longitude,
