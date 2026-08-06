@@ -66,6 +66,10 @@ export async function POST(req) {
 
     const placeholderEmail = `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
     const placeholderPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+    // Schema requires businessNumber for role "store"; this form has no CVR field
+    // (unlike the admin CSV importer), so stub one out until the real owner claims
+    // the store and provides their actual CVR during verification.
+    const placeholderBusinessNumber = `UNVERIFIED-${crypto.randomUUID()}`;
 
     const doc = new User({
       firstname: "",
@@ -79,6 +83,7 @@ export async function POST(req) {
       address,
       latitude,
       longitude,
+      businessNumber: placeholderBusinessNumber,
       isVerified: false,
       isActive: false,
     });
