@@ -3,15 +3,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-
-// Loose match: ignore case, punctuation and extra whitespace so
-// "H&M" / "H & M." / "h and m " are treated as the same store name.
-function normalizeName(name) {
-  return String(name || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
+import { normalizeName } from "@/lib/storeMatching";
 
 // Real-world CSV exports (Google Sheets, official registries, etc.) don't
 // all use our exact column names — accept common alternates instead of
