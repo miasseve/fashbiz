@@ -72,8 +72,10 @@ export async function POST(req) {
     const placeholderBusinessNumber = `UNVERIFIED-${crypto.randomUUID()}`;
 
     const doc = new User({
-      firstname: "",
-      lastname: "",
+      // Mongoose treats "" as "not provided" for a required String field, so an
+      // empty string here fails validation just like omitting the field entirely.
+      firstname: "Unclaimed",
+      lastname: "Store",
       storename,
       email: placeholderEmail,
       password: placeholderPassword,
