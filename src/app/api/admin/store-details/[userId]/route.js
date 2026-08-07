@@ -85,26 +85,36 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    if (body.latitude !== undefined && body.latitude !== null && body.latitude !== "") {
-      const lat = Number(body.latitude);
-      if (Number.isNaN(lat) || lat < -90 || lat > 90) {
-        return new Response(JSON.stringify({ error: "Invalid latitude" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+    // A blank field means "clear this" — distinct from the field being
+    // absent from the request entirely, which means "leave it alone".
+    if (body.latitude !== undefined) {
+      if (body.latitude === null || body.latitude === "") {
+        update.latitude = null;
+      } else {
+        const lat = Number(body.latitude);
+        if (Number.isNaN(lat) || lat < -90 || lat > 90) {
+          return new Response(JSON.stringify({ error: "Invalid latitude" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        update.latitude = lat;
       }
-      update.latitude = lat;
     }
 
-    if (body.longitude !== undefined && body.longitude !== null && body.longitude !== "") {
-      const lng = Number(body.longitude);
-      if (Number.isNaN(lng) || lng < -180 || lng > 180) {
-        return new Response(JSON.stringify({ error: "Invalid longitude" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+    if (body.longitude !== undefined) {
+      if (body.longitude === null || body.longitude === "") {
+        update.longitude = null;
+      } else {
+        const lng = Number(body.longitude);
+        if (Number.isNaN(lng) || lng < -180 || lng > 180) {
+          return new Response(JSON.stringify({ error: "Invalid longitude" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        update.longitude = lng;
       }
-      update.longitude = lng;
     }
 
     if (typeof body.isVerified === "boolean") {
