@@ -40,12 +40,14 @@ export async function GET(req) {
   }
 }
 
-// A Discover user capturing a "Find" — REE's AI recognition isn't wired up
-// yet, so whatever title/brand/category/price the caller sends is unverified.
-// Every product created here is saved hidden (archived + needsReview) so it
-// never appears in listings or syncs to Shopify until a human reviews it,
-// same as any other product a store can already un-archive from their
-// dashboard once the real details are confirmed.
+// A Discover user capturing a "Find" — the title/brand/category come from
+// Ree's real product-recognition AI now (see /api/public/products/analyze,
+// same pipeline the dashboard's "add product" uses), so the data itself is
+// trustworthy. Still saved archived: there's no store-linking UI in Discover
+// yet, so every capture attaches to an arbitrary fallback store rather than
+// the boutique it actually came from — that's the reason it stays hidden,
+// not the AI. needsReview mirrors the dashboard's own rule (confidence < 0.6)
+// rather than always being forced on.
 export async function POST(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;
@@ -70,15 +72,18 @@ export async function POST(req) {
       }
     }
 
+    // Accepts either raw data URLs (uploads them now) or already-hosted
+    // {url, publicId} pairs from a prior /analyze call, so a capture that
+    // went through AI analysis first doesn't upload the same photos twice.
     const rawImages = Array.isArray(body.images) ? body.images.slice(0, 6) : [];
     const images = [];
-    for (const dataUrl of rawImages) {
-      if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
-      const uploaded = await cloudinary.v2.uploader.upload(dataUrl, {
-        folder: "nm-demo",
-        format: "webp",
-      });
-      images.push({ url: uploaded.secure_url, publicId: uploaded.public_id });
+    for (const img of rawImages) {
+      if (typeof img === "string" && img.startsWith("data:")) {
+        const uploaded = await cloudinary.v2.uploader.upload(img, { folder: "nm-demo", format: "webp" });
+        images.push({ url: uploaded.secure_url, publicId: uploaded.public_id });
+      } else if (img && typeof img === "object" && typeof img.url === "string") {
+        images.push({ url: img.url, publicId: img.publicId || "" });
+      }
     }
 
     const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase();
@@ -95,16 +100,19 @@ export async function POST(req) {
       title: String(body.title || "").trim() || "Untitled item (via Discover)",
       brand: String(body.brand || "").trim() || "Unknown",
       category: String(body.category || "").trim() || "Uncategorized",
+      subcategory: String(body.subcategory || "").trim() || undefined,
       description: String(body.description || "").trim() || "Submitted via Discover — pending review.",
       price,
       size: [String(body.size || "One Size")],
       fabric: body.material ? String(body.material) : undefined,
+      condition_grade: ["A", "B", "C"].includes(body.conditionGrade) ? body.conditionGrade : null,
       condition_notes: body.condition ? String(body.condition) : "",
+      color: body.colorName ? { name: String(body.colorName), hex: body.colorHex || "#fff" } : undefined,
       images,
       userId: store._id,
       consignorAccount: "discover-app",
       aiConfidenceScore,
-      needsReview: true,
+      needsReview: aiConfidenceScore == null ? true : aiConfidenceScore < 0.6,
       archived: true,
     });
 
