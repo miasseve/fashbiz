@@ -4,9 +4,34 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { normalizeName } from "@/lib/storeMatching";
 import { requireApiKey, handlePreflight } from "@/lib/apiKeyMiddleware";
+import { serializePublicStore, PUBLIC_STORE_FIELDS } from "@/lib/publicStoreSerializer";
 
 export async function OPTIONS() {
   return handlePreflight();
+}
+
+// The real boutique directory — every known store, verified or not.
+// Unverified/unclaimed entries (bulk-imported or Discover-submitted) are
+// included on purpose: Discover is meant to help people find them, whether
+// or not the business itself has claimed a Ree account yet.
+export async function GET(req) {
+  const unauthorized = requireApiKey(req);
+  if (unauthorized) return unauthorized;
+
+  try {
+    await dbConnect();
+
+    const stores = await User.find({ role: "store" })
+      .select(PUBLIC_STORE_FIELDS)
+      .sort({ storename: 1 })
+      .limit(500)
+      .lean();
+
+    return Response.json({ ok: true, stores: stores.map(serializePublicStore) });
+  } catch (error) {
+    console.error("Public stores list error:", error);
+    return Response.json({ error: "Something went wrong" }, { status: 500 });
+  }
 }
 
 // A Discover user submitting "Add a boutique" — matches the real form's
