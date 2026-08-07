@@ -75,6 +75,19 @@ export async function POST(request) {
       if (s.storename) byName.set(normalizeName(s.storename), s);
     }
 
+    // A single CVR can legitimately cover many branches of one chain/charity
+    // (they all share one parent registration) — that makes CVR ambiguous as
+    // a per-branch match key whenever the same number shows up more than
+    // once in this upload. Only trust CVR fallback for a business number
+    // that's unique within the batch; a repeated one falls back to
+    // create-as-new instead of blindly overwriting whichever store the CVR
+    // last happened to match.
+    const cvrCountInBatch = new Map();
+    for (const row of rows) {
+      const bn = getField(row, "businessNumber");
+      if (bn) cvrCountInBatch.set(bn, (cvrCountInBatch.get(bn) || 0) + 1);
+    }
+
     const created = [];
     const updated = [];
     const errors = [];
@@ -107,7 +120,8 @@ export async function POST(request) {
       // to share a name than CVR would, since CVR is a unique government
       // number and names aren't guaranteed unique.
       const matchByName = byName.get(normalizedName);
-      const matchByCvr = !matchByName && businessNumber
+      const cvrIsAmbiguousInBatch = businessNumber && cvrCountInBatch.get(businessNumber) > 1;
+      const matchByCvr = !matchByName && businessNumber && !cvrIsAmbiguousInBatch
         ? byBusinessNumber.get(businessNumber)
         : null;
       const match = matchByName || matchByCvr;
