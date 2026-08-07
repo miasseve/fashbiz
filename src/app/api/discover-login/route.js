@@ -9,7 +9,9 @@ import { validateDiscoverRedirect, issueSsoCode } from "@/lib/discoverRedirect";
 // Discover then exchanges that code server-to-server for the user's identity.
 export async function POST(req) {
   try {
-    const { email, password, redirectUri } = await req.json();
+    const body = await req.json();
+    const email = String(body.email || "").toLowerCase();
+    const { password, redirectUri } = body;
 
     const redirectCheck = validateDiscoverRedirect(redirectUri);
     if (!redirectCheck.ok) {
