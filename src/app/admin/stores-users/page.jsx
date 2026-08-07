@@ -44,6 +44,7 @@ const StoresUsersPage = () => {
   const [filterCountry, setFilterCountry] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterVerification, setFilterVerification] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -140,6 +141,13 @@ const StoresUsersPage = () => {
       list = list.filter((u) => u.isVerified !== false);
     }
 
+    // Location filter — stores with no lat/long don't show as map pins in Discover
+    if (filterLocation === "missing") {
+      list = list.filter(
+        (u) => u.latitude == null || u.longitude == null
+      );
+    }
+
     // Date range filter
     if (dateFrom) {
       const from = new Date(dateFrom);
@@ -196,6 +204,7 @@ const StoresUsersPage = () => {
     filterCountry,
     filterCity,
     filterVerification,
+    filterLocation,
     dateFrom,
     dateTo,
   ]);
@@ -203,7 +212,7 @@ const StoresUsersPage = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, search, sortBy, filterCountry, filterCity, filterVerification, dateFrom, dateTo]);
+  }, [activeTab, search, sortBy, filterCountry, filterCity, filterVerification, filterLocation, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(filteredUsers.length / perPage);
   const paginatedUsers = filteredUsers.slice(
@@ -320,6 +329,7 @@ const StoresUsersPage = () => {
     setFilterCountry("");
     setFilterCity("");
     setFilterVerification("");
+    setFilterLocation("");
     setDateFrom("");
     setDateTo("");
   };
@@ -356,6 +366,7 @@ const StoresUsersPage = () => {
     filterCountry ||
     filterCity ||
     filterVerification ||
+    filterLocation ||
     dateFrom ||
     dateTo ||
     sortBy !== "newest";
@@ -632,6 +643,19 @@ const StoresUsersPage = () => {
               }`}
             >
               Not Verified
+            </button>
+            <button
+              onClick={() =>
+                setFilterLocation((prev) => (prev === "missing" ? "" : "missing"))
+              }
+              title="Stores with no latitude/longitude — these don't show as pins on the Discover map"
+              className={`px-4 py-2 text-md font-semibold border-l border-gray-200 transition-colors ${
+                filterLocation === "missing"
+                  ? "bg-red-600 text-white"
+                  : "bg-white text-red-700 hover:bg-red-50"
+              }`}
+            >
+              Missing Location
             </button>
           </div>
         )}
