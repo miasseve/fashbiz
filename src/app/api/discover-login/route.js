@@ -1,10 +1,7 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
-import SsoCode from "@/models/SsoCode";
 import { signIn } from "@/auth";
-import crypto from "crypto";
-
-const CODE_TTL_MS = 2 * 60 * 1000; // 2 minutes — just long enough for the redirect round-trip
+import { validateDiscoverRedirect, issueSsoCode } from "@/lib/discoverRedirect";
 
 // Real Ree credentials, entered on Ree's own domain (so the httpOnly session
 // cookie works normally) — but instead of sending the browser to the Ree
@@ -14,18 +11,9 @@ export async function POST(req) {
   try {
     const { email, password, redirectUri } = await req.json();
 
-    const allowedOrigin = process.env.DISCOVER_APP_ORIGIN;
-    if (!allowedOrigin) {
-      return Response.json({ error: "Discover connection is not configured" }, { status: 500 });
-    }
-    let redirectOrigin;
-    try {
-      redirectOrigin = new URL(redirectUri).origin;
-    } catch {
-      return Response.json({ error: "Invalid redirect" }, { status: 400 });
-    }
-    if (redirectOrigin !== new URL(allowedOrigin).origin) {
-      return Response.json({ error: "Invalid redirect" }, { status: 400 });
+    const redirectCheck = validateDiscoverRedirect(redirectUri);
+    if (!redirectCheck.ok) {
+      return Response.json({ error: redirectCheck.error }, { status: redirectCheck.status });
     }
 
     await dbConnect();
@@ -53,12 +41,7 @@ export async function POST(req) {
       );
     }
 
-    const code = crypto.randomUUID();
-    await SsoCode.create({
-      code,
-      userId: user._id,
-      expiresAt: new Date(Date.now() + CODE_TTL_MS),
-    });
+    const code = await issueSsoCode(user._id);
 
     return Response.json({ ok: true, code });
   } catch (error) {
