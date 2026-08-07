@@ -15,8 +15,9 @@ export function serializePublicStore(store) {
     businessNumber: store.businessNumber || null,
     verified: store.isVerified !== false,
     logo: store.branding?.logoUrl || null,
+    phone: store.phone || null,
   };
 }
 
 export const PUBLIC_STORE_FIELDS =
-  "storename address city state zipcode country latitude longitude businessNumber isVerified branding";
+  "storename address city state zipcode country latitude longitude businessNumber isVerified branding phone";
