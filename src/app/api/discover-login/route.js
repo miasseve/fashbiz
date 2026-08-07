@@ -30,7 +30,14 @@ export async function POST(req) {
 
     await dbConnect();
 
-    const result = await signIn("credentials", { email, password, redirect: false });
+    let result;
+    try {
+      result = await signIn("credentials", { email, password, redirect: false });
+    } catch {
+      // NextAuth throws for bad credentials rather than returning { error }
+      // when called outside a plain form submit — normalize both to a 401.
+      return Response.json({ error: "Invalid email or password" }, { status: 401 });
+    }
     if (result?.error) {
       return Response.json({ error: "Invalid email or password" }, { status: 401 });
     }
