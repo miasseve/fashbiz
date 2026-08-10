@@ -21,10 +21,18 @@ export async function GET(req) {
   try {
     await dbConnect();
 
+    // Was capped at 500, sorted alphabetically — harmless when there were a
+    // few hundred stores total, but once bulk imports pushed the real count
+    // well past that, it silently truncated to an alphabetical slice of
+    // store names with zero relation to geography (e.g. entire cities
+    // missing from the map depending on how their names sorted). Raised
+    // well above current + expected near-term volume; real pagination is
+    // the correct long-term fix if this keeps growing into the tens of
+    // thousands.
     const stores = await User.find({ role: "store" })
       .select(PUBLIC_STORE_FIELDS)
       .sort({ storename: 1 })
-      .limit(500)
+      .limit(5000)
       .lean();
 
     return Response.json({ ok: true, stores: stores.map(serializePublicStore) });
