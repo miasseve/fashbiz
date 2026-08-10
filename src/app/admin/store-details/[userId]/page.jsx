@@ -264,7 +264,7 @@ const StoreDetailPage = () => {
               )}
             </div>
 
-            {user.storename && (
+            {!editingLocation && user.storename && (
               <div className="flex items-center gap-1.5 text-gray-500 text-md mb-3">
                 <FaStore className="text-gray-400" />
                 {user.storename}
@@ -272,11 +272,13 @@ const StoreDetailPage = () => {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 text-[12px]">
-              <div>
-                <span className="font-semibold text-gray-600">Email: </span>
-                <span className="text-gray-800">{user.email}</span>
-              </div>
-              {user.phone && (
+              {!editingLocation && (
+                <div>
+                  <span className="font-semibold text-gray-600">Email: </span>
+                  <span className="text-gray-800">{user.email}</span>
+                </div>
+              )}
+              {!editingLocation && user.phone && (
                 <div>
                   <span className="font-semibold text-gray-600">Phone: </span>
                   <span className="text-gray-800">{user.phone}</span>
