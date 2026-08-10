@@ -7,6 +7,11 @@ import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEd
 import { MdCheckCircle, MdCancel, MdWarning, MdToggleOn, MdToggleOff } from "react-icons/md";
 
 const LOCATION_EDIT_FIELDS = [
+  { key: "storename", label: "Store Name" },
+  { key: "firstname", label: "Owner First Name" },
+  { key: "lastname", label: "Owner Last Name" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
   { key: "address", label: "Address" },
   { key: "city", label: "City" },
   { key: "state", label: "State" },
@@ -82,6 +87,11 @@ const StoreDetailPage = () => {
 
   const startEditingLocation = () => {
     setLocationForm({
+      storename: data.user.storename || "",
+      firstname: data.user.firstname || "",
+      lastname: data.user.lastname || "",
+      email: data.user.email || "",
+      phone: data.user.phone || "",
       address: data.user.address || "",
       city: data.user.city || "",
       state: data.user.state || "",

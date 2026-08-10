@@ -78,11 +78,39 @@ export async function PATCH(request, { params }) {
       update.shopifyStoreCreated = body.shopifyStoreCreated;
     }
 
-    const stringFields = ["address", "city", "state", "zipcode", "businessNumber"];
+    const stringFields = [
+      "address",
+      "city",
+      "state",
+      "zipcode",
+      "businessNumber",
+      "storename",
+      "firstname",
+      "lastname",
+      "phone",
+    ];
     for (const field of stringFields) {
       if (typeof body[field] === "string") {
         update[field] = body[field].trim();
       }
+    }
+
+    if (typeof body.email === "string") {
+      const email = body.email.trim().toLowerCase();
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email cannot be empty" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      const existing = await User.findOne({ email, _id: { $ne: userId } }).select("_id");
+      if (existing) {
+        return new Response(JSON.stringify({ error: "Email already in use by another account" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      update.email = email;
     }
 
     // A blank field means "clear this" — distinct from the field being
@@ -132,7 +160,7 @@ export async function PATCH(request, { params }) {
       new: true,
       runValidators: true,
     }).select(
-      "shopifyStoreCreated address city state zipcode businessNumber latitude longitude isVerified"
+      "shopifyStoreCreated address city state zipcode businessNumber latitude longitude isVerified storename firstname lastname phone email"
     );
 
     if (!updated) {
