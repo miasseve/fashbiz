@@ -16,6 +16,11 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   phone: { type: String },
+  // Public business contact email (e.g. scraped from a CVR registry import) —
+  // kept separate from `email`, which is the login credential and must stay
+  // unique. A store's real-world contact address shouldn't collide with or
+  // silently become someone's login just because it appeared in an import.
+  contactEmail: { type: String },
   address: { type: String },
   city: { type: String },
   state: { type: String },

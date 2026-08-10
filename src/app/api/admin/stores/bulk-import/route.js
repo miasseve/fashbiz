@@ -18,6 +18,8 @@ const FIELD_ALIASES = {
   businessNumber: ["businessnumber", "cvr", "cvr_number", "cvrnumber", "vat", "vat_number"],
   latitude: ["latitude", "lat"],
   longitude: ["longitude", "lng", "lon", "long"],
+  phone: ["phone", "telefonnr", "telefon", "phonenumber", "phone_number", "tel"],
+  contactEmail: ["contactemail", "contact_email", "email", "e-mail"],
 };
 
 function getField(row, canonicalKey) {
@@ -114,6 +116,8 @@ export async function POST(request) {
       const city = getField(row, "city");
       const state = getField(row, "state");
       const zipcode = getField(row, "zipcode");
+      const phone = getField(row, "phone");
+      const contactEmail = getField(row, "contactEmail");
 
       // Name first (per Mia's request), CVR as fallback. Note: matching by
       // name carries more risk of merging two unrelated stores that happen
@@ -150,6 +154,8 @@ export async function POST(request) {
         if (businessNumber) update.businessNumber = businessNumber;
         if (latitude !== undefined) update.latitude = latitude;
         if (longitude !== undefined) update.longitude = longitude;
+        if (phone) update.phone = phone;
+        if (contactEmail) update.contactEmail = contactEmail;
 
         try {
           await User.findByIdAndUpdate(match._id, update, { runValidators: true });
@@ -182,6 +188,8 @@ export async function POST(request) {
         state,
         zipcode,
         address,
+        phone: phone || undefined,
+        contactEmail: contactEmail || undefined,
         businessNumber: businessNumber || undefined,
         latitude,
         longitude,
