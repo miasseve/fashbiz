@@ -56,6 +56,11 @@ const PRODUCT_RESPONSE_SCHEMA = {
           type: "number",
           description: "0 to 1 confidence in the analysis",
         },
+        price_tag_amount: {
+          type: ["number", "null"],
+          description:
+            "The numeric price read directly off a visible physical price tag in the image, in the tag's own currency units (e.g. a tag reading '59 KR' → 59). Only set this when a price is clearly and unambiguously legible — null if no price tag is visible, or if it's blurry, handwritten and unclear, partially obscured, or otherwise not confidently readable. Never guess or estimate a price.",
+        },
       },
       required: [
         "title",
@@ -70,6 +75,7 @@ const PRODUCT_RESPONSE_SCHEMA = {
         "condition_notes",
         "shopify_tags",
         "confidence_score",
+        "price_tag_amount",
       ],
       additionalProperties: false,
     },
@@ -154,7 +160,8 @@ export async function analyzeProductImages(imageUrls, storeId) {
         - Tags: include product type, gender (men/women/unisex), color, style (casual/formal/vintage)
         - confidence_score: rate 0-1 based on image clarity and label visibility. Multiple clear images should increase confidence.
         - Description: write a short (1-2 sentence) resale-ready product description
-        - Do NOT invent brands — if no brand visible, use "Unbranded"`,
+        - Do NOT invent brands — if no brand visible, use "Unbranded"
+        - price_tag_amount: only set this if a physical price tag is visible AND its price is clearly, unambiguously legible. If there's no tag, or it's blurry/handwritten/obscured/uncertain in any way, return null — never guess a price`,
       },
       {
         role: "user",

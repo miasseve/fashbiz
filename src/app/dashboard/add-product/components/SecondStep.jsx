@@ -222,6 +222,14 @@ const SecondStep = ({
               setValue("tags", data.shopify_tags);
             }
 
+            // Price read directly off a visible tag — only set when the AI
+            // was confident enough to return one (see price_tag_amount in
+            // the shared schema); otherwise the field stays blank for
+            // manual entry, same as if this feature didn't run at all.
+            if (!pointsEnabled && data.price_tag_amount) {
+              setValue("price", String(data.price_tag_amount), { shouldValidate: true });
+            }
+
             // Fetch AI price suggestion based on store history (skip for demo)
             if (!pointsEnabled && !isDemo && data.category) {
               axios

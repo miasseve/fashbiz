@@ -369,6 +369,11 @@ export function normalizeProductResponse(raw) {
   // Flag low confidence for manual review
   const needsReview = (raw.confidence_score || 0) < 0.6;
 
+  const priceTagAmount =
+    typeof raw.price_tag_amount === "number" && Number.isFinite(raw.price_tag_amount) && raw.price_tag_amount > 0
+      ? raw.price_tag_amount
+      : null;
+
   return {
     title: raw.title?.trim() || "",
     brand,
@@ -386,5 +391,6 @@ export function normalizeProductResponse(raw) {
     value_score: rewardPoints,
     confidence_score: raw.confidence_score || 0,
     needsReview,
+    price_tag_amount: priceTagAmount,
   };
 }
