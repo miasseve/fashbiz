@@ -22,15 +22,19 @@ export async function POST(req) {
 
     await dbConnect();
 
-    const images = [];
-    for (const dataUrl of rawImages) {
-      if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
-      const uploaded = await cloudinary.v2.uploader.upload(dataUrl, {
-        folder: "nm-demo",
-        format: "webp",
-      });
-      images.push({ url: uploaded.secure_url, publicId: uploaded.public_id });
-    }
+    // Uploaded in parallel (was sequential — each extra photo added its full
+    // upload time on top of the last) and tolerant of a single bad image:
+    // one corrupt/unsupported photo shouldn't sink the whole request when
+    // the other photo(s) are fine.
+    const validDataUrls = rawImages.filter((u) => typeof u === "string" && u.startsWith("data:"));
+    const uploadResults = await Promise.allSettled(
+      validDataUrls.map((dataUrl) =>
+        cloudinary.v2.uploader.upload(dataUrl, { folder: "nm-demo", format: "webp" })
+      )
+    );
+    const images = uploadResults
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => ({ url: r.value.secure_url, publicId: r.value.public_id }));
 
     if (!images.length) {
       return Response.json({ error: "At least one valid image is required" }, { status: 400 });
