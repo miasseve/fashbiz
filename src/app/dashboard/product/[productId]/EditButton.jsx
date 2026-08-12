@@ -19,7 +19,7 @@ import { updateProduct } from "@/actions/productActions";
 import { useDispatch } from "react-redux";
 import { updateProductInCart } from "@/features/cartSlice";
 import { FiEdit2 } from "react-icons/fi";
-import { FaTimes, FaPlus, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaPlus, FaSpinner, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import axios from "axios";
 
 const EditButton = ({ product }) => {
@@ -118,6 +118,19 @@ const EditButton = ({ product }) => {
     }
   };
 
+  // The first photo becomes the hero image everywhere it's shown (Ree,
+  // webstore, Instagram) — this lets the store pick which one that is,
+  // instead of it always being whatever was uploaded first.
+  const moveImage = (index, direction) => {
+    setImages((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
   const handleRemoveImage = async (publicId) => {
     setDeletingPublicId(publicId);
     try {
@@ -164,8 +177,11 @@ const EditButton = ({ product }) => {
                   <label className="text-sm font-medium block mb-2">
                     Photos
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    The first photo is the main one shown everywhere — use the arrows to reorder.
+                  </p>
                   <div className="flex flex-wrap gap-3">
-                    {images.map((img) => (
+                    {images.map((img, index) => (
                       <div
                         key={img.publicId}
                         className="relative w-20 h-20 rounded-lg overflow-hidden border"
@@ -175,6 +191,11 @@ const EditButton = ({ product }) => {
                           alt="Product"
                           className="w-full h-full object-cover"
                         />
+                        {index === 0 && (
+                          <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] text-center py-0.5">
+                            Main
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(img.publicId)}
@@ -187,6 +208,27 @@ const EditButton = ({ product }) => {
                             <FaTimes size={10} />
                           )}
                         </button>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(index, -1)}
+                            className="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                            title="Move earlier"
+                          >
+                            <FaChevronLeft size={9} />
+                          </button>
+                        )}
+                        {index < images.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(index, 1)}
+                            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                            style={{ right: "1.5rem" }}
+                            title="Move later"
+                          >
+                            <FaChevronRight size={9} />
+                          </button>
+                        )}
                       </div>
                     ))}
                     <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer text-gray-400 hover:text-gray-600 hover:border-gray-400">
