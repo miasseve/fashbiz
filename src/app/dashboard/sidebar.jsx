@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { RiProductHuntFill } from "react-icons/ri";
 
-import { FaHandHoldingUsd } from "react-icons/fa";
+import { FaHandHoldingUsd, FaInstagram, FaGlobe, FaTags } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { CiBoxList } from "react-icons/ci";
@@ -81,6 +81,22 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     );
   }
 
+  // Same subscriptionType heuristic already used on the Profile page's
+  // webstore tab — kept in sync here so the sidebar's "connected" dot
+  // matches what actually gates access elsewhere in the dashboard.
+  const subType = session.data?.user?.subscriptionType?.toLowerCase() || "";
+  const hasWebstoreAccess =
+    subType.includes("webstore") ||
+    subType.includes("plugin") ||
+    subType.includes("plug") ||
+    subType === "pro" ||
+    subType === "business";
+  // Matches ProductList.jsx's canPostToInstagram check exactly.
+  const canPostToInstagram =
+    session.data?.user?.subscriptionType === "free" ||
+    session.data?.user?.subscriptionType === "Pro" ||
+    session.data?.user?.subscriptionType === "Business";
+
   const menuItems = [
     {
       href: "/dashboard/profile",
@@ -137,11 +153,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: "Stripe Connect",
       icon: <PiStripeLogoFill />,
     },
-    session.data?.user?.role !== "consignor" && {
-      href: "/dashboard/subscription-plan",
-      label: "Subscription Plan",
-      icon: <IoQrCode />,
-    },
+    // Subscription Plan moved to render at the very bottom of the sidebar,
+    // below the connections section — see the bottom of this file.
     {
       href: "/dashboard/payment-history",
       label: "Transaction History",
@@ -150,7 +163,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   ].filter(Boolean);
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
         {/* <img src="/fashlogo.svg" className="w-[132px] mx-auto" /> */}
         <img src="/new_ree_icon.png" className="w-[92px] mx-auto py-[12px]" />
@@ -171,7 +184,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </>
         )}
       </div>
-      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
+      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto">
         {menuItems.map(({ href, label, icon }) => (
           <Link
             key={href}
@@ -187,8 +200,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </Link>
         ))}
 
-        {/* Ree Collect and Invite Store - store role only */}
-        {session.data?.user?.role === "store" && (
+        {/* Ree Collect — hidden for now per Mia's request ("we dont need the
+            collect button for now"). Left in place, not deleted, in case
+            it needs to come back. */}
+        {false && session.data?.user?.role === "store" && (
           <>
             {!session.data?.user?.points_mode && (
               <Link
@@ -206,20 +221,100 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 <span className="ml-2">Ree Collect</span>
               </Link>
             )}
-
-            <Link
-              href="/dashboard/invite-store"
-              onClick={() => isSidebarOpen && toggleSidebar()}
-              className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
-                pathname === "/dashboard/invite-store"
-                  ? "bg-[#ffd7d7] text-black"
-                  : "hover:bg-[#ffd7d7] hover:text-black"
-              }`}
-            >
-              <FaHandHoldingUsd className="text-[1.3rem]" />
-              <span className="ml-2">Invite a store</span>
-            </Link>
           </>
+        )}
+
+        {/* Connections — Webstore/Instagram reflect real subscription access;
+            Vinted Pro has no backend integration yet, so it always shows as
+            not-connected regardless of plan. */}
+        {session.data?.user?.role === "store" && (
+          <div className="w-full px-3 pt-6 pb-2">
+            <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-2 px-1">
+              Connections
+            </p>
+            {[
+              {
+                key: "webstore",
+                label: "Webstore",
+                icon: <FaGlobe className="text-[1.1rem]" />,
+                active: hasWebstoreAccess,
+                href: hasWebstoreAccess ? "/dashboard/profile" : "/dashboard/subscription-plan",
+              },
+              {
+                key: "vinted",
+                label: "Vinted Pro",
+                icon: <FaTags className="text-[1.1rem]" />,
+                active: false,
+                comingSoon: true,
+              },
+              {
+                key: "instagram",
+                label: "Instagram",
+                icon: <FaInstagram className="text-[1.1rem]" />,
+                active: canPostToInstagram,
+                href: canPostToInstagram ? "/dashboard/store" : "/dashboard/subscription-plan",
+              },
+            ].map((c) =>
+              c.comingSoon ? (
+                <div
+                  key={c.key}
+                  className="w-full px-2 py-2 flex items-center justify-between text-gray-400 cursor-not-allowed"
+                  title="Coming soon"
+                >
+                  <span className="flex items-center gap-2 text-[1rem]">
+                    {c.icon} {c.label}
+                  </span>
+                  <span className="text-[10px] uppercase font-semibold">Soon</span>
+                </div>
+              ) : (
+                <Link
+                  key={c.key}
+                  href={c.href}
+                  onClick={() => isSidebarOpen && toggleSidebar()}
+                  className="w-full px-2 py-2 flex items-center justify-between text-black hover:bg-[#ffd7d7] rounded"
+                >
+                  <span className="flex items-center gap-2 text-[1rem]">
+                    {c.icon} {c.label}
+                  </span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${c.active ? "bg-green-500" : "bg-gray-300"}`}
+                    title={c.active ? "Connected" : "Not connected"}
+                  />
+                </Link>
+              ),
+            )}
+          </div>
+        )}
+
+        {session.data?.user?.role === "store" && (
+          <Link
+            href="/dashboard/invite-store"
+            onClick={() => isSidebarOpen && toggleSidebar()}
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
+              pathname === "/dashboard/invite-store"
+                ? "bg-[#ffd7d7] text-black"
+                : "hover:bg-[#ffd7d7] hover:text-black"
+            }`}
+          >
+            <FaHandHoldingUsd className="text-[1.3rem]" />
+            <span className="ml-2">Invite a store</span>
+          </Link>
+        )}
+
+        {/* Subscription Plan — moved to the bottom of the sidebar per Mia's request. */}
+        {session.data?.user?.role !== "consignor" && (
+          <Link
+            href="/dashboard/subscription-plan"
+            onClick={() => isSidebarOpen && toggleSidebar()}
+            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-auto ${
+              pathname === "/dashboard/subscription-plan"
+                ? "bg-[#ffd7d7] text-black"
+                : "hover:bg-[#ffd7d7] hover:text-black"
+            }`}
+          >
+            <IoQrCode />
+            <span className="ml-2">Subscription Plan</span>
+          </Link>
         )}
       </nav>
       <div className="sidebar-footer border-t border-[#dedede] py-[16px] text-center">
