@@ -16,7 +16,7 @@ const NotificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["sold", "order", "system", "reminder"],
+      enum: ["sold", "order", "system", "reminder", "reservation", "reservation_cancelled"],
       default: "sold",
     },
     title: { type: String, required: true },

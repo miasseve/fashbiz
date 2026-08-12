@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import Reservation from "@/models/Reservation";
+import Notification from "@/models/Notification";
 import { requireApiKey, handlePreflight } from "@/lib/apiKeyMiddleware";
 import { RESERVATION_WINDOW_MS, getActiveReservation } from "@/lib/reservationLib";
 
@@ -52,6 +53,22 @@ export async function POST(req) {
       state: "RESERVED",
       expiresAt: new Date(Date.now() + RESERVATION_WINDOW_MS),
     });
+
+    // Store-side heads up — the store otherwise has no way to know a hold
+    // exists until the shopper physically shows up. Best-effort: the
+    // reservation itself is already committed, so a notification hiccup
+    // shouldn't fail the whole request.
+    try {
+      await Notification.create({
+        userId: reservation.storeId,
+        productId: reservation.productId,
+        type: "reservation",
+        title: "New reservation",
+        message: `Someone reserved "${product.title}" — hold it for them for the next 8 hours.`,
+      });
+    } catch (notifyError) {
+      console.error("Reservation notification error:", notifyError);
+    }
 
     return Response.json({ ok: true, ...serialize(reservation) }, { status: 201 });
   } catch (error) {

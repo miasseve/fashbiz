@@ -1,4 +1,6 @@
 import dbConnect from "@/lib/db";
+import Product from "@/models/Product";
+import Notification from "@/models/Notification";
 import { requireApiKey, handlePreflight } from "@/lib/apiKeyMiddleware";
 import { getReservationById } from "@/lib/reservationLib";
 
@@ -24,6 +26,20 @@ export async function POST(req, { params }) {
 
     reservation.state = "CANCELLED";
     await reservation.save();
+
+    // Best-effort — the cancellation itself is already committed.
+    try {
+      const product = await Product.findById(reservation.productId).select("title");
+      await Notification.create({
+        userId: reservation.storeId,
+        productId: reservation.productId,
+        type: "reservation_cancelled",
+        title: "Reservation cancelled",
+        message: `The hold on "${product?.title || "a product"}" was cancelled — it's available again.`,
+      });
+    } catch (notifyError) {
+      console.error("Reservation cancel notification error:", notifyError);
+    }
 
     return Response.json({ ok: true, state: reservation.state });
   } catch (error) {
