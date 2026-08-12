@@ -1191,6 +1191,41 @@ export async function deleteProductByIdAndWix(
   }
 }
 
+// Bulk version of deleteProductByIdAndWix — same per-product ownership check
+// and Shopify cleanup, just looped for a multi-select "delete these" action.
+export async function deleteProductsByIds(productIds) {
+  try {
+    const session = await auth();
+    if (!session) {
+      throw new Error("User is not authenticated");
+    }
+
+    await dbConnect();
+
+    let deleted = 0;
+    for (const productId of productIds) {
+      const dbProduct = await Product.findById(productId);
+      if (!dbProduct) continue;
+      if (dbProduct.userId.toString() !== session.user.id) continue;
+
+      if (dbProduct.shopifyProductId) {
+        try {
+          await deleteShopifyProduct([dbProduct]);
+        } catch (error) {
+          console.log(error, "error");
+        }
+      }
+
+      await Product.deleteOne({ _id: productId });
+      deleted++;
+    }
+
+    return { status: 200, message: "Products deleted successfully", deleted };
+  } catch (error) {
+    return { status: 500, error: error.message || "Something went wrong" };
+  }
+}
+
 export async function unlinkProductFromWix(productIds) {
   try {
     const session = await auth();

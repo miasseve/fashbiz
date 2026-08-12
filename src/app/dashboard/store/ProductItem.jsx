@@ -12,16 +12,19 @@ const ProductItem = ({
   isGrid,
   isSelected = false,
   isInstagramSelected = false,
+  isDeleteSelected = false,
   onSelectionChange = () => {},
   onInstagramSelectionChange = () => {},
+  onDeleteSelectionChange = () => {},
   selectionMode = false,
   instagramMode = false,
+  deleteMode = false,
   instagramLimitReached = false,
 }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    if (!selectionMode && !instagramMode) {
+    if (!selectionMode && !instagramMode && !deleteMode) {
       router.push(`/dashboard/product/${product._id}`);
     }
   };
@@ -34,6 +37,10 @@ const ProductItem = ({
     onInstagramSelectionChange(product._id, checked);
   };
 
+  const handleDeleteCheckboxChange = (checked) => {
+    onDeleteSelectionChange(product._id, checked);
+  };
+
   const hasWixProductId = product.wixProductId && product.wixProductId !== "";
   const isUnlinked = !hasWixProductId;
   const hasInstagramPost = product.hasInstagramPost || false;
@@ -44,9 +51,21 @@ const ProductItem = ({
         <>
           <Card
             className={`p-[10px] h-full w-full max-w-full md:max-w-md lg:max-w-lg border-none rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.2)] group relative ${
-              isSelected || isInstagramSelected ? "ring-2 ring-blue-500" : ""
+              isSelected || isInstagramSelected || isDeleteSelected ? "ring-2 ring-blue-500" : ""
             }`}
           >
+            {/* Delete Selection Checkbox - Top Left */}
+            {deleteMode && (
+              <div className="absolute top-4 left-4 z-10">
+                <Checkbox
+                  isSelected={isDeleteSelected}
+                  onValueChange={handleDeleteCheckboxChange}
+                  size="lg"
+                  className="bg-white rounded-md shadow-md"
+                />
+              </div>
+            )}
+
             {/* Selection Checkbox or Status Indicator - Top Left */}
             {selectionMode && (
               <div className="absolute top-4 left-4 z-10">
@@ -159,7 +178,7 @@ const ProductItem = ({
         // Line (List) view layout
         <div
           className={`flex items-center bg-[white] p-[10px] rounded-[8px] items-start mb-6 group relative ${
-            isSelected || isInstagramSelected ? "ring-2 ring-blue-500" : ""
+            isSelected || isInstagramSelected || isDeleteSelected ? "ring-2 ring-blue-500" : ""
           }`}
         >
           {/* Unlinked Indicator - Top Left Corner */}
@@ -175,6 +194,17 @@ const ProductItem = ({
             <div className="absolute -top-2 -left-2 z-20 bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
               <InstagramIcon size={14} />
               Posted
+            </div>
+          )}
+
+          {/* Delete Selection Checkbox - Left Side */}
+          {deleteMode && (
+            <div className="mr-4 flex items-center">
+              <Checkbox
+                isSelected={isDeleteSelected}
+                onValueChange={handleDeleteCheckboxChange}
+                size="lg"
+              />
             </div>
           )}
 

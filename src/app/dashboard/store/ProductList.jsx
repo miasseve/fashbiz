@@ -3,11 +3,12 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProductItem from "./ProductItem";
 import { Button } from "@heroui/react";
-import { GridIcon, List, CheckSquare, X, InstagramIcon } from "lucide-react";
+import { GridIcon, List, CheckSquare, X, InstagramIcon, Trash2 } from "lucide-react";
 import {
   unlinkProductFromWix,
   createBulkInstagramPosts,
   getInstagramPendingStatus,
+  deleteProductsByIds,
 } from "@/actions/productActions";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
@@ -24,6 +25,12 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
     new Set(),
   );
   const [isCreatingPosts, setIsCreatingPosts] = useState(false);
+
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedDeleteProducts, setSelectedDeleteProducts] = useState(
+    new Set(),
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   // Poll for Instagram post completion and auto-refresh
@@ -114,6 +121,60 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
     }
   };
 
+  const handleDeleteSelectionChange = (productId, isSelected) => {
+    const newSelection = new Set(selectedDeleteProducts);
+    if (isSelected) {
+      newSelection.add(productId);
+    } else {
+      newSelection.delete(productId);
+    }
+    setSelectedDeleteProducts(newSelection);
+  };
+
+  const handleBulkDelete = async () => {
+    const productIds = Array.from(selectedDeleteProducts);
+
+    if (productIds.length === 0) {
+      toast.error("Please select at least one product to delete");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: `Delete ${productIds.length} product${productIds.length > 1 ? "s" : ""}?`,
+      text: "This can't be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, keep it",
+      reverseButtons: true,
+      customClass: {
+        confirmButton: "btn-danger",
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await deleteProductsByIds(productIds);
+      if (response.status === 200) {
+        toast.success(
+          `Successfully deleted ${response.deleted} product${response.deleted > 1 ? "s" : ""}`,
+        );
+        setSelectedDeleteProducts(new Set());
+        setDeleteMode(false);
+        router.refresh();
+      } else {
+        toast.error(`Failed to delete products: ${response.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error deleting products:", error);
+      toast.error("An error occurred while deleting products");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleBulkInstagramPost = async () => {
     const productIds = Array.from(selectedInstagramProducts);
 
@@ -169,6 +230,7 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
   };
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode);
+    setDeleteMode(false);
     if (selectionMode) {
       setSelectedProducts(new Set());
     }
@@ -176,8 +238,17 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
   const toggleInstagramMode = () => {
     setInstagramMode(!instagramMode);
     setSelectionMode(false);
+    setDeleteMode(false);
     if (instagramMode) {
       setSelectedInstagramProducts(new Set());
+    }
+  };
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectionMode(false);
+    setInstagramMode(false);
+    if (deleteMode) {
+      setSelectedDeleteProducts(new Set());
     }
   };
 
@@ -196,8 +267,8 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
         {/* Left Controls */}
         <div className="flex flex-col gap-3 w-full">
           {/* Top row: Unlink + Menu (same row even on mobile) */}
-          <div className="flex justify-between items-center gap-3">
-            {!selectionMode && !instagramMode ? (
+          <div className="flex justify-between items-center gap-3 flex-wrap">
+            {!selectionMode && !instagramMode && !deleteMode ? (
               <>
                 <Button
                   onPress={toggleSelectionMode}
@@ -206,6 +277,15 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
                 >
                   <CheckSquare size={20} />
                   Click to Unlink
+                </Button>
+
+                <Button
+                  onPress={toggleDeleteMode}
+                  className="font-semibold p-7 border border-red-600 rounded-[4px] text-black bg-white"
+                  isDisabled={products.length === 0}
+                >
+                  <Trash2 size={20} />
+                  Select to Delete
                 </Button>
 
                 <Button
@@ -220,7 +300,7 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
           </div>
 
           {/* Bottom row: Instagram button (mobile bottom, desktop inline) - Pro and Business only */}
-          {canPostToInstagram && !selectionMode && !instagramMode && (
+          {canPostToInstagram && !selectionMode && !instagramMode && !deleteMode && (
             <Button
               onPress={toggleInstagramMode}
               className="font-semibold p-7 border border-blue-500 rounded-[4px] text-black bg-white w-full sm:w-[30%]"
@@ -287,6 +367,35 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
               )}
             </div>
           )}
+
+          {/* Delete Mode */}
+          {deleteMode && (
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                onPress={toggleDeleteMode}
+                variant="ghost"
+                isDisabled={isDeleting}
+                className="font-semibold p-7 border border-gray-300 rounded-[4px] text-black bg-white"
+              >
+                <X size={20} />
+                Cancel
+              </Button>
+
+              {selectedDeleteProducts.size > 0 && (
+                <Button
+                  onPress={handleBulkDelete}
+                  isLoading={isDeleting}
+                  isDisabled={isDeleting}
+                  className="font-semibold p-7 rounded-[4px] text-white bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 size={20} />
+                  {isDeleting
+                    ? "Deleting..."
+                    : `Delete ${selectedDeleteProducts.size} Product${selectedDeleteProducts.size > 1 ? "s" : ""}`}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -345,6 +454,16 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
         </div>
       )}
 
+      {/* Delete Selection Info */}
+      {deleteMode && (
+        <div className="mx-[15px] mb-4 p-3 w-fit bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800">
+            <strong>{selectedDeleteProducts.size}</strong> of{" "}
+            <strong>{products.length}</strong> products selected
+          </p>
+        </div>
+      )}
+
       {/* Product List */}
       <div
         className={`${
@@ -360,10 +479,13 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
             isGrid={isGrid}
             selectionMode={selectionMode}
             instagramMode={instagramMode}
+            deleteMode={deleteMode}
             isSelected={selectedProducts.has(product._id)}
             isInstagramSelected={selectedInstagramProducts.has(product._id)}
+            isDeleteSelected={selectedDeleteProducts.has(product._id)}
             onSelectionChange={handleSelectionChange}
             onInstagramSelectionChange={handleInstagramSelectionChange}
+            onDeleteSelectionChange={handleDeleteSelectionChange}
             instagramLimitReached={selectedInstagramProducts.size >= 10}
           />
         ))}
