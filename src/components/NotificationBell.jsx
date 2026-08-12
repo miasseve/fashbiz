@@ -6,8 +6,10 @@ import { IoMailUnreadOutline, IoMailOpenOutline } from "react-icons/io5";
 import { FiExternalLink } from "react-icons/fi";
 import { FaBoxOpen } from "react-icons/fa6";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const NotificationBell = () => {
+  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -168,7 +170,12 @@ const NotificationBell = () => {
                   No notifications yet
                 </div>
               ) : (
-                notifications.map((notification) => (
+                notifications.map((notification) => {
+                  // Populated by the API when the notification references a
+                  // product (e.g. a reservation) — a plain id, or absent for
+                  // store-wide notifications like the daily reminder.
+                  const productId = notification.productId?._id;
+                  return (
                   <div
                     key={notification._id}
                     className={`px-4 sm:px-5 py-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -195,6 +202,10 @@ const NotificationBell = () => {
                                   notification._id,
                                   notification.isRead,
                                 );
+                              if (productId) {
+                                setIsOpen(false);
+                                router.push(`/dashboard/product/${productId}`);
+                              }
                             }}
                           >
                             <p className="text-[14px] sm:text-[15px] font-semibold text-gray-900">
@@ -203,6 +214,11 @@ const NotificationBell = () => {
                             <p className="text-[12px] sm:text-[13px] text-gray-500 mt-1">
                               {notification.message}
                             </p>
+                            {productId && (
+                              <p className="text-[12px] sm:text-[13px] text-blue-600 mt-1 inline-flex items-center gap-1">
+                                View product <FiExternalLink size={12} />
+                              </p>
+                            )}
                           </div>
                           <button
                             onClick={() =>
@@ -271,7 +287,8 @@ const NotificationBell = () => {
                       </div>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 
