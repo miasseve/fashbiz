@@ -107,6 +107,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       href: "/dashboard/store",
       label: "Store",
       icon: <FaStore />,
+      // A product's own detail page is reached FROM the store's product
+      // list — it should still read as "you're in Store", not lose the
+      // highlight just because the URL isn't an exact match.
+      isActive: (path) => path === "/dashboard/store" || path.startsWith("/dashboard/product"),
     },
     {
       href: "/dashboard/add-product",
@@ -185,13 +189,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         )}
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto">
-        {menuItems.map(({ href, label, icon }) => (
+        {menuItems.map(({ href, label, icon, isActive }) => (
           <Link
             key={href}
             href={href}
             onClick={() => isSidebarOpen && toggleSidebar()}
             className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
-              pathname === href
+              (isActive ? isActive(pathname) : pathname === href)
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
             }`}
