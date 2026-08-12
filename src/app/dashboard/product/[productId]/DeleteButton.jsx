@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { Button } from "@heroui/react";
 import { useDispatch } from "react-redux";
 import { FiTrash2 } from "react-icons/fi";
-const DeleteButton = ({ product }) => {
+const DeleteButton = ({ product, compact = false }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,20 @@ const DeleteButton = ({ product }) => {
       setLoading(false); // Stop loader (just in case)
     }
   };
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={loading}
+        title="Delete product"
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+      >
+        <FiTrash2 size={15} />
+      </button>
+    );
+  }
 
   return (
     <Button onPress={handleDelete} disabled={loading} className={`danger-btn`}>

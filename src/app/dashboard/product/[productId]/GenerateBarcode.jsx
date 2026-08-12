@@ -1,6 +1,6 @@
 "use client";
 import bwipjs from "bwip-js";
-import { FaBarcode } from "react-icons/fa6";
+import { FaBarcode, FaPrint, FaDownload } from "react-icons/fa6";
 import React, { useEffect, useRef } from "react";
 import {
   Button,
@@ -20,6 +20,10 @@ export default function GenerateBarcode({
   currency,
   onClose,
   autoOpen = false,
+  // Renders the barcode directly inline (product card's bottom section)
+  // instead of behind a "Generate Barcode" button + modal — same generation
+  // and print/download logic either way, just always visible.
+  inline = false,
 }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const canvasRef = useRef(null);
@@ -39,9 +43,9 @@ export default function GenerateBarcode({
     }
   };
 
-  // Generate barcode whenever modal opens
+  // Generate barcode on mount when inline, or whenever the modal opens.
   useEffect(() => {
-    if (isOpen && canvasRef.current && barcode) {
+    if ((inline || isOpen) && canvasRef.current && barcode) {
       try {
         bwipjs.toCanvas(canvasRef.current, {
           bcid: "code128",
@@ -317,6 +321,33 @@ export default function GenerateBarcode({
       console.error("Print barcode generation error:", e);
     }
   };
+
+  if (inline) {
+    if (!barcode) return null;
+    return (
+      <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+        <canvas ref={canvasRef} className="max-w-[70%]" />
+        <div className="flex gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={printBarcode}
+            title="Print barcode"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+          >
+            <FaPrint size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={downloadBarcode}
+            title="Download barcode"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+          >
+            <FaDownload size={13} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

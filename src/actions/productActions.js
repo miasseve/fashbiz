@@ -1345,6 +1345,42 @@ export async function updateProduct(productId, data) {
   }
 }
 
+// One-click "mark sold / delist" for the product page's manual button —
+// same effect a barcode scan already triggers (via /api/product-barcode),
+// just reachable directly without needing a physical scan first. Ownership
+// is checked here since soldProductsByIds itself trusts its caller to have
+// already done that (the barcode route does the same check before calling it).
+export async function markProductSoldManually(productId) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    await dbConnect();
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return { status: 404, error: "Product not found" };
+    }
+    if (String(product.userId) !== session.user.id) {
+      return { status: 403, error: "This product belongs to a different store" };
+    }
+    if (product.sold) {
+      return { status: 400, error: "Already marked sold" };
+    }
+
+    const result = await soldProductsByIds([product._id]);
+    if (result.status && result.status !== 200) {
+      return { status: 500, error: result.message || "Failed to mark sold" };
+    }
+
+    return { status: 200, message: "Marked sold" };
+  } catch (error) {
+    return { status: 500, error: error.message || "Something went wrong" };
+  }
+}
+
 export async function soldProductsByIds(productIds, transactionData = {}) {
   try {
     const session = await auth();

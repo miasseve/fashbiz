@@ -22,7 +22,7 @@ import { FiEdit2 } from "react-icons/fi";
 import { FaTimes, FaPlus, FaSpinner, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import axios from "axios";
 
-const EditButton = ({ product }) => {
+const EditButton = ({ product, compact = false }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -145,10 +145,21 @@ const EditButton = ({ product }) => {
 
   return (
     <>
-      <Button onPress={onOpen} className="auth-btn">
-        <FiEdit2 size={18} />
-        Edit Product
-      </Button>
+      {compact ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          title="Edit product"
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+        >
+          <FiEdit2 size={15} />
+        </button>
+      ) : (
+        <Button onPress={onOpen} className="auth-btn">
+          <FiEdit2 size={18} />
+          Edit Product
+        </Button>
+      )}
 
       <Modal
         backdrop="blur"
