@@ -9,13 +9,14 @@ const NotificationSchema = new mongoose.Schema(
       index: true,
     },
     productId: {
+      // Optional — "reminder" notifications are store-wide, not tied to one
+      // product.
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
     },
     type: {
       type: String,
-      enum: ["sold", "order", "system"],
+      enum: ["sold", "order", "system", "reminder"],
       default: "sold",
     },
     title: { type: String, required: true },

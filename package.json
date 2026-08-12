@@ -28,6 +28,8 @@
     "@wix/ecom": "^1.0.1005",
     "@wix/sdk": "^1.15.14",
     "@wix/stores": "^1.0.391",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.21.3",
     "autoprefixer": "^10.4.24",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",

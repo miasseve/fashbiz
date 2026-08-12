@@ -16,6 +16,7 @@ import { FaHandHoldingUsd } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { CiBoxList } from "react-icons/ci";
+import BarcodeScannerModal from "@/components/BarcodeScannerModal";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const session = useSession();
@@ -32,24 +33,29 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         if (!scanned) return;
 
         try {
-          // Call API to convert scanned barcode → productId
-          const res = await fetch(`/api/product-barcode?barcode=${scanned}`);
+          // Scan-to-delist: marks the product sold and delists it everywhere
+          // (same as a real Shopify sale would), rather than just opening
+          // the product page for a manual toggle. Input stays focused so a
+          // store owner can scan several sold items back-to-back.
+          const res = await fetch("/api/product-barcode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ barcode: scanned }),
+          });
           const data = await res.json();
 
-          if (data.error) {
-            toast.error("Product not found for scanned barcode");
-            input.value = ""; // reset for next scan
+          if (!res.ok) {
+            toast.error(data.error || "Couldn't process that barcode");
             return;
           }
 
-          if (data.productId) {
-            window.open(`/dashboard/product/${data.productId}`, "_blank");
-          }
+          toast.success(`Marked sold: ${data.title}`);
         } catch (error) {
-          console.error("Error fetching product:", error);
+          console.error("Error processing barcode:", error);
           toast.error("Error processing barcode");
         } finally {
           input.value = ""; // reset for next scan
+          input.focus();
         }
       }
     };
@@ -149,15 +155,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         {/* <img src="/fashlogo.svg" className="w-[132px] mx-auto" /> */}
         <img src="/new_ree_icon.png" className="w-[92px] mx-auto py-[12px]" />
         {session.data?.user?.role === "store" && (
-          <input
-            ref={barcodeInputRef}
-            type="text"
-            id="barcode-input"
-            placeholder="Scan barcode..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ffd7d7]"
-            autoComplete="off"
-            hidden
-          />
+          <>
+            <input
+              ref={barcodeInputRef}
+              type="text"
+              id="barcode-input"
+              placeholder="Scan barcode..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ffd7d7]"
+              autoComplete="off"
+              hidden
+            />
+            <div className="px-3 pb-3">
+              <BarcodeScannerModal />
+            </div>
+          </>
         )}
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar ">
