@@ -8,7 +8,7 @@ import AddOnPurchase from "@/models/AddOnPurchase";
 // heuristic alone misses stores whose webstore access comes from a paid
 // add-on purchase instead of their subscription plan (e.g. Mia's own
 // account), which showed as "not active" elsewhere even though it's real.
-async function computeHasWebstoreAccess(userId, subscriptionType) {
+export async function computeHasWebstoreAccess(userId, subscriptionType) {
   const subType = subscriptionType?.toLowerCase() || "";
   if (
     subType.includes("webstore") ||
