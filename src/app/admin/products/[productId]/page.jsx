@@ -151,8 +151,8 @@ const AdminProductDetailPage = () => {
   const Field = ({ label, value }) =>
     value === null || value === undefined || value === "" ? null : (
       <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
-        <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">{label}</div>
-        <div className="text-base text-gray-900 font-semibold break-words">{value}</div>
+        <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1">{label}</div>
+        <div className="text-lg text-gray-900 font-semibold break-words">{value}</div>
       </div>
     );
 
@@ -230,30 +230,30 @@ const AdminProductDetailPage = () => {
             <div className="space-y-4 border-t border-gray-100 pt-4">
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Title</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Title</span>
                   <input
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Brand</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Brand</span>
                   <input
                     value={form.brand}
                     onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">
                     Category <span className="text-red-500">*</span>
                   </span>
                   <select
                     value={form.category}
                     onChange={(e) => setForm((f) => ({ ...f, category: e.target.value, subcategory: "" }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base bg-white"
                   >
                     <option value="">Select category…</option>
                     {CATEGORIES.map((c) => (
@@ -262,12 +262,12 @@ const AdminProductDetailPage = () => {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Sub Category</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Sub Category</span>
                   <select
                     value={form.subcategory}
                     onChange={(e) => setForm((f) => ({ ...f, subcategory: e.target.value }))}
                     disabled={!form.category}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-50"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base bg-white disabled:bg-gray-50"
                   >
                     <option value="">Select sub category…</option>
                     {(SUBCATEGORIES[form.category] || []).map((sc) => (
@@ -277,46 +277,46 @@ const AdminProductDetailPage = () => {
                 </label>
 
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Price (DKK)</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Price (DKK)</span>
                   <input
                     type="number"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Size (comma separated)</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Size (comma separated)</span>
                   <input
                     value={form.size}
                     onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Fabric</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Fabric</span>
                   <input
                     value={form.fabric}
                     onChange={(e) => setForm((f) => ({ ...f, fabric: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Color</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Color</span>
                   <input
                     value={form.colorName}
                     onChange={(e) => setForm((f) => ({ ...f, colorName: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Condition</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Condition</span>
                   <select
                     value={form.condition_grade}
                     onChange={(e) => setForm((f) => ({ ...f, condition_grade: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base bg-white"
                   >
                     <option value="">—</option>
                     <option value="A">A — like new</option>
@@ -325,31 +325,31 @@ const AdminProductDetailPage = () => {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">SKU</span>
+                  <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">SKU</span>
                   <input
                     value={form.sku}
                     onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                   />
                 </label>
               </div>
 
               <label className="block">
-                <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Condition Notes</span>
+                <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Condition Notes</span>
                 <textarea
                   value={form.condition_notes}
                   onChange={(e) => setForm((f) => ({ ...f, condition_notes: e.target.value }))}
                   rows={2}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
               <label className="block">
-                <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Description</span>
+                <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Description</span>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   rows={3}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
 
