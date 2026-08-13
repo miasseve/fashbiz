@@ -16,20 +16,27 @@ export async function setShopifyStorefrontPassword(password) {
     return { status: 401, error: "Unauthorized" };
   }
 
-  await dbConnect();
-  const trimmed = (password || "").trim();
+  try {
+    await dbConnect();
+    const trimmed = (password || "").trim();
 
-  if (!trimmed) {
-    await SiteSetting.deleteOne({ key: SHOPIFY_STOREFRONT_PASSWORD_KEY });
+    if (!trimmed) {
+      await SiteSetting.deleteOne({ key: SHOPIFY_STOREFRONT_PASSWORD_KEY });
+      return { status: 200 };
+    }
+
+    await SiteSetting.findOneAndUpdate(
+      { key: SHOPIFY_STOREFRONT_PASSWORD_KEY },
+      { value: encrypt(trimmed) },
+      { upsert: true },
+    );
     return { status: 200 };
+  } catch (error) {
+    // Temporary: surface the real error instead of a bare digest so this
+    // can be root-caused from the UI without Vercel log access.
+    console.error("setShopifyStorefrontPassword failed:", error);
+    return { status: 500, error: error.message };
   }
-
-  await SiteSetting.findOneAndUpdate(
-    { key: SHOPIFY_STOREFRONT_PASSWORD_KEY },
-    { value: encrypt(trimmed) },
-    { upsert: true },
-  );
-  return { status: 200 };
 }
 
 export async function hasShopifyStorefrontPassword() {
