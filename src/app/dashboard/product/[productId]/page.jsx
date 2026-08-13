@@ -248,8 +248,11 @@ const Page = async ({ params }) => {
           {/* Right column — connections + upsells. Moved back above the fold
               per Mia's feedback ("CTA buttons up here without scrolling —
               otherwise the user doesn't see it") — visibility here matters
-              more than the extra width the bottom placement gave them. */}
-          <div className="lg:col-span-1 space-y-4">
+              more than the extra width the bottom placement gave them.
+              Sticky so it stays in view while scrolling through the taller
+              product card on the left, instead of scrolling out of sight
+              first. */}
+          <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OmnichannelConnections
               hasWebstoreAccess={hasWebstoreAccess}
               canPostToInstagram={canPostToInstagram}
