@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
-import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash } from "react-icons/fa";
+import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash, FaEdit } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const STATUS_OPTIONS = [
@@ -472,6 +472,13 @@ const AdminProductsPage = () => {
                     >
                       <FaEye className="text-sm" /> View
                     </Link>
+                    <Link
+                      href={`/admin/products/${product._id}?edit=true`}
+                      title="Edit"
+                      className="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors"
+                    >
+                      <FaEdit className="text-sm" />
+                    </Link>
                     <button
                       onClick={() => setDeleteTarget(product)}
                       title="Delete"
@@ -608,6 +615,13 @@ const AdminProductsPage = () => {
                           className="inline-flex items-center justify-center w-9 h-9 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
                         >
                           <FaEye className="text-md" />
+                        </Link>
+                        <Link
+                          href={`/admin/products/${product._id}?edit=true`}
+                          title="Edit"
+                          className="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors"
+                        >
+                          <FaEdit className="text-md" />
                         </Link>
                         <button
                           onClick={() => setDeleteTarget(product)}
