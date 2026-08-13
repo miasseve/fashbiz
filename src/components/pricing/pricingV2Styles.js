@@ -19,7 +19,7 @@ const PRICING_V2_CSS = `
   }
 
   .p2-section {
-    width: min(1120px, 94vw);
+    width: min(1120px, 100%);
     margin: 0 auto;
   }
 
@@ -196,7 +196,7 @@ const PRICING_V2_CSS = `
   .p2-status {
     position: relative;
     display: flex;
-    width: min(1120px, 94vw);
+    width: min(1120px, 100%);
     margin: 0 auto clamp(28px, 4vw, 44px);
     background: #ffffff;
     border: 1px solid #ececec;

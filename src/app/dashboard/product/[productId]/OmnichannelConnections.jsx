@@ -77,16 +77,16 @@ const OmnichannelConnections = ({ hasWebstoreAccess, canPostToInstagram, webstor
 };
 
 export const WebstoreUpsellCard = () => (
-  <div className="bg-gradient-to-r from-red-600 to-pink-600 rounded-xl p-4 text-white flex items-center gap-3">
+  <div className="bg-gradient-to-r from-red-600 to-pink-600 rounded-xl p-6 text-white flex items-center gap-4">
     <div className="min-w-0">
-      <p className="font-bold text-sm leading-tight truncate">Your Own Webstore</p>
-      <p className="text-xs text-white/90 mt-0.5 truncate">
+      <p className="font-bold text-base leading-tight truncate">Your Own Webstore</p>
+      <p className="text-sm text-white/90 mt-1 truncate">
         Branded and launched by our team, synced automatically.
       </p>
     </div>
     <Link
       href="/dashboard/subscription-plan"
-      className="shrink-0 ml-auto bg-white text-red-600 font-semibold px-4 py-2 rounded-full text-xs whitespace-nowrap"
+      className="shrink-0 ml-auto bg-white text-red-600 font-semibold px-5 py-2.5 rounded-full text-sm whitespace-nowrap"
     >
       Get started
     </Link>
@@ -94,18 +94,18 @@ export const WebstoreUpsellCard = () => (
 );
 
 export const AutomateWorkflowUpsellCard = () => (
-  <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
+  <div className="bg-white rounded-xl border-2 border-gray-200 p-6 flex items-center gap-4">
     <div className="min-w-0">
-      <p className="font-bold text-sm leading-tight text-gray-900 truncate">
+      <p className="font-bold text-base leading-tight text-gray-900 truncate">
         Automate your entire workflow
       </p>
-      <p className="text-xs text-gray-500 mt-0.5 truncate">
+      <p className="text-sm text-gray-500 mt-1 truncate">
         Sync Webstore, Vinted &amp; Instagram from one place.
       </p>
     </div>
     <Link
       href="/dashboard/subscription-plan"
-      className="shrink-0 ml-auto bg-red-600 text-white font-semibold px-4 py-2 rounded-full text-xs whitespace-nowrap"
+      className="shrink-0 ml-auto bg-red-600 text-white font-semibold px-5 py-2.5 rounded-full text-sm whitespace-nowrap"
     >
       Get started
     </Link>
