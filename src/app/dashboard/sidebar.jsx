@@ -81,16 +81,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     );
   }
 
-  // Same subscriptionType heuristic already used on the Profile page's
-  // webstore tab — kept in sync here so the sidebar's "connected" dot
-  // matches what actually gates access elsewhere in the dashboard.
-  const subType = session.data?.user?.subscriptionType?.toLowerCase() || "";
-  const hasWebstoreAccess =
-    subType.includes("webstore") ||
-    subType.includes("plugin") ||
-    subType.includes("plug") ||
-    subType === "pro" ||
-    subType === "business";
+  // Computed once at login (see auth.js) — includes both the subscriptionType
+  // heuristic and the AddOnPurchase check, so "connected" means the same
+  // thing here as on the product page and everywhere else.
+  const hasWebstoreAccess = !!session.data?.user?.hasWebstoreAccess;
   // Matches ProductList.jsx's canPostToInstagram check exactly.
   const canPostToInstagram =
     session.data?.user?.subscriptionType === "free" ||

@@ -6,7 +6,7 @@ import { FiExternalLink } from "react-icons/fi";
 // dashboard/sidebar.jsx) — Webstore/Instagram reflect real subscription
 // access, Vinted Pro always shows as not-connected since there's no real
 // integration built for it yet.
-const OmnichannelConnections = ({ hasWebstoreAccess, canPostToInstagram }) => {
+const OmnichannelConnections = ({ hasWebstoreAccess, canPostToInstagram, webstoreUrl }) => {
   const rows = [
     {
       key: "webstore",
@@ -47,8 +47,8 @@ const OmnichannelConnections = ({ hasWebstoreAccess, canPostToInstagram }) => {
               <span
                 className={`w-2.5 h-2.5 rounded-full ${row.active ? "bg-green-500" : "bg-gray-300"}`}
               />
-              {row.key === "webstore" && row.active && (
-                <a href="/dashboard/profile" target="_blank" rel="noopener noreferrer">
+              {row.key === "webstore" && row.active && webstoreUrl && (
+                <a href={webstoreUrl} target="_blank" rel="noopener noreferrer" title="Open on your webstore">
                   <FiExternalLink size={15} className="text-gray-400" />
                 </a>
               )}

@@ -34,16 +34,10 @@ const Page = async ({ params }) => {
   const parsedUser = JSON.parse(user);
 
   const session = await auth();
-  // Same heuristic as the sidebar (dashboard/sidebar.jsx) and the Profile
-  // page's webstore tab — kept in sync so "connected" means the same thing
-  // everywhere in the dashboard.
-  const subType = session?.user?.subscriptionType?.toLowerCase() || "";
-  const hasWebstoreAccess =
-    subType.includes("webstore") ||
-    subType.includes("plugin") ||
-    subType.includes("plug") ||
-    subType === "pro" ||
-    subType === "business";
+  // Computed once at login (see auth.js) — includes both the subscriptionType
+  // heuristic and the AddOnPurchase check, so it stays consistent with the
+  // sidebar and every other place that shows webstore connection status.
+  const hasWebstoreAccess = !!session?.user?.hasWebstoreAccess;
   const canPostToInstagram =
     session?.user?.subscriptionType === "free" ||
     session?.user?.subscriptionType === "Pro" ||
@@ -256,6 +250,7 @@ const Page = async ({ params }) => {
             <OmnichannelConnections
               hasWebstoreAccess={hasWebstoreAccess}
               canPostToInstagram={canPostToInstagram}
+              webstoreUrl={shopifyProductUrl}
             />
 
             {parsedUser && (
