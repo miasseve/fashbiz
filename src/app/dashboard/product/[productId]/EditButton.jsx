@@ -150,9 +150,9 @@ const EditButton = ({ product, compact = false }) => {
           type="button"
           onClick={onOpen}
           title="Edit product"
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
         >
-          <FiEdit2 size={15} />
+          <FiEdit2 size={19} />
         </button>
       ) : (
         <Button onPress={onOpen} className="auth-btn">

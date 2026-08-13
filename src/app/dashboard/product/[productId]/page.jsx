@@ -167,6 +167,10 @@ const Page = async ({ params }) => {
                     <div className="text-base text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Category</div>
+                    <div className="text-base text-gray-900 font-semibold">{parsedProduct.category}</div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Sub Category</div>
                     <div className="text-base text-gray-900 font-semibold">{parsedProduct.subcategory}</div>
                   </div>
@@ -176,10 +180,26 @@ const Page = async ({ params }) => {
                       {parsedProduct.size?.length ? parsedProduct.size.join(", ") : "N/A"}
                     </div>
                   </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">SKU</div>
+                    <div className="text-base text-gray-900 font-semibold break-words">{parsedProduct.sku}</div>
+                  </div>
                   {parsedProduct.fabric && (
-                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 col-span-2">
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                       <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Fabric</div>
                       <div className="text-base text-gray-900 font-semibold">{parsedProduct.fabric}</div>
+                    </div>
+                  )}
+                  {parsedProduct.condition_grade && (
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                      <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Condition</div>
+                      <div className="text-base text-gray-900 font-semibold">{parsedProduct.condition_grade}</div>
+                    </div>
+                  )}
+                  {parsedProduct.condition_notes && (
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 col-span-2">
+                      <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Condition Notes</div>
+                      <div className="text-base text-gray-900 font-semibold">{parsedProduct.condition_notes}</div>
                     </div>
                   )}
                 </div>
@@ -231,14 +251,12 @@ const Page = async ({ params }) => {
             </div>
           </div>
 
-          {/* Right column — connections + upsells */}
+          {/* Right column — connections */}
           <div className="lg:col-span-1 space-y-4">
             <OmnichannelConnections
               hasWebstoreAccess={hasWebstoreAccess}
               canPostToInstagram={canPostToInstagram}
             />
-            <AutomateWorkflowUpsellCard />
-            <WebstoreUpsellCard />
 
             {parsedUser && (
               <div className="bg-white rounded-xl border-2 border-gray-200 p-5">
@@ -252,6 +270,19 @@ const Page = async ({ params }) => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Upsell CTAs — wider, placed below the whole workspace rather than
+          squeezed into the narrow right column, per Mia's feedback. */}
+      {!isBrandOrCollectItem && (
+        <div className="flex flex-col items-end gap-4 mt-6">
+          <div className="w-full lg:w-2/3">
+            <AutomateWorkflowUpsellCard />
+          </div>
+          <div className="w-full lg:w-2/3">
+            <WebstoreUpsellCard />
           </div>
         </div>
       )}

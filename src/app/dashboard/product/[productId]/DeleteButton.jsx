@@ -52,9 +52,9 @@ const DeleteButton = ({ product, compact = false }) => {
         onClick={handleDelete}
         disabled={loading}
         title="Delete product"
-        className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+        className="w-11 h-11 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
       >
-        <FiTrash2 size={15} />
+        <FiTrash2 size={19} />
       </button>
     );
   }
