@@ -18,6 +18,7 @@ import {
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
+import { getShopifyStorefrontPassword, withStorefrontPassword } from "@/lib/shopifySettings";
 // import {
 //   createWixProduct,
 //   unlinkWixProduct,
@@ -376,8 +377,12 @@ export async function createGuestProduct(formData) {
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
         : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
-    const shopifyProductUrl = shopifyProductId
-      ? (await getShopifyProductStorefrontUrl(shopifyProductId)) || ""
+    const shopifyStoreDomain = process.env.SHOPIFY_STOREFRONT_DOMAIN || process.env.SHOPIFY_STORE_DOMAIN;
+    const rawShopifyProductUrl = shopifyProductHandle && shopifyStoreDomain
+      ? `https://${shopifyStoreDomain}/products/${shopifyProductHandle}`
+      : "";
+    const shopifyProductUrl = rawShopifyProductUrl
+      ? withStorefrontPassword(rawShopifyProductUrl, await getShopifyStorefrontPassword())
       : "";
 
     return {
