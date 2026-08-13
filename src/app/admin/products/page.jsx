@@ -1,7 +1,9 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { Spinner } from "@heroui/react";
-import { FaSearch, FaFilter, FaThLarge, FaList } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const STATUS_OPTIONS = [
@@ -35,6 +37,27 @@ const AdminProductsPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
+
+  // Delete
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/products/${deleteTarget._id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to delete");
+      setAllProducts((prev) => prev.filter((p) => p._id !== deleteTarget._id));
+      toast.success("Product deleted");
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err.message || "Something went wrong while deleting.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -415,7 +438,7 @@ const AdminProductsPage = () => {
                   </p>
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-lg font-bold text-gray-800">
-                      ${product.price}
+                      {product.price} DKK
                     </span>
                     <span className="text-[13px] text-gray-400">
                       {product.brand}
@@ -440,6 +463,22 @@ const AdminProductsPage = () => {
                   )}
                   <div className="mt-3 pt-3 border-t border-gray-100 text-[13px] text-gray-400 truncate">
                     {storeName}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Link
+                      href={`/admin/products/${product._id}`}
+                      title="View"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors text-sm font-semibold"
+                    >
+                      <FaEye className="text-sm" /> View
+                    </Link>
+                    <button
+                      onClick={() => setDeleteTarget(product)}
+                      title="Delete"
+                      className="inline-flex items-center justify-center w-9 h-9 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -478,6 +517,9 @@ const AdminProductsPage = () => {
                 <th className="text-left px-3 sm:px-4 py-3 sm:py-3.5 font-bold text-gray-700 hidden sm:table-cell">
                   Created
                 </th>
+                <th className="text-left px-3 sm:px-4 py-3 sm:py-3.5 font-bold text-gray-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -515,7 +557,7 @@ const AdminProductsPage = () => {
                       {product.category}
                     </td>
                     <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-gray-700 font-semibold">
-                      ${product.price}
+                      {product.price} DKK
                     </td>
                     <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-gray-700 hidden xl:table-cell">
                       {product.userId
@@ -558,6 +600,24 @@ const AdminProductsPage = () => {
                         year: "numeric",
                       })}
                     </td>
+                    <td className="px-3 sm:px-4 py-3 sm:py-3.5">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/products/${product._id}`}
+                          title="View"
+                          className="inline-flex items-center justify-center w-9 h-9 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                        >
+                          <FaEye className="text-md" />
+                        </Link>
+                        <button
+                          onClick={() => setDeleteTarget(product)}
+                          title="Delete"
+                          className="inline-flex items-center justify-center w-9 h-9 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -596,6 +656,57 @@ const AdminProductsPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Delete confirmation modal — same pattern as the Stores & Users list */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !deleting && setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-5">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <FaTrash className="text-red-600 text-xl" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-gray-900">Delete this product?</h3>
+                <p className="mt-2 text-gray-600 leading-relaxed">
+                  You're about to permanently delete{" "}
+                  <span className="font-semibold text-gray-900">{deleteTarget.title}</span>. This also
+                  removes it from Shopify if it was synced there. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? (
+                  <>
+                    <Spinner size="sm" color="white" /> Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaTrash className="text-sm" /> Delete permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
