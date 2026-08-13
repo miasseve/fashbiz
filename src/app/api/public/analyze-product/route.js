@@ -45,11 +45,6 @@ export async function POST(req) {
     return Response.json({ ok: true, images, analysis });
   } catch (error) {
     console.error("Public analyze-product error:", error);
-    // Temporary: surface the real upstream error (usually from the OpenAI
-    // SDK) so a live failure can be root-caused without Vercel log access.
-    return Response.json(
-      { error: "Something went wrong", debug: { message: error.message, code: error.code, type: error.type, status: error.status } },
-      { status: error.status || 500 },
-    );
+    return Response.json({ error: "Something went wrong" }, { status: error.status || 500 });
   }
 }
