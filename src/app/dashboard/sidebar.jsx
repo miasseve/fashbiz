@@ -193,7 +193,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 : "hover:bg-[#ffd7d7] hover:text-black"
             }`}
           >
-            {icon} <span className="ml-2">{label}</span>
+            {/* Fixed-width, left-aligned inner group so every row's icon
+                lands at the same x-position — the row itself is centered as
+                a block, but icons no longer drift left/right depending on
+                how long that row's label happens to be. */}
+            <span className="inline-flex items-center w-[210px]">
+              {icon} <span className="ml-2">{label}</span>
+            </span>
           </Link>
         ))}
 
@@ -310,8 +316,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 : "hover:bg-[#ffd7d7] hover:text-black"
             }`}
           >
-            <FaHandHoldingUsd className="text-[1.3rem]" />
-            <span className="ml-2">Invite a store</span>
+            <span className="inline-flex items-center w-[210px]">
+              <FaHandHoldingUsd className="text-[1.3rem]" />
+              <span className="ml-2">Invite a store</span>
+            </span>
           </Link>
         )}
       </nav>
