@@ -32,10 +32,8 @@ export async function setShopifyStorefrontPassword(password) {
     );
     return { status: 200 };
   } catch (error) {
-    // Temporary: surface the real error instead of a bare digest so this
-    // can be root-caused from the UI without Vercel log access.
     console.error("setShopifyStorefrontPassword failed:", error);
-    return { status: 500, error: error.message };
+    return { status: 500, error: "Something went wrong saving the password." };
   }
 }
 

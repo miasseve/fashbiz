@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getShopifyStorefrontPassword, withStorefrontPassword } from "@/lib/shopifySettings";
+import { getShopifyStorefrontPassword, buildStorefrontLink } from "@/lib/shopifySettings";
 
 const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const shopifyAccessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
@@ -1123,10 +1123,10 @@ export async function getShopifyProductStorefrontUrl(shopifyProductId) {
     if (!url) return null;
 
     // If the storefront is password-protected (Shopify's built-in launch
-    // password), append it so links Ree hands out work without whoever
-    // clicks them hitting the password wall.
+    // password), route through our own /go unlock page so whoever clicks
+    // this link doesn't hit the password wall.
     const storefrontPassword = await getShopifyStorefrontPassword();
-    return withStorefrontPassword(url, storefrontPassword);
+    return buildStorefrontLink(url, storefrontPassword);
   } catch (error) {
     console.error("Error fetching Shopify product URL:", error.message);
     return null;

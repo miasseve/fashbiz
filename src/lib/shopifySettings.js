@@ -18,12 +18,21 @@ export async function getShopifyStorefrontPassword() {
   }
 }
 
-// Shopify's password-protected storefronts accept ?password=xxx on any
-// storefront URL to bypass the wall (sets a cookie for the rest of the
-// visit) — appends it to a URL if a password is configured, otherwise
-// returns the URL untouched.
-export function withStorefrontPassword(url, password) {
+// Verified against the live store: Shopify's password wall does NOT accept
+// ?password=xxx as a query string on an arbitrary page — it's ignored and
+// the visitor still lands on /password. The only way through is POSTing the
+// password to /password, which sets a cookie in THAT VISITOR'S browser. We
+// can't set that cookie for them from our server (cookies are scoped to the
+// domain that sets them), so instead we route shared links through our own
+// /go page, which does the POST client-side (in the visitor's own browser)
+// before forwarding them on. Returns the URL untouched if no password is
+// configured — nothing to bypass.
+export function buildStorefrontLink(url, password) {
   if (!url || !password) return url;
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}password=${encodeURIComponent(password)}`;
+  const base =
+    process.env.NODE_ENV === "development"
+      ? process.env.NEXT_PUBLIC_FRONTEND_URL
+      : process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL;
+  if (!base) return url;
+  return `${base}/go?to=${encodeURIComponent(url)}`;
 }

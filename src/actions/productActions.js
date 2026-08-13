@@ -18,7 +18,7 @@ import {
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
-import { getShopifyStorefrontPassword, withStorefrontPassword } from "@/lib/shopifySettings";
+import { getShopifyStorefrontPassword, buildStorefrontLink } from "@/lib/shopifySettings";
 // import {
 //   createWixProduct,
 //   unlinkWixProduct,
@@ -382,7 +382,7 @@ export async function createGuestProduct(formData) {
       ? `https://${shopifyStoreDomain}/products/${shopifyProductHandle}`
       : "";
     const shopifyProductUrl = rawShopifyProductUrl
-      ? withStorefrontPassword(rawShopifyProductUrl, await getShopifyStorefrontPassword())
+      ? buildStorefrontLink(rawShopifyProductUrl, await getShopifyStorefrontPassword())
       : "";
 
     return {
