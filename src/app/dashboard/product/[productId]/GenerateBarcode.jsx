@@ -332,17 +332,17 @@ export default function GenerateBarcode({
             type="button"
             onClick={printBarcode}
             title="Print barcode"
-            className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
           >
-            <FaPrint size={19} />
+            <FaPrint size={24} />
           </button>
           <button
             type="button"
             onClick={downloadBarcode}
             title="Download barcode"
-            className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
           >
-            <FaDownload size={19} />
+            <FaDownload size={24} />
           </button>
         </div>
       </div>

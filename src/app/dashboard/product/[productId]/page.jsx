@@ -245,13 +245,22 @@ const Page = async ({ params }) => {
             </div>
           </div>
 
-          {/* Right column — connections */}
+          {/* Right column — connections + upsells. Moved back above the fold
+              per Mia's feedback ("CTA buttons up here without scrolling —
+              otherwise the user doesn't see it") — visibility here matters
+              more than the extra width the bottom placement gave them. */}
           <div className="lg:col-span-1 space-y-4">
             <OmnichannelConnections
               hasWebstoreAccess={hasWebstoreAccess}
               canPostToInstagram={canPostToInstagram}
               webstoreUrl={shopifyProductUrl}
             />
+            {!isBrandOrCollectItem && (
+              <>
+                <AutomateWorkflowUpsellCard />
+                <WebstoreUpsellCard />
+              </>
+            )}
 
             {parsedUser && (
               <div className="bg-white rounded-xl border-2 border-gray-200 p-5">
@@ -265,19 +274,6 @@ const Page = async ({ params }) => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Upsell CTAs — wider, placed below the whole workspace rather than
-          squeezed into the narrow right column, per Mia's feedback. */}
-      {!isBrandOrCollectItem && (
-        <div className="flex flex-col items-end gap-4 mt-6">
-          <div className="w-full lg:w-2/3">
-            <AutomateWorkflowUpsellCard />
-          </div>
-          <div className="w-full lg:w-2/3">
-            <WebstoreUpsellCard />
           </div>
         </div>
       )}

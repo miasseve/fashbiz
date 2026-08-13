@@ -47,6 +47,14 @@ const ImageCarousel = ({ images }) => {
         .carousel .carousel-thumb .selected img {
           border-color: #ef4444; /* Tailwind red-500 */
         }
+        /* "X of Y" image counter badge — bigger and easier to see */
+        .carousel .carousel-status {
+          font-size: 15px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: rgba(42, 40, 37, 0.7);
+        }
       `}</style>
     </div>
   );

@@ -2,9 +2,8 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BiLogoProductHunt } from "react-icons/bi";
 import { IoQrCode } from "react-icons/io5";
-import { FaStore, FaUser, FaUsers } from "react-icons/fa";
+import { FaStore, FaUser, FaUsers, FaPlus } from "react-icons/fa";
 import { MdLocalGroceryStore, MdOutlineReceiptLong } from "react-icons/md";
 import { PiStripeLogoFill } from "react-icons/pi";
 import { useSession } from "next-auth/react";
@@ -109,7 +108,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     {
       href: "/dashboard/add-product",
       label: "Add Product",
-      icon: <BiLogoProductHunt />,
+      icon: <FaPlus />,
     },
     session.data?.user?.role === "store" && {
       href: "/dashboard/items-sold",
@@ -182,13 +181,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </>
         )}
       </div>
-      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto">
+      <nav className="flex flex-col items-center text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto">
         {menuItems.map(({ href, label, icon, isActive }) => (
           <Link
             key={href}
             href={href}
             onClick={() => isSidebarOpen && toggleSidebar()}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
+            className={`w-full px-3 p-3 transition-all text-[1.6rem] flex items-center justify-center py-[14px] ${
               (isActive ? isActive(pathname) : pathname === href)
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
@@ -284,11 +283,28 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </div>
         )}
 
+        {/* Subscription Plan — made bigger/bolder and placed above Invite a
+            store per Mia's request ("bigger, easier to find"). */}
+        {session.data?.user?.role !== "consignor" && (
+          <Link
+            href="/dashboard/subscription-plan"
+            onClick={() => isSidebarOpen && toggleSidebar()}
+            className={`w-full px-3 p-4 transition-all text-[1.75rem] font-bold flex items-center justify-center gap-2 mt-auto ${
+              pathname === "/dashboard/subscription-plan"
+                ? "bg-[#ffd7d7] text-black"
+                : "bg-[#fff0f0] hover:bg-[#ffd7d7] text-black"
+            }`}
+          >
+            <IoQrCode className="text-[1.5rem]" />
+            <span>Subscription Plan</span>
+          </Link>
+        )}
+
         {session.data?.user?.role === "store" && (
           <Link
             href="/dashboard/invite-store"
             onClick={() => isSidebarOpen && toggleSidebar()}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
+            className={`w-full px-3 p-3 transition-all text-[1.6rem] flex items-center justify-center py-[14px] ${
               pathname === "/dashboard/invite-store"
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
@@ -296,22 +312,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           >
             <FaHandHoldingUsd className="text-[1.3rem]" />
             <span className="ml-2">Invite a store</span>
-          </Link>
-        )}
-
-        {/* Subscription Plan — moved to the bottom of the sidebar per Mia's request. */}
-        {session.data?.user?.role !== "consignor" && (
-          <Link
-            href="/dashboard/subscription-plan"
-            onClick={() => isSidebarOpen && toggleSidebar()}
-            className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-auto ${
-              pathname === "/dashboard/subscription-plan"
-                ? "bg-[#ffd7d7] text-black"
-                : "hover:bg-[#ffd7d7] hover:text-black"
-            }`}
-          >
-            <IoQrCode />
-            <span className="ml-2">Subscription Plan</span>
           </Link>
         )}
       </nav>
