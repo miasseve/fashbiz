@@ -270,14 +270,18 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
           <div className="flex justify-between items-center gap-3 flex-wrap">
             {!selectionMode && !instagramMode && !deleteMode ? (
               <>
-                <Button
-                  onPress={toggleSelectionMode}
-                  className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-black bg-white"
-                  isDisabled={selectableProducts.length === 0}
-                >
-                  <CheckSquare size={20} />
-                  Click to Unlink
-                </Button>
+                {/* "Click to Unlink" hidden per Mia's request — kept, not
+                    deleted, in case it needs to come back. */}
+                {false && (
+                  <Button
+                    onPress={toggleSelectionMode}
+                    className="font-semibold p-7 border border-[#06cb03] rounded-[4px] text-black bg-white"
+                    isDisabled={selectableProducts.length === 0}
+                  >
+                    <CheckSquare size={20} />
+                    Click to Unlink
+                  </Button>
+                )}
 
                 <Button
                   onPress={toggleDeleteMode}
