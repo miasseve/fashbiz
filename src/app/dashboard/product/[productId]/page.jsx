@@ -199,9 +199,9 @@ const Page = async ({ params }) => {
                 </div>
 
                 {parsedProduct.description && (
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-2">Description</div>
-                    <div className="text-gray-700 leading-relaxed text-[14px] break-words">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Description</div>
+                    <div className="text-gray-700 text-sm break-words">
                       {parsedProduct.description}
                     </div>
                   </div>
@@ -259,10 +259,10 @@ const Page = async ({ params }) => {
               webstoreUrl={shopifyProductUrl}
             />
             {!isBrandOrCollectItem && (
-              <>
+              <div className="space-y-3 pt-2">
                 <AutomateWorkflowUpsellCard />
                 <WebstoreUpsellCard />
-              </>
+              </div>
             )}
 
             {parsedUser && (
