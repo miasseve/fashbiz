@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
-import { MdDashboard, MdTimeline, MdSupportAgent, MdDeveloperMode } from "react-icons/md";
+import { MdDashboard, MdTimeline, MdSupportAgent, MdDeveloperMode, MdSettings } from "react-icons/md";
 import { FaUsers } from "react-icons/fa";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { TbReportAnalytics } from "react-icons/tb";
@@ -70,6 +70,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
     { href: "/admin/platform-fees", label: "Platform Fees", icon: <RiMoneyDollarCircleLine />, roles: ["admin"] },
     { href: "/admin/addon-purchases", label: "Add-On Purchases", icon: <RiMoneyDollarCircleLine />, roles: ["admin","developer"] },
+    { href: "/admin/settings", label: "Settings", icon: <MdSettings />, roles: ["admin", "developer"] },
     { href: "/admin/developer", label: "Developer", icon: <MdDeveloperMode />, roles: ["developer"] },
   ].filter((item) => item.roles.includes(userRole));
 

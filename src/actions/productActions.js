@@ -376,9 +376,8 @@ export async function createGuestProduct(formData) {
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/product/${newProduct._id}`
         : `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/product/${newProduct._id}`;
 
-    const shopifyStoreDomain = process.env.SHOPIFY_STOREFRONT_DOMAIN || process.env.SHOPIFY_STORE_DOMAIN;
-    const shopifyProductUrl = shopifyProductHandle && shopifyStoreDomain
-      ? `https://${shopifyStoreDomain}/products/${shopifyProductHandle}`
+    const shopifyProductUrl = shopifyProductId
+      ? (await getShopifyProductStorefrontUrl(shopifyProductId)) || ""
       : "";
 
     return {
