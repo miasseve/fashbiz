@@ -32,6 +32,13 @@ const AD_DESC = {
   Pro: "Up to 1,000 items per month. For established multi-channel stores.",
 };
 
+// Per-card descriptions for the webstore section — clarifies the product
+// volume each tier is sized for, same treatment as the Ads section above.
+const WEBSTORE_DESC = {
+  Basic: "For up to 300 products.",
+  Pro: "For more than 1,000 products.",
+};
+
 // Section headings/subtitles, matched to a plan group by its productName.
 function getSectionMeta(productName = "") {
   const n = productName.toLowerCase();
@@ -53,6 +60,7 @@ function getSectionMeta(productName = "") {
       subtitle:
         "Branded and launched by our team, synced so every item lists automatically. One-time setup, no monthly fee.",
       includePayg: false,
+      isWebstore: true,
     };
   }
   // default: Ads / Resale Ecommerce Engine
@@ -88,12 +96,16 @@ export default function PricingSections({
 }) {
   const payPerProductHref = tryMode ? "/try/add-product" : "/dashboard/add-product";
 
-  const renderCard = (plan, { isAds }) => {
+  const renderCard = (plan, { isAds, isWebstore }) => {
     const popular = isAds && (plan.tierName || "").toLowerCase() === "basic";
     const { num, unit, fee } = formatPrice(plan);
     const desc = plan.isPayg
       ? plan.desc
-      : (isAds && AD_DESC[plan.tierName]) || plan.subtitle || plan.tagline || "";
+      : (isAds && AD_DESC[plan.tierName]) ||
+        (isWebstore && WEBSTORE_DESC[plan.tierName]) ||
+        plan.subtitle ||
+        plan.tagline ||
+        "";
     const features = plan.features || [];
 
     // ── Button: behaviour & labels preserved from the old PricingCard ──
@@ -169,6 +181,7 @@ export default function PricingSections({
         const meta = getSectionMeta(group.productName);
         const cards = meta.includePayg ? [PAYG, ...group.plans] : group.plans;
         const isAds = meta.includePayg;
+        const isWebstore = !!meta.isWebstore;
         return (
           <section key={group.productName} className="p2-section">
             <div className="p2-head">
@@ -184,7 +197,7 @@ export default function PricingSections({
               className="p2-grid"
               style={{ gridTemplateColumns: `repeat(${cards.length}, minmax(0, 1fr))` }}
             >
-              {cards.map((plan) => renderCard(plan, { isAds }))}
+              {cards.map((plan) => renderCard(plan, { isAds, isWebstore }))}
             </div>
           </section>
         );
