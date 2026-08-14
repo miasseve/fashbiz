@@ -15,6 +15,11 @@ export async function OPTIONS() {
 // listed (not archived, not stuck pending review). This is what Home /
 // Discover map / Finds browse; it replaced a hardcoded seed array on
 // Discover's side that had no connection to real Ree data at all.
+//
+// A product also only shows once its OWNING STORE is verified — same rule
+// as the public stores feed. A store that isn't approved yet stays fully
+// invisible, products included, rather than the store being hidden while
+// its items still leak into search/Home independently.
 export async function GET(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;
@@ -26,7 +31,16 @@ export async function GET(req) {
     const storeId = searchParams.get("storeId");
 
     const filter = { archived: { $ne: true }, needsReview: { $ne: true } };
-    if (storeId) filter.userId = storeId;
+    if (storeId) {
+      const store = await User.findOne({ _id: storeId, role: "store", isVerified: true }).select("_id");
+      if (!store) {
+        return Response.json({ ok: true, products: [] });
+      }
+      filter.userId = storeId;
+    } else {
+      const verifiedStores = await User.find({ role: "store", isVerified: true }).select("_id").lean();
+      filter.userId = { $in: verifiedStores.map((s) => s._id) };
+    }
 
     const products = await Product.find(filter).sort({ createdAt: -1 }).limit(200);
     const reservations = await getActiveReservationsByProduct(products.map((p) => p._id));
@@ -43,11 +57,11 @@ export async function GET(req) {
 // A Discover user capturing a "Find" — the title/brand/category come from
 // Ree's real product-recognition AI now (see /api/public/products/analyze,
 // same pipeline the dashboard's "add product" uses), so the data itself is
-// trustworthy. Still saved archived: there's no store-linking UI in Discover
-// yet, so every capture attaches to an arbitrary fallback store rather than
-// the boutique it actually came from — that's the reason it stays hidden,
-// not the AI. needsReview mirrors the dashboard's own rule (confidence < 0.6)
-// rather than always being forced on.
+// trustworthy. When the capture names a real store (storeId), it's visible
+// immediately. Without one, it falls back to an arbitrary store and stays
+// archived/hidden — attaching a real customer's product to the wrong shop
+// would be worse than just not showing it. needsReview mirrors the
+// dashboard's own rule (confidence < 0.6) rather than always being forced on.
 export async function POST(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;
@@ -58,7 +72,8 @@ export async function POST(req) {
     await dbConnect();
 
     let store = null;
-    if (body.storeId) {
+    const hasRealStore = !!body.storeId;
+    if (hasRealStore) {
       store = await User.findOne({ _id: body.storeId, role: "store" });
       if (!store) {
         return Response.json({ error: "Store not found" }, { status: 400 });
@@ -113,7 +128,7 @@ export async function POST(req) {
       consignorAccount: "discover-app",
       aiConfidenceScore,
       needsReview: aiConfidenceScore == null ? true : aiConfidenceScore < 0.6,
-      archived: true,
+      archived: !hasRealStore,
     });
 
     await doc.save();

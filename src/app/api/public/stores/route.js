@@ -11,10 +11,13 @@ export async function OPTIONS() {
   return handlePreflight();
 }
 
-// The real boutique directory — every known store, verified or not.
-// Unverified/unclaimed entries (bulk-imported or Discover-submitted) are
-// included on purpose: Discover is meant to help people find them, whether
-// or not the business itself has claimed a Ree account yet.
+// The real boutique directory — every known store, verified or not. The
+// `verified` field on each entry tells the caller which ones are approved;
+// filtering that down to a "map-visible" set is Discover's job (it also
+// needs the FULL list, unverified included, to let a user attribute a
+// capture to a brand-new not-yet-approved store) — see fetchStores() on
+// that side. Nothing here is ever deleted for being unverified, just not
+// shown on the public map until an admin ticks "Verified" in Ree admin.
 export async function GET(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;
