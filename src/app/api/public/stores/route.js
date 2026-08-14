@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import Product from "@/models/Product";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { normalizeName } from "@/lib/storeMatching";
@@ -35,7 +36,46 @@ export async function GET(req) {
       .limit(5000)
       .lean();
 
-    return Response.json({ ok: true, stores: stores.map(serializePublicStore) });
+    // One representative photo + a real count per store, computed directly
+    // instead of Discover trying to derive it client-side from a capped
+    // global product feed. That approach silently broke at scale: fetching
+    // "all products" is capped (currently 200, platform-wide) to keep that
+    // endpoint fast, so once total inventory grew past that, only whichever
+    // stores happened to have the very newest listings ever showed a photo
+    // on the map — every other store looked photo-less regardless of how
+    // much real inventory it actually had. This aggregation has no such
+    // cap: it's one pass over real (non-archived, non-sold, review-passed,
+    // has-a-photo) products, grouped per store, so it stays correct no
+    // matter how large the catalogue gets.
+    const productAgg = await Product.aggregate([
+      {
+        $match: {
+          archived: { $ne: true },
+          needsReview: { $ne: true },
+          sold: { $ne: true },
+          images: { $exists: true, $not: { $size: 0 } },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$userId",
+          activeProductCount: { $sum: 1 },
+          thumbnail: { $first: { $arrayElemAt: ["$images.url", 0] } },
+        },
+      },
+    ]);
+    const productInfoByStore = new Map(
+      productAgg.map((p) => [String(p._id), { thumbnail: p.thumbnail || null, activeProductCount: p.activeProductCount }]),
+    );
+
+    return Response.json({
+      ok: true,
+      stores: stores.map((s) => ({
+        ...serializePublicStore(s),
+        ...(productInfoByStore.get(String(s._id)) || { thumbnail: null, activeProductCount: 0 }),
+      })),
+    });
   } catch (error) {
     console.error("Public stores list error:", error);
     return Response.json({ error: "Something went wrong" }, { status: 500 });
