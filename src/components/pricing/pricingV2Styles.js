@@ -140,6 +140,18 @@ const PRICING_V2_CSS = `
     font-weight: 500;
     color: #9ca3af;
   }
+  .p2-price__vat {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #9ca3af;
+  }
+  .p2-vat-note {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+  }
 
   /* features */
   .p2-features {
