@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload, FaPlus } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 // Builds a compact page-number list: always the first and last page, the
@@ -80,6 +80,49 @@ const StoresUsersPage = () => {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkError, setBulkError] = useState(null);
+
+  // Add single store state
+  const emptyAddStoreForm = {
+    storename: "",
+    businessNumber: "",
+    address: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    country: "",
+    latitude: "",
+    longitude: "",
+    phone: "",
+    contactEmail: "",
+    email: "",
+    isVerified: true,
+  };
+  const [showAddStore, setShowAddStore] = useState(false);
+  const [addStoreForm, setAddStoreForm] = useState(emptyAddStoreForm);
+  const [addingStore, setAddingStore] = useState(false);
+  const [addStoreError, setAddStoreError] = useState(null);
+
+  const handleAddStore = async () => {
+    setAddingStore(true);
+    setAddStoreError(null);
+    try {
+      const res = await fetch("/api/admin/stores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addStoreForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add store");
+      toast.success(`"${addStoreForm.storename}" added`);
+      setShowAddStore(false);
+      setAddStoreForm(emptyAddStoreForm);
+      fetchUsers();
+    } catch (err) {
+      setAddStoreError(err.message);
+    } finally {
+      setAddingStore(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -414,17 +457,30 @@ const StoresUsersPage = () => {
         <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Stores & Users</h1>
         <div className="flex items-center gap-3">
           {activeTab === "stores" && (
-            <button
-              onClick={() => {
-                setBulkResult(null);
-                setBulkError(null);
-                setShowBulkUpload(true);
-              }}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
-            >
-              <FaUpload className="text-sm" />
-              Upload CSV
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setAddStoreError(null);
+                  setAddStoreForm(emptyAddStoreForm);
+                  setShowAddStore(true);
+                }}
+                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+              >
+                <FaPlus className="text-sm" />
+                Add Store
+              </button>
+              <button
+                onClick={() => {
+                  setBulkResult(null);
+                  setBulkError(null);
+                  setShowBulkUpload(true);
+                }}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+              >
+                <FaUpload className="text-sm" />
+                Upload CSV
+              </button>
+            </>
           )}
           <button
             onClick={downloadCSV}
@@ -885,6 +941,161 @@ const StoresUsersPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Add single store modal */}
+      {showAddStore && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !addingStore && setShowAddStore(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">Add Store</h3>
+            <p className="text-gray-600 mb-5">
+              Add one real store directly. Checked against existing stores by name and
+              CVR first — if either already exists, you'll be pointed to that entry
+              instead of creating a duplicate.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Store Name *</span>
+                <input
+                  value={addStoreForm.storename}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, storename: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">CVR / Business Number</span>
+                <input
+                  value={addStoreForm.businessNumber}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, businessNumber: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Country *</span>
+                <input
+                  value={addStoreForm.country}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, country: e.target.value }))}
+                  placeholder="DK"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Address</span>
+                <input
+                  value={addStoreForm.address}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, address: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">City</span>
+                <input
+                  value={addStoreForm.city}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, city: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Zipcode</span>
+                <input
+                  value={addStoreForm.zipcode}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, zipcode: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">
+                  Latitude <span className="text-gray-400 font-normal">(optional — shows on map instantly)</span>
+                </span>
+                <input
+                  value={addStoreForm.latitude}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, latitude: e.target.value }))}
+                  placeholder="e.g. 55.6761"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Longitude</span>
+                <input
+                  value={addStoreForm.longitude}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, longitude: e.target.value }))}
+                  placeholder="e.g. 12.5683"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Phone</span>
+                <input
+                  value={addStoreForm.phone}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Contact Email</span>
+                <input
+                  value={addStoreForm.contactEmail}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">
+                  Login Email <span className="text-gray-400 font-normal">(optional — leave blank if the owner hasn't claimed the account yet)</span>
+                </span>
+                <input
+                  value={addStoreForm.email}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, email: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <label className="col-span-2 flex items-center gap-2 mt-1">
+                <input
+                  type="checkbox"
+                  checked={addStoreForm.isVerified}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, isVerified: e.target.checked }))}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-semibold text-gray-700">
+                  Verified — show on the app immediately (uncheck to add as pending)
+                </span>
+              </label>
+            </div>
+
+            {addStoreError && <p className="text-red-500 text-md mt-4">{addStoreError}</p>}
+
+            <div className="flex justify-end gap-3 pt-6">
+              <button
+                onClick={() => setShowAddStore(false)}
+                disabled={addingStore}
+                className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddStore}
+                disabled={addingStore || !addStoreForm.storename.trim() || !addStoreForm.country.trim()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:opacity-50"
+              >
+                {addingStore ? <><Spinner size="sm" color="white" /> Adding...</> : "Add Store"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
