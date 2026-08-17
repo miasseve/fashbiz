@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
+import User from "@/models/User";
 import { deleteShopifyProduct } from "@/actions/shopifyAction";
 import { CATEGORIES, ALL_SUBCATEGORIES } from "@/lib/taxonomy";
 
@@ -29,7 +30,7 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     const product = await Product.findById(productId)
-      .populate("userId", "firstname lastname storename email phone")
+      .populate("userId", "firstname lastname storename email phone address city country")
       .lean();
 
     if (!product) return json({ error: "Product not found" }, 404);
@@ -104,6 +105,17 @@ export async function PATCH(request, { params }) {
 
     if (body.colorName !== undefined) {
       update.color = { ...product.color, name: String(body.colorName).trim() || "No Color" };
+    }
+
+    // Reassigning a product to a different store — admin-only, no ownership
+    // check needed here (that's the whole point of doing this from admin
+    // rather than the public app).
+    if (body.storeId !== undefined) {
+      const store = await User.findOne({ _id: body.storeId, role: "store" }).select("_id");
+      if (!store) {
+        return json({ error: "Store not found" }, 400);
+      }
+      update.userId = store._id;
     }
 
     await Product.updateOne({ _id: productId }, { $set: update });

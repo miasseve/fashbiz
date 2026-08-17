@@ -1,10 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaTrash, FaStore, FaEdit } from "react-icons/fa";
 import { CATEGORIES, SUBCATEGORIES } from "@/lib/taxonomy";
+
+// Full address shown alongside every store name in the reassign picker —
+// two stores can share a name (or a very similar one), and only the address
+// makes it unambiguous which one is actually being picked.
+const storeAddressLine = (s) =>
+  [s.address, s.city, s.country].filter(Boolean).join(", ");
 
 const emptyForm = {
   title: "",
@@ -34,7 +40,30 @@ const AdminProductDetailPage = () => {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
+  // Store reassignment — separate from the rest of the edit form since it's
+  // a search-and-pick control, not a plain field. Holds the FULL selected
+  // store object (not just an id) so the header display can update
+  // immediately on save without a second fetch.
+  const [stores, setStores] = useState([]);
+  const [storeQuery, setStoreQuery] = useState("");
+  const [reassignStore, setReassignStore] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((res) => res.json())
+      .then((data) => setStores((data.users || []).filter((u) => u.role === "store")))
+      .catch(() => {});
+  }, []);
+
+  const storeMatches = useMemo(() => {
+    const q = storeQuery.trim().toLowerCase();
+    if (!q) return [];
+    return stores.filter((s) => (s.storename || "").toLowerCase().includes(q)).slice(0, 8);
+  }, [stores, storeQuery]);
+
   const startEditing = (p) => {
+    setReassignStore(null);
+    setStoreQuery("");
     setForm({
       title: p.title || "",
       brand: p.brand || "",
@@ -93,10 +122,11 @@ const AdminProductDetailPage = () => {
     }
     setSaving(true);
     try {
+      const body = reassignStore ? { ...form, storeId: reassignStore._id } : form;
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to save");
@@ -106,6 +136,7 @@ const AdminProductDetailPage = () => {
         price: Number(form.price),
         size: form.size.split(",").map((s) => s.trim()).filter(Boolean),
         color: { ...prev.color, name: form.colorName },
+        ...(reassignStore ? { userId: reassignStore } : {}),
       }));
       toast.success("Product updated");
       setEditing(false);
@@ -222,12 +253,65 @@ const AdminProductDetailPage = () => {
 
           <div className="flex items-center gap-2 text-gray-600">
             <FaStore className="text-gray-400" />
-            <span className="font-semibold">{storeName}</span>
-            {product.userId?.email && <span className="text-gray-400">· {product.userId.email}</span>}
+            <span className="font-semibold">
+              {reassignStore ? reassignStore.storename : storeName}
+            </span>
+            {reassignStore ? (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                Pending — save to confirm
+              </span>
+            ) : (
+              product.userId?.email && <span className="text-gray-400">· {product.userId.email}</span>
+            )}
           </div>
 
           {editing ? (
             <div className="space-y-4 border-t border-gray-100 pt-4">
+              <div>
+                <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">
+                  Reassign to a different store
+                </span>
+                {reassignStore ? (
+                  <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border border-gray-300 px-3 py-2.5 bg-gray-50">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 truncate">{reassignStore.storename}</div>
+                      <div className="text-sm text-gray-500 truncate">{storeAddressLine(reassignStore) || "No address on file"}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReassignStore(null)}
+                      className="shrink-0 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      value={storeQuery}
+                      onChange={(e) => setStoreQuery(e.target.value)}
+                      placeholder="Search store by name…"
+                      className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                    />
+                    {storeMatches.length > 0 && (
+                      <div className="mt-1 max-h-[220px] overflow-y-auto rounded-lg border border-gray-300 bg-white">
+                        {storeMatches.map((s) => (
+                          <button
+                            type="button"
+                            key={s._id}
+                            onClick={() => { setReassignStore(s); setStoreQuery(""); }}
+                            className="block w-full text-left px-3 py-2.5 border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
+                          >
+                            <div className="font-semibold text-gray-900">{s.storename}</div>
+                            <div className="text-sm text-gray-500">{storeAddressLine(s) || "No address on file"}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
                   <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Title</span>
@@ -355,7 +439,7 @@ const AdminProductDetailPage = () => {
 
               <div className="flex justify-end gap-3 pt-2">
                 <button
-                  onClick={() => setEditing(false)}
+                  onClick={() => { setReassignStore(null); setEditing(false); }}
                   disabled={saving}
                   className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 >

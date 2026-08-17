@@ -16,7 +16,7 @@ export async function GET() {
 
     const users = await User.find({ role: { $ne: "admin" } })
       .select(
-        "firstname lastname email role storename brandname isActive isVerified isProfileComplete phone country city businessNumber products createdAt latitude longitude"
+        "firstname lastname email role storename brandname isActive isVerified isProfileComplete phone country city address zipcode businessNumber products createdAt latitude longitude"
       )
       // Newest first. Sort by createdAt (what the "Joined" column shows),
       // tie-broken by _id so records without a createdAt still order sensibly.
