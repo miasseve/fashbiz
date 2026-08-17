@@ -7,6 +7,26 @@ import Papa from "papaparse";
 import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
+// Builds a compact page-number list: always the first and last page, the
+// current page and one neighbour on each side, with "…" filling any gap —
+// e.g. [1, "…", 11, 12, 13, "…", 104] instead of every page from 1 to 104.
+function getPaginationItems(current, total) {
+  const items = [];
+  const addPage = (p) => items.push(p);
+  const addEllipsis = () => {
+    if (items[items.length - 1] !== "…") items.push("…");
+  };
+
+  for (let p = 1; p <= total; p++) {
+    if (p === 1 || p === total || (p >= current - 1 && p <= current + 1)) {
+      addPage(p);
+    } else {
+      addEllipsis();
+    }
+  }
+  return items;
+}
+
 const CSV_TEMPLATE_HEADERS = [
   "storename",
   "businessNumber",
@@ -825,33 +845,43 @@ const StoresUsersPage = () => {
         )}
       </div>
 
-      {/* Pagination */}
+      {/* Pagination — windowed (first/last + a few around the current page),
+          not one button per page. With 100+ pages of stores, rendering
+          every page number in a single row is what was forcing the whole
+          table to scroll absurdly wide and leaving a huge blank gap - not
+          the font size. */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg text-[15px] font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-[14px] font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 rounded-lg text-[15px] font-semibold transition-colors ${
-                currentPage === page
-                  ? "bg-indigo-600 text-white"
-                  : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
+          {getPaginationItems(currentPage, totalPages).map((item, i) =>
+            item === "…" ? (
+              <span key={`ellipsis-${i}`} className="px-1 text-gray-400 text-[14px]">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                onClick={() => setCurrentPage(item)}
+                className={`w-9 h-9 rounded-lg text-[14px] font-semibold transition-colors ${
+                  currentPage === item
+                    ? "bg-indigo-600 text-white"
+                    : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {item}
+              </button>
+            ),
+          )}
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg text-[15px] font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-[14px] font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>
