@@ -134,6 +134,12 @@ const PRICING_V2_CSS = `
     font-weight: 600;
     color: #ff2e7e;
   }
+  .p2-price__commitment {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #9ca3af;
+  }
 
   /* features */
   .p2-features {

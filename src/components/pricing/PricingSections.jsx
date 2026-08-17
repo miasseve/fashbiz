@@ -159,6 +159,7 @@ export default function PricingSections({
           <span className="p2-price__unit">{unit}</span>
         </div>
         {fee && <div className="p2-price__fee">{fee}</div>}
+        {isWebstore && <div className="p2-price__commitment">6 months commitment</div>}
 
         <div className="p2-features">
           {features.map((f, i) => (
