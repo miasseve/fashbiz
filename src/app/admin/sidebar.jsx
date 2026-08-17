@@ -65,7 +65,16 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin", label: "Overview", icon: <MdDashboard />, roles: ["admin", "developer"] },
     { href: "/admin/live-activity", label: "Live Activity", icon: <MdTimeline />, roles: ["admin", "developer"] },
     { href: "/admin/stores-users", label: "Stores & Users", icon: <FaUsers />, roles: ["admin", "developer"] },
-    { href: "/admin/products", label: "Products", icon: <BiLogoProductHunt />, roles: ["admin", "developer"] },
+    {
+      href: "/admin/products",
+      label: "Products",
+      icon: <BiLogoProductHunt />,
+      roles: ["admin", "developer"],
+      // A product's own detail/edit page is reached FROM the products list —
+      // it should still read as "you're in Products", not lose the
+      // highlight just because the URL isn't an exact match.
+      isActive: (path) => path === "/admin/products" || path.startsWith("/admin/products/"),
+    },
     { href: "/admin/support", label: "Support", icon: <MdSupportAgent />, roles: ["admin", "developer"] },
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
     { href: "/admin/platform-fees", label: "Platform Fees", icon: <RiMoneyDollarCircleLine />, roles: ["admin"] },
@@ -81,13 +90,13 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
         <div className="text-[1rem] text-gray-500 pb-2">Admin Panel</div>
       </div>
       <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar">
-        {menuItems.map(({ href, label, icon }) => (
+        {menuItems.map(({ href, label, icon, isActive }) => (
           <Link
             key={href}
             href={href}
             onClick={() => isSidebarOpen && toggleSidebar()}
             className={`w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] ${
-              pathname === href
+              (isActive ? isActive(pathname) : pathname === href)
                 ? "bg-[#ffd7d7] text-black"
                 : "hover:bg-[#ffd7d7] hover:text-black"
             }`}
