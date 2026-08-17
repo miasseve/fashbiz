@@ -668,7 +668,7 @@ const StoresUsersPage = () => {
             No {activeTab === "stores" ? "stores" : "users"} found.
           </p>
         ) : (
-          <table className="w-full text-[15px]">
+          <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left px-4 py-3.5 font-bold text-gray-700">
@@ -730,7 +730,7 @@ const StoresUsersPage = () => {
                     </td>
                     <td className="px-4 py-3.5">
                       <span
-                        className={`capitalize px-2.5 py-1 rounded-full text-[14px] font-semibold ${getRoleBadge(
+                        className={`capitalize px-2.5 py-1 rounded-full text-[12px] font-semibold ${getRoleBadge(
                           user.role,
                         )}`}
                       >
@@ -760,18 +760,18 @@ const StoresUsersPage = () => {
                       </td>
                     )}
                     <td className="px-4 py-3.5 text-center">
-                      <span className="inline-flex items-center justify-center bg-gray-100 text-gray-800 font-bold rounded-full w-9 h-9 text-[14px]">
+                      <span className="inline-flex items-center justify-center bg-gray-100 text-gray-800 font-bold rounded-full w-8 h-8 text-[12px]">
                         {user.productCount || 0}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
                       {user.isActive === true ? (
-                        <span className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-green-700">
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-700">
                           <span className="w-2 h-2 bg-green-500 rounded-full" />
                           Active
                         </span>
                       ) : user.isActive === false ? (
-                        <span className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-red-600">
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-red-600">
                           <span className="w-2 h-2 bg-red-500 rounded-full" />
                           Inactive
                         </span>
