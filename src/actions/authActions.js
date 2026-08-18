@@ -19,6 +19,7 @@ import {
 import { sendResetPasswordEmail } from "@/mails/forgotPassword";
 import ActiveUser from "@/models/Activeuser";
 import { transferGuestProducts } from "@/actions/productActions";
+import { normalizeName, isUnclaimedEmail } from "@/lib/storeMatching";
 
 export async function registerUser(data) {
   try {
@@ -50,34 +51,76 @@ export async function registerUser(data) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new User({
-      firstname,
-      lastname: role === "brand" ? undefined : lastname,
-      email,
-      password: hashedPassword,
-      role,
-      phone: phone || undefined,
+    // A store may already exist as an unclaimed listing — added by admin
+    // without login info, imported from a CSV, or submitted by a Discover
+    // user who spotted a boutique that wasn't listed yet. If this signup
+    // matches one (by name or CVR), claim it in place — update that exact
+    // record instead of creating a second, separate account — so any
+    // products already attributed to it stay attributed to it. Ambiguous
+    // (more than one match) is left alone rather than guessed at; an admin
+    // can sort that out via the store reassignment tools instead.
+    let savedUser = null;
+    if (role === "store") {
+      const unclaimedStores = await User.find({ role: "store" })
+        .select("_id storename businessNumber email")
+        .lean();
+      const normalizedName = normalizeName(storename);
+      const candidates = unclaimedStores.filter(
+        (s) =>
+          isUnclaimedEmail(s.email) &&
+          (normalizeName(s.storename) === normalizedName ||
+            (businessNumber && s.businessNumber && s.businessNumber === businessNumber)),
+      );
 
-      // Save country ONLY for brand + store
-      country: role === "store" || role === "brand" ? country : undefined,
+      if (candidates.length === 1) {
+        savedUser = await User.findByIdAndUpdate(
+          candidates[0]._id,
+          {
+            firstname,
+            lastname,
+            email,
+            password: hashedPassword,
+            phone: phone || undefined,
+            country,
+            storename,
+            businessNumber,
+            isVerified: true,
+          },
+          { new: true },
+        );
+      }
+    }
 
-      // Store fields
-      ...(role === "store" && {
-        storename,
-        businessNumber,
-      }),
+    if (!savedUser) {
+      const user = new User({
+        firstname,
+        lastname: role === "brand" ? undefined : lastname,
+        email,
+        password: hashedPassword,
+        role,
+        phone: phone || undefined,
 
-      // Brand fields
-      ...(role === "brand" && {
-        contactTitle,
-        companyNumber,
-        companyWebsite,
-        legalCompanyName,
-        brandname,
-      }),
-    });
+        // Save country ONLY for brand + store
+        country: role === "store" || role === "brand" ? country : undefined,
 
-    const savedUser = await user.save();
+        // Store fields
+        ...(role === "store" && {
+          storename,
+          businessNumber,
+        }),
+
+        // Brand fields
+        ...(role === "brand" && {
+          contactTitle,
+          companyNumber,
+          companyWebsite,
+          legalCompanyName,
+          brandname,
+        }),
+      });
+
+      savedUser = await user.save();
+    }
 
     // Transfer any guest products from demo mode to the new user
     const guestSessionId = data.guestSessionId;

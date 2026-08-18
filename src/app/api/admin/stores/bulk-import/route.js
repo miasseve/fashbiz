@@ -3,7 +3,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { normalizeName } from "@/lib/storeMatching";
+import { normalizeName, makeUnclaimedEmail } from "@/lib/storeMatching";
 
 // Real-world CSV exports (Google Sheets, official registries, etc.) don't
 // all use our exact column names — accept common alternates instead of
@@ -172,7 +172,7 @@ export async function POST(request) {
         continue;
       }
 
-      const placeholderEmail = `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
+      const placeholderEmail = makeUnclaimedEmail();
 
       const doc = new User({
         // Mongoose treats "" as "not provided" for a required String field, so an

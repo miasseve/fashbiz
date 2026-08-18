@@ -3,7 +3,7 @@ import User from "@/models/User";
 import Product from "@/models/Product";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { normalizeName } from "@/lib/storeMatching";
+import { normalizeName, makeUnclaimedEmail } from "@/lib/storeMatching";
 import { requireApiKey, handlePreflight } from "@/lib/apiKeyMiddleware";
 import { serializePublicStore, PUBLIC_STORE_FIELDS } from "@/lib/publicStoreSerializer";
 
@@ -140,7 +140,7 @@ export async function POST(req) {
       });
     }
 
-    const placeholderEmail = `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
+    const placeholderEmail = makeUnclaimedEmail();
     const placeholderPassword = await bcrypt.hash(crypto.randomUUID(), 10);
     // Schema requires businessNumber for role "store"; this form has no CVR field
     // (unlike the admin CSV importer), so stub one out until the real owner claims

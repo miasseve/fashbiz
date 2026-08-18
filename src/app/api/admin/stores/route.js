@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 // Straight from libphonenumber-js itself, not react-phone-number-input —
 // that package's entry points all re-export its React <PhoneInput/>
 // component too (even the "/core" one), which broke the build when pulled
@@ -11,7 +12,7 @@ import bcrypt from "bcryptjs";
 // the default/min builds are.
 import { isValidPhoneNumber } from "libphonenumber-js/core";
 import metadata from "libphonenumber-js/min/metadata";
-import { normalizeName } from "@/lib/storeMatching";
+import { normalizeName, makeUnclaimedEmail } from "@/lib/storeMatching";
 
 // Same 8 countries the real store signup form offers — keeping this list to
 // exactly what StoreForm.jsx supports (src/app/(auth)/register/StoreForm.jsx)
@@ -51,9 +52,15 @@ async function requireAdmin() {
 /**
  * POST /api/admin/stores — manually add a single real store from admin.
  *
- * Exactly the same required fields as the real store sign-up form
- * (src/app/(auth)/register/StoreForm.jsx) — an admin-created store is meant
- * to be a real, immediately-usable account, not a placeholder.
+ * Name, country and CVR are the only truly required fields — an admin
+ * adding a store one at a time often doesn't have the owner's phone/email
+ * on hand. Leaving email blank creates an unclaimed listing (same stub
+ * pattern as the CSV importer and the app's "add a boutique" flow): visible
+ * everywhere a normal store is, but with no working login until the real
+ * owner signs up for real, at which point registerUser() claims this exact
+ * record in place instead of creating a duplicate — see authActions.js.
+ * Providing a real email still creates an immediately-usable account, same
+ * as before.
  *
  * Same duplicate-detection rules as the CSV bulk importer (name and CVR),
  * checked here too so this doesn't become a second way to accidentally
@@ -84,10 +91,21 @@ export async function POST(request) {
       return json({ error: `Country must be one of: ${ALLOWED_COUNTRIES.join(", ")}` }, 400);
     }
     if (!businessNumber) return json({ error: "Business Registration Number is required" }, 400);
-    if (!phone || !isValidPhoneNumber(phone, metadata)) return json({ error: "Phone number is not valid" }, 400);
-    if (!email) return json({ error: "Email is required" }, 400);
-    const passwordError = validatePassword(password);
-    if (passwordError) return json({ error: passwordError }, 400);
+    // Phone is optional — only validated if actually provided.
+    if (phone && !isValidPhoneNumber(phone, metadata)) return json({ error: "Phone number is not valid" }, 400);
+
+    // Email is optional too — no email means no real login is possible, so
+    // password is irrelevant and skipped entirely rather than validated.
+    let finalEmail, finalPassword;
+    if (email) {
+      const passwordError = validatePassword(password);
+      if (passwordError) return json({ error: passwordError }, 400);
+      finalEmail = email;
+      finalPassword = await bcrypt.hash(password, 10);
+    } else {
+      finalEmail = makeUnclaimedEmail();
+      finalPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+    }
 
     await dbConnect();
 
@@ -109,19 +127,21 @@ export async function POST(request) {
       );
     }
 
-    const emailTaken = await User.findOne({ email }).select("_id").lean();
-    if (emailTaken) return json({ error: "That email is already in use" }, 409);
+    if (email) {
+      const emailTaken = await User.findOne({ email }).select("_id").lean();
+      if (emailTaken) return json({ error: "That email is already in use" }, 409);
+    }
 
     const doc = new User({
       firstname,
       lastname,
       storename,
-      email,
-      password: await bcrypt.hash(password, 10),
+      email: finalEmail,
+      password: finalPassword,
       role: "store",
       country,
       businessNumber,
-      phone,
+      phone: phone || undefined,
       addedByAdmin: true,
       // An admin manually adding a store from real, known-good info is
       // exactly what verification means to signal — same as a real signup,

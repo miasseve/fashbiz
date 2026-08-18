@@ -826,6 +826,15 @@ const StoresUsersPage = () => {
                             Added by Admin
                           </span>
                         )}
+                        {user.role === "store" &&
+                          user.email?.toLowerCase().endsWith("@ree-unclaimed.internal") && (
+                            <span
+                              title="No login yet — automatically linked to the real owner's account when they sign up"
+                              className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+                            >
+                              Unclaimed
+                            </span>
+                          )}
                       </div>
                       {(user.storename || user.brandname) && (
                         <div className="text-[13px] text-gray-400 font-normal mt-0.5">
@@ -985,8 +994,11 @@ const StoresUsersPage = () => {
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-1">Add Store</h3>
             <p className="text-gray-600 mb-5">
-              Same fields as the real store sign-up form, except the owner's name is
-              optional if you don't know it. Checked against existing stores by name and
+              Store Name, Country and CVR are the only required fields. Leave Email
+              blank to add it as an unclaimed listing — it'll show up everywhere a
+              normal store does, just with no login until the real owner signs up,
+              at which point it's automatically linked to their new account instead
+              of creating a duplicate. Checked against existing stores by name and
               CVR first — if either already exists, you'll be pointed to that entry
               instead of creating a duplicate.
             </p>
@@ -1044,7 +1056,8 @@ const StoresUsersPage = () => {
               </label>
 
               <label className="block col-span-2">
-                <span className="text-sm font-semibold text-gray-700">Phone *</span>
+                <span className="text-sm font-semibold text-gray-700">Phone</span>
+                <span className="text-gray-400 text-sm"> (optional if unknown)</span>
                 <PhoneInput
                   international
                   defaultCountry="DK"
@@ -1055,32 +1068,39 @@ const StoresUsersPage = () => {
                 />
               </label>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Email *</span>
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Email</span>
+                <span className="text-gray-400 text-sm">
+                  {" "}
+                  (optional — leave blank to add as an unclaimed listing with no login yet)
+                </span>
                 <input
                   value={addStoreForm.email}
                   onChange={(e) => setAddStoreForm((f) => ({ ...f, email: e.target.value }))}
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Password *</span>
-                <div className="relative mt-1">
-                  <input
-                    type={showAddStorePassword ? "text" : "password"}
-                    value={addStoreForm.password}
-                    onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowAddStorePassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showAddStorePassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </label>
+
+              {addStoreForm.email.trim() && (
+                <label className="block col-span-2">
+                  <span className="text-sm font-semibold text-gray-700">Password *</span>
+                  <div className="relative mt-1">
+                    <input
+                      type={showAddStorePassword ? "text" : "password"}
+                      value={addStoreForm.password}
+                      onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 text-base"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAddStorePassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showAddStorePassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                </label>
+              )}
             </div>
 
             {addStoreError && <p className="text-red-500 text-md mt-4">{addStoreError}</p>}
@@ -1100,10 +1120,8 @@ const StoresUsersPage = () => {
                   !addStoreForm.storename.trim() ||
                   !addStoreForm.country.trim() ||
                   !addStoreForm.businessNumber.trim() ||
-                  !addStoreForm.phone ||
-                  !isValidPhoneNumber(addStoreForm.phone) ||
-                  !addStoreForm.email.trim() ||
-                  !addStoreForm.password
+                  (addStoreForm.phone && !isValidPhoneNumber(addStoreForm.phone)) ||
+                  (addStoreForm.email.trim() && !addStoreForm.password)
                 }
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:opacity-50"
               >
