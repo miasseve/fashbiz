@@ -2,7 +2,10 @@ import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
+// Core validation only — the default entry also bundles the PhoneInput
+// React component, which broke the build when pulled into a server-only
+// API route ("Super expression must either be null or a function").
+import { isValidPhoneNumber } from "react-phone-number-input/core";
 import { normalizeName } from "@/lib/storeMatching";
 
 // Same 8 countries the real store signup form offers — keeping this list to
@@ -43,6 +46,10 @@ async function requireAdmin() {
 /**
  * POST /api/admin/stores — manually add a single real store from admin.
  *
+ * Exactly the same required fields as the real store sign-up form
+ * (src/app/(auth)/register/StoreForm.jsx) — an admin-created store is meant
+ * to be a real, immediately-usable account, not a placeholder.
+ *
  * Same duplicate-detection rules as the CSV bulk importer (name and CVR),
  * checked here too so this doesn't become a second way to accidentally
  * create the exact kind of duplicate that prompted building this in the
@@ -55,40 +62,33 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
+    const firstname = String(body.firstname || "").trim();
+    const lastname = String(body.lastname || "").trim();
     const storename = String(body.storename || "").trim();
     const country = String(body.country || "").trim().toUpperCase();
-    if (!storename) return json({ error: "Store name is required" }, 400);
+    const businessNumber = String(body.businessNumber || "").trim();
+    const phone = String(body.phone || "").trim();
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+
+    if (!firstname) return json({ error: "First Name is required" }, 400);
+    if (!lastname) return json({ error: "Last Name is required" }, 400);
+    if (!storename) return json({ error: "Store Name is required" }, 400);
     if (!country) return json({ error: "Country is required" }, 400);
     if (!ALLOWED_COUNTRIES.includes(country)) {
       return json({ error: `Country must be one of: ${ALLOWED_COUNTRIES.join(", ")}` }, 400);
     }
-
-    const businessNumber = String(body.businessNumber || "").trim();
-    const address = String(body.address || "").trim();
-    const city = String(body.city || "").trim();
-    const state = String(body.state || "").trim();
-    const zipcode = String(body.zipcode || "").trim();
-    const phone = String(body.phone || "").trim();
-    const contactEmail = String(body.contactEmail || "").trim();
-    const loginEmail = String(body.email || "").trim();
-
-    let latitude, longitude;
-    if (body.latitude !== undefined && body.latitude !== null && body.latitude !== "") {
-      const lat = Number(body.latitude);
-      if (Number.isNaN(lat) || lat < -90 || lat > 90) return json({ error: "Invalid latitude" }, 400);
-      latitude = lat;
-    }
-    if (body.longitude !== undefined && body.longitude !== null && body.longitude !== "") {
-      const lng = Number(body.longitude);
-      if (Number.isNaN(lng) || lng < -180 || lng > 180) return json({ error: "Invalid longitude" }, 400);
-      longitude = lng;
-    }
+    if (!businessNumber) return json({ error: "Business Registration Number is required" }, 400);
+    if (!phone || !isValidPhoneNumber(phone)) return json({ error: "Phone number is not valid" }, 400);
+    if (!email) return json({ error: "Email is required" }, 400);
+    const passwordError = validatePassword(password);
+    if (passwordError) return json({ error: passwordError }, 400);
 
     await dbConnect();
 
     // Duplicate check — the exact problem this feature exists to prevent.
-    const normalizedName = normalizeName(storename);
     const existing = await User.find({ role: "store" }).select("storename businessNumber").lean();
+    const normalizedName = normalizeName(storename);
     const nameMatch = existing.find((s) => normalizeName(s.storename) === normalizedName);
     if (nameMatch) {
       return json(
@@ -96,57 +96,31 @@ export async function POST(request) {
         409,
       );
     }
-    if (businessNumber) {
-      const cvrMatch = existing.find((s) => s.businessNumber === businessNumber);
-      if (cvrMatch) {
-        return json(
-          { error: `CVR ${businessNumber} is already registered to "${cvrMatch.storename}". Edit that one instead of creating a duplicate.` },
-          409,
-        );
-      }
+    const cvrMatch = existing.find((s) => s.businessNumber === businessNumber);
+    if (cvrMatch) {
+      return json(
+        { error: `CVR ${businessNumber} is already registered to "${cvrMatch.storename}". Edit that one instead of creating a duplicate.` },
+        409,
+      );
     }
 
-    // A real login email needs a real, chosen password to go with it (same
-    // as signup — email and password always arrive together there). Left
-    // blank, the store stays an unclaimed stub, same as a bulk-import row or
-    // a self-submitted "Add a boutique" entry — nobody can log into it until
-    // it's edited with real credentials later.
-    let email, password;
-    if (loginEmail) {
-      const emailTaken = await User.findOne({ email: loginEmail.toLowerCase() }).select("_id").lean();
-      if (emailTaken) return json({ error: "That email is already in use" }, 409);
-
-      const passwordError = validatePassword(body.password || "");
-      if (passwordError) return json({ error: passwordError }, 400);
-
-      email = loginEmail;
-      password = await bcrypt.hash(body.password, 10);
-    } else {
-      email = `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
-      password = await bcrypt.hash(crypto.randomUUID(), 10);
-    }
+    const emailTaken = await User.findOne({ email }).select("_id").lean();
+    if (emailTaken) return json({ error: "That email is already in use" }, 409);
 
     const doc = new User({
-      firstname: body.firstname?.trim() || storename,
-      lastname: body.lastname?.trim() || "Store",
+      firstname,
+      lastname,
       storename,
       email,
-      password,
+      password: await bcrypt.hash(password, 10),
       role: "store",
       country,
-      city: city || undefined,
-      state: state || undefined,
-      zipcode: zipcode || undefined,
-      address: address || undefined,
-      phone: phone || undefined,
-      contactEmail: contactEmail || undefined,
-      businessNumber: businessNumber || undefined,
-      latitude,
-      longitude,
-      // An admin deliberately adding a store from real, known-good info is
-      // exactly what verification means to signal — defaults on, but still
-      // an explicit choice (checkbox), not forced.
-      isVerified: body.isVerified !== false,
+      businessNumber,
+      phone,
+      // An admin manually adding a store from real, known-good info is
+      // exactly what verification means to signal — same as a real signup,
+      // which also defaults to verified.
+      isVerified: true,
       isActive: false,
     });
 

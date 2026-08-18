@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import Papa from "papaparse";
 import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload, FaPlus } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import "react-phone-number-input/style.css";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 
 // Builds a compact page-number list: always the first and last page, the
 // current page and one neighbour on each side, with "…" filling any gap —
@@ -81,19 +83,15 @@ const StoresUsersPage = () => {
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkError, setBulkError] = useState(null);
 
-  // Add single store state
+  // Add single store state — exactly the fields the real store sign-up
+  // form has, nothing more.
   const emptyAddStoreForm = {
+    firstname: "",
+    lastname: "",
     storename: "",
-    businessNumber: "",
-    address: "",
-    city: "",
-    state: "",
-    zipcode: "",
     country: "",
-    latitude: "",
-    longitude: "",
+    businessNumber: "",
     phone: "",
-    contactEmail: "",
     email: "",
     password: "",
     isVerified: true,
@@ -969,12 +967,29 @@ const StoresUsersPage = () => {
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-1">Add Store</h3>
             <p className="text-gray-600 mb-5">
-              Add one real store directly. Checked against existing stores by name and
-              CVR first — if either already exists, you'll be pointed to that entry
-              instead of creating a duplicate.
+              Exact same fields as the real store sign-up form. Checked against existing
+              stores by name and CVR first — if either already exists, you'll be pointed
+              to that entry instead of creating a duplicate.
             </p>
 
             <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">First Name *</span>
+                <input
+                  value={addStoreForm.firstname}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, firstname: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Last Name *</span>
+                <input
+                  value={addStoreForm.lastname}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, lastname: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+
               <label className="block col-span-2">
                 <span className="text-sm font-semibold text-gray-700">Store Name *</span>
                 <input
@@ -984,15 +999,7 @@ const StoresUsersPage = () => {
                 />
               </label>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">CVR / Business Number</span>
-                <input
-                  value={addStoreForm.businessNumber}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, businessNumber: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-              <label className="block">
+              <label className="block col-span-2">
                 <span className="text-sm font-semibold text-gray-700">Country *</span>
                 <select
                   value={addStoreForm.country}
@@ -1007,104 +1014,42 @@ const StoresUsersPage = () => {
               </label>
 
               <label className="block col-span-2">
-                <span className="text-sm font-semibold text-gray-700">Address</span>
+                <span className="text-sm font-semibold text-gray-700">Business Registration Number (VAT/CVR) *</span>
                 <input
-                  value={addStoreForm.address}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, address: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">City</span>
-                <input
-                  value={addStoreForm.city}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, city: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Zipcode</span>
-                <input
-                  value={addStoreForm.zipcode}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, zipcode: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">
-                  Latitude <span className="text-gray-400 font-normal">(optional — shows on map instantly)</span>
-                </span>
-                <input
-                  value={addStoreForm.latitude}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, latitude: e.target.value }))}
-                  placeholder="e.g. 55.6761"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Longitude</span>
-                <input
-                  value={addStoreForm.longitude}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, longitude: e.target.value }))}
-                  placeholder="e.g. 12.5683"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Phone</span>
-                <input
-                  value={addStoreForm.phone}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Contact Email</span>
-                <input
-                  value={addStoreForm.contactEmail}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                  value={addStoreForm.businessNumber}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, businessNumber: e.target.value }))}
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
 
               <label className="block col-span-2">
-                <span className="text-sm font-semibold text-gray-700">
-                  Login Email <span className="text-gray-400 font-normal">(optional — leave both this and Password blank if the owner hasn't claimed the account yet)</span>
-                </span>
+                <span className="text-sm font-semibold text-gray-700">Phone *</span>
+                <PhoneInput
+                  international
+                  defaultCountry="DK"
+                  value={addStoreForm.phone}
+                  onChange={(value) => setAddStoreForm((f) => ({ ...f, phone: value || "" }))}
+                  placeholder="Enter phone number"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base [&_input]:outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Email *</span>
                 <input
                   value={addStoreForm.email}
                   onChange={(e) => setAddStoreForm((f) => ({ ...f, email: e.target.value }))}
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
-
-              {addStoreForm.email && (
-                <label className="block col-span-2">
-                  <span className="text-sm font-semibold text-gray-700">
-                    Password <span className="text-gray-400 font-normal">(min 8 chars, needs a digit, lowercase, uppercase and special character)</span>
-                  </span>
-                  <input
-                    type="password"
-                    value={addStoreForm.password}
-                    onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                  />
-                </label>
-              )}
-
-              <label className="col-span-2 flex items-center gap-2 mt-1">
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Password *</span>
                 <input
-                  type="checkbox"
-                  checked={addStoreForm.isVerified}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, isVerified: e.target.checked }))}
-                  className="w-4 h-4"
+                  type="password"
+                  value={addStoreForm.password}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
-                <span className="text-sm font-semibold text-gray-700">
-                  Verified — show on the app immediately (uncheck to add as pending)
-                </span>
               </label>
             </div>
 
@@ -1122,9 +1067,15 @@ const StoresUsersPage = () => {
                 onClick={handleAddStore}
                 disabled={
                   addingStore ||
+                  !addStoreForm.firstname.trim() ||
+                  !addStoreForm.lastname.trim() ||
                   !addStoreForm.storename.trim() ||
                   !addStoreForm.country.trim() ||
-                  (!!addStoreForm.email.trim() && !addStoreForm.password)
+                  !addStoreForm.businessNumber.trim() ||
+                  !addStoreForm.phone ||
+                  !isValidPhoneNumber(addStoreForm.phone) ||
+                  !addStoreForm.email.trim() ||
+                  !addStoreForm.password
                 }
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:opacity-50"
               >
