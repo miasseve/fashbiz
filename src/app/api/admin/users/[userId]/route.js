@@ -25,15 +25,18 @@ import PointRule from "@/models/PointRule";
 import StoreReferralCode from "@/models/StoreReferralCode";
 import ApprovedProduct from "@/models/ApprovedProduct";
 import Referral from "@/models/Referral";
+import DeletedAccountBackup from "@/models/DeletedAccountBackup";
 
 /**
  * DELETE /api/admin/users/:userId
  *
- * HARD-deletes a user and cascades to every collection that references them.
- * Products are also removed from Shopify (best-effort — a Shopify failure does
- * NOT block the DB deletion).
+ * Snapshots the user and everything that references them into
+ * DeletedAccountBackup, THEN hard-deletes and cascades to every one of those
+ * same collections. Products are also removed from Shopify (best-effort — a
+ * Shopify failure does NOT block the DB deletion).
  *
- * This is IRREVERSIBLE — there is no backup. Admin/developer only.
+ * Recoverable via POST /api/admin/stores/deleted/[backupId]/restore — see
+ * that route for how the backup gets restored. Admin/developer only.
  */
 export async function DELETE(request, { params }) {
   try {
@@ -64,15 +67,82 @@ export async function DELETE(request, { params }) {
       return json({ error: "Admin accounts cannot be deleted here." }, 403);
     }
 
+    // ── 0. Snapshot everything before touching any of it ──
+    //    Same collections/filters as the cascade delete below — read in full
+    //    (not just the fields each step needs) so the backup is a complete,
+    //    restorable copy. Saved BEFORE any deletion happens: if this fails,
+    //    the delete is aborted rather than proceeding without a backup.
+    const [
+      allProducts,
+      accounts,
+      activeUsers,
+      addOnPurchases,
+      carts,
+      contactSupport,
+      instagramPostLogs,
+      notifications,
+      sessions,
+      shopifyStores,
+      subscriptions,
+      transactions,
+      pointRules,
+      storeReferralCodes,
+      approvedProducts,
+      referrals,
+    ] = await Promise.all([
+      Product.find({ userId }).lean(),
+      Account.find({ userId }).lean(),
+      ActiveUser.find({ userId }).lean(),
+      AddOnPurchase.find({ userId }).lean(),
+      Cart.find({ userId }).lean(),
+      ContactSupport.find({ userId }).lean(),
+      InstagramPostLogs.find({ userId }).lean(),
+      Notification.find({ userId }).lean(),
+      Session.find({ userId }).lean(),
+      ShopifyStore.find({ userId }).lean(),
+      Subscription.find({ userId }).lean(),
+      Transaction.find({ userId }).lean(),
+      PointRule.find({ storeUserId: userId }).lean(),
+      StoreReferralCode.find({ user_id: userId }).lean(),
+      ApprovedProduct.find({ storeId: userId }).lean(),
+      Referral.find({
+        $or: [{ referredByuser_id: userId }, { referredTouser_id: userId }],
+      }).lean(),
+    ]);
+
+    await DeletedAccountBackup.create({
+      originalUserId: userId,
+      role: user.role,
+      displayName: user.storename || user.brandname || `${user.firstname} ${user.lastname}`,
+      email: user.email,
+      businessNumber: user.businessNumber,
+      deletedBy: session.user.id,
+      deletedByName: session.user.name || session.user.email,
+      data: {
+        user,
+        products: allProducts,
+        accounts,
+        activeUsers,
+        addOnPurchases,
+        carts,
+        contactSupport,
+        instagramPostLogs,
+        notifications,
+        sessions,
+        shopifyStores,
+        subscriptions,
+        transactions,
+        pointRules,
+        storeReferralCodes,
+        approvedProducts,
+        referrals,
+      },
+    });
+
     // ── 1. Best-effort Shopify removal for any synced products ──
-    //    We only need the products that are linked to Shopify so we can remove
-    //    them there before wiping them from the DB.
-    const shopifyProducts = await Product.find({
-      userId,
-      shopifyProductId: { $exists: true, $ne: "" },
-    })
-      .select("shopifyProductId")
-      .lean();
+    const shopifyProducts = allProducts
+      .filter((p) => p.shopifyProductId)
+      .map((p) => ({ shopifyProductId: p.shopifyProductId }));
     let shopifyResult = { attempted: shopifyProducts.length, error: null };
     if (shopifyProducts.length > 0) {
       try {

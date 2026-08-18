@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus, FaHistory } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import "react-phone-number-input/style.css";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
@@ -409,7 +409,9 @@ const StoresUsersPage = () => {
     setDateTo("");
   };
 
-  // Hard-delete the user + all their associated data. No backup — delete means delete.
+  // Hard-deletes the user + all their associated data — the server backs up
+  // a full snapshot first (see /admin/stores-users/deleted), so this can be
+  // undone from there if it turns out to be a mistake.
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -501,6 +503,13 @@ const StoresUsersPage = () => {
             <FaDownload className="text-sm" />
             Download CSV
           </button>
+          <Link
+            href="/admin/stores-users/deleted"
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg text-lg font-semibold transition-colors border border-gray-200"
+          >
+            <FaHistory className="text-sm" />
+            Deleted Stores
+          </Link>
         </div>
       </div>
 
@@ -1221,8 +1230,9 @@ const StoresUsersPage = () => {
               This removes the account and{" "}
               <span className="font-semibold">all associated data</span> —
               products (also from Shopify), subscriptions, transactions,
-              notifications and more. This{" "}
-              <span className="font-semibold">cannot be undone</span>.
+              notifications and more. A full backup is saved automatically,
+              so if this was a mistake it can be restored from{" "}
+              <span className="font-semibold">Deleted Stores</span>.
             </div>
 
             <div className="mt-8 flex justify-end gap-3">
