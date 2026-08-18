@@ -977,14 +977,16 @@ const StoresUsersPage = () => {
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-1">Add Store</h3>
             <p className="text-gray-600 mb-5">
-              Exact same fields as the real store sign-up form. Checked against existing
-              stores by name and CVR first — if either already exists, you'll be pointed
-              to that entry instead of creating a duplicate.
+              Same fields as the real store sign-up form, except the owner's name is
+              optional if you don't know it. Checked against existing stores by name and
+              CVR first — if either already exists, you'll be pointed to that entry
+              instead of creating a duplicate.
             </p>
 
             <div className="grid grid-cols-2 gap-4">
               <label className="block">
-                <span className="text-sm font-semibold text-gray-700">First Name *</span>
+                <span className="text-sm font-semibold text-gray-700">First Name</span>
+                <span className="text-gray-400 text-sm"> (optional if unknown)</span>
                 <input
                   value={addStoreForm.firstname}
                   onChange={(e) => setAddStoreForm((f) => ({ ...f, firstname: e.target.value }))}
@@ -992,7 +994,8 @@ const StoresUsersPage = () => {
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Last Name *</span>
+                <span className="text-sm font-semibold text-gray-700">Last Name</span>
+                <span className="text-gray-400 text-sm"> (optional if unknown)</span>
                 <input
                   value={addStoreForm.lastname}
                   onChange={(e) => setAddStoreForm((f) => ({ ...f, lastname: e.target.value }))}
@@ -1086,8 +1089,6 @@ const StoresUsersPage = () => {
                 onClick={handleAddStore}
                 disabled={
                   addingStore ||
-                  !addStoreForm.firstname.trim() ||
-                  !addStoreForm.lastname.trim() ||
                   !addStoreForm.storename.trim() ||
                   !addStoreForm.country.trim() ||
                   !addStoreForm.businessNumber.trim() ||

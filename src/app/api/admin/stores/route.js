@@ -67,8 +67,10 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    const firstname = String(body.firstname || "").trim();
-    const lastname = String(body.lastname || "").trim();
+    // Owner's name is often unknown when adding a store one at a time (same
+    // reason the CSV bulk importer defaults to this) — not required.
+    const firstname = String(body.firstname || "").trim() || "Unclaimed";
+    const lastname = String(body.lastname || "").trim() || "Store";
     const storename = String(body.storename || "").trim();
     const country = String(body.country || "").trim().toUpperCase();
     const businessNumber = String(body.businessNumber || "").trim();
@@ -76,8 +78,6 @@ export async function POST(request) {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
 
-    if (!firstname) return json({ error: "First Name is required" }, 400);
-    if (!lastname) return json({ error: "Last Name is required" }, 400);
     if (!storename) return json({ error: "Store Name is required" }, 400);
     if (!country) return json({ error: "Country is required" }, 400);
     if (!ALLOWED_COUNTRIES.includes(country)) {
