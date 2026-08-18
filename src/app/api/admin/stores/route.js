@@ -5,6 +5,26 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { normalizeName } from "@/lib/storeMatching";
 
+// Same 8 countries the real store signup form offers — keeping this list to
+// exactly what StoreForm.jsx supports (src/app/(auth)/register/StoreForm.jsx)
+// instead of free text, since anything outside it isn't a real option
+// elsewhere in the app either.
+const ALLOWED_COUNTRIES = ["DK", "FR", "DE", "IT", "ES", "NL", "SE", "NO"];
+
+// Mirrors validatePassword in src/app/(auth)/validation/validation.js exactly
+// - an admin-created account should be held to the same bar as a real signup,
+// since it's meant to actually be logged into.
+function validatePassword(value) {
+  if (!value) return "Password is required";
+  if (value.length < 8) return "Password must be at least 8 characters long";
+  if (!/\d/.test(value)) return "Password must contain a digit";
+  if (!/[a-z]/.test(value)) return "Password must contain a lowercase letter";
+  if (!/[A-Z]/.test(value)) return "Password must contain an uppercase letter";
+  if (!/[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]/.test(value)) return "Password must contain a special character";
+  if (value.length > 50) return "Password can be at most 50 characters";
+  return null;
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -36,9 +56,12 @@ export async function POST(request) {
     const body = await request.json();
 
     const storename = String(body.storename || "").trim();
-    const country = String(body.country || "").trim();
+    const country = String(body.country || "").trim().toUpperCase();
     if (!storename) return json({ error: "Store name is required" }, 400);
     if (!country) return json({ error: "Country is required" }, 400);
+    if (!ALLOWED_COUNTRIES.includes(country)) {
+      return json({ error: `Country must be one of: ${ALLOWED_COUNTRIES.join(", ")}` }, 400);
+    }
 
     const businessNumber = String(body.businessNumber || "").trim();
     const address = String(body.address || "").trim();
@@ -83,13 +106,25 @@ export async function POST(request) {
       }
     }
 
+    // A real login email needs a real, chosen password to go with it (same
+    // as signup — email and password always arrive together there). Left
+    // blank, the store stays an unclaimed stub, same as a bulk-import row or
+    // a self-submitted "Add a boutique" entry — nobody can log into it until
+    // it's edited with real credentials later.
+    let email, password;
     if (loginEmail) {
       const emailTaken = await User.findOne({ email: loginEmail.toLowerCase() }).select("_id").lean();
       if (emailTaken) return json({ error: "That email is already in use" }, 409);
-    }
 
-    const email = loginEmail || `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
-    const password = await bcrypt.hash(crypto.randomUUID(), 10);
+      const passwordError = validatePassword(body.password || "");
+      if (passwordError) return json({ error: passwordError }, 400);
+
+      email = loginEmail;
+      password = await bcrypt.hash(body.password, 10);
+    } else {
+      email = `unverified-${crypto.randomUUID()}@ree-unclaimed.internal`;
+      password = await bcrypt.hash(crypto.randomUUID(), 10);
+    }
 
     const doc = new User({
       firstname: body.firstname?.trim() || storename,

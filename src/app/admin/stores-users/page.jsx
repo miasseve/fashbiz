@@ -95,8 +95,20 @@ const StoresUsersPage = () => {
     phone: "",
     contactEmail: "",
     email: "",
+    password: "",
     isVerified: true,
   };
+
+  const COUNTRY_OPTIONS = [
+    { value: "DK", label: "Denmark (DK)" },
+    { value: "FR", label: "France (FR)" },
+    { value: "DE", label: "Germany (DE)" },
+    { value: "IT", label: "Italy (IT)" },
+    { value: "ES", label: "Spain (ES)" },
+    { value: "NL", label: "Netherlands (NL)" },
+    { value: "SE", label: "Sweden (SE)" },
+    { value: "NO", label: "Norway (NO)" },
+  ];
   const [showAddStore, setShowAddStore] = useState(false);
   const [addStoreForm, setAddStoreForm] = useState(emptyAddStoreForm);
   const [addingStore, setAddingStore] = useState(false);
@@ -981,12 +993,16 @@ const StoresUsersPage = () => {
               </label>
               <label className="block">
                 <span className="text-sm font-semibold text-gray-700">Country *</span>
-                <input
+                <select
                   value={addStoreForm.country}
                   onChange={(e) => setAddStoreForm((f) => ({ ...f, country: e.target.value }))}
-                  placeholder="DK"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base bg-white"
+                >
+                  <option value="">Select Country</option>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
               </label>
 
               <label className="block col-span-2">
@@ -1055,7 +1071,7 @@ const StoresUsersPage = () => {
 
               <label className="block col-span-2">
                 <span className="text-sm font-semibold text-gray-700">
-                  Login Email <span className="text-gray-400 font-normal">(optional — leave blank if the owner hasn't claimed the account yet)</span>
+                  Login Email <span className="text-gray-400 font-normal">(optional — leave both this and Password blank if the owner hasn't claimed the account yet)</span>
                 </span>
                 <input
                   value={addStoreForm.email}
@@ -1063,6 +1079,20 @@ const StoresUsersPage = () => {
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
                 />
               </label>
+
+              {addStoreForm.email && (
+                <label className="block col-span-2">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Password <span className="text-gray-400 font-normal">(min 8 chars, needs a digit, lowercase, uppercase and special character)</span>
+                  </span>
+                  <input
+                    type="password"
+                    value={addStoreForm.password}
+                    onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                  />
+                </label>
+              )}
 
               <label className="col-span-2 flex items-center gap-2 mt-1">
                 <input
@@ -1089,7 +1119,12 @@ const StoresUsersPage = () => {
               </button>
               <button
                 onClick={handleAddStore}
-                disabled={addingStore || !addStoreForm.storename.trim() || !addStoreForm.country.trim()}
+                disabled={
+                  addingStore ||
+                  !addStoreForm.storename.trim() ||
+                  !addStoreForm.country.trim() ||
+                  (!!addStoreForm.email.trim() && !addStoreForm.password)
+                }
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:opacity-50"
               >
                 {addingStore ? <><Spinner size="sm" color="white" /> Adding...</> : "Add Store"}
