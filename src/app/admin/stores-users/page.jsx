@@ -131,6 +131,7 @@ const StoresUsersPage = () => {
       fetchUsers();
     } catch (err) {
       setAddStoreError(err.message);
+      toast.error(err.message);
     } finally {
       setAddingStore(false);
     }
