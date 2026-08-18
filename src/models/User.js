@@ -86,6 +86,10 @@ const UserSchema = new mongoose.Schema({
   // false only for stores added via CSV bulk import or an unrecognized store name during
   // upload — not yet claimed/confirmed by the real business. Real signups default to true.
   isVerified: { type: Boolean, default: true },
+  // True only for stores created through the admin "Add Store" form (as
+  // opposed to a real self-signup or a CSV import) — shown as a badge in
+  // Stores & Users so it's clear this account didn't sign up itself.
+  addedByAdmin: { type: Boolean, default: false },
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: String, default: null },
   stripeCustomerId: { type: String },

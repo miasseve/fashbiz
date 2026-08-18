@@ -122,6 +122,7 @@ export async function POST(request) {
       country,
       businessNumber,
       phone,
+      addedByAdmin: true,
       // An admin manually adding a store from real, known-good info is
       // exactly what verification means to signal — same as a real signup,
       // which also defaults to verified.

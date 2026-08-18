@@ -818,6 +818,14 @@ const StoresUsersPage = () => {
                             Not Verified
                           </span>
                         )}
+                        {user.addedByAdmin && (
+                          <span
+                            title="Created through the admin Add Store form, not a self sign-up"
+                            className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700"
+                          >
+                            Added by Admin
+                          </span>
+                        )}
                       </div>
                       {(user.storename || user.brandname) && (
                         <div className="text-[13px] text-gray-400 font-normal mt-0.5">
