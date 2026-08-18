@@ -1,5 +1,9 @@
 "use client";
 import { useState } from "react";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { EyeFilledIcon } from "../icons/EyeFilledIcon ";
+import { EyeSlashFilledIcon } from "../icons/EyeSlashFilledIcon ";
 
 const DiscoverLoginForm = ({ redirectUri }) => {
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
@@ -11,6 +15,7 @@ const DiscoverLoginForm = ({ redirectUri }) => {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const missingRedirect = !redirectUri;
 
@@ -18,6 +23,14 @@ const DiscoverLoginForm = ({ redirectUri }) => {
     e.preventDefault();
     setError("");
     setInfo("");
+
+    // Same rule the real Consignor sign-up form enforces — checked here too
+    // since this is a separate form, not a shared component.
+    if (mode === "signup" && !isValidPhoneNumber(phone || "")) {
+      setError("Phone number is not valid");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const endpoint = mode === "signin" ? "/api/discover-login" : "/api/discover-signup";
@@ -58,7 +71,7 @@ const DiscoverLoginForm = ({ redirectUri }) => {
       <div className="w-full max-w-[400px] rounded-[14px] bg-white p-8 shadow-lg text-center">
         <img src="/new_ree_icon.png" alt="Ree" className="w-[72px] mx-auto py-[8px]" />
         <h1 className="text-[1.8rem] font-semibold text-gray-900 mb-6">
-          {mode === "signin" ? "Sign in to continue" : "Create your account"}
+          {mode === "signin" ? "Sign in to continue" : "Sign Up"}
         </h1>
 
         {missingRedirect ? (
@@ -105,29 +118,40 @@ const DiscoverLoginForm = ({ redirectUri }) => {
                 />
               </div>
 
-              {mode === "signup" && (
-                <div className="mb-4">
-                  <input
-                    type="tel"
-                    required
-                    placeholder="Phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-full border border-gray-300 px-4 py-3 text-[15px]"
-                  />
-                </div>
-              )}
-
-              <div className="mb-6">
+              <div className="mb-4 relative">
                 <input
-                  type="password"
+                  type={isPasswordVisible ? "text" : "password"}
                   required
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-full border border-gray-300 px-4 py-3 text-[15px]"
+                  className="w-full rounded-full border border-gray-300 px-4 py-3 pr-11 text-[15px]"
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordVisible((v) => !v)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {isPasswordVisible ? (
+                    <EyeSlashFilledIcon className="h-6 w-6" />
+                  ) : (
+                    <EyeFilledIcon className="h-6 w-6" />
+                  )}
+                </button>
               </div>
+
+              {mode === "signup" && (
+                <div className="mb-6">
+                  <PhoneInput
+                    international
+                    defaultCountry="DK"
+                    value={phone}
+                    onChange={(value) => setPhone(value || "")}
+                    placeholder="Enter phone number"
+                    className="w-full rounded-full border border-gray-300 px-4 py-3 text-[15px] [&_input]:outline-none"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
