@@ -2,10 +2,15 @@ import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-// Core validation only — the default entry also bundles the PhoneInput
-// React component, which broke the build when pulled into a server-only
-// API route ("Super expression must either be null or a function").
-import { isValidPhoneNumber } from "react-phone-number-input/core";
+// Straight from libphonenumber-js itself, not react-phone-number-input —
+// that package's entry points all re-export its React <PhoneInput/>
+// component too (even the "/core" one), which broke the build when pulled
+// into a server-only API route ("Super expression must either be null or a
+// function"). isValidPhoneNumber from libphonenumber-js/core has no such
+// baggage, but needs metadata passed explicitly - it isn't bundled in like
+// the default/min builds are.
+import { isValidPhoneNumber } from "libphonenumber-js/core";
+import metadata from "libphonenumber-js/min/metadata";
 import { normalizeName } from "@/lib/storeMatching";
 
 // Same 8 countries the real store signup form offers — keeping this list to
@@ -79,7 +84,7 @@ export async function POST(request) {
       return json({ error: `Country must be one of: ${ALLOWED_COUNTRIES.join(", ")}` }, 400);
     }
     if (!businessNumber) return json({ error: "Business Registration Number is required" }, 400);
-    if (!phone || !isValidPhoneNumber(phone)) return json({ error: "Phone number is not valid" }, 400);
+    if (!phone || !isValidPhoneNumber(phone, metadata)) return json({ error: "Phone number is not valid" }, 400);
     if (!email) return json({ error: "Email is required" }, 400);
     const passwordError = validatePassword(password);
     if (passwordError) return json({ error: passwordError }, 400);
