@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaUpload, FaPlus } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import "react-phone-number-input/style.css";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
@@ -111,6 +111,7 @@ const StoresUsersPage = () => {
   const [addStoreForm, setAddStoreForm] = useState(emptyAddStoreForm);
   const [addingStore, setAddingStore] = useState(false);
   const [addStoreError, setAddStoreError] = useState(null);
+  const [showAddStorePassword, setShowAddStorePassword] = useState(false);
 
   const handleAddStore = async () => {
     setAddingStore(true);
@@ -1044,12 +1045,21 @@ const StoresUsersPage = () => {
               </label>
               <label className="block">
                 <span className="text-sm font-semibold text-gray-700">Password *</span>
-                <input
-                  type="password"
-                  value={addStoreForm.password}
-                  onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showAddStorePassword ? "text" : "password"}
+                    value={addStoreForm.password}
+                    onChange={(e) => setAddStoreForm((f) => ({ ...f, password: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 text-base"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddStorePassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showAddStorePassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
               </label>
             </div>
 
