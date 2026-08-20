@@ -7,6 +7,7 @@ import { FiExternalLink } from "react-icons/fi";
 import { FaBoxOpen } from "react-icons/fa6";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const NotificationBell = () => {
   const router = useRouter();
@@ -16,6 +17,11 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
   const prevUnreadRef = useRef(0);
+  // null until the first poll — that first poll just records whatever's
+  // already there as "seen" so logging in with old unread notifications
+  // doesn't pop up a toast for every one of them; only notifications that
+  // arrive AFTER that get the popup treatment.
+  const seenIdsRef = useRef(null);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
@@ -35,11 +41,92 @@ const NotificationBell = () => {
     }
   }, [isOpen]);
 
+  // Runs alongside the count poll, on the same interval, so a new
+  // notification pops up on-screen no matter which dashboard page the
+  // store is on — this component lives in the dashboard layout, not any
+  // one page.
+  const checkForNewNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications?limit=5");
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = data.notifications || [];
+
+      if (seenIdsRef.current === null) {
+        seenIdsRef.current = new Set(list.map((n) => n._id));
+        return;
+      }
+
+      const fresh = list.filter((n) => !seenIdsRef.current.has(n._id));
+      fresh.forEach((n) => {
+        seenIdsRef.current.add(n._id);
+        showNotificationPopup(n);
+      });
+    } catch (err) {
+      // Silently fail — polling will retry in 5s
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const showNotificationPopup = (notification) => {
+    const product = notification.productId;
+    toast(
+      () => (
+        <div
+          className={product?._id ? "cursor-pointer" : undefined}
+          onClick={() => {
+            if (product?._id) router.push(`/dashboard/product/${product._id}`);
+          }}
+        >
+          <p className="text-[13px] font-bold text-green-700 mb-1.5">
+            {notification.title}
+          </p>
+          <div className="flex items-center gap-3">
+            {product?.images?.[0]?.url && (
+              <img
+                src={product.images[0].url}
+                alt=""
+                className="w-12 h-12 rounded-lg object-cover shrink-0"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-gray-900 truncate">
+                {product?.title || notification.message}
+              </p>
+              {product?.price != null && (
+                <p className="text-[12px] text-gray-500">{product.price} DKK</p>
+              )}
+              {!product?.title && notification.message && (
+                <p className="text-[12px] text-gray-500 line-clamp-2">
+                  {notification.message}
+                </p>
+              )}
+            </div>
+          </div>
+          {product?._id && (
+            <p className="text-[12px] text-blue-600 mt-1.5 inline-flex items-center gap-1">
+              View product <FiExternalLink size={11} />
+            </p>
+          )}
+        </div>
+      ),
+      {
+        icon: false,
+        autoClose: 15000,
+        className: "!border-l-4 !border-l-green-500",
+      },
+    );
+  };
+
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 5000);
+    checkForNewNotifications();
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      checkForNewNotifications();
+    }, 5000);
     return () => clearInterval(interval);
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, checkForNewNotifications]);
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -130,9 +217,14 @@ const NotificationBell = () => {
     <div ref={containerRef} className="relative">
       <button
         onClick={handleOpen}
-        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className={`relative p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+          unreadCount > 0 ? "animate-pulse" : ""
+        }`}
       >
-        <IoNotifications size={24} className="text-gray-700" />
+        <IoNotifications
+          size={24}
+          className={unreadCount > 0 ? "text-green-500" : "text-gray-700"}
+        />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[11px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1 animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
