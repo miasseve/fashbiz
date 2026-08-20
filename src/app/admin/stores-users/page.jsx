@@ -86,8 +86,10 @@ const StoresUsersPage = () => {
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkError, setBulkError] = useState(null);
 
-  // Add single store state — exactly the fields the real store sign-up
-  // form has, nothing more.
+  // Add single store state — the real store sign-up form's fields, plus
+  // address/location and a photo, which the sign-up form doesn't collect
+  // but a store added one at a time in admin needs up front to actually
+  // show up on the map/search page without a separate edit step after.
   const emptyAddStoreForm = {
     firstname: "",
     lastname: "",
@@ -97,6 +99,14 @@ const StoresUsersPage = () => {
     phone: "",
     email: "",
     password: "",
+    address: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    latitude: "",
+    longitude: "",
+    logoUrl: "",
+    logoPublicId: "",
     isVerified: true,
   };
 
@@ -115,6 +125,30 @@ const StoresUsersPage = () => {
   const [addingStore, setAddingStore] = useState(false);
   const [addStoreError, setAddStoreError] = useState(null);
   const [showAddStorePassword, setShowAddStorePassword] = useState(false);
+  const [uploadingStorePhoto, setUploadingStorePhoto] = useState(false);
+
+  // Same /api/upload Cloudinary flow the store's own dashboard Branding tab
+  // uses — just triggered from admin instead, since an admin-added store
+  // (especially an Unclaimed one) has no owner who can log in and set it.
+  const handleStorePhotoUpload = async (e, formSetter) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingStorePhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("isProfileImage", false);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      formSetter((f) => ({ ...f, logoUrl: data.url, logoPublicId: data.publicId }));
+      toast.success("Photo uploaded!");
+    } catch (err) {
+      toast.error(err.message || "Failed to upload photo");
+    } finally {
+      setUploadingStorePhoto(false);
+    }
+  };
 
   const handleAddStore = async () => {
     setAddingStore(true);
@@ -1142,6 +1176,99 @@ const StoresUsersPage = () => {
                   </div>
                 </label>
               )}
+
+              <div className="col-span-2 pt-2 mt-2 border-t border-gray-100">
+                <span className="text-sm font-semibold text-gray-700">Address</span>
+                <span className="text-gray-400 text-sm">
+                  {" "}
+                  (optional, but needed for the store to show on the map/search page)
+                </span>
+              </div>
+
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Street Address</span>
+                <input
+                  value={addStoreForm.address}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, address: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">City</span>
+                <input
+                  value={addStoreForm.city}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, city: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Zipcode</span>
+                <input
+                  value={addStoreForm.zipcode}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, zipcode: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block col-span-2">
+                <span className="text-sm font-semibold text-gray-700">State / Region</span>
+                <input
+                  value={addStoreForm.state}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, state: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Latitude</span>
+                <span className="text-gray-400 text-sm"> (optional)</span>
+                <input
+                  type="number"
+                  step="any"
+                  value={addStoreForm.latitude}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, latitude: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Longitude</span>
+                <span className="text-gray-400 text-sm"> (optional)</span>
+                <input
+                  type="number"
+                  step="any"
+                  value={addStoreForm.longitude}
+                  onChange={(e) => setAddStoreForm((f) => ({ ...f, longitude: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                />
+              </label>
+              <p className="col-span-2 text-gray-400 text-sm -mt-2">
+                Leave latitude/longitude blank and Discover will locate it automatically from the
+                address — filling them in here places it on the map immediately instead of waiting.
+              </p>
+
+              <div className="col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Store Photo</span>
+                <span className="text-gray-400 text-sm"> (optional)</span>
+                <div className="mt-1 flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {addStoreForm.logoUrl ? (
+                      <img src={addStoreForm.logoUrl} alt="Store" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-gray-300 text-xs text-center px-1">No photo</span>
+                    )}
+                  </div>
+                  <label className="cursor-pointer">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50">
+                      {uploadingStorePhoto ? "Uploading..." : "Upload Photo"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingStorePhoto}
+                      onChange={(e) => handleStorePhotoUpload(e, setAddStoreForm)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
 
             {addStoreError && <p className="text-red-500 text-md mt-4">{addStoreError}</p>}
@@ -1158,6 +1285,7 @@ const StoresUsersPage = () => {
                 onClick={handleAddStore}
                 disabled={
                   addingStore ||
+                  uploadingStorePhoto ||
                   !addStoreForm.storename.trim() ||
                   !addStoreForm.country.trim() ||
                   !addStoreForm.businessNumber.trim() ||

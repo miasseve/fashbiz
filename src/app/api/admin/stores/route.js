@@ -66,6 +66,12 @@ async function requireAdmin() {
  * checked here too so this doesn't become a second way to accidentally
  * create the exact kind of duplicate that prompted building this in the
  * first place.
+ *
+ * Address and a photo are optional but both matter for a store to actually
+ * be usable the moment it's created: no address/coordinates means it stays
+ * off the map/search page (same rule as everywhere else — see
+ * publicStoreSerializer.js) until edited in later, and with no photo it just
+ * falls back to a generic icon.
  */
 export async function POST(request) {
   const session = await requireAdmin();
@@ -84,6 +90,32 @@ export async function POST(request) {
     const phone = String(body.phone || "").trim();
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
+
+    // Address is optional but strongly encouraged — without it (and
+    // coordinates), a store stays off the map/search page even once
+    // verified, same rule as everywhere else in the app. Not required here
+    // since some stores get their address filled in later.
+    const address = String(body.address || "").trim();
+    const city = String(body.city || "").trim();
+    const state = String(body.state || "").trim();
+    const zipcode = String(body.zipcode || "").trim();
+    let latitude, longitude;
+    if (body.latitude !== undefined && body.latitude !== null && body.latitude !== "") {
+      const lat = Number(body.latitude);
+      if (Number.isNaN(lat) || lat < -90 || lat > 90) return json({ error: "Invalid latitude" }, 400);
+      latitude = lat;
+    }
+    if (body.longitude !== undefined && body.longitude !== null && body.longitude !== "") {
+      const lng = Number(body.longitude);
+      if (Number.isNaN(lng) || lng < -180 || lng > 180) return json({ error: "Invalid longitude" }, 400);
+      longitude = lng;
+    }
+
+    // Storefront photo, already uploaded via /api/upload by the time this
+    // request is made — same Cloudinary flow the store's own dashboard
+    // Branding tab uses. Optional.
+    const logoUrl = String(body.logoUrl || "").trim();
+    const logoPublicId = String(body.logoPublicId || "").trim();
 
     if (!storename) return json({ error: "Store Name is required" }, 400);
     if (!country) return json({ error: "Country is required" }, 400);
@@ -142,6 +174,13 @@ export async function POST(request) {
       country,
       businessNumber,
       phone: phone || undefined,
+      address: address || undefined,
+      city: city || undefined,
+      state: state || undefined,
+      zipcode: zipcode || undefined,
+      latitude,
+      longitude,
+      ...(logoUrl && { branding: { logoUrl, logoPublicId } }),
       addedByAdmin: true,
       // An admin manually adding a store from real, known-good info is
       // exactly what verification means to signal — same as a real signup,

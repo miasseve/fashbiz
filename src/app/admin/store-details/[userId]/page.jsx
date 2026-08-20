@@ -41,6 +41,7 @@ const StoreDetailPage = () => {
   const [locationForm, setLocationForm] = useState({});
   const [savingLocation, setSavingLocation] = useState(false);
   const [locationError, setLocationError] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -100,6 +101,8 @@ const StoreDetailPage = () => {
       latitude: data.user.latitude ?? "",
       longitude: data.user.longitude ?? "",
       isVerified: data.user.isVerified !== false,
+      logoUrl: data.user.branding?.logoUrl || "",
+      logoPublicId: data.user.branding?.logoPublicId || "",
     });
     setLocationError(null);
     setEditingLocation(true);
@@ -107,6 +110,29 @@ const StoreDetailPage = () => {
 
   const handleLocationFieldChange = (key, value) => {
     setLocationForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Same /api/upload Cloudinary flow the store's own dashboard Branding tab
+  // uses — available here too since an Unclaimed store has no owner who can
+  // log in and set it themselves.
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("isProfileImage", false);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setLocationForm((prev) => ({ ...prev, logoUrl: data.url, logoPublicId: data.publicId }));
+      toast.success("Photo uploaded!");
+    } catch (err) {
+      toast.error(err.message || "Failed to upload photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSaveLocation = async () => {
@@ -336,6 +362,34 @@ const StoreDetailPage = () => {
                     </div>
                   ))}
                 </div>
+
+                <div className="mt-3">
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    Store Photo
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {locationForm.logoUrl ? (
+                        <img src={locationForm.logoUrl} alt="Store" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-gray-300 text-[10px] text-center px-1">No photo</span>
+                      )}
+                    </div>
+                    <label className="cursor-pointer">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 text-[12px] font-semibold hover:bg-gray-50">
+                        {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingPhoto}
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
                 <label className="flex items-center gap-2 mt-3 text-[12px] font-semibold text-gray-600">
                   <input
                     type="checkbox"
@@ -351,7 +405,7 @@ const StoreDetailPage = () => {
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={handleSaveLocation}
-                    disabled={savingLocation}
+                    disabled={savingLocation || uploadingPhoto}
                     className="text-[12px] font-semibold px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {savingLocation ? "Updating..." : "Update"}

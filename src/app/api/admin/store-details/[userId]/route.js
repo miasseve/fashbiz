@@ -149,6 +149,13 @@ export async function PATCH(request, { params }) {
       update.isVerified = body.isVerified;
     }
 
+    // Storefront photo — already uploaded via /api/upload by the time this
+    // request is made, same as the store's own dashboard Branding tab.
+    if (typeof body.logoUrl === "string") {
+      update["branding.logoUrl"] = body.logoUrl;
+      update["branding.logoPublicId"] = body.logoPublicId || "";
+    }
+
     if (Object.keys(update).length === 0) {
       return new Response(JSON.stringify({ error: "No valid fields to update" }), {
         status: 400,
@@ -160,7 +167,7 @@ export async function PATCH(request, { params }) {
       new: true,
       runValidators: true,
     }).select(
-      "shopifyStoreCreated address city state zipcode businessNumber latitude longitude isVerified storename firstname lastname phone email"
+      "shopifyStoreCreated address city state zipcode businessNumber latitude longitude isVerified storename firstname lastname phone email branding"
     );
 
     if (!updated) {
