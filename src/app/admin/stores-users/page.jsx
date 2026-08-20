@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus, FaHistory, FaCheckCircle } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus, FaHistory, FaCheckCircle, FaMapMarkedAlt } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import "react-phone-number-input/style.css";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
@@ -85,6 +85,57 @@ const StoresUsersPage = () => {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkError, setBulkError] = useState(null);
+
+  // "Locate Pending Stores" — works through the backlog of verified stores
+  // that have an address but no coordinates yet, one small rate-limited
+  // batch at a time, looping automatically until it's cleared.
+  const [showGeocode, setShowGeocode] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeStats, setGeocodeStats] = useState({ processed: 0, resolved: 0, failed: 0, totalPending: null });
+  const [geocodeError, setGeocodeError] = useState(null);
+  const geocodeStopRef = useRef(false);
+
+  const runGeocodePending = async () => {
+    setGeocoding(true);
+    setGeocodeError(null);
+    setGeocodeStats({ processed: 0, resolved: 0, failed: 0, totalPending: null });
+    geocodeStopRef.current = false;
+
+    let afterId = null;
+    try {
+      while (!geocodeStopRef.current) {
+        const res = await fetch("/api/admin/stores/geocode-pending", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ afterId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to locate stores");
+
+        setGeocodeStats((prev) => ({
+          processed: prev.processed + data.processed,
+          resolved: prev.resolved + data.resolved,
+          failed: prev.failed + data.failed,
+          totalPending: data.totalPending,
+        }));
+
+        afterId = data.lastId;
+        if (data.done) break;
+      }
+      if (!geocodeStopRef.current) {
+        toast.success("Finished locating pending stores");
+      }
+      fetchUsers();
+    } catch (err) {
+      setGeocodeError(err.message || "Something went wrong");
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const stopGeocodePending = () => {
+    geocodeStopRef.current = true;
+  };
 
   // Add single store state — the real store sign-up form's fields, plus
   // address/location and a photo, which the sign-up form doesn't collect
@@ -554,6 +605,17 @@ const StoresUsersPage = () => {
               >
                 <FaUpload className="text-sm" />
                 Upload CSV
+              </button>
+              <button
+                onClick={() => {
+                  setGeocodeError(null);
+                  setGeocodeStats({ processed: 0, resolved: 0, failed: 0, totalPending: null });
+                  setShowGeocode(true);
+                }}
+                className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+              >
+                <FaMapMarkedAlt className="text-sm" />
+                Locate Pending Stores
               </button>
             </>
           )}
@@ -1399,6 +1461,88 @@ const StoresUsersPage = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Locate Pending Stores modal */}
+      {showGeocode && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !geocoding && setShowGeocode(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">Locate Pending Stores</h3>
+            <p className="text-gray-600 mb-5">
+              Looks up map coordinates for every store that has an address but no
+              location yet, and saves them straight to the store — a handful at a
+              time, respecting the map-lookup service's rate limit, looping
+              automatically until it's done or you stop it.
+            </p>
+
+            {!geocoding && geocodeStats.processed === 0 && (
+              <button
+                onClick={runGeocodePending}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-teal-600 hover:bg-teal-700"
+              >
+                <FaMapMarkedAlt className="text-sm" />
+                Start
+              </button>
+            )}
+
+            {(geocoding || geocodeStats.processed > 0) && (
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex-1 text-center bg-gray-50 border border-gray-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-gray-700">{geocodeStats.processed}</p>
+                    <p className="text-md text-gray-600">Checked</p>
+                  </div>
+                  <div className="flex-1 text-center bg-green-50 border border-green-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-green-700">{geocodeStats.resolved}</p>
+                    <p className="text-md text-gray-600">Located</p>
+                  </div>
+                  <div className="flex-1 text-center bg-amber-50 border border-amber-200 rounded-lg py-3">
+                    <p className="text-2xl font-bold text-amber-700">{geocodeStats.failed}</p>
+                    <p className="text-md text-gray-600">Couldn't resolve</p>
+                  </div>
+                </div>
+                {geocodeStats.totalPending !== null && (
+                  <p className="text-gray-500 text-md">
+                    {geocodeStats.totalPending} store{geocodeStats.totalPending !== 1 ? "s" : ""} still
+                    waiting overall.
+                  </p>
+                )}
+                {geocoding && (
+                  <div className="flex items-center gap-3">
+                    <Spinner size="sm" />
+                    <span className="text-gray-600 text-md">Working through the list...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {geocodeError && <p className="text-red-500 text-md mt-4">{geocodeError}</p>}
+
+            <div className="mt-6 flex justify-end gap-3">
+              {geocoding ? (
+                <button
+                  onClick={stopGeocodePending}
+                  className="px-5 py-2.5 rounded-lg font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowGeocode(false)}
+                  className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>
