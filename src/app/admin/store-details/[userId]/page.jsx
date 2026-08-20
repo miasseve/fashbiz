@@ -341,7 +341,7 @@ const StoreDetailPage = () => {
                     type="checkbox"
                     checked={!!locationForm.isVerified}
                     onChange={(e) => handleLocationFieldChange("isVerified", e.target.checked)}
-                    className="rounded border-gray-300"
+                    className="w-4 h-4 shrink-0 rounded border-gray-300 accent-indigo-600"
                   />
                   Verified
                 </label>

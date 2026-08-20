@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus, FaHistory } from "react-icons/fa";
+import { FaDownload, FaSearch, FaFilter, FaEye, FaEyeSlash, FaEdit, FaTrash, FaUpload, FaPlus, FaHistory, FaCheckCircle } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import "react-phone-number-input/style.css";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
@@ -76,6 +76,9 @@ const StoresUsersPage = () => {
   // Delete flow state
   const [deleteTarget, setDeleteTarget] = useState(null); // the user pending deletion
   const [deleting, setDeleting] = useState(false);
+
+  // Quick-verify flow state
+  const [verifyingId, setVerifyingId] = useState(null);
 
   // CSV bulk upload state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -407,6 +410,30 @@ const StoresUsersPage = () => {
     setFilterLocation("");
     setDateFrom("");
     setDateTo("");
+  };
+
+  // One-click verify straight from the table — same PATCH the store-details
+  // edit page's "Verified" checkbox uses, just without leaving the list.
+  const handleQuickVerify = async (user) => {
+    setVerifyingId(user._id);
+    try {
+      const res = await fetch(`/api/admin/store-details/${user._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isVerified: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to verify store");
+
+      setAllUsers((prev) =>
+        prev.map((u) => (u._id === user._id ? { ...u, isVerified: true } : u)),
+      );
+      toast.success(`"${user.storename || user.firstname}" marked as verified`);
+    } catch (err) {
+      toast.error(err.message || "Something went wrong while verifying.");
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
   // Hard-deletes the user + all their associated data — the server backs up
@@ -920,6 +947,20 @@ const StoresUsersPage = () => {
                             >
                               <FaEdit className="text-md" />
                             </Link>
+                            {user.isVerified === false && (
+                              <button
+                                onClick={() => handleQuickVerify(user)}
+                                disabled={verifyingId === user._id}
+                                title="Mark as Verified"
+                                className="inline-flex items-center justify-center w-9 h-9 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {verifyingId === user._id ? (
+                                  <Spinner size="sm" />
+                                ) : (
+                                  <FaCheckCircle className="text-md" />
+                                )}
+                              </button>
+                            )}
                           </>
                         )}
                         <button
