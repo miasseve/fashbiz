@@ -95,6 +95,28 @@ const StoresUsersPage = () => {
   const [geocodeError, setGeocodeError] = useState(null);
   const geocodeStopRef = useRef(false);
 
+  // Cooldown between runs — a full pass can already send a lot of requests
+  // to the free geocoding service; this keeps someone from immediately
+  // re-hammering it with another full pass right after one finishes.
+  // Persisted so it survives closing the modal or reloading the page.
+  const GEOCODE_COOLDOWN_MS = 15 * 60 * 1000;
+  const [geocodeReadyAt, setGeocodeReadyAt] = useState(0);
+  const [geocodeNow, setGeocodeNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const stored = Number(localStorage.getItem("geocodeReadyAt") || 0);
+    if (stored) setGeocodeReadyAt(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!showGeocode) return;
+    const interval = setInterval(() => setGeocodeNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [showGeocode]);
+
+  const geocodeSecondsLeft = Math.max(0, Math.ceil((geocodeReadyAt - geocodeNow) / 1000));
+  const geocodeOnCooldown = geocodeSecondsLeft > 0;
+
   const runGeocodePending = async () => {
     setGeocoding(true);
     setGeocodeError(null);
@@ -130,6 +152,10 @@ const StoresUsersPage = () => {
       setGeocodeError(err.message || "Something went wrong");
     } finally {
       setGeocoding(false);
+      const readyAt = Date.now() + GEOCODE_COOLDOWN_MS;
+      localStorage.setItem("geocodeReadyAt", String(readyAt));
+      setGeocodeReadyAt(readyAt);
+      setGeocodeNow(Date.now());
     }
   };
 
@@ -1484,14 +1510,29 @@ const StoresUsersPage = () => {
               automatically until it's done or you stop it.
             </p>
 
-            {!geocoding && geocodeStats.processed === 0 && (
+            {!geocoding && (
               <button
                 onClick={runGeocodePending}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-teal-600 hover:bg-teal-700"
+                disabled={geocodeOnCooldown}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-colors ${
+                  geocodeOnCooldown
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "text-white bg-green-600 hover:bg-green-700"
+                }`}
               >
                 <FaMapMarkedAlt className="text-sm" />
-                Start
+                {geocodeOnCooldown
+                  ? `Available in ${Math.floor(geocodeSecondsLeft / 60)}:${String(geocodeSecondsLeft % 60).padStart(2, "0")}`
+                  : geocodeStats.processed > 0
+                    ? "Go — Run Again"
+                    : "Go — Start"}
               </button>
+            )}
+            {geocodeOnCooldown && !geocoding && (
+              <p className="text-gray-400 text-md mt-2">
+                Cooling down for a few minutes between runs so the free map-lookup
+                service doesn't get hammered — you can run it again once the timer's up.
+              </p>
             )}
 
             {(geocoding || geocodeStats.processed > 0) && (

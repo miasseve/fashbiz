@@ -2,14 +2,18 @@ import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 
+// Give this more room than the Vercel default (10s) — a store can need
+// several sequential geocode attempts (see buildQueryVariants), each
+// rate-limited a second apart.
+export const maxDuration = 60;
+
 // Small on purpose — Nominatim's usage policy caps at 1 request/second, and
-// this runs sequentially (with a delay between calls) rather than in
-// parallel like Discover's own client-side pass does, to actually respect
-// that instead of risking the shared IP getting rate-limited. A handful per
-// call keeps each request safely inside typical serverless time limits; the
-// admin page calls this repeatedly (passing back `afterId`) to work through
-// however many stores are waiting.
-const BATCH_SIZE = 6;
+// this runs sequentially (with a delay between EVERY request, including
+// retries for the same store) rather than in parallel like Discover's own
+// client-side pass does, to actually respect that instead of risking the
+// shared IP getting rate-limited. The admin page calls this repeatedly
+// (passing back `afterId`) to work through however many stores are waiting.
+const BATCH_SIZE = 4;
 const NOMINATIM_DELAY_MS = 1100;
 
 function sleep(ms) {
@@ -33,6 +37,55 @@ async function geocodeAddress(query) {
   } catch {
     return null;
   }
+}
+
+// A big chunk of this backlog comes from bulk-imported CVR registry data,
+// which turned out to have two real formatting quirks that silently defeat
+// a plain address lookup: " - " used as the field separator instead of a
+// comma (so a street/postal/city block reads as one run-on phrase), and a
+// "C/O <name>," addressee prefix — sometimes duplicated — that isn't a
+// geocodable place at all. Neither is something Discover's own auto-geocode
+// pass (a single plain query) can work around.
+function stripCareOf(address) {
+  return address.replace(/^(?:c\/o\s+[^,-]+[,-]\s*)+/gi, "").trim();
+}
+
+// Tries increasingly coarse queries so a bad street-level address still
+// lands the pin somewhere real (its postal code/city) instead of nowhere —
+// approximate beats missing entirely for a map pin.
+function buildQueryVariants(store) {
+  const rawAddress = (store.address || "").trim();
+  const cleanedAddress = rawAddress.replace(/\s+-\s+/g, ", ");
+  const noCareOf = stripCareOf(cleanedAddress);
+  const zip = (store.zipcode || "").trim();
+  const city = (store.city || "").trim();
+  const country = store.country || "DK";
+
+  const withLocation = (addr) => {
+    const parts = [addr];
+    if (zip && !addr.includes(zip)) parts.push(zip);
+    if (city && !addr.toLowerCase().includes(city.toLowerCase())) parts.push(city);
+    parts.push(country);
+    return parts.filter(Boolean).join(", ");
+  };
+
+  const variants = [];
+  if (cleanedAddress) variants.push(withLocation(cleanedAddress));
+  if (noCareOf && noCareOf !== cleanedAddress) variants.push(withLocation(noCareOf));
+  if (zip && city) variants.push([zip, city, country].join(", "));
+  if (zip) variants.push([zip, country].join(", "));
+
+  return [...new Set(variants)];
+}
+
+async function geocodeStore(store) {
+  const variants = buildQueryVariants(store);
+  for (let i = 0; i < variants.length; i++) {
+    const hit = await geocodeAddress(variants[i]);
+    if (hit) return hit;
+    if (i < variants.length - 1) await sleep(NOMINATIM_DELAY_MS);
+  }
+  return null;
 }
 
 // Same "pending" definition as Discover's own auto-geocode pass — missing
@@ -89,10 +142,7 @@ export async function POST(request) {
       const store = batch[i];
       lastId = store._id;
 
-      const query = [store.address, store.zipcode, store.city, store.country || "DK"]
-        .filter(Boolean)
-        .join(", ");
-      const hit = await geocodeAddress(query);
+      const hit = await geocodeStore(store);
 
       if (hit) {
         await User.updateOne({ _id: store._id }, { $set: { latitude: hit.lat, longitude: hit.lng } });
