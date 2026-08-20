@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
-import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEdit } from "react-icons/fa";
+import { FaArrowLeft, FaInstagram, FaFacebook, FaGlobe, FaStore, FaShopify, FaEdit, FaTrash } from "react-icons/fa";
 import { MdCheckCircle, MdCancel, MdWarning, MdToggleOn, MdToggleOff } from "react-icons/md";
 
 const LOCATION_EDIT_FIELDS = [
@@ -387,6 +387,16 @@ const StoreDetailPage = () => {
                         className="hidden"
                       />
                     </label>
+                    {locationForm.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setLocationForm((prev) => ({ ...prev, logoUrl: "", logoPublicId: "" }))}
+                        title="Remove photo"
+                        className="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+                      >
+                        <FaTrash className="text-xs" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -1267,6 +1267,16 @@ const StoresUsersPage = () => {
                       className="hidden"
                     />
                   </label>
+                  {addStoreForm.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setAddStoreForm((f) => ({ ...f, logoUrl: "", logoPublicId: "" }))}
+                      title="Remove photo"
+                      className="inline-flex items-center justify-center w-9 h-9 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
