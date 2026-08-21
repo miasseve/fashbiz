@@ -11,25 +11,14 @@ import Link from "next/link";
    checkout behaviour are kept identical to the old design.
    ─────────────────────────────────────────────────────────────── */
 
-// Pay-as-you-go card (the old "No Subscription / FROM 10 DKK" card),
-// shown as the first card of section 1.
-const PAYG = {
-  id: "payg",
-  isPayg: true,
-  tierName: "Pay as you go",
-  desc: "No monthly commitment. For low or seasonal volume.",
-  features: [
-    "AI listing generation",
-    "Print-ready barcode labels",
-    "Publish to one channel",
-  ],
-};
-
 // Per-card descriptions for the Resale Ecommerce Engine (Ads) section,
 // matching the 2hand2go copy. Keyed by tier name; falls back to plan data.
+// Uploads are unlimited on every tier — Le Stores AI is priced for
+// automation/workflow features, not product capacity, so these describe
+// what each tier automates rather than a product ceiling.
 const AD_DESC = {
-  Basic: "Up to 300 items per month. The sweet spot for growing stores.",
-  Pro: "Up to 1,000 items per month. For established multi-channel stores.",
+  Basic: "Core automation tools. Unlimited product uploads on every plan.",
+  Pro: "Full automation and multi-channel workflow, for established stores.",
 };
 
 // Per-card descriptions for the webstore section — clarifies the product
@@ -49,7 +38,6 @@ function getSectionMeta(productName = "") {
       titleAccent: "store.",
       subtitle:
         "Already have a webstore? Plug it into REE and sync your full product catalog automatically.",
-      includePayg: false,
     };
   }
   if (n.includes("webstore")) {
@@ -59,7 +47,6 @@ function getSectionMeta(productName = "") {
       titleAccent: "webshop.",
       subtitle:
         "Branded and launched by our team, synced so every item lists automatically. One-time setup, no monthly fee.",
-      includePayg: false,
       isWebstore: true,
     };
   }
@@ -69,14 +56,13 @@ function getSectionMeta(productName = "") {
     titlePre: "Resale Ecommerce ",
     titleAccent: "Engine.",
     subtitle:
-      "Simple pricing that grows with your store. Free for your first 25 items, no card required.",
-    includePayg: true,
+      "Unlimited free product uploads via Le Stores Discovery. These plans are for automating the workflow around them.",
+    isAds: true,
   };
 }
 
 // Build the big number + unit + transaction-fee line from plan data.
 function formatPrice(plan) {
-  if (plan.isPayg) return { num: "10", unit: "DKK / item", fee: null };
   const amount = parseFloat(plan.price) || 0;
   const num = amount.toLocaleString("en-US");
   const isOneTime = plan.planType === "one-time" || plan.period === "once";
@@ -94,29 +80,20 @@ export default function PricingSections({
   readOnly = false,
   tryMode = false,
 }) {
-  const payPerProductHref = tryMode ? "/try/add-product" : "/dashboard/add-product";
-
   const renderCard = (plan, { isAds, isWebstore }) => {
     const popular = isAds && (plan.tierName || "").toLowerCase() === "basic";
     const { num, unit, fee } = formatPrice(plan);
-    const desc = plan.isPayg
-      ? plan.desc
-      : (isAds && AD_DESC[plan.tierName]) ||
-        (isWebstore && WEBSTORE_DESC[plan.tierName]) ||
-        plan.subtitle ||
-        plan.tagline ||
-        "";
+    const desc =
+      (isAds && AD_DESC[plan.tierName]) ||
+      (isWebstore && WEBSTORE_DESC[plan.tierName]) ||
+      plan.subtitle ||
+      plan.tagline ||
+      "";
     const features = plan.features || [];
 
     // ── Button: behaviour & labels preserved from the old PricingCard ──
     let button;
-    if (plan.isPayg) {
-      button = (
-        <Link href={payPerProductHref} className="p2-cta p2-cta--outline">
-          Pay Per Product
-        </Link>
-      );
-    } else {
+    {
       const isSubscribed =
         !readOnly &&
         activePlan &&
@@ -181,8 +158,8 @@ export default function PricingSections({
 
       {planGroups.map((group) => {
         const meta = getSectionMeta(group.productName);
-        const cards = meta.includePayg ? [PAYG, ...group.plans] : group.plans;
-        const isAds = meta.includePayg;
+        const cards = group.plans;
+        const isAds = !!meta.isAds;
         const isWebstore = !!meta.isWebstore;
         return (
           <section key={group.productName} className="p2-section">

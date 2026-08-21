@@ -1,24 +1,25 @@
 import React from "react";
 import Main from "./Main";
-import AddOnSelector from "./components/AddOnSelector";
 import { auth } from "@/auth";
 import { getUserProductCount } from "@/actions/productActions";
 import { checkStripeIsConnected } from "@/actions/authActions";
 import { getUser } from "@/actions/authActions";
-import { getSubscriptionPlans } from "@/actions/stripePlans";
 import Link from "next/link";
 import dbConnect from "@/lib/db";
 import AddOnPurchase from "@/models/AddOnPurchase";
-import Subscription from "@/models/Subscription";
-import SubscriptionPlanDetails from "@/models/SubscriptionPlanDetails";
+import User from "@/models/User";
 import ADDON_V2_CSS from "./components/addOnStyles";
 
 export const metadata = {
   title: "Add Product",
 };
 
-// Add-ons that can only be purchased once per user
-const ONE_TIME_ADDONS = ["webstore", "plugin"];
+// Discovery/AI-vision product uploads are free and unlimited regardless of
+// subscription — see the removed product-count wall further down. At this
+// many products, show a one-time non-blocking "ready to automate?" popup
+// instead (see productLimitUpsell on the User model). Not a limit — a
+// milestone.
+const PRODUCT_LIMIT_UPSELL_THRESHOLD = 300;
 
 // Client-requested journey: guest (25) → FREE demo test (up to the demo limit,
 // e.g. 200) → subscribe (300/1000) → connect Stripe → live.
@@ -49,8 +50,6 @@ const NO_PLAN_MESSAGE =
 
 const SubscriptionMessage = ({
   message,
-  userId,
-  paidOneTimeAddOns,
   heading, // optional — overrides the default "Subscription Required" title
   ctaLabel = "Subscribe Now", // optional — button text (e.g. "Upgrade Your Plan")
 }) => {
@@ -74,16 +73,6 @@ const SubscriptionMessage = ({
             </button>
           </Link>
         </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-4 w-full max-w-lg my-2">
-          <div className="flex-1 h-px bg-gray-200"></div>
-          <span className="text-md text-gray-500 font-medium">OR</span>
-          <div className="flex-1 h-px bg-gray-200"></div>
-        </div>
-
-        {/* Add-on pay-per-product option */}
-        {userId && <AddOnSelector userId={userId} paidOneTimeAddOns={paidOneTimeAddOns} />}
       </div>
     );
   }
@@ -118,70 +107,10 @@ const SubscriptionMessage = ({
             {ctaLabel}
           </Link>
         </div>
-
-        <div className="ap-or">
-          <span>Or</span>
-        </div>
-
-        {/* Add-on pay-per-product option */}
-        {userId && <AddOnSelector userId={userId} paidOneTimeAddOns={paidOneTimeAddOns} />}
       </div>
     </>
   );
 };
-
-async function fetchactivesubscription(userId) {
-  try {
-    await dbConnect();
-
-    // Direct DB lookup instead of HTTP self-fetch
-    const subscription = await Subscription.findOne({ userId });
-    if (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) {
-      return null;
-    }
-
-    // Try matching against Stripe plans
-    const plans = await getSubscriptionPlans();
-    const formattedPlans = plans.map((plan) => ({
-      id: plan.id,
-      name: plan.product.name,
-      productLimit: plan.productLimit,
-      maxUsers: plan.maxUsers,
-    }));
-
-    const activePlan = formattedPlans.find(
-      (p) =>
-        p.id === subscription.planPriceId ||
-        p.name.toLowerCase() === subscription.planName?.toLowerCase()
-    );
-
-    if (activePlan) return activePlan;
-
-    // Fallback: look up product limit from SubscriptionPlanDetails
-    const planDoc = await SubscriptionPlanDetails.findOne({
-      subscriptionPlanId: subscription.planPriceId,
-    });
-
-    if (planDoc) {
-      return {
-        id: subscription.planPriceId,
-        name: subscription.planName,
-        productLimit: planDoc.productLimit,
-        maxUsers: planDoc.maxUsers,
-      };
-    }
-
-    console.error(
-      "Could not match subscription plan:",
-      subscription.planName,
-      subscription.planPriceId
-    );
-    return null;
-  } catch (error) {
-    console.error("Error fetching subscription plan:", error);
-    return null;
-  }
-}
 
 const page = async ({ searchParams }) => {
   const session = await auth();
@@ -194,25 +123,20 @@ const page = async ({ searchParams }) => {
     throw new Error(response.error);
   }
 
-  // Check which one-time add-ons this user has already paid for
-  let paidOneTimeAddOns = [];
-  if (session?.user?.id) {
-    try {
-      await dbConnect();
-      const paidPurchases = await AddOnPurchase.find({
-        userId: session.user.id,
-        status: "paid",
-        addOns: { $in: ONE_TIME_ADDONS },
-      }).lean();
-      const paidSet = new Set();
-      for (const p of paidPurchases) {
-        for (const a of p.addOns) {
-          if (ONE_TIME_ADDONS.includes(a)) paidSet.add(a);
-        }
-      }
-      paidOneTimeAddOns = [...paidSet];
-    } catch (error) {
-      console.error("Error checking one-time add-ons:", error);
+  // One-time, non-blocking "ready to automate?" popup at the 300-product
+  // mark — shown at most once per store (see productLimitUpsell on User).
+  // Marking it shown here, at render time, is the "popup shown" tracking;
+  // "CTA clicked" is recorded client-side, see Main.jsx.
+  let showProductLimitUpsell = false;
+  if (session?.user?.id && !response.isDemo && response.count >= PRODUCT_LIMIT_UPSELL_THRESHOLD) {
+    await dbConnect();
+    const dbUser = await User.findById(session.user.id).select("productLimitUpsell");
+    if (!dbUser?.productLimitUpsell?.shownAt) {
+      await User.updateOne(
+        { _id: session.user.id },
+        { $set: { "productLimitUpsell.shownAt": new Date() } },
+      );
+      showProductLimitUpsell = true;
     }
   }
 
@@ -252,6 +176,7 @@ const page = async ({ searchParams }) => {
         isDemo={response.isDemo}
         demoLimitReached={response.demoLimitReached}
         addonPurchase={addonPurchase}
+        showProductLimitUpsell={showProductLimitUpsell}
       />
     );
   }
@@ -277,10 +202,11 @@ const page = async ({ searchParams }) => {
           stripeResponse={stripeResponse}
           isDemo={response.isDemo}
           demoLimitReached={response.demoLimitReached}
+          showProductLimitUpsell={showProductLimitUpsell}
         />
       );
     }
-    return <SubscriptionMessage message={NO_PLAN_MESSAGE} userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
+    return <SubscriptionMessage message={NO_PLAN_MESSAGE} />;
   }
 
   if (user?.isActive === true) {
@@ -289,7 +215,7 @@ const page = async ({ searchParams }) => {
     const end = new Date(user.subscriptionEnd);
     if (user.subscriptionType === "free") {
       if (now < start || now > end) {
-        return <SubscriptionMessage message="Your free plan has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />;
+        return <SubscriptionMessage message="Your free plan has expired." />;
       }
       return (
         <Main
@@ -298,28 +224,15 @@ const page = async ({ searchParams }) => {
           stripeResponse={stripeResponse}
           isDemo={response.isDemo}
           demoLimitReached={response.demoLimitReached}
+          showProductLimitUpsell={showProductLimitUpsell}
         />
       );
     } else if ((now < start || now > end) && user.subscriptionType !== "free") {
-      return (
-        <SubscriptionMessage message="Your current subscription has expired." userId={session?.user?.id} paidOneTimeAddOns={paidOneTimeAddOns} />
-      );
-    } else {
-      const userId = session?.user?.id;
-      const activePlan = await fetchactivesubscription(userId);
-
-      if (!activePlan || activePlan.productLimit <= user.products.length) {
-        return (
-          <SubscriptionMessage
-            message="You've reached the product upload limit for your current plan."
-            heading="Plan Limit Reached"
-            ctaLabel="Upgrade Your Plan"
-            userId={session?.user?.id}
-            paidOneTimeAddOns={paidOneTimeAddOns}
-          />
-        );
-      }
+      return <SubscriptionMessage message="Your current subscription has expired." />;
     }
+    // Paid, active, within the billing period — no product-count wall.
+    // Discovery/AI-vision uploads are unlimited regardless of plan; see
+    // showProductLimitUpsell above for the one-time 300-product nudge.
   }
 
   return (
@@ -329,6 +242,7 @@ const page = async ({ searchParams }) => {
       stripeResponse={stripeResponse}
       isDemo={response.isDemo}
       demoLimitReached={response.demoLimitReached}
+      showProductLimitUpsell={showProductLimitUpsell}
     />
   );
 };

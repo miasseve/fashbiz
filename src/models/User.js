@@ -106,6 +106,14 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // The non-blocking "Ready to automate?" popup shown once a store crosses
+  // 300 products (Discovery uploads are unlimited/free — this is a one-time
+  // nudge toward Le Stores AI, not a wall). Tracked so it only shows once,
+  // and so store-side conversion (shown -> clicked) can be measured later.
+  productLimitUpsell: {
+    shownAt: { type: Date, default: null },
+    ctaClicked: { type: Boolean, default: false },
+  },
   branding: {
     logoUrl: { type: String, default: "" },
     logoPublicId: { type: String, default: "" },

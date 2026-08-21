@@ -17,14 +17,21 @@ const Main = ({
   isDemo,
   demoLimitReached,
   addonPurchase,
+  showProductLimitUpsell,
 }) => {
   const currentStep = useSelector((state) => state.product.currentStep);
   const [count, setCount] = useState(productCount || 0);
+  const [showUpsell, setShowUpsell] = useState(!!showProductLimitUpsell);
   const stripedata = stripeResponse?.data
     ? JSON.parse(stripeResponse.data)
     : null;
   const router = useRouter();
   const dispatch = useDispatch();
+
+  const handleExploreLeStoresAI = () => {
+    fetch("/api/dashboard/product-limit-upsell-click", { method: "POST" }).catch(() => {});
+    router.push("/dashboard/subscription-plan");
+  };
 
   const handleSaveUrl = () => {
     dispatch(setCurrentStep(currentStep + 1));
@@ -65,6 +72,37 @@ const Main = ({
     !demoLimitReached;
   return (
     <div className="mx-auto lg:my-[10px] bg-white rounded-xl dark:bg-gray-900 transition-all ">
+      {showUpsell && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowUpsell(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              You've added 300 products.
+            </h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Ready to automate the workflow? Le Stores AI automates listing,
+              inventory, publishing and synchronization — from 390 DKK/month.
+            </p>
+            <button
+              onClick={handleExploreLeStoresAI}
+              className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-3 mb-3 transition-all"
+            >
+              Explore Le Stores AI
+            </button>
+            <button
+              onClick={() => setShowUpsell(false)}
+              className="w-full rounded-xl border border-gray-200 text-gray-600 font-semibold py-3 hover:bg-gray-50 transition-colors"
+            >
+              Continue with free Discovery
+            </button>
+          </div>
+        </div>
+      )}
       <ProgressBar currentStep={currentStep} steps={steps} />
       {addonPurchase && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-red-800 px-4 py-3">

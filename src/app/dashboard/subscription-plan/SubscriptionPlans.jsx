@@ -322,7 +322,11 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                     const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
                     const users = isPro ? "5" : isBasic ? "2" : "1";
                     const fallbackFeatures = [
-                      `Upload up to ${limit} products per month`,
+                      // Le Stores AI (the "Add" plans) prices automation, not
+                      // product capacity — uploads via Discovery are unlimited
+                      // regardless of plan. Other plan types (Webstore/Plug-In)
+                      // are a separate product, unaffected by that change.
+                      isAdd ? "Unlimited product uploads" : `Upload up to ${limit} products per month`,
                       `Up to ${users} users access`,
                       "Instagram integration",
                       ...(!isAdd ? ["SecondsToSee webstore synchronization"] : []),
@@ -376,7 +380,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             <div className="p2-status__main">
               <div className="p2-status__heading">Choose a plan below to continue</div>
               <div className="p2-status__features">
-                {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300–1000 products per month", "Up to 2–5 users access"].map((f, i) => (
+                {["Unlimited product uploads via Le Stores Discovery", "Instagram integration", "SecondsToSee webstore synchronization", "Up to 2–5 users access"].map((f, i) => (
                   <div key={i} className="p2-status__feature">
                     <span className="p2-check">&#10003;</span>
                     {f}
@@ -410,13 +414,13 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
         <div className="pricing-mobile-info__card">
           <div className="pricing-mobile-info__row">
             <div className="pricing-mobile-info__tier-name">BASIC</div>
-            <div className="pricing-mobile-info__tier-detail">Up to 300 products per month</div>
+            <div className="pricing-mobile-info__tier-detail">Unlimited product uploads</div>
             <div className="pricing-mobile-info__tier-detail">Up to 2 users access</div>
           </div>
           <div className="pricing-mobile-info__divider" />
           <div className="pricing-mobile-info__row">
             <div className="pricing-mobile-info__tier-name">PRO</div>
-            <div className="pricing-mobile-info__tier-detail">Up to 1000 products per month</div>
+            <div className="pricing-mobile-info__tier-detail">Unlimited product uploads</div>
             <div className="pricing-mobile-info__tier-detail">Up to 5 users access</div>
           </div>
         </div>
