@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { requireApiKey, handlePreflight } from "@/lib/apiKeyMiddleware";
 import { serializePublicProduct } from "@/lib/publicProductSerializer";
 import { getActiveReservationsByProduct } from "@/lib/reservationLib";
+import { createShopifyProduct } from "@/actions/shopifyAction";
 
 export async function OPTIONS() {
   return handlePreflight();
@@ -112,20 +113,65 @@ export async function POST(req) {
     let aiConfidenceScore = Number(body.aiConfidence);
     if (!Number.isFinite(aiConfidenceScore)) aiConfidenceScore = null;
 
+    const sku = `DISC-${suffix}`;
+    const barcode = `DISC-BC-${suffix}`;
+    const title = String(body.title || "").trim() || "Untitled item (via Discover)";
+    const brand = String(body.brand || "").trim() || "Unknown";
+    const description = String(body.description || "").trim() || "Submitted via Discover.";
+    const size = [String(body.size || "One Size")];
+    const fabric = body.material ? String(body.material) : undefined;
+    const color = body.colorName ? { name: String(body.colorName), hex: body.colorHex || "#fff" } : undefined;
+    const subcategory = String(body.subcategory || "").trim() || undefined;
+
+    // Same shared Shopify catalogue (secondstosee.com) the dashboard's own
+    // add-product flow always pushes into — no per-store gating there
+    // either, so a Discover capture should sync the same way once it names
+    // a real store. Best-effort: a Shopify hiccup shouldn't block the
+    // capture itself, same pattern createProduct() in productActions.js
+    // uses — the product still saves, just without a shopifyProductId.
+    let shopifyProductId, shopifyVariantId, shopifyInventoryItemId;
+    if (hasRealStore) {
+      try {
+        const shopifyResponse = await createShopifyProduct({
+          title,
+          sku,
+          brand,
+          description,
+          price,
+          images,
+          color,
+          size,
+          fabric,
+          subcategory,
+          barcodeValue: barcode,
+          storeName: store.storename || store.brandname || "",
+        });
+        if (shopifyResponse.status === 200) {
+          shopifyProductId = shopifyResponse.productId;
+          shopifyVariantId = shopifyResponse.variantId;
+          shopifyInventoryItemId = shopifyResponse.inventoryItemId;
+        } else {
+          console.error("Discover capture Shopify sync failed:", shopifyResponse.error);
+        }
+      } catch (shopifyError) {
+        console.error("Discover capture Shopify sync error:", shopifyError);
+      }
+    }
+
     const doc = new Product({
-      sku: `DISC-${suffix}`,
-      barcode: `DISC-BC-${suffix}`,
-      title: String(body.title || "").trim() || "Untitled item (via Discover)",
-      brand: String(body.brand || "").trim() || "Unknown",
+      sku,
+      barcode,
+      title,
+      brand,
       category: String(body.category || "").trim() || "Uncategorized",
-      subcategory: String(body.subcategory || "").trim() || undefined,
-      description: String(body.description || "").trim() || "Submitted via Discover.",
+      subcategory,
+      description,
       price,
-      size: [String(body.size || "One Size")],
-      fabric: body.material ? String(body.material) : undefined,
+      size,
+      fabric,
       condition_grade: ["A", "B", "C"].includes(body.conditionGrade) ? body.conditionGrade : null,
       condition_notes: body.condition ? String(body.condition) : "",
-      color: body.colorName ? { name: String(body.colorName), hex: body.colorHex || "#fff" } : undefined,
+      color,
       images,
       userId: store._id,
       consignorAccount: "discover-app",
@@ -136,6 +182,9 @@ export async function POST(req) {
       // comes back.
       needsReview: false,
       archived: !hasRealStore,
+      shopifyProductId,
+      shopifyVariantId,
+      shopifyInventoryItemId,
     });
 
     await doc.save();
