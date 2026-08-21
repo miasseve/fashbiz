@@ -60,8 +60,11 @@ export async function GET(req) {
 // trustworthy. When the capture names a real store (storeId), it's visible
 // immediately. Without one, it falls back to an arbitrary store and stays
 // archived/hidden — attaching a real customer's product to the wrong shop
-// would be worse than just not showing it. needsReview mirrors the
-// dashboard's own rule (confidence < 0.6) rather than always being forced on.
+// would be worse than just not showing it.
+//
+// needsReview (low AI confidence) used to hold a capture back for manual
+// approval — removed per client request, everything a shopper adds should
+// show up right away. aiConfidenceScore is still recorded either way.
 export async function POST(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;
@@ -116,7 +119,7 @@ export async function POST(req) {
       brand: String(body.brand || "").trim() || "Unknown",
       category: String(body.category || "").trim() || "Uncategorized",
       subcategory: String(body.subcategory || "").trim() || undefined,
-      description: String(body.description || "").trim() || "Submitted via Discover — pending review.",
+      description: String(body.description || "").trim() || "Submitted via Discover.",
       price,
       size: [String(body.size || "One Size")],
       fabric: body.material ? String(body.material) : undefined,
@@ -127,7 +130,11 @@ export async function POST(req) {
       userId: store._id,
       consignorAccount: "discover-app",
       aiConfidenceScore,
-      needsReview: aiConfidenceScore == null ? true : aiConfidenceScore < 0.6,
+      // Low-confidence captures used to be held back pending manual review;
+      // client asked for everything a shopper adds to show up immediately
+      // instead. Still recorded (aiConfidenceScore above) if review ever
+      // comes back.
+      needsReview: false,
       archived: !hasRealStore,
     });
 
@@ -136,7 +143,7 @@ export async function POST(req) {
     return Response.json(
       {
         ok: true,
-        status: "pending_review",
+        status: hasRealStore ? "live" : "pending_store_match",
         productId: String(doc._id),
         images,
         createdAt: doc.createdAt.toISOString(),

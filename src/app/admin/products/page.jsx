@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
-import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash, FaEdit } from "react-icons/fa";
+import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash, FaEdit, FaCheckDouble } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const STATUS_OPTIONS = [
@@ -37,6 +37,29 @@ const AdminProductsPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
+
+  // One-time cleanup: releases any products still stuck from the old
+  // AI-confidence review gate (removed — everything added should show up
+  // immediately now). Safe to run more than once; it's a no-op once nothing
+  // is left flagged.
+  const [clearingReviewFlags, setClearingReviewFlags] = useState(false);
+  const handleClearReviewFlags = async () => {
+    setClearingReviewFlags(true);
+    try {
+      const res = await fetch("/api/admin/products/clear-review-flags", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to clear review flags");
+      toast.success(
+        data.updatedCount > 0
+          ? `${data.updatedCount} product${data.updatedCount !== 1 ? "s" : ""} released and now visible.`
+          : "Nothing was stuck — all clear.",
+      );
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setClearingReviewFlags(false);
+    }
+  };
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -204,6 +227,15 @@ const AdminProductsPage = () => {
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-4xl font-bold sm:!pt-[30px] sm:!pr-[30px] sm:!pb-[20px] sm:!pl-[4px] p-1">Products</h1>
+        <button
+          onClick={handleClearReviewFlags}
+          disabled={clearingReviewFlags}
+          title="Releases any products still stuck from the old AI-confidence review gate so they show up immediately"
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-md font-semibold transition-colors disabled:opacity-50"
+        >
+          {clearingReviewFlags ? <Spinner size="sm" color="white" /> : <FaCheckDouble className="text-sm" />}
+          Clear Review Flags
+        </button>
         {/* View toggle */}
         <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
           <button

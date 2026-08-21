@@ -337,7 +337,10 @@ const SecondStep = ({
         collect: collectSelection ?? false,
         condition_grade: data.condition_grade || null,
         condition_notes: data.condition_notes || "",
-        needsReview: confidenceScore !== null && confidenceScore < 0.6,
+        // Low-confidence products used to be held back for manual review —
+        // removed per client request, everything added should show up
+        // immediately. Still recorded below if review ever comes back.
+        needsReview: false,
         aiConfidenceScore: confidenceScore,
       };
 
