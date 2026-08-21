@@ -1018,7 +1018,7 @@ const StoresUsersPage = () => {
                     type="checkbox"
                     checked={paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedIds.has(u._id))}
                     onChange={toggleSelectPage}
-                    className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                    className="w-4 h-4 rounded border-gray-300 accent-indigo-600 cursor-pointer"
                   />
                 </th>
                 <th className="text-left px-4 py-3.5 font-bold text-gray-700">
@@ -1068,7 +1068,7 @@ const StoresUsersPage = () => {
                         type="checkbox"
                         checked={selectedIds.has(user._id)}
                         onChange={() => toggleSelected(user._id)}
-                        className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                        className="w-4 h-4 rounded border-gray-300 accent-indigo-600 cursor-pointer"
                       />
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">
