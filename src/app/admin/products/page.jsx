@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
-import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash, FaEdit, FaCheckDouble } from "react-icons/fa";
+import { FaSearch, FaFilter, FaThLarge, FaList, FaEye, FaTrash, FaEdit, FaCheckDouble, FaShopify } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 const STATUS_OPTIONS = [
@@ -58,6 +58,47 @@ const AdminProductsPage = () => {
       toast.error(err.message || "Something went wrong");
     } finally {
       setClearingReviewFlags(false);
+    }
+  };
+
+  // One-time catch-up: Discover captures saved before the app-to-Shopify
+  // sync existed (see /api/public/products) never got pushed to the shared
+  // Shopify catalogue, so they can never show up on secondstosee.com no
+  // matter how long they sit there. Loops the batch endpoint (same pattern
+  // as Locate Pending Stores) until the backlog clears or it's stopped.
+  const [syncingShopify, setSyncingShopify] = useState(false);
+  const syncShopifyStopRef = useRef(false);
+  const handleSyncMissingShopify = async () => {
+    setSyncingShopify(true);
+    syncShopifyStopRef.current = false;
+    let afterId = null;
+    let totalSynced = 0;
+    let totalFailed = 0;
+    try {
+      while (!syncShopifyStopRef.current) {
+        const res = await fetch("/api/admin/products/sync-missing-shopify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ afterId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to sync products");
+        totalSynced += data.synced;
+        totalFailed += data.failed;
+        afterId = data.lastId;
+        if (data.done) break;
+      }
+      if (!syncShopifyStopRef.current) {
+        toast.success(
+          totalSynced > 0
+            ? `${totalSynced} product${totalSynced !== 1 ? "s" : ""} synced to Shopify.${totalFailed ? ` ${totalFailed} failed — check logs.` : ""}`
+            : "Nothing was stuck — all clear.",
+        );
+      }
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setSyncingShopify(false);
     }
   };
 
@@ -235,6 +276,15 @@ const AdminProductsPage = () => {
         >
           {clearingReviewFlags ? <Spinner size="sm" color="white" /> : <FaCheckDouble className="text-sm" />}
           Clear Review Flags
+        </button>
+        <button
+          onClick={handleSyncMissingShopify}
+          disabled={syncingShopify}
+          title="Pushes any Discover captures made before the app-to-Shopify sync existed onto secondstosee.com"
+          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-md font-semibold transition-colors disabled:opacity-50"
+        >
+          {syncingShopify ? <Spinner size="sm" color="white" /> : <FaShopify className="text-sm" />}
+          Sync Missing Shopify
         </button>
         {/* View toggle */}
         <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
