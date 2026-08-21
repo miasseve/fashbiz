@@ -77,6 +77,14 @@ const StoresUsersPage = () => {
   const [deleteTarget, setDeleteTarget] = useState(null); // the user pending deletion
   const [deleting, setDeleting] = useState(false);
 
+  // Bulk-select state — scoped per tab, since Stores and Users are separate
+  // lists; switching tabs clears it so a selection made on one can't be
+  // accidentally applied to the other.
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+
   // Quick-verify flow state
   const [verifyingId, setVerifyingId] = useState(null);
 
@@ -576,6 +584,66 @@ const StoresUsersPage = () => {
     }
   };
 
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectPage = () => {
+    const pageIds = paginatedUsers.map((u) => u._id);
+    const allSelected = pageIds.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  // Reuses the same single DELETE endpoint (backup + cascade + Shopify
+  // cleanup) one at a time rather than a separate bulk endpoint — one less
+  // place for the delete logic to drift out of sync, and it's already
+  // proven correct.
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    setBulkDeleteProgress(0);
+    const ids = [...selectedIds];
+    let succeeded = 0;
+    let failed = 0;
+
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        const res = await fetch(`/api/admin/users/${ids[i]}`, { method: "DELETE" });
+        if (res.ok) succeeded++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+      setBulkDeleteProgress(i + 1);
+    }
+
+    if (succeeded) {
+      const deletedSet = new Set(ids);
+      setAllUsers((prev) => prev.filter((u) => !deletedSet.has(u._id)));
+    }
+    if (failed) {
+      toast.error(`${succeeded} deleted, ${failed} failed — see individual rows to retry.`);
+    } else {
+      toast.success(`${succeeded} ${succeeded === 1 ? "account" : "accounts"} deleted.`);
+    }
+
+    setSelectedIds(new Set());
+    setShowBulkDelete(false);
+    setBulkDeleting(false);
+  };
+
   const hasActiveFilters =
     search ||
     filterCountry ||
@@ -667,7 +735,10 @@ const StoresUsersPage = () => {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              setActiveTab(tab.key);
+              setSelectedIds(new Set());
+            }}
             className={`px-6 py-2.5 rounded-md text-[12px] font-medium transition-all ${
               activeTab === tab.key
                 ? "bg-white text-gray-900 shadow-sm"
@@ -907,6 +978,31 @@ const StoresUsersPage = () => {
         )}
       </div>
 
+      {/* Bulk selection bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-3">
+          <span className="text-md font-semibold text-indigo-900">
+            {selectedIds.size} {activeTab === "stores" ? "store" : "user"}
+            {selectedIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-md font-semibold text-indigo-700 hover:text-indigo-900"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setShowBulkDelete(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 text-md"
+            >
+              <FaTrash className="text-sm" />
+              Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
         {filteredUsers.length === 0 ? (
@@ -917,6 +1013,14 @@ const StoresUsersPage = () => {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedIds.has(u._id))}
+                    onChange={toggleSelectPage}
+                    className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                  />
+                </th>
                 <th className="text-left px-4 py-3.5 font-bold text-gray-700">
                   Name
                 </th>
@@ -959,6 +1063,14 @@ const StoresUsersPage = () => {
                     key={user._id}
                     className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
                   >
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(user._id)}
+                        onChange={() => toggleSelected(user._id)}
+                        className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                      />
+                    </td>
                     <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {user.firstname} {user.lastname}
@@ -1640,6 +1752,85 @@ const StoresUsersPage = () => {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {deleting ? (
+                  <>
+                    <Spinner size="sm" color="white" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaTrash className="text-sm" />
+                    Delete permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirmation modal */}
+      {showBulkDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !bulkDeleting && setShowBulkDelete(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-5">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <FaTrash className="text-red-600 text-2xl" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-3xl font-bold text-gray-900">
+                  Delete {selectedIds.size} {activeTab === "stores" ? "stores" : "users"}?
+                </h3>
+                <p className="mt-2 text-lg text-gray-600 leading-relaxed">
+                  You're about to permanently delete{" "}
+                  <span className="font-semibold text-gray-900">{selectedIds.size}</span> selected{" "}
+                  {activeTab === "stores" ? "stores" : "users"}.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-red-50 border border-red-100 p-5 text-lg text-red-700 leading-relaxed">
+              This removes each account and{" "}
+              <span className="font-semibold">all associated data</span> —
+              products (also from Shopify), subscriptions, transactions,
+              notifications and more. A full backup is saved automatically for
+              each one, so if this was a mistake they can be restored from{" "}
+              <span className="font-semibold">Deleted Stores</span>.
+            </div>
+
+            {bulkDeleting && (
+              <div className="mt-5">
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-red-600 h-2.5 rounded-full transition-all"
+                    style={{ width: `${(bulkDeleteProgress / selectedIds.size) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-md text-gray-600">
+                  Deleting {bulkDeleteProgress} of {selectedIds.size}...
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkDelete(false)}
+                disabled={bulkDeleting}
+                className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {bulkDeleting ? (
                   <>
                     <Spinner size="sm" color="white" />
                     Deleting...
