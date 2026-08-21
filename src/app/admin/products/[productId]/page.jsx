@@ -39,6 +39,7 @@ const AdminProductDetailPage = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // Store reassignment — separate from the rest of the edit form since it's
   // a search-and-pick control, not a plain field. Holds the FULL selected
@@ -90,6 +91,7 @@ const AdminProductDetailPage = () => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || "Failed to load");
         setProduct(json.product);
+        setActiveImageIndex(0);
         if (searchParams.get("edit") === "true") startEditing(json.product);
       } catch (err) {
         setError(err.message);
@@ -219,19 +221,25 @@ const AdminProductDetailPage = () => {
           {product.images && product.images.length > 0 ? (
             <div className="space-y-2">
               <img
-                src={product.images[0].url}
+                src={product.images[activeImageIndex]?.url || product.images[0].url}
                 alt={product.title}
                 className="w-full aspect-square object-cover rounded-xl border border-gray-200"
               />
               {product.images.length > 1 && (
-                <div className="flex gap-2 flex-wrap">
-                  {product.images.slice(1).map((img, i) => (
-                    <img
+                <div className="grid grid-cols-4 gap-2">
+                  {product.images.map((img, i) => (
+                    <button
                       key={i}
-                      src={img.url}
-                      alt=""
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                    />
+                      type="button"
+                      onClick={() => setActiveImageIndex(i)}
+                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                        i === activeImageIndex
+                          ? "border-indigo-500"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    </button>
                   ))}
                 </div>
               )}
