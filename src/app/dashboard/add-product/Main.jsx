@@ -65,7 +65,7 @@ const Main = ({
     router.push("/dashboard/stripe-connect");
   };
 
-  const steps = ["Select Consignor", "Product Details", "Finish"];
+  const steps = ["Select Client", "Product Details", "Finish"];
   const isInDemoMode =
     stripedata?.accountId == null &&
     stripedata?.mode === "demo" &&

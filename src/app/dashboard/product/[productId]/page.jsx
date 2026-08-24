@@ -120,7 +120,7 @@ const Page = async ({ params }) => {
 
             {parsedUser && (
               <div className="mt-6 bg-gray-50 rounded-xl border-2 border-gray-200 p-5">
-                <p className="text-gray-800 font-bold text-lg mb-3">Consignor Details</p>
+                <p className="text-gray-800 font-bold text-lg mb-3">Client Details</p>
                 <div className="space-y-2 text-gray-700">
                   <p><span className="font-semibold">Name:</span> {parsedUser.firstname} {parsedUser.lastname}</p>
                   <p><span className="font-semibold">Email:</span> {parsedUser.email}</p>
@@ -267,7 +267,7 @@ const Page = async ({ params }) => {
 
             {parsedUser && (
               <div className="bg-white rounded-xl border-2 border-gray-200 p-5">
-                <p className="text-gray-800 font-bold text-base mb-3">Consignor Details</p>
+                <p className="text-gray-800 font-bold text-base mb-3">Client Details</p>
                 <div className="space-y-1.5 text-sm text-gray-700">
                   <p><span className="font-semibold">Name:</span> {parsedUser.firstname} {parsedUser.lastname}</p>
                   <p><span className="font-semibold">Email:</span> {parsedUser.email}</p>
@@ -391,7 +391,7 @@ const Page = async ({ params }) => {
 
             {parsedUser && (
               <div className="mt-6 bg-gray-50 rounded-xl border-2 border-gray-200 p-5">
-                <p className="text-gray-800 font-bold text-lg mb-3">Consignor Details</p>
+                <p className="text-gray-800 font-bold text-lg mb-3">Client Details</p>
                 <div className="space-y-2 text-gray-700">
                   <p><span className="font-semibold">Name:</span> {parsedUser.firstname} {parsedUser.lastname}</p>
                   <p><span className="font-semibold">Email:</span> {parsedUser.email}</p>

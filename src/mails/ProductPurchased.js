@@ -45,7 +45,7 @@ export async function productPurchased(
     html: `
       <p>Dear ${customerName},</p>
       <p>Customer has purchase the products from store! Below are the details of the products :</p>
-      <p>Consignor linked with that products - ${consignorName} ( ${consignorEmail} )</p>
+      <p>Client linked with that products - ${consignorName} ( ${consignorEmail} )</p>
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="background-color: #f8f8f8;">

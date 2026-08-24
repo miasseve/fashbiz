@@ -33,7 +33,7 @@ export default function QRCodeScanner() {
 
   return (
     <div className="flex flex-col justify-center items-center p-4">
-      <h5 className="font-bold mb-3">Scan Consignor QR Code</h5>
+      <h5 className="font-bold mb-3">Scan Client QR Code</h5>
       {error && <p className="text-red-500">{error}</p>}
       <div
         id="reader"

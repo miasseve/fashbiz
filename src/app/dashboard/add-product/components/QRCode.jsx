@@ -78,7 +78,7 @@ export default function QRCode() {
   };
   return (
     <div className="p-4 text-center">
-      <h2 className="text-2xl font-semibold mb-4">Scan Consiqnor QR Code</h2>
+      <h2 className="text-2xl font-semibold mb-4">Scan Client QR Code</h2>
 
       <div className="flex gap-4 mb-4 justify-center">
         <Button

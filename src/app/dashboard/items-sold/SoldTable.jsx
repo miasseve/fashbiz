@@ -74,8 +74,8 @@ const SoldTable = ({ products }) => {
       "Product Name",
       "Price",
       "Sold On",
-      "Consignor Name",
-      "Consignor Email",
+      "Client Name",
+      "Client Email",
       "Customer Name",
       "Customer Email",
     ];
@@ -117,8 +117,8 @@ const SoldTable = ({ products }) => {
           <TableColumn>Product Name</TableColumn>
           <TableColumn>Price</TableColumn>
           <TableColumn>Sold On</TableColumn>
-          <TableColumn>Consignor Name</TableColumn>
-          <TableColumn>Consignor Email</TableColumn>
+          <TableColumn>Client Name</TableColumn>
+          <TableColumn>Client Email</TableColumn>
           <TableColumn>Actions</TableColumn>
         </TableHeader>
         <TableBody>

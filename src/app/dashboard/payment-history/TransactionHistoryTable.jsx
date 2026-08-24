@@ -81,8 +81,8 @@ const TransactionHistoryTable = ({ transactions }) => {
       "Channel",
       "Status",
       "Payment Method",
-      "Consignor Name",
-      "Consignor Email",
+      "Client Name",
+      "Client Email",
       "Fulfillment",
     ];
 
@@ -531,7 +531,7 @@ const TransactionHistoryTable = ({ transactions }) => {
                     selectedTransaction.consignorName !== "" && (
                       <div className="bg-gray-50 rounded-lg p-3">
                         <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">
-                          Consignor
+                          Client
                         </p>
                         <p className="text-[12px] font-semibold text-gray-900">
                           {selectedTransaction.consignorName}

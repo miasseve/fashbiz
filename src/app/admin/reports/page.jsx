@@ -55,7 +55,7 @@ const AdminReportsPage = () => {
       title: "Users by Role",
       items: [
         { label: "Stores", value: storeCount, color: "bg-green-100 text-green-700" },
-        { label: "Consignors", value: consignorCount, color: "bg-blue-100 text-blue-700" },
+        { label: "Clients", value: consignorCount, color: "bg-blue-100 text-blue-700" },
         { label: "Brands", value: brandCount, color: "bg-purple-100 text-purple-700" },
         { label: "Total", value: users.length, color: "bg-gray-100 text-gray-700" },
       ],

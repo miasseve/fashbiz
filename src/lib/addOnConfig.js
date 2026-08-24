@@ -6,7 +6,7 @@ export const ADD_ONS = {
   complete_adds: {
     key: "complete_adds",
     label: "Complete Adds",
-    description: "Upload product with AI details, consignor linking & split payments",
+    description: "Upload product with AI details, client linking & split payments",
     price: 10, // DKK
     required: true,
   },

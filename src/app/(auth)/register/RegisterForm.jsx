@@ -71,7 +71,7 @@ const RegisterForm = () => {
                     <Tab key="store" title="Store">
                       <StoreForm />
                     </Tab>
-                    <Tab key="consignor" title="Consignor">
+                    <Tab key="consignor" title="Client">
                       <ConsignorForm />
                     </Tab>
                     <Tab key="brand" title="Brand">

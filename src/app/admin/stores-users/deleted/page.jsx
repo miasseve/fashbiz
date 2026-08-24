@@ -135,7 +135,7 @@ const DeletedStoresPage = () => {
           </Link>
           <h1 className="text-4xl font-bold">Deleted Stores</h1>
           <p className="text-gray-500 mt-1">
-            A backup is saved automatically before any store, brand, or consignor account
+            A backup is saved automatically before any store, brand, or client account
             is deleted. Restore brings back the account and everything linked to it —
             products, transactions, subscriptions, and more — exactly as it was.
           </p>
