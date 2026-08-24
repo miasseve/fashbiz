@@ -367,30 +367,12 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             </div>
           </div>
         </div>
-      ) : userRole === "store" ? (
-        <div className="p2-status">
-          <div className="p2-status__badge p2-status__badge--inactive">Inactive</div>
-          <div className="p2-status__left">
-            <div className="p2-status__title">
-              No <em>Plan</em>
-            </div>
-            <div className="p2-status__sub">Subscribe to get started.</div>
-          </div>
-          <div className="p2-status__right">
-            <div className="p2-status__main">
-              <div className="p2-status__heading">Choose a plan below to continue</div>
-              <div className="p2-status__features">
-                {["Unlimited product uploads via Le Stores Discovery", "Instagram integration", "SecondsToSee webstore synchronization", "Up to 2–5 users access"].map((f, i) => (
-                  <div key={i} className="p2-status__feature">
-                    <span className="p2-check">&#10003;</span>
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
       ) : null}
+      {/* No-plan status card removed per client request — it listed paid-only
+          features (Instagram, webstore sync) with checkmarks on a screen
+          shown to stores who haven't subscribed to anything yet, implying
+          they were already included for free. The pricing cards below
+          already show the correct feature list per real plan. */}
 
       {/* ── NEW: 2hand2go-style stacked pricing sections ── */}
       {USE_NEW_PRICING ? (
