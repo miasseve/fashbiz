@@ -209,31 +209,11 @@ const page = async ({ searchParams }) => {
     return <SubscriptionMessage message={NO_PLAN_MESSAGE} />;
   }
 
-  if (user?.isActive === true) {
-    const now = new Date();
-    const start = new Date(user.subscriptionStart);
-    const end = new Date(user.subscriptionEnd);
-    if (user.subscriptionType === "free") {
-      if (now < start || now > end) {
-        return <SubscriptionMessage message="Your free plan has expired." />;
-      }
-      return (
-        <Main
-          user={session.user}
-          productCount={response.count}
-          stripeResponse={stripeResponse}
-          isDemo={response.isDemo}
-          demoLimitReached={response.demoLimitReached}
-          showProductLimitUpsell={showProductLimitUpsell}
-        />
-      );
-    } else if ((now < start || now > end) && user.subscriptionType !== "free") {
-      return <SubscriptionMessage message="Your current subscription has expired." />;
-    }
-    // Paid, active, within the billing period — no product-count wall.
-    // Discovery/AI-vision uploads are unlimited regardless of plan; see
-    // showProductLimitUpsell above for the one-time 300-product nudge.
-  }
+  // Subscription/date status (active, expired, free, paid) no longer gates
+  // this page at all — Discovery/AI-vision uploads are unconditionally
+  // unlimited, same principle as the removed product-count wall above.
+  // Only the separate, older demo-mode cap (Account.demoProductLimit, for
+  // guests who've never subscribed) still applies, untouched by this.
 
   return (
     <Main
