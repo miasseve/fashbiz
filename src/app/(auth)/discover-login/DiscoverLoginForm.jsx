@@ -5,7 +5,20 @@ import "react-phone-number-input/style.css";
 import { EyeFilledIcon } from "../icons/EyeFilledIcon ";
 import { EyeSlashFilledIcon } from "../icons/EyeSlashFilledIcon ";
 
+// redirectUri is Discover's OAuth-style callback route (.../auth/callback),
+// expecting a real ?code= from a completed sign-in — hitting it without one
+// shows Discover's own "Sign-in failed" page. "Back to app" should land on
+// the app itself, not that callback handler, so it links to just the origin.
+function appHomeFrom(redirectUri) {
+  try {
+    return new URL(redirectUri).origin;
+  } catch {
+    return redirectUri;
+  }
+}
+
 const DiscoverLoginForm = ({ redirectUri }) => {
+  const appHome = appHomeFrom(redirectUri);
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
@@ -71,7 +84,7 @@ const DiscoverLoginForm = ({ redirectUri }) => {
       <div className="w-full max-w-[400px] rounded-[14px] bg-white p-8 shadow-lg text-center">
         {redirectUri && (
           <a
-            href={redirectUri}
+            href={appHome}
             className="flex items-center gap-1 text-[13px] font-semibold text-gray-500 hover:text-gray-700 mb-2 -mt-2"
           >
             <span aria-hidden="true">&#8592;</span> Back to app
