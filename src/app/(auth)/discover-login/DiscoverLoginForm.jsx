@@ -69,6 +69,14 @@ const DiscoverLoginForm = ({ redirectUri }) => {
   return (
     <section className="min-h-screen bg-fash-gradient flex items-center justify-center px-4">
       <div className="w-full max-w-[400px] rounded-[14px] bg-white p-8 shadow-lg text-center">
+        {redirectUri && (
+          <a
+            href={redirectUri}
+            className="flex items-center gap-1 text-[13px] font-semibold text-gray-500 hover:text-gray-700 mb-2 -mt-2"
+          >
+            <span aria-hidden="true">&#8592;</span> Back to app
+          </a>
+        )}
         <img src="/new_ree_icon.png" alt="Ree" className="w-[72px] mx-auto py-[8px]" />
         <h1 className="text-[1.8rem] font-semibold text-gray-900 mb-6">
           {mode === "signin" ? "Sign in to continue" : "Sign Up"}
