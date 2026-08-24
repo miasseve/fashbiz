@@ -46,7 +46,7 @@ export async function GET() {
         userId: storeId,
         type: "reminder",
         title: "Sold something today?",
-        message: "Remove any items you've sold in-store so they don't stay listed. Upgrade to a paid plan and Ree delists automatically for you — see Subscription in your dashboard.",
+        message: "Remove any items you've sold in-store so they don't stay listed. Upgrade to a paid plan and leStores AI delists automatically for you — see Subscription in your dashboard.",
       });
       sent++;
     }

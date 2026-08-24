@@ -12,7 +12,7 @@ const PrivacyPolicy = () => {
             <section>
               <p className="text-sm text-gray-500 mb-4">Last updated: January 7, 2026</p>
               <p className="leading-relaxed">
-                Welcome to REE. We respect your privacy and are committed to protecting your personal data. 
+                Welcome to leStores AI. We respect your privacy and are committed to protecting your personal data.
                 This privacy policy will inform you about how we handle your personal data when you visit our 
                 marketplace and tell you about your privacy rights.
               </p>
@@ -113,7 +113,7 @@ const PrivacyPolicy = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center text-white text-sm">
-          <p>© 2026 REE Marketplace. All rights reserved.</p>
+          <p>© 2026 leStores AI Marketplace. All rights reserved.</p>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ export function OrganizationJsonLd() {
       height: 512,
     },
     description:
-      "Buy and sell secondhand fashion online. Ree is a resale and secondhand store platform with automated product listing and smart POS. Genbrugstøj og brugt tøj i Danmark.",
+      "Buy and sell secondhand fashion online. leStores AI is a resale and secondhand store platform with automated product listing and smart POS. Genbrugstøj og brugt tøj i Danmark.",
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer support",

@@ -52,7 +52,7 @@ const SettingsPage = () => {
   };
 
   const handleClear = async () => {
-    if (!confirm("Remove the stored storefront password? Ree-generated links will stop bypassing the Shopify password wall.")) return;
+    if (!confirm("Remove the stored storefront password? leStores AI-generated links will stop bypassing the Shopify password wall.")) return;
     setSaving(true);
     try {
       const res = await setShopifyStorefrontPassword("");
@@ -81,7 +81,7 @@ const SettingsPage = () => {
         <h3 className="text-2xl font-bold text-gray-900 mb-1">Shopify Storefront Password</h3>
         <p className="text-md text-gray-600 mb-4">
           If the Shopify storefront has a password wall enabled (Shopify's "coming soon" screen),
-          enter it here — every webstore/product link Ree generates will automatically include it,
+          enter it here — every webstore/product link leStores AI generates will automatically include it,
           so shared links open straight to the product instead of the password prompt.
         </p>
 

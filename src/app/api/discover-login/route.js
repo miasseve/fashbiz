@@ -38,7 +38,7 @@ export async function POST(req) {
     }
     if (user.role !== "consignor") {
       return Response.json(
-        { error: "This sign-in is for shopper accounts. Store and brand accounts should use the main Ree login." },
+        { error: "This sign-in is for shopper accounts. Store and brand accounts should use the main leStores AI login." },
         { status: 403 }
       );
     }

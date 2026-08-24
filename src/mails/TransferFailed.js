@@ -44,9 +44,9 @@ export async function transferFailed(
 
       <p>If you believe this was a mistake or need support resolving it, feel free to contact our support team.</p>
 
-      <p>Thank you for using LESTORES.</p>
+      <p>Thank you for using leStores AI.</p>
 
-      <p>Best regards,<br/>REELESTORES Team</p>
+      <p>Best regards,<br/>leStores AI Team</p>
     </div>`,
   });
 }

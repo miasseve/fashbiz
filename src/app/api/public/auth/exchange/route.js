@@ -8,7 +8,7 @@ export async function OPTIONS() {
 }
 
 // Discover calls this server-to-server right after a user completes the
-// redirect login on re-e.dk, trading the one-time code for their identity.
+// redirect login on lestores-ai.com, trading the one-time code for their identity.
 export async function POST(req) {
   const unauthorized = requireApiKey(req);
   if (unauthorized) return unauthorized;

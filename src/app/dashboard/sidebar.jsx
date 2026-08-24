@@ -221,7 +221,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 <div className="bg-pink-400 p-2 rounded-full border border-white flex items-center justify-center">
                   <FaBoxOpen className="text-white text-[1.3rem]" />
                 </div>
-                <span className="ml-2">Ree Collect</span>
+                <span className="ml-2">leStores AI Collect</span>
               </Link>
             )}
           </>

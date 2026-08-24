@@ -1,7 +1,7 @@
 import DiscoverLoginForm from "./DiscoverLoginForm";
 
 export const metadata = {
-  title: "Sign in — Ree",
+  title: "Sign in — leStores AI",
 };
 
 const DiscoverLogin = async ({ searchParams }) => {

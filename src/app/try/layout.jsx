@@ -94,7 +94,7 @@ const TryLayout = ({ children }) => {
             <img
               src="/new_ree_icon.png"
               className="w-[92px] mx-auto py-[12px]"
-              alt="REE"
+              alt="leStores AI"
             />
           </div>
           <nav className="flex flex-col items-start text-lg w-full text-[1rem]">
@@ -124,7 +124,7 @@ const TryLayout = ({ children }) => {
             <Link
               href="#"
               onClick={(e) => {
-                handleLockedClick(e, "Ree Collect");
+                handleLockedClick(e, "leStores AI Collect");
                 if (isSidebarOpen) toggleSidebar();
               }}
               className="w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] mt-32 text-gray-400 hover:bg-gray-50 cursor-pointer"
@@ -132,7 +132,7 @@ const TryLayout = ({ children }) => {
               <div className="bg-pink-400 p-2 rounded-full border border-white flex items-center justify-center">
                 <FaBoxOpen className="text-white text-[1.3rem]" />
               </div>
-              <span className="ml-2">Ree Collect</span>
+              <span className="ml-2">leStores AI Collect</span>
               <FaLock className="ml-auto text-sm text-gray-300" />
             </Link>
 

@@ -76,7 +76,7 @@ export default function GetCollectProduct({ products, filters, userRole }) {
                     <FaBoxOpen size={20} />
                   </span>
                   <span className="text-2xl font-bold text-pink-600 ">
-                    Welcome to ReeCollect
+                    Welcome to leStores AI Collect
                   </span>
                 </div>
 

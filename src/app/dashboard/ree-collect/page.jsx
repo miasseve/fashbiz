@@ -28,10 +28,10 @@ export default async function CollectPage() {
         <div className="bg-white p-8 rounded-lg shadow-lg w-[50%] text-center">
           <FaBoxOpen className="mx-auto mb-4 text-pink-600" size={48} />
           <h2 className="text-2xl font-bold mb-4">
-            No Ree Collect Products Found
+            No leStores AI Collect Products Found
           </h2>
           <p className="text-gray-700">
-            Please add Ree Collect products to view them here
+            Please add leStores AI Collect products to view them here
           </p>
         </div>
       </div>

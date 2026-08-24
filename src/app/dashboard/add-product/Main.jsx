@@ -85,14 +85,14 @@ const Main = ({
               You've added 300 products.
             </h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Ready to automate the workflow? Le Stores AI automates listing,
+              Ready to automate the workflow? leStores AI automates listing,
               inventory, publishing and synchronization — from 390 DKK/month.
             </p>
             <button
               onClick={handleExploreLeStoresAI}
               className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-3 mb-3 transition-all"
             >
-              Explore Le Stores AI
+              Explore leStores AI
             </button>
             <button
               onClick={() => setShowUpsell(false)}

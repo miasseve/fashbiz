@@ -13,7 +13,7 @@ import Link from "next/link";
 
 // Per-card descriptions for the Resale Ecommerce Engine (Ads) section,
 // matching the 2hand2go copy. Keyed by tier name; falls back to plan data.
-// Uploads are unlimited on every tier — Le Stores AI is priced for
+// Uploads are unlimited on every tier — leStores AI is priced for
 // automation/workflow features, not product capacity, so these describe
 // what each tier automates rather than a product ceiling.
 const AD_DESC = {
@@ -37,7 +37,7 @@ function getSectionMeta(productName = "") {
       titlePre: "Connect your existing ",
       titleAccent: "store.",
       subtitle:
-        "Already have a webstore? Plug it into REE and sync your full product catalog automatically.",
+        "Already have a webstore? Plug it into leStores AI and sync your full product catalog automatically.",
     };
   }
   if (n.includes("webstore")) {
@@ -52,7 +52,7 @@ function getSectionMeta(productName = "") {
   }
   // default: Ads / Resale Ecommerce Engine
   return {
-    eyebrow: "REE",
+    eyebrow: "leStores AI",
     titlePre: "Resale Ecommerce ",
     titleAccent: "Engine.",
     subtitle:

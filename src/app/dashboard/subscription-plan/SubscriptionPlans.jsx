@@ -322,7 +322,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                     const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
                     const users = isPro ? "5" : isBasic ? "2" : "1";
                     const fallbackFeatures = [
-                      // Le Stores AI (the "Add" plans) prices automation, not
+                      // leStores AI (the "Add" plans) prices automation, not
                       // product capacity — uploads via Discovery are unlimited
                       // regardless of plan. Other plan types (Webstore/Plug-In)
                       // are a separate product, unaffected by that change.

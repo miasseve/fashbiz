@@ -96,7 +96,7 @@ const TransactionHistoryTable = ({ transactions }) => {
       t.customerEmail || "",
       (t.amount / 100).toFixed(2),
       (t.currency || "DKK").toUpperCase(),
-      t.channel === "shopify" ? "Web (SecondsToSee)" : "Store (Ree)",
+      t.channel === "shopify" ? "Web (SecondsToSee)" : "Store (leStores AI)",
       t.status,
       t.paymentMethod || "",
       `"${t.consignorName || "Store Owner"}"`,
@@ -473,7 +473,7 @@ const TransactionHistoryTable = ({ transactions }) => {
                       >
                         {selectedTransaction?.channel === "shopify"
                           ? "Web (SecondsToSee)"
-                          : "Store (Ree)"}
+                          : "Store (leStores AI)"}
                       </span>
                     </div>
                   </div>

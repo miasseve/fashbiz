@@ -83,7 +83,7 @@ const SoldTable = ({ products }) => {
       p.sku,
       `"${p.title}"`,
       p.price,
-      p.soldVia === "shopify" ? "SecondsToSee" : "REE",
+      p.soldVia === "shopify" ? "SecondsToSee" : "leStores AI",
       p.consignorName || "Store Owner",
       p.consignorEmail || "Store Owner",
       p.orderDetails?.customerName || "",
@@ -135,7 +135,7 @@ const SoldTable = ({ products }) => {
                       : "bg-blue-100 text-blue-700"
                   }`}
                 >
-                  {product.soldVia === "shopify" ? "SecondsToSee" : "REE"}
+                  {product.soldVia === "shopify" ? "SecondsToSee" : "leStores AI"}
                 </span>
               </TableCell>
               <TableCell>{product.consignorName || "Store Owner"}</TableCell>

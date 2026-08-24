@@ -1,17 +1,17 @@
 /**
- * Central SEO Configuration for Ree (re-e.dk)
+ * Central SEO Configuration for leStores AI (lestores-ai.com)
  * -----------------------------------------------
  * All shared SEO constants, defaults, and helper functions live here.
  * Import from this file rather than hardcoding values across the app.
  */
 
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://re-e.dk";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://lestores-ai.com";
 
-export const SITE_NAME = "Ree";
+export const SITE_NAME = "leStores AI";
 
 export const DEFAULT_DESCRIPTION =
-  "Ree — Buy and sell secondhand fashion online. Secondhand & resale store platform with automated product listing and smart POS. Genbrugstøj, brugt tøj og resale i Danmark.";
+  "leStores AI — Buy and sell secondhand fashion online. Secondhand & resale store platform with automated product listing and smart POS. Genbrugstøj, brugt tøj og resale i Danmark.";
 
 export const DEFAULT_OG_IMAGE = `${BASE_URL}/new_ree_icon.png`;
 
@@ -26,7 +26,7 @@ export const defaultMetadata = {
   keywords: [
     "secondhand", "resale", "genbrugstøj", "brugt tøj", "secondhand store",
     "secondhand butik", "køb genbrugstøj", "used clothes", "secondhand fashion",
-    "resale store Denmark", "Ree", "re-e.dk",
+    "resale store Denmark", "leStores AI", "lestores-ai.com",
   ],
   alternates: {
     canonical: BASE_URL,
@@ -104,7 +104,7 @@ export function buildProductMetadata(product) {
   const title = product.title;
   const rawDescription =
     product.description ||
-    `${product.brand} — ${product.title}. Shop secondhand on Ree.`;
+    `${product.brand} — ${product.title}. Shop secondhand on leStores AI.`;
   const description =
     rawDescription.length > 160
       ? rawDescription.slice(0, 157) + "..."

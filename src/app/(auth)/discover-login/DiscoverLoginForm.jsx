@@ -90,7 +90,7 @@ const DiscoverLoginForm = ({ redirectUri }) => {
             <span aria-hidden="true">&#8592;</span> Back to app
           </a>
         )}
-        <img src="/new_ree_icon.png" alt="Ree" className="w-[72px] mx-auto py-[8px]" />
+        <img src="/new_ree_icon.png" alt="leStores AI" className="w-[72px] mx-auto py-[8px]" />
         <h1 className="text-[1.8rem] font-semibold text-gray-900 mb-6">
           {mode === "signin" ? "Sign in to continue" : "Sign Up"}
         </h1>

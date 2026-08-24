@@ -34,7 +34,7 @@ const DataDeletion = () => {
                 <section>
                   <p className="leading-relaxed mb-4">
                     We respect your right to control your personal data. You can request the deletion of your 
-                    account and associated data from REE marketplace at any time.
+                    account and associated data from leStores AI marketplace at any time.
                   </p>
                 </section>
 
@@ -192,7 +192,7 @@ const DataDeletion = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center text-white text-sm">
-          <p>© 2026 REE Marketplace. All rights reserved.</p>
+          <p>© 2026 leStores AI Marketplace. All rights reserved.</p>
         </div>
       </div>
     </div>

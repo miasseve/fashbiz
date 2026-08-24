@@ -581,8 +581,8 @@ const SecondStep = ({
 
             <p className="text-center text-gray-700 dark:text-gray-300 text-lg leading-relaxed px-4">
               Do you want to add this product to the{" "}
-              <strong>Ree Collect</strong> program? If yes, this product will
-              not appear in your store but will be visible in the Ree Collect
+              <strong>leStores AI Collect</strong> program? If yes, this product will
+              not appear in your store but will be visible in the leStores AI Collect
               marketplace.
             </p>
 

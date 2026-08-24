@@ -59,7 +59,7 @@ export async function consignorUpdate(
         </tbody>
       </table>
       <p>We appreciate your business!</p>
-      <p>Best Regards,<br>REELESTORES Team</p>
+      <p>Best Regards,<br>leStores AI Team</p>
     `,
   });
 }

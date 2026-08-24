@@ -5,7 +5,7 @@ import User from "@/models/User";
 /**
  * POST /api/dashboard/product-limit-upsell-click
  *
- * Records that a store clicked "Explore Le Stores AI" on the one-time
+ * Records that a store clicked "Explore leStores AI" on the one-time
  * 300-product popup (src/app/dashboard/add-product/page.jsx). "Shown" is
  * tracked server-side at render time; this is the other half — click-through,
  * for measuring conversion later.

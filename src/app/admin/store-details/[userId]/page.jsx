@@ -197,7 +197,7 @@ const StoreDetailPage = () => {
       return {
         icon: <MdWarning className="text-amber-500 text-xl" />,
         label: "Not Synced",
-        sub: `${productStats.total} products exist in REE but none are on SecondsToSee yet`,
+        sub: `${productStats.total} products exist in leStores AI but none are on SecondsToSee yet`,
         badge: "bg-amber-50 border-amber-200 text-amber-700",
       };
     }
@@ -492,7 +492,7 @@ const StoreDetailPage = () => {
                     : <span className="ml-2 text-[12px] font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">Pending</span>}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-0.5">
-                  A dedicated SecondsToSee store has been created and connected to REE for this store owner.
+                  A dedicated SecondsToSee store has been created and connected to leStores AI for this store owner.
                 </p>
               </div>
             </div>
