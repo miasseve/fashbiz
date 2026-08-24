@@ -163,7 +163,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     <div className="h-full flex flex-col">
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
         {/* <img src="/fashlogo.svg" className="w-[132px] mx-auto" /> */}
-        <img src="/new_ree_icon.png" className="w-[92px] mx-auto py-[12px]" />
+        <img src="/new_ree_icon.png" className="w-[150px] max-w-full mx-auto py-[12px]" />
         {session.data?.user?.role === "store" && (
           <>
             <input
