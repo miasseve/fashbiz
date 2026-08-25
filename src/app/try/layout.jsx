@@ -168,10 +168,12 @@ const TryLayout = ({ children }) => {
               href="https://lestoresworld.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-[2px] font-extrabold text-[1rem] tracking-tight"
             >
-              <span className="text-black">LE STORES</span>
-              <span className="text-pink-600">WORLD</span>
+              <img
+                src="/leStoresworld_logo.png"
+                alt="leStoresworld"
+                className="w-[140px] mx-auto"
+              />
             </a>
           </div>
         </div>

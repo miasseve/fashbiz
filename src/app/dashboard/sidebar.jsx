@@ -343,10 +343,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           href="https://lestoresworld.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-[2px] font-extrabold text-[1rem] tracking-tight"
+          className="inline-block"
         >
-          <span className="text-black">LE STORES</span>
-          <span className="text-pink-600">WORLD</span>
+          <img
+            src="/leStoresworld_logo.png"
+            alt="leStoresworld"
+            width={140}
+            height={19}
+            className="w-[140px] h-auto max-w-none mx-auto object-contain"
+          />
         </a>
       </div>
     </div>
