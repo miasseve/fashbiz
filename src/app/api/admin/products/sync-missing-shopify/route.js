@@ -38,7 +38,7 @@ function pendingQuery(afterId) {
  * pushing to Shopify at capture time (see /api/public/products POST) — a
  * product like this exists fine in Ree/Discover but was never actually
  * created on the shared Shopify catalogue, so it can never show up on
- * secondstosee.com no matter how long you wait.
+ * lestoresweb.com no matter how long you wait.
  */
 export async function POST(request) {
   const session = await auth();

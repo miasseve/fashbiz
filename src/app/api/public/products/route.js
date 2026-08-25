@@ -123,7 +123,7 @@ export async function POST(req) {
     const color = body.colorName ? { name: String(body.colorName), hex: body.colorHex || "#fff" } : undefined;
     const subcategory = String(body.subcategory || "").trim() || undefined;
 
-    // Same shared Shopify catalogue (secondstosee.com) the dashboard's own
+    // Same shared Shopify catalogue (lestoresweb.com) the dashboard's own
     // add-product flow always pushes into — no per-store gating there
     // either, so a Discover capture should sync the same way once it names
     // a real store. Best-effort: a Shopify hiccup shouldn't block the

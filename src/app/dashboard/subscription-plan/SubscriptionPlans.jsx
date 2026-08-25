@@ -264,7 +264,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             <div className="p2-status__main">
               <div className="p2-status__heading">Create an account to unlock all features</div>
               <div className="p2-status__features">
-                {["Instagram integration", "SecondsToSee webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
+                {["Instagram integration", "leStoresweb webstore synchronization", "Up to 300-1000 products per month", "Up to 2-5 users access"].map((f, i) => (
                   <div key={i} className="p2-status__feature">
                     <span className="p2-check">&#10003;</span>
                     {f}
@@ -329,7 +329,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                       isAdd ? "Unlimited product uploads" : `Upload up to ${limit} products per month`,
                       `Up to ${users} users access`,
                       "Instagram integration",
-                      ...(!isAdd ? ["SecondsToSee webstore synchronization"] : []),
+                      ...(!isAdd ? ["leStoresweb webstore synchronization"] : []),
                     ];
                     return fallbackFeatures.map((f, i) => (
                       <div key={i} className="p2-status__feature">

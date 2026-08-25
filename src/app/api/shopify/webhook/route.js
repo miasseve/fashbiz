@@ -246,7 +246,7 @@ export async function POST(req) {
             productId: product._id,
             type: "sold",
             title: `"${product.title}" inventory set to 0`,
-            message: "Inventory was manually adjusted in SecondsToSee",
+            message: "Inventory was manually adjusted in leStoresweb",
           });
         }
       } else if (newQuantity > 0 && product.sold) {

@@ -63,7 +63,7 @@ const AdminProductsPage = () => {
 
   // One-time catch-up: Discover captures saved before the app-to-Shopify
   // sync existed (see /api/public/products) never got pushed to the shared
-  // Shopify catalogue, so they can never show up on secondstosee.com no
+  // Shopify catalogue, so they can never show up on lestoresweb.com no
   // matter how long they sit there. Loops the batch endpoint (same pattern
   // as Locate Pending Stores) until the backlog clears or it's stopped.
   const [syncingShopify, setSyncingShopify] = useState(false);
@@ -280,7 +280,7 @@ const AdminProductsPage = () => {
         <button
           onClick={handleSyncMissingShopify}
           disabled={syncingShopify}
-          title="Pushes any Discover captures made before the app-to-Shopify sync existed onto secondstosee.com"
+          title="Pushes any Discover captures made before the app-to-Shopify sync existed onto lestoresweb.com"
           className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-md font-semibold transition-colors disabled:opacity-50"
         >
           {syncingShopify ? <Spinner size="sm" color="white" /> : <FaShopify className="text-sm" />}
