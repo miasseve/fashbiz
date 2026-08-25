@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Tabs, Tab, Card, CardBody } from "@heroui/react";
 import ConsignorForm from "./ConsignorForm";
 import StoreForm from "./StoreForm";
-import BrandForm from "./BrandForm";
+// "Brand" tab removed from signup per Mia's request — commented out below,
+// not deleted, in case it's wanted back later.
+// import BrandForm from "./BrandForm";
 const RegisterForm = () => {
   const [selectedTab, setSelectedTab] = useState("consignor");
 
@@ -74,9 +76,11 @@ const RegisterForm = () => {
                     <Tab key="consignor" title="Client">
                       <ConsignorForm />
                     </Tab>
+                    {/*
                     <Tab key="brand" title="Brand">
                       <BrandForm />
                     </Tab>
+                    */}
                   </Tabs>
                 </CardBody>
               </Card>

@@ -39,7 +39,7 @@ const TryLayout = ({ children }) => {
 
   const menuItems = [
     { href: "#", label: "Profile", icon: <FaUser />, locked: true },
-    { href: "#", label: "Store", icon: <FaStore />, locked: true },
+    { href: "#", label: "Inventory", icon: <FaStore />, locked: true },
     {
       href: "/try/add-product",
       label: "Add Product",

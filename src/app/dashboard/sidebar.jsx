@@ -98,7 +98,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     },
     session.data?.user?.role === "store" && {
       href: "/dashboard/store",
-      label: "Store",
+      label: "Inventory",
       icon: <FaStore />,
       // A product's own detail page is reached FROM the store's product
       // list — it should still read as "you're in Store", not lose the
