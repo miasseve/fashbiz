@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { IoQrCode } from "react-icons/io5";
 import { FaStore, FaUser, FaLock } from "react-icons/fa";
-import { FaHandHoldingUsd } from "react-icons/fa";
+import { FaHandHoldingUsd, FaInfoCircle } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { MdLocalGroceryStore, MdOutlineReceiptLong } from "react-icons/md";
 import { PiStripeLogoFill } from "react-icons/pi";
@@ -149,6 +149,19 @@ const TryLayout = ({ children }) => {
               <span className="ml-2">Invite a store</span>
               <FaLock className="ml-auto text-sm text-gray-300" />
             </Link>
+
+            {/* About Us — links out to the lestoresworld.com marketing site,
+                same as the real dashboard sidebar. */}
+            <a
+              href="https://lestoresworld.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => isSidebarOpen && toggleSidebar()}
+              className="w-full px-3 p-3 transition-all text-[1.5rem] flex items-center py-[13px] text-black hover:bg-[#ffd7d7]"
+            >
+              <FaInfoCircle className="text-[1.3rem]" />
+              <span className="ml-2">About Us</span>
+            </a>
           </nav>
           <div className="sidebar-footer border-t border-[#dedede] py-[16px] flex justify-center">
             <a
