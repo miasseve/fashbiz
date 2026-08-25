@@ -193,7 +193,7 @@ const TryLayout = ({ children }) => {
             <GiHamburgerMenu size={25} />
           </button>
           <div className="flex items-center gap-3 ml-auto">
-            {/* Go Live Button */}
+            {/* "Unlock More Features" button — removed per Mia's request.
             <Button
               onPress={() => router.push("/register")}
               className="bg-green-500 text-white font-semibold px-5 py-4 text-sm hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-500/35 transition-all"
@@ -202,6 +202,7 @@ const TryLayout = ({ children }) => {
                 Unlock More Features →
               </span>
             </Button>
+            */}
 
             {/* Sign Up Dropdown */}
             <Dropdown
