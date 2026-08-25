@@ -152,15 +152,13 @@ const TryLayout = ({ children }) => {
           </nav>
           <div className="sidebar-footer border-t border-[#dedede] py-[16px] flex justify-center">
             <a
-              href="https://www.2hand2go.com"
+              href="https://lestoresworld.com"
               target="_blank"
               rel="noopener noreferrer"
+              className="inline-flex items-center gap-[2px] font-extrabold text-[1rem] tracking-tight"
             >
-              <img
-                src="/2hand2go_logo.png"
-                alt="2hand2go"
-                className="w-[120px] mx-auto"
-              />
+              <span className="text-black">LE STORES</span>
+              <span className="text-pink-600">WORLD</span>
             </a>
           </div>
         </div>

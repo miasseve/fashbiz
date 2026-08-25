@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { RiProductHuntFill } from "react-icons/ri";
 
-import { FaHandHoldingUsd, FaInstagram, FaGlobe, FaTags } from "react-icons/fa";
+import { FaHandHoldingUsd, FaInstagram, FaGlobe, FaTags, FaInfoCircle } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { CiBoxList } from "react-icons/ci";
@@ -289,6 +289,21 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </div>
         )}
 
+        {/* About Us — links out to the lestoresworld.com marketing site
+            per Mia's request. */}
+        <a
+          href="https://lestoresworld.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => isSidebarOpen && toggleSidebar()}
+          className="w-full px-3 p-3 transition-all text-[1.6rem] flex items-center py-[13px] text-black hover:bg-[#ffd7d7]"
+        >
+          <span className="inline-flex items-center w-[210px]">
+            <FaInfoCircle className="text-[1.3rem]" />
+            <span className="ml-2">About Us</span>
+          </span>
+        </a>
+
         {/* Subscription Plan — made bigger/bolder and placed above Invite a
             store per Mia's request ("bigger, easier to find"). */}
         {session.data?.user?.role !== "consignor" && (
@@ -325,18 +340,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       </nav>
       <div className="sidebar-footer border-t border-[#dedede] py-[16px] text-center">
         <a
-          href="https://www.2hand2go.com"
+          href="https://lestoresworld.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block"
+          className="inline-flex items-center gap-[2px] font-extrabold text-[1rem] tracking-tight"
         >
-          <img
-            src="/2hand2go_logo.png"
-            alt="2hand2go"
-            width={120}
-            height={30}
-            className="w-[120px] h-auto max-w-none mx-auto object-contain"
-          />
+          <span className="text-black">LE STORES</span>
+          <span className="text-pink-600">WORLD</span>
         </a>
       </div>
     </div>
