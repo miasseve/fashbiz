@@ -45,3 +45,10 @@ next-env.d.ts
 # internal planning docs (kept locally, not committed)
 /docs/
 docs/
+
+HANDOFF.md
+PROJECT_HANDOFF.md
+PROJECT_BRIEF.md
+IOS_APP_FLUTTER_SCOPE.md
+iOS App - Flutter Build Scope and Estimate.docx
+PLUGIN_MULTISTORE_SCOPE.md

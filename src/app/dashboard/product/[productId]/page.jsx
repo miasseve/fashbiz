@@ -34,10 +34,6 @@ const Page = async ({ params }) => {
   const parsedUser = JSON.parse(user);
 
   const session = await auth();
-  // Computed once at login (see auth.js) — includes both the subscriptionType
-  // heuristic and the AddOnPurchase check, so it stays consistent with the
-  // sidebar and every other place that shows webstore connection status.
-  const hasWebstoreAccess = !!session?.user?.hasWebstoreAccess;
   const canPostToInstagram =
     session?.user?.subscriptionType === "free" ||
     session?.user?.subscriptionType === "Pro" ||
@@ -254,7 +250,6 @@ const Page = async ({ params }) => {
               first. */}
           <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OmnichannelConnections
-              hasWebstoreAccess={hasWebstoreAccess}
               canPostToInstagram={canPostToInstagram}
               webstoreUrl={shopifyProductUrl}
             />

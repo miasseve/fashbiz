@@ -2,18 +2,19 @@ import Link from "next/link";
 import { FaGlobe, FaInstagram, FaTags } from "react-icons/fa";
 import { FiExternalLink } from "react-icons/fi";
 
-// Mirrors the same connection status shown in the sidebar (see
-// dashboard/sidebar.jsx) — Webstore/Instagram reflect real subscription
-// access, Vinted Pro always shows as not-connected since there's no real
-// integration built for it yet.
-const OmnichannelConnections = ({ hasWebstoreAccess, canPostToInstagram, webstoreUrl }) => {
+// Instagram reflects real subscription access; Vinted Pro always shows as
+// not-connected since there's no real integration built for it yet.
+// Webstore always shows Preview for every account (demo link, not gated by
+// subscription) — clicking only works when this specific product is
+// actually synced to Shopify (webstoreUrl present).
+const OmnichannelConnections = ({ canPostToInstagram, webstoreUrl }) => {
   const rows = [
     {
       key: "webstore",
       label: "Webstore",
       icon: <FaGlobe size={18} />,
-      active: hasWebstoreAccess,
-      status: hasWebstoreAccess ? "Live" : "Not active",
+      active: true,
+      status: "Preview",
     },
     {
       key: "vinted",
