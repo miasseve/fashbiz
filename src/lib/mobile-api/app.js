@@ -7,6 +7,7 @@ import { listFrom, normalizeProduct, normalizeStore, productFrom, } from "./norm
 import { createRateLimiter } from "./rateLimit.js";
 import { createMemoryRevocationStore, createSessions } from "./session.js";
 import { createStorefrontSource } from "./storefronts.js";
+import { createStoreHoursSource } from "./storeHours.js";
 import { createUpstream, ID_PATTERN } from "./upstream.js";
 /** The association document. Modern (iOS 13+) `appIDs` + `components` form; the app targets iOS 15. */
 export function appleAppSiteAssociation(teamId, bundleId) {
@@ -23,6 +24,15 @@ export function appleAppSiteAssociation(teamId, bundleId) {
 }
 /** Catalogue visibility rule, matching the reference Discover feed and search (`status !== "SOLD"`). */
 const FEED_STATUSES = new Set(["LIVE", "RESERVED"]);
+/**
+ * `?include=sold` also returns SOLD finds, for the flows where the reference
+ * keeps them (its catalogue holds every non-archived find; SOLD ones back
+ * Product Detail, Saved/Collected Finds, Store Detail and the "Collected"
+ * notification, while For You, Search, recommendations and the map filter
+ * them out client-side). Opt-in, so a client that does not ask - every build
+ * released before this - keeps exactly the feed it had.
+ */
+const WITH_SOLD = new Set(["LIVE", "RESERVED", "SOLD"]);
 function isLocalDevOrigin(origin) {
     try {
         const { hostname, protocol } = new URL(origin);
@@ -36,10 +46,20 @@ export function createApp(config, fetcher = fetch, options = {}) {
     const upstream = createUpstream(config, fetcher);
     const now = options.now ?? Date.now;
     const storefronts = options.storefronts ?? createStorefrontSource(config, fetcher, now);
-    /** Attaches the storefront photo, if any, to already-normalised stores. */
+    const storeHours = options.storeHours ?? createStoreHoursSource(config, fetcher, now);
+    /**
+     * Attaches the storefront photo and the reference's cached opening hours,
+     * if any, to already-normalised stores. `hours` is Sunday-first, as the
+     * reference's DayHours; null means "no confident real hours".
+     */
     const withStorefronts = async (stores) => {
-        const photos = await storefronts.photos();
-        return stores.map((s) => ({ ...s, storefront: photos[s.id] ?? null }));
+        const [photos, hours] = await Promise.all([storefronts.photos(), storeHours.hours()]);
+        return stores.map((s) => ({
+            ...s,
+            storefront: photos[s.id] ?? null,
+            hours: hours[s.id]?.hours ?? null,
+            temporaryClosure: hours[s.id]?.temporaryClosure ?? null,
+        }));
     };
     const sessions = createSessions(config, options.revocations ?? createMemoryRevocationStore(now), now);
     const allow = createRateLimiter(config.rateLimitPerMinute);
@@ -104,6 +124,10 @@ export function createApp(config, fetcher = fetch, options = {}) {
         const storeId = c.req.query("storeId");
         if (storeId !== undefined && !ID_PATTERN.test(storeId))
             return fail(c, 400, "invalid_request");
+        const include = c.req.query("include");
+        if (include !== undefined && include !== "sold")
+            return fail(c, 400, "invalid_request");
+        const visible = include === "sold" ? WITH_SOLD : FEED_STATUSES;
         const result = await upstream({ kind: "products", storeId });
         if (!result.ok)
             return failUpstream(c, result.error);
@@ -112,7 +136,7 @@ export function createApp(config, fetcher = fetch, options = {}) {
             return fail(c, 502, "upstream_error");
         const products = list
             .map(normalizeProduct)
-            .filter((p) => !!p && FEED_STATUSES.has(p.status));
+            .filter((p) => !!p && visible.has(p.status));
         c.header("cache-control", "public, max-age=30, s-maxage=60");
         return c.json({ products, meta: { count: products.length, upstreamLimit: 200, paginated: false } });
     });
