@@ -186,6 +186,7 @@ export function createApp(config, fetcher = fetch, options = {}) {
         "/v1/me/saves",
         "/v1/me/saves/:productId",
         "/v1/me/reservation",
+        "/v1/me/reservations",
         "/v1/reservations",
         "/v1/reservations/:id/cancel",
         "/v1/capture/analyze",

@@ -31,8 +31,36 @@ export function normalizeReservation(raw) {
     if (!id || !ID_PATTERN.test(id) || !productId || !storeId || !state || !RESERVATION_STATES.has(state) || expiresAt == null) {
         return null;
     }
-    return { id, productId, storeId, state, expiresAt: new Date(expiresAt).toISOString() };
+    const createdAt = num(raw.createdAt);
+    return {
+        id,
+        productId,
+        storeId,
+        state,
+        expiresAt: new Date(expiresAt).toISOString(),
+        createdAt: createdAt == null ? null : new Date(createdAt).toISOString(),
+    };
 }
+/**
+ * Every open hold in a fashbiz reservations body. Newer fashbiz lists them all
+ * (`reservations`); an older one only names the latest (`reservation`).
+ * Returns null when the body is not a reservations answer at all.
+ */
+export function normalizeReservations(body) {
+    if (!isObject(body))
+        return null;
+    const raws = Array.isArray(body.reservations) ? body.reservations : body.reservation == null ? [] : [body.reservation];
+    const list = [];
+    for (const raw of raws) {
+        const reservation = normalizeReservation(raw);
+        if (!reservation)
+            return null;
+        list.push(reservation);
+    }
+    return list.sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
+}
+/** Discover's two hold durations (reservation-rules.ts `DURATIONS`). */
+const DURATIONS = new Set([2, 5]);
 function hostedImages(raw) {
     if (!Array.isArray(raw))
         return [];
@@ -247,6 +275,16 @@ export function registerMemberRoutes(app, config, sessions, upstream) {
             return fail(c, 502, "upstream_error");
         return c.json({ reservation });
     });
+    /** Every open hold of the session user, soonest to end first. */
+    app.get("/v1/me/reservations", auth, async (c) => {
+        const result = await upstream({ kind: "reservationActive", userId: userId(c) });
+        if (!result.ok)
+            return failUpstream(c, result.error);
+        const reservations = normalizeReservations(result.body);
+        if (!reservations)
+            return fail(c, 502, "upstream_error");
+        return c.json({ reservations });
+    });
     /**
      * Holds a find. The product must be visible in the shopper catalogue (LIVE,
      * at a verified store) before fashbiz is asked; fashbiz then enforces
@@ -254,11 +292,17 @@ export function registerMemberRoutes(app, config, sessions, upstream) {
      */
     app.post("/v1/reservations", auth, smallBody, async (c) => {
         const body = await jsonBody(c);
-        if (!body || hasUnknownKeys(body, ["productId"]))
+        if (!body || hasUnknownKeys(body, ["productId", "durationHours"]))
             return fail(c, 400, "invalid_request");
         const productId = body.productId;
         if (typeof productId !== "string" || !ID_PATTERN.test(productId))
             return fail(c, 400, "invalid_request");
+        // Optional: 2 or 5 hours. Omitted keeps fashbiz's default window. Never a
+        // timestamp - the expiry is always the server's.
+        const durationHours = body.durationHours;
+        if (durationHours !== undefined && (typeof durationHours !== "number" || !DURATIONS.has(durationHours))) {
+            return fail(c, 400, "invalid_request");
+        }
         const productResult = await upstream({ kind: "product", id: productId });
         if (!productResult.ok)
             return failUpstream(c, productResult.error);
@@ -274,11 +318,25 @@ export function registerMemberRoutes(app, config, sessions, upstream) {
         if (product.status !== "LIVE") {
             return fail(c, 409, "conflict", { reason: product.status === "SOLD" ? "sold" : "already_reserved" });
         }
-        const result = await upstream({ kind: "reservationCreate", userId: userId(c), productId });
+        const result = await upstream({
+            kind: "reservationCreate",
+            userId: userId(c),
+            productId,
+            ...(durationHours === undefined ? {} : { durationHours: durationHours }),
+        });
         if (!result.ok) {
-            return result.error === "conflict"
-                ? fail(c, 409, "conflict", { reason: "unavailable" })
-                : failUpstream(c, result.error);
+            if (result.error !== "conflict")
+                return failUpstream(c, result.error);
+            // A limit or cooldown is the shopper's to act on; anything else is
+            // simply "that find is not available".
+            const reason = result.reason === "limit_store" || result.reason === "limit_global" || result.reason === "cooldown"
+                ? result.reason
+                : "unavailable";
+            const extra = { reason };
+            if (reason === "cooldown" && result.cooldownUntil !== undefined) {
+                extra.cooldownUntil = new Date(result.cooldownUntil).toISOString();
+            }
+            return fail(c, 409, "conflict", extra);
         }
         const reservation = normalizeReservation(result.body);
         if (!reservation)
@@ -298,8 +356,8 @@ export function registerMemberRoutes(app, config, sessions, upstream) {
         const active = await upstream({ kind: "reservationActive", userId: userId(c) });
         if (!active.ok)
             return failUpstream(c, active.error);
-        const owned = isObject(active.body) ? normalizeReservation(active.body.reservation) : null;
-        if (!owned || owned.id !== id)
+        const owned = (normalizeReservations(active.body) ?? []).find((r) => r.id === id);
+        if (!owned || (owned.state !== "RESERVED" && owned.state !== "CONFIRMED"))
             return fail(c, 404, "not_found");
         const result = await upstream({ kind: "reservationCancel", reservationId: id });
         if (!result.ok)

@@ -1,3 +1,5 @@
+/** Conflict reasons fashbiz may give, passed through as a closed set only. */
+export const CONFLICT_REASONS = new Set(["sold", "already_reserved", "limit_store", "limit_global", "cooldown"]);
 /** Ids are Mongo ObjectIds upstream; anything else never leaves the BFF. */
 export const ID_PATTERN = /^[a-f0-9]{24}$/i;
 export function upstreamRequest(route) {
@@ -24,7 +26,15 @@ export function upstreamRequest(route) {
         case "reservationCreate":
             // No storeId: fashbiz derives it from the product, so a client cannot
             // point the store-side notification at an arbitrary boutique.
-            return { method: "POST", path: "/api/public/reservations", body: { productId: route.productId, userId: route.userId } };
+            return {
+                method: "POST",
+                path: "/api/public/reservations",
+                body: {
+                    productId: route.productId,
+                    userId: route.userId,
+                    ...(route.durationHours === undefined ? {} : { durationHours: route.durationHours }),
+                },
+            };
         case "reservationCancel":
             return { method: "POST", path: `/api/public/reservations/${q(route.reservationId)}/cancel` };
         case "analyze":
@@ -79,8 +89,27 @@ export function createUpstream(config, fetcher = fetch, log = defaultLog) {
                 return { ok: false, error: "not_found" };
             if (res.status === 400)
                 return { ok: false, error: "bad_request" };
-            if (res.status === 409)
-                return { ok: false, error: "conflict" };
+            if (res.status === 409) {
+                // Only a known reason word is kept - never the upstream message.
+                let reason;
+                let cooldownUntil;
+                try {
+                    const body = (await res.json());
+                    if (typeof body?.reason === "string" && CONFLICT_REASONS.has(body.reason))
+                        reason = body.reason;
+                    if (typeof body?.cooldownUntil === "number" && Number.isFinite(body.cooldownUntil))
+                        cooldownUntil = body.cooldownUntil;
+                }
+                catch {
+                    /* no body */
+                }
+                return {
+                    ok: false,
+                    error: "conflict",
+                    ...(reason ? { reason } : {}),
+                    ...(cooldownUntil === undefined ? {} : { cooldownUntil }),
+                };
+            }
             if (!res.ok)
                 return { ok: false, error: "server_error" };
             try {
