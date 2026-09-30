@@ -21,11 +21,18 @@ const PLATFORM_FEE_RATES = {
 };
 
 function verifyShopifyWebhook(body, hmacHeader, secret) {
+  if (!hmacHeader || !secret) return false;
+
   const generatedHmac = crypto
     .createHmac("sha256", secret)
     .update(body, "utf8")
     .digest("base64");
-  return hmacHeader === generatedHmac;
+
+  const provided = Buffer.from(String(hmacHeader));
+  const expected = Buffer.from(generatedHmac);
+  if (provided.length !== expected.length) return false;
+
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 export async function POST(req) {
@@ -34,15 +41,24 @@ export async function POST(req) {
   const body = await req.text();
   const hmacHeader = req.headers.get("x-shopify-hmac-sha256");
 
-  // Resolve the webhook secret: check DB for per-store secret, fallback to env
+  // Resolve the webhook secret, strictly scoped by how the shop was connected:
+  //   • connectedVia "oauth" → the Shopify app's client secret, which is what
+  //     Shopify signs those shops' webhooks with.
+  //   • everything else      → unchanged behaviour: the per-store secret when a
+  //     record exists, otherwise SHOPIFY_API_SECRET.
   await dbConnect();
   let webhookSecret = process.env.SHOPIFY_API_SECRET;
   const shopDomain = req.headers.get("x-shopify-shop-domain");
   if (shopDomain) {
     const storeRecord = await ShopifyStore.findOne({ storeDomain: shopDomain.toLowerCase() });
     if (storeRecord) {
-      webhookSecret = decrypt(storeRecord.apiSecret);
-      console.log(`[Shopify Webhook] Using per-store secret for domain: ${shopDomain}`);
+      if (storeRecord.connectedVia === "oauth") {
+        webhookSecret = process.env.SHOPIFY_APP_CLIENT_SECRET;
+        console.log(`[Shopify Webhook] Using OAuth app secret for domain: ${shopDomain}`);
+      } else {
+        webhookSecret = decrypt(storeRecord.apiSecret);
+        console.log(`[Shopify Webhook] Using per-store secret for domain: ${shopDomain}`);
+      }
     }
   }
 
