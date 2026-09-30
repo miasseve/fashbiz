@@ -116,8 +116,14 @@ export function verifyStateToken(token) {
  * @param {string}  args.userId          store owner's User _id
  * @param {string}  args.shopDomain      shop domain (validated + normalized)
  * @param {string} [args.issuedByUserId] admin/developer generating the link
+ * @param {string} [args.recipientEmail] address the link is emailed to
  */
-export async function createShopifyAuthorizeUrl({ userId, shopDomain, issuedByUserId = null }) {
+export async function createShopifyAuthorizeUrl({
+  userId,
+  shopDomain,
+  issuedByUserId = null,
+  recipientEmail = "",
+}) {
   const clientId = requireEnv("SHOPIFY_APP_CLIENT_ID");
   const redirectUri = requireEnv("SHOPIFY_OAUTH_REDIRECT_URI");
   const scopes = requireEnv("SHOPIFY_OAUTH_SCOPES");
@@ -142,6 +148,7 @@ export async function createShopifyAuthorizeUrl({ userId, shopDomain, issuedByUs
     userId,
     shopDomain: normalizedShop,
     issuedByUserId,
+    recipientEmail,
     expiresAt,
   });
 

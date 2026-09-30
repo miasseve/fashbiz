@@ -36,6 +36,14 @@ const ShopifyOAuthStateSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // Address the link was emailed to. The admin can override the store
+    // owner's registered email when sending, so "Resend" reuses whatever was
+    // actually used rather than silently switching address.
+    recipientEmail: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     used: {
       type: Boolean,
       default: false,

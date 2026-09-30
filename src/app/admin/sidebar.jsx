@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { MdDashboard, MdTimeline, MdSupportAgent, MdDeveloperMode, MdSettings } from "react-icons/md";
-import { FaUsers } from "react-icons/fa";
+import { FaUsers, FaShopify } from "react-icons/fa";
 import { BiLogoProductHunt } from "react-icons/bi";
 import { TbReportAnalytics } from "react-icons/tb";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
@@ -79,6 +79,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { href: "/admin/reports", label: "Reports", icon: <TbReportAnalytics />, roles: ["admin", "developer"] },
     { href: "/admin/platform-fees", label: "Platform Fees", icon: <RiMoneyDollarCircleLine />, roles: ["admin"] },
     { href: "/admin/addon-purchases", label: "Add-On Purchases", icon: <RiMoneyDollarCircleLine />, roles: ["admin","developer"] },
+    { href: "/admin/shopify-connections", label: "Shopify Connections", icon: <FaShopify />, roles: ["admin", "developer"] },
     { href: "/admin/settings", label: "Settings", icon: <MdSettings />, roles: ["admin", "developer"] },
     { href: "/admin/developer", label: "Developer", icon: <MdDeveloperMode />, roles: ["developer"] },
   ].filter((item) => item.roles.includes(userRole));
