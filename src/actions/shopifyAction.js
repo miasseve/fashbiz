@@ -12,8 +12,57 @@ const shopify = axios.create({
   },
 });
 
+// Base-store API version, matched to the module-level `shopify` client above
+// so the no-storeConfig path is provably identical to what it's always been.
+const BASE_STORE_API_VERSION = "2024-10";
+
+/**
+ * Builds the Shopify Admin API client to use for a call, given an optional
+ * per-store config ({ storeDomain, accessToken, apiVersion }).
+ *
+ * No storeConfig -> returns the existing shared `shopify` client and env
+ * values above, completely unchanged. This is the path every current caller
+ * takes today, since nothing yet passes a storeConfig.
+ *
+ * A storeConfig -> builds a fresh client for that store/token/API version.
+ * Used only by createShopifyProduct and the handful of internal helpers it
+ * depends on (getShopifyLocations, updateInventory,
+ * publishProductToFacebookInstagram) so a routed store's product creation
+ * can't accidentally touch a different store's inventory, locations, or
+ * Facebook/Instagram channel.
+ */
+function buildShopifyClient(storeConfig) {
+  if (!storeConfig) {
+    return {
+      client: shopify,
+      storeDomain: shopifyStoreDomain,
+      accessToken: shopifyAccessToken,
+      apiVersion: BASE_STORE_API_VERSION,
+    };
+  }
+
+  const {
+    storeDomain,
+    accessToken,
+    apiVersion = BASE_STORE_API_VERSION,
+  } = storeConfig;
+
+  return {
+    client: axios.create({
+      baseURL: `https://${storeDomain}/admin/api/${apiVersion}/graphql.json`,
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+    }),
+    storeDomain,
+    accessToken,
+    apiVersion,
+  };
+}
+
 // CREATE PRODUCT
-export async function createShopifyProduct(formData) {
+export async function createShopifyProduct(formData, storeConfig) {
   try {
     const {
       title,
@@ -33,10 +82,19 @@ export async function createShopifyProduct(formData) {
       storeName = "",
     } = formData;
 
+    // Resolve once. No storeConfig -> identical to the module-level `shopify`
+    // client and env values used throughout the rest of this file.
+    const {
+      client,
+      storeDomain: targetStoreDomain,
+      accessToken: targetAccessToken,
+      apiVersion: targetApiVersion,
+    } = buildShopifyClient(storeConfig);
+
     // Get location ID (with fallback if permissions are missing)
     let locationId;
     try {
-      const locations = await getShopifyLocations();
+      const locations = await getShopifyLocations(storeConfig);
       const activeLocation = locations.find((l) => l.isActive);
       locationId = activeLocation?.id;
 
@@ -146,7 +204,7 @@ export async function createShopifyProduct(formData) {
       productInput.metafields = metafields;
     }
 
-    const productRes = await shopify.post("", {
+    const productRes = await client.post("", {
       query: CREATE_PRODUCT,
       variables: { product: productInput },
     });
@@ -201,7 +259,7 @@ export async function createShopifyProduct(formData) {
       }
     `;
 
-    const existingRes = await shopify.post("", {
+    const existingRes = await client.post("", {
       query: GET_EXISTING_VARIANTS,
       variables: { id: productId },
     });
@@ -275,7 +333,7 @@ export async function createShopifyProduct(formData) {
         return updatePayload;
       });
 
-      const priceUpdateRes = await shopify.post("", {
+      const priceUpdateRes = await client.post("", {
         query: UPDATE_VARIANTS_BULK,
         variables: {
           productId,
@@ -330,7 +388,7 @@ export async function createShopifyProduct(formData) {
             }
           `;
 
-          await shopify.post("", {
+          await client.post("", {
             query: ENABLE_TRACKING,
             variables: {
               id: node.inventoryItem.id,
@@ -339,7 +397,7 @@ export async function createShopifyProduct(formData) {
           });
 
           // Set inventory quantity
-          await updateInventory(node.inventoryItem.id, locationId, 1);
+          await updateInventory(node.inventoryItem.id, locationId, 1, storeConfig);
         } catch (invError) {
           console.error(
             `⚠ Error setting inventory for variant ${node.id}:`,
@@ -435,7 +493,7 @@ export async function createShopifyProduct(formData) {
         }
       `;
 
-      const variantRes = await shopify.post("", {
+      const variantRes = await client.post("", {
         query: CREATE_VARIANTS,
         variables: {
           productId,
@@ -474,7 +532,7 @@ export async function createShopifyProduct(formData) {
                 }
               `;
 
-              await shopify.post("", {
+              await client.post("", {
                 query: ENABLE_TRACKING,
                 variables: {
                   id: variant.inventoryItem.id,
@@ -482,7 +540,7 @@ export async function createShopifyProduct(formData) {
                 },
               });
 
-              await updateInventory(variant.inventoryItem.id, locationId, 1);
+              await updateInventory(variant.inventoryItem.id, locationId, 1, storeConfig);
             } catch (invError) {
               console.error(
                 `Error setting inventory for new variant ${variant.id}:`,
@@ -524,7 +582,7 @@ export async function createShopifyProduct(formData) {
         alt: title,
       }));
 
-      const mediaRes = await shopify.post("", {
+      const mediaRes = await client.post("", {
         query: CREATE_MEDIA,
         variables: { productId, media: mediaInputs },
       });
@@ -575,9 +633,9 @@ export async function createShopifyProduct(formData) {
     try {
       const numericProductId = productId.split("/").pop();
       await axios.put(
-        `https://${shopifyStoreDomain}/admin/api/2024-10/products/${numericProductId}.json`,
+        `https://${targetStoreDomain}/admin/api/${targetApiVersion}/products/${numericProductId}.json`,
         { product: { id: numericProductId, published: true } },
-        { headers: { "X-Shopify-Access-Token": shopifyAccessToken, "Content-Type": "application/json" } },
+        { headers: { "X-Shopify-Access-Token": targetAccessToken, "Content-Type": "application/json" } },
       );
     } catch (pubErr) {
       console.error("Failed to publish product to Online Store:", pubErr.response?.data || pubErr.message);
@@ -588,7 +646,7 @@ export async function createShopifyProduct(formData) {
     // Wait 3s first so Shopify has time to attach images before the catalog syncs.
     setTimeout(async () => {
       try {
-        await publishProductToFacebookInstagram(productId);
+        await publishProductToFacebookInstagram(productId, storeConfig);
       } catch (fbErr) {
         console.error("Failed to publish product to Facebook & Instagram:", fbErr.message);
       }
@@ -827,8 +885,10 @@ export async function bulkSyncMetafieldsToShopify() {
 }
 
 // UPDATE INVENTORY
-export async function updateInventory(inventoryItemId, locationId, quantity) {
+export async function updateInventory(inventoryItemId, locationId, quantity, storeConfig) {
   try {
+    const { client } = buildShopifyClient(storeConfig);
+
     const UPDATE_INVENTORY = `
       mutation inventorySetQuantities($input: InventorySetQuantitiesInput!) {
         inventorySetQuantities(input: $input) {
@@ -847,7 +907,7 @@ export async function updateInventory(inventoryItemId, locationId, quantity) {
       }
     `;
 
-    const response = await shopify.post("", {
+    const response = await client.post("", {
       query: UPDATE_INVENTORY,
       variables: {
         input: {
@@ -1020,22 +1080,32 @@ export async function disableShopifyProduct(productId) {
 }
 
 
-// Cache the Facebook & Instagram publication ID so we only look it up once per process
+// Cache the Facebook & Instagram publication ID so we only look it up once per
+// process — for the base store only. A publication ID belongs to one specific
+// shop's channel, so a passed storeConfig never reads or writes this cache;
+// it always resolves its own publication ID fresh (see publicationId below).
 let _facebookPublicationId = null;
 
 /**
  * Publish a product to the Facebook & Instagram sales channel automatically.
  * Requires read_publications + write_publications scopes on the Shopify app.
  */
-async function publishProductToFacebookInstagram(shopifyProductGid) {
-  // Get publication ID — from env (fast) or query Shopify (once per process)
-  if (!_facebookPublicationId) {
-    _facebookPublicationId = process.env.SHOPIFY_FACEBOOK_PUBLICATION_ID || null;
+async function publishProductToFacebookInstagram(shopifyProductGid, storeConfig) {
+  const { client } = buildShopifyClient(storeConfig);
+
+  // Base-store path (no storeConfig): behaves exactly as before, using the
+  // shared cache and the SHOPIFY_FACEBOOK_PUBLICATION_ID shortcut.
+  // Routed-store path (storeConfig passed): always starts uncached.
+  let publicationId = storeConfig ? null : _facebookPublicationId;
+
+  if (!publicationId && !storeConfig) {
+    publicationId = process.env.SHOPIFY_FACEBOOK_PUBLICATION_ID || null;
+    _facebookPublicationId = publicationId;
   }
 
-  if (!_facebookPublicationId) {
+  if (!publicationId) {
     // Query Shopify for the Facebook & Instagram publication ID
-    const pubRes = await shopify.post("", {
+    const pubRes = await client.post("", {
       query: `query {
         publications(first: 20) {
           edges {
@@ -1060,12 +1130,15 @@ async function publishProductToFacebookInstagram(shopifyProductGid) {
       return;
     }
 
-    _facebookPublicationId = fbPub.node.id;
-    console.log(`[Shopify] Found Facebook & Instagram publication: ${_facebookPublicationId}`);
+    publicationId = fbPub.node.id;
+    if (!storeConfig) {
+      _facebookPublicationId = publicationId;
+    }
+    console.log(`[Shopify] Found Facebook & Instagram publication: ${publicationId}`);
   }
 
   // Publish the product to the Facebook & Instagram channel
-  const publishRes = await shopify.post("", {
+  const publishRes = await client.post("", {
     query: `mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
       publishablePublish(id: $id, input: $input) {
         publishable {
@@ -1079,7 +1152,7 @@ async function publishProductToFacebookInstagram(shopifyProductGid) {
     }`,
     variables: {
       id: shopifyProductGid,
-      input: [{ publicationId: _facebookPublicationId }],
+      input: [{ publicationId }],
     },
   });
 
@@ -1534,8 +1607,10 @@ export async function bulkRemoveShopifyProducts(userId) {
 }
 
 //  GET SHOPIFY LOCATIONS
-export async function getShopifyLocations() {
+export async function getShopifyLocations(storeConfig) {
   try {
+    const { client } = buildShopifyClient(storeConfig);
+
     const GET_LOCATIONS = `
       query {
         locations(first: 10) {
@@ -1549,7 +1624,7 @@ export async function getShopifyLocations() {
       }
     `;
 
-    const response = await shopify.post("", {
+    const response = await client.post("", {
       query: GET_LOCATIONS,
     });
 
