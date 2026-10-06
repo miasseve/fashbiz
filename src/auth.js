@@ -15,7 +15,13 @@ export async function computeHasWebstoreAccess(userId, subscriptionType) {
     subType.includes("plugin") ||
     subType.includes("plug") ||
     subType === "pro" ||
-    subType === "business"
+    subType === "business" ||
+    // New leStoresworld plans that include a web store. Deliberately NOT the
+    // plain "lestores-ai" automation plan (549) — it has no web store — so
+    // these tokens match "lestores-ai-web"/"lestores-web"/"link" only.
+    subType.includes("ai-web") ||
+    subType.includes("lestores-web") ||
+    subType === "link"
   ) {
     return true;
   }

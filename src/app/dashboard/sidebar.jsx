@@ -84,11 +84,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   // heuristic and the AddOnPurchase check, so "connected" means the same
   // thing here as on the product page and everywhere else.
   const hasWebstoreAccess = !!session.data?.user?.hasWebstoreAccess;
-  // Matches ProductList.jsx's canPostToInstagram check exactly.
+  // Matches ProductList.jsx's canPostToInstagram check exactly. Paid
+  // automation plans only (free = Discovery-only). Old names kept, new added.
   const canPostToInstagram =
-    session.data?.user?.subscriptionType === "free" ||
     session.data?.user?.subscriptionType === "Pro" ||
-    session.data?.user?.subscriptionType === "Business";
+    session.data?.user?.subscriptionType === "Business" ||
+    session.data?.user?.subscriptionType === "lestores-ai" ||
+    session.data?.user?.subscriptionType === "lestores-ai-web" ||
+    session.data?.user?.subscriptionType === "lestores-web" ||
+    session.data?.user?.subscriptionType === "link";
 
   const menuItems = [
     {

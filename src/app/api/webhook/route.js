@@ -332,8 +332,11 @@ export async function POST(req, res) {
 
       const wasActive = user.isActive;
 
-      // Determine plan change for branding (Pro/Business only feature)
-      const brandingPlans = ["Pro", "Business"];
+      // Determine plan change for branding (branded web store feature).
+      // Old plan names kept intact; new leStoresworld web plans added so their
+      // subscribers also get branding. "lestores-ai" (automation only, no web
+      // store) is intentionally excluded.
+      const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link"];
       const oldSubType = user.subscriptionType;
       const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
       const product = await stripe.products.retrieve(price.product);

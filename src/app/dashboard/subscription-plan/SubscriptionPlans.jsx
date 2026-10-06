@@ -246,6 +246,26 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
     plans: groupedPlans[key].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
   }));
 
+  // Display-only filter for the NEW leStoresworld pricing page: show ONLY the
+  // new plans here. Old plans are deliberately NOT removed from `plans` (so the
+  // active-subscription status card above, activePlan matching, and the login
+  // seat-limit lookup via getSubscriptionPlans all keep working for existing
+  // subscribers) — they're just not rendered as purchasable cards on the new
+  // page. Matched by Stripe product name OR nickname.
+  const NEW_PLAN_IDENTIFIERS = [
+    "le stores discovery",
+    "lestores-ai",
+    "lestores-ai-web",
+    "le stores web",
+    "lestores-web",
+    "link",
+  ];
+  const newPlans = plans.filter(
+    (p) =>
+      NEW_PLAN_IDENTIFIERS.includes((p.name || "").toLowerCase()) ||
+      NEW_PLAN_IDENTIFIERS.includes((p.nickname || "").toLowerCase()),
+  );
+
   return (
     <section>
       <style>{PRICING_CSS}</style>
@@ -374,17 +394,14 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           they were already included for free. The pricing cards below
           already show the correct feature list per real plan. */}
 
-      {/* ── NEW: 2hand2go-style stacked pricing sections ── */}
+      {/* ── NEW: leStoresworld-aligned 3-option pricing page ── */}
       {USE_NEW_PRICING ? (
-        planGroups.length > 0 && (
-          <PricingSections
-            planGroups={planGroups}
-            activePlan={activePlan}
-            handleCheckout={handleCheckout}
-            readOnly={readOnly}
-            tryMode={readOnly}
-          />
-        )
+        <PricingSections
+          newPlans={newPlans}
+          activePlan={activePlan}
+          handleCheckout={handleCheckout}
+          readOnly={readOnly}
+        />
       ) : (
       <>
       <h2 className="text-3xl md:text-6xl font-bold text-center text-gray-900 text-white mb-5">

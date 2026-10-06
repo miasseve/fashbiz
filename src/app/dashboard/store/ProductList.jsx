@@ -14,7 +14,15 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
 const ProductList = ({ products, instagramPending, subscriptionType }) => {
-  const canPostToInstagram = subscriptionType === "free" || subscriptionType === "Pro" || subscriptionType === "Business";
+  // Paid automation plans only (free = Discovery-only, no Instagram). Old paid
+  // plan names kept; new leStoresworld plans added.
+  const canPostToInstagram =
+    subscriptionType === "Pro" ||
+    subscriptionType === "Business" ||
+    subscriptionType === "lestores-ai" ||
+    subscriptionType === "lestores-ai-web" ||
+    subscriptionType === "lestores-web" ||
+    subscriptionType === "link";
   const hasPostInProgress = instagramPending?.hasPending || false;
   const [isGrid, setIsGrid] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);

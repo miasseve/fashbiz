@@ -82,23 +82,41 @@ const Main = ({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-3">
-              You've added 300 products.
+              You&apos;ve added 300 products. Ready to automate the rest?
             </h3>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Ready to automate the workflow? leStores AI automates listing,
-              inventory, publishing and synchronization — from 390 DKK/month.
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Keep adding products to Le Stores for free — or let Le Stores AI
+              handle the full workflow for you: inventory, barcodes, publishing,
+              syncing and automatic delisting when sold.
+            </p>
+            <p className="text-lg font-semibold text-gray-900 mb-6">
+              From 549 DKK/month
             </p>
             <button
               onClick={handleExploreLeStoresAI}
               className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-3 mb-3 transition-all"
             >
-              Explore leStores AI
+              Upgrade to Le Stores AI
             </button>
+            <a
+              href="mailto:mia@le-stores.com?subject=Book%20an%20in-store%20demo%20(Copenhagen%20area)"
+              onClick={() => setShowUpsell(false)}
+              className="block w-full rounded-xl border border-gray-200 text-gray-700 font-semibold py-3 mb-3 hover:bg-gray-50 transition-colors"
+            >
+              Book an in-store demo with Mia — Copenhagen area
+            </a>
+            <a
+              href="mailto:mia@le-stores.com?subject=Book%20an%20online%20demo%20(outside%20Copenhagen)"
+              onClick={() => setShowUpsell(false)}
+              className="block w-full rounded-xl border border-gray-200 text-gray-700 font-semibold py-3 mb-3 hover:bg-gray-50 transition-colors"
+            >
+              Book an online demo — outside Copenhagen
+            </a>
             <button
               onClick={() => setShowUpsell(false)}
               className="w-full rounded-xl border border-gray-200 text-gray-600 font-semibold py-3 hover:bg-gray-50 transition-colors"
             >
-              Continue with free Discovery
+              Continue Le Stores Discovery app only
             </button>
           </div>
         </div>

@@ -331,9 +331,109 @@ const PRICING_V2_CSS = `
     transform: translateY(-1px);
   }
 
+  /* ── leStoresworld 3-option layout (added) ── */
+  .p2-hero-head { text-align: center; margin-bottom: clamp(24px, 4vw, 40px); }
+  .p2-hero-grid {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 24px);
+    align-items: stretch;
+  }
+  .p2-eyebrow--card {
+    color: #ff2e7e;
+    margin-bottom: 8px;
+  }
+  .p2-card__tagline {
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #111827;
+  }
+  .p2-price__sub {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+  .p2-card__note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #9ca3af;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Pro / 3+ locations strip */
+  .p2-pro {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+    padding: clamp(18px, 2.2vw, 26px);
+    font-family: var(--font-bricolage), system-ui, sans-serif;
+  }
+  .p2-pro__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .p2-pro__text { font-weight: 700; font-size: clamp(15px, 1.8vw, 19px); color: #111827; }
+  .p2-pro__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .p2-pro__toggle {
+    background: none;
+    border: none;
+    color: #ff2e7e;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+  }
+  .p2-pro__details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .p2-cta--inline { width: auto; margin-top: 0; padding: 10px 22px; }
+
+  /* Bottom contact block */
+  .p2-bottom {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: clamp(24px, 3vw, 36px) 0;
+  }
+  .p2-bottom__title {
+    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-weight: 400;
+    color: #ffffff;
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1.1;
+  }
+  .p2-bottom__actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
+  .p2-bottom__phone { color: #ffffff; font-weight: 600; font-size: 15px; font-family: var(--font-bricolage), system-ui, sans-serif; }
+  .p2-bottom__phone a { color: #ffe3ee; text-decoration: underline; }
+
   /* ── Responsive: collapse to a single column ── */
   @media (max-width: 860px) {
     .p2-grid { grid-template-columns: 1fr !important; }
+    .p2-hero-grid { grid-template-columns: 1fr !important; }
     .p2-card__desc { min-height: 0; }
   }
   @media (max-width: 760px) {

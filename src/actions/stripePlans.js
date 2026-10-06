@@ -58,6 +58,110 @@ import dbConnect from "@/lib/db";
 // };
 
 const PLAN_CONFIG = {
+  // ─────────────────────────────────────────────────────────────────────
+  // NEW leStoresworld.com-aligned plans (added 2026). The OLD plans below
+  // (Add_*/Webstore_*/Plug-In_*) are intentionally LEFT INTACT so existing
+  // subscribers keep resolving — their feature display, seat limits and
+  // gating all still work. New plans are matched by Stripe nickname first
+  // (price.nickname) then by product name (stripeProductName fallback).
+  // ─────────────────────────────────────────────────────────────────────
+  Le_Stores_Discovery: {
+    stripeProductName: "Le Stores Discovery",
+    productLimit: null, // unlimited
+    maxUsers: null,
+    billing: "monthly",
+    price: 0, // Free until 1 May 2027, then 449 DKK/month (Stripe is source of truth)
+    currency: "DKK",
+    tagline: "GET DISCOVERED",
+    subtitle: "Free until 1 May 2027",
+    modules: [
+      "Consumer Discovery app",
+      "Store and products visible",
+      "Unlimited products",
+    ],
+    bgColor: "bg-white",
+    type: "subscription",
+  },
+
+  "lestores-ai": {
+    stripeProductName: "lestores-ai",
+    productLimit: null, // unlimited
+    maxUsers: null,
+    billing: "monthly",
+    price: 549,
+    currency: "DKK",
+    tagline: "AUTOMATE",
+    subtitle: "One photo = complete product",
+    modules: [
+      "AI product creation",
+      "Descriptions and product information",
+      "Price assistance",
+      "Barcodes and labels",
+      "Inventory workflow and synchronization",
+      "Unlimited products",
+    ],
+    bgColor: "bg-white",
+    type: "subscription",
+  },
+
+  "lestores-ai-web": {
+    stripeProductName: "lestores-ai-web",
+    productLimit: null, // unlimited
+    maxUsers: null,
+    billing: "monthly",
+    price: 399, // bundled Le Stores AI rate when taken with Le Stores Web
+    transactionFee: 0.04, // 4% on webshop sales
+    currency: "DKK",
+    tagline: "AUTOMATE + SELL ONLINE",
+    subtitle: "Le Stores AI, bundled with Le Stores Web (12-month commitment)",
+    modules: [
+      "Everything in Le Stores AI, included",
+      "Your own branded Web Store",
+      "Automatic product synchronization",
+      "Synchronized inventory",
+    ],
+    bgColor: "bg-white",
+    type: "subscription",
+  },
+
+  "lestores-web": {
+    stripeProductName: "Le Stores Web",
+    productLimit: null, // unlimited
+    maxUsers: null,
+    billing: "one-time",
+    price: 5900,
+    transactionFee: 0.04, // 4% on webshop sales
+    currency: "DKK",
+    tagline: "WEB SETUP",
+    subtitle: "One-time web setup",
+    modules: [
+      "Your own branded Web Store",
+      "Automatic product synchronization",
+      "Synchronized inventory",
+      "One-time setup",
+    ],
+    bgColor: "bg-white",
+    type: "one-time",
+  },
+
+  link: {
+    stripeProductName: "Link",
+    productLimit: null, // unlimited
+    maxUsers: null,
+    billing: "one-time",
+    price: 6500,
+    transactionFee: 0.04, // 4% on webshop sales
+    currency: "DKK",
+    tagline: "CONNECT",
+    subtitle: "Connect your existing webstore",
+    modules: [
+      "Connect your existing webstore",
+      "Full product sync",
+    ],
+    bgColor: "bg-white",
+    type: "one-time",
+  },
+
   Add_Basic: {
     stripeProductName: "Ads Basic",
     productLimit: 300,

@@ -14,10 +14,16 @@ import {
   getAllVariantInventoryIds,
 } from "@/actions/shopifyAction";
 
-// Platform transaction fee rates by subscription type
+// Platform transaction fee rates by subscription type.
+// Old plans kept exactly as-is so existing subscribers' fees never change.
+// New leStoresworld web plans added at 4% per the current commission decision.
 const PLATFORM_FEE_RATES = {
   "Webstore Basic": 0.04, // 4%
   "Webstore Pro": 0.02,   // 2%
+  // New plans — matched against user.subscriptionType (price.nickname || product.name)
+  "lestores-ai-web": 0.04, // 4%
+  "lestores-web": 0.04,    // 4%
+  "link": 0.04,            // 4%
 };
 
 function verifyShopifyWebhook(body, hmacHeader, secret) {

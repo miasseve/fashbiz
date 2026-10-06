@@ -34,10 +34,14 @@ const Page = async ({ params }) => {
   const parsedUser = JSON.parse(user);
 
   const session = await auth();
+  // Paid automation plans only (free = Discovery-only). Old names kept, new added.
   const canPostToInstagram =
-    session?.user?.subscriptionType === "free" ||
     session?.user?.subscriptionType === "Pro" ||
-    session?.user?.subscriptionType === "Business";
+    session?.user?.subscriptionType === "Business" ||
+    session?.user?.subscriptionType === "lestores-ai" ||
+    session?.user?.subscriptionType === "lestores-ai-web" ||
+    session?.user?.subscriptionType === "lestores-web" ||
+    session?.user?.subscriptionType === "link";
   // Free-plan stores don't get automatic Shopify-sync delisting, so they
   // need the manual "Mark Sold / Delist" button; paid subscribers already
   // have that happen automatically via the real Shopify sale webhook.

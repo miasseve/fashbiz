@@ -1,186 +1,224 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 
 /* ───────────────────────────────────────────────────────────────
-   2hand2go-style pricing layout: three stacked sections, white
-   cards on top of the site's existing gradient theme.
+   leStoresworld.com-aligned pricing page.
 
-   Copy is HYBRID — section headings/subtitles mirror 2hand2go,
-   while per-plan prices & feature bullets come from the existing
-   plan data (PLAN_CONFIG / Stripe). Button labels, states, and
-   checkout behaviour are kept identical to the old design.
+   Three option cards (Discovery / AI / Web+AI) with hardcoded
+   marketing copy, a "Pro / 3+ locations" strip, and a bottom
+   contact block. No FAQ.
+
+   Prices in the copy are fixed marketing text, but every CTA resolves
+   its Stripe PRICE ID dynamically from `newPlans` (passed in from
+   SubscriptionPlans.jsx, which fetched /api/stripe/plans) — nothing
+   is hardcoded for checkout. If a plan's Stripe product can't be
+   matched, that card's CTA degrades to disabled rather than breaking
+   the page or sending a bad price ID to checkout.
+
+   Button state/behaviour (readOnly → sign-up, subscribed → disabled,
+   otherwise → handleCheckout) mirrors the old design exactly.
    ─────────────────────────────────────────────────────────────── */
 
-// Per-card descriptions for the Resale Ecommerce Engine (Ads) section,
-// matching the 2hand2go copy. Keyed by tier name; falls back to plan data.
-// Uploads are unlimited on every tier — leStores AI is priced for
-// automation/workflow features, not product capacity, so these describe
-// what each tier automates rather than a product ceiling.
-const AD_DESC = {
-  Basic: "Core automation tools. Unlimited product uploads on every plan.",
-  Pro: "Full automation and multi-channel workflow, for established stores.",
-};
+const CONTACT_EMAIL = "mia@le-stores.com";
+const CONTACT_PHONE = "81 93 82 68";
 
-// Per-card descriptions for the webstore section — clarifies the product
-// volume each tier is sized for, same treatment as the Ads section above.
-const WEBSTORE_DESC = {
-  Basic: "For up to 300 products.",
-  Pro: "For more than 1,000 products.",
-};
-
-// Section headings/subtitles, matched to a plan group by its productName.
-function getSectionMeta(productName = "") {
-  const n = productName.toLowerCase();
-  if (n.includes("plug")) {
-    return {
-      eyebrow: "PLUGIN",
-      titlePre: "Connect your existing ",
-      titleAccent: "store.",
-      subtitle:
-        "Already have a webstore? Plug it into leStores AI and sync your full product catalog automatically.",
-    };
-  }
-  if (n.includes("webstore")) {
-    return {
-      eyebrow: "ADD-ON",
-      titlePre: "Add your own ",
-      titleAccent: "webshop.",
-      subtitle:
-        "Branded and launched by our team, synced so every item lists automatically. One-time setup, no monthly fee.",
-      isWebstore: true,
-    };
-  }
-  // default: Ads / Resale Ecommerce Engine
-  return {
-    eyebrow: "leStores AI",
-    titlePre: "Resale Ecommerce ",
-    titleAccent: "Engine.",
-    subtitle:
-      "Unlimited free product uploads via Le Stores Discovery. These plans are for automating the workflow around them.",
-    isAds: true,
-  };
-}
-
-// Build the big number + unit + transaction-fee line from plan data.
-function formatPrice(plan) {
-  const amount = parseFloat(plan.price) || 0;
-  const num = amount.toLocaleString("en-US");
-  const isOneTime = plan.planType === "one-time" || plan.period === "once";
-  const unit = isOneTime ? "DKK one-time" : `DKK / ${plan.period || "month"}`;
-  const fee = plan.transactionFee
-    ? `+ ${Math.round(plan.transactionFee * 100)}% per transaction`
-    : null;
-  return { num, unit, fee };
+// Match a fetched plan by its Stripe product name OR nickname (case-insensitive).
+function findPlan(newPlans, ...identifiers) {
+  const wanted = identifiers.map((s) => s.toLowerCase());
+  return (
+    newPlans.find(
+      (p) =>
+        wanted.includes((p.name || "").toLowerCase()) ||
+        wanted.includes((p.nickname || "").toLowerCase()),
+    ) || null
+  );
 }
 
 export default function PricingSections({
-  planGroups = [],
+  newPlans = [],
   activePlan,
   handleCheckout,
   readOnly = false,
-  tryMode = false,
 }) {
-  const renderCard = (plan, { isAds, isWebstore }) => {
-    const popular = isAds && (plan.tierName || "").toLowerCase() === "basic";
-    const { num, unit, fee } = formatPrice(plan);
-    const desc =
-      (isAds && AD_DESC[plan.tierName]) ||
-      (isWebstore && WEBSTORE_DESC[plan.tierName]) ||
-      plan.subtitle ||
-      plan.tagline ||
-      "";
-    const features = plan.features || [];
+  const [showProDetails, setShowProDetails] = useState(false);
 
-    // ── Button: behaviour & labels preserved from the old PricingCard ──
-    let button;
-    {
-      const isSubscribed =
-        !readOnly &&
-        activePlan &&
-        (activePlan.nickname === plan.nickname || activePlan.name === plan.name);
-      const label = isSubscribed
-        ? "Subscribed"
-        : readOnly
-          ? "Sign up to subscribe"
-          : plan.requiresQuote
-            ? "Get a quote"
-            : "Get Started";
-      let cls = "p2-cta";
-      if (isSubscribed) cls += " p2-cta--subscribed";
-      else if (!popular) cls += " p2-cta--outline";
-      if (readOnly) cls += " p2-cta--readonly";
-      button = (
-        <button
-          className={cls}
-          disabled={isSubscribed || readOnly}
-          onClick={() => {
-            if (!readOnly && !isSubscribed) handleCheckout(plan.id);
-          }}
-        >
+  const discovery = findPlan(newPlans, "Le Stores Discovery");
+  const ai = findPlan(newPlans, "lestores-ai");
+  const web = findPlan(newPlans, "Le Stores Web", "lestores-web");
+
+  const isSubscribedTo = (plan) =>
+    !readOnly &&
+    plan &&
+    activePlan &&
+    (activePlan.nickname === plan.nickname || activePlan.name === plan.name);
+
+  // Renders a card's CTA with the same behaviour rules as the old design.
+  const renderCta = (plan, label, { primary = false } = {}) => {
+    const cls = `p2-cta${primary ? "" : " p2-cta--outline"}`;
+
+    if (readOnly) {
+      return (
+        <Link href="/register" className={`${cls} p2-cta--readonly`}>
+          Sign up to subscribe
+        </Link>
+      );
+    }
+    if (isSubscribedTo(plan)) {
+      return (
+        <button className={`${cls} p2-cta--subscribed`} disabled>
+          Subscribed
+        </button>
+      );
+    }
+    // No matching Stripe price → disable rather than send a bad ID to checkout.
+    if (!plan?.id) {
+      return (
+        <button className={`${cls} p2-cta--subscribed`} disabled title="Coming soon">
           {label}
         </button>
       );
     }
-
     return (
-      <div
-        key={plan.id}
-        className={`p2-card${popular ? " p2-card--popular" : ""}`}
-      >
-        {popular && <div className="p2-badge">Most Popular</div>}
-        <div className="p2-card__name">{plan.tierName}</div>
-        <div className="p2-card__desc">{desc}</div>
-
-        <div className="p2-price">
-          <span className="p2-price__num">{num}</span>
-          <span className="p2-price__unit">{unit}</span>
-        </div>
-        {fee && <div className="p2-price__fee">{fee}</div>}
-        {isWebstore && <div className="p2-price__commitment">6 months commitment</div>}
-        <div className="p2-price__vat">excl. VAT</div>
-
-        <div className="p2-features">
-          {features.map((f, i) => (
-            <div key={i} className="p2-feature">
-              <span className="p2-check">&#10003;</span>
-              {f}
-            </div>
-          ))}
-        </div>
-
-        {button}
-      </div>
+      <button className={cls} onClick={() => handleCheckout(plan.id)}>
+        {label}
+      </button>
     );
   };
 
+  const feature = (text) => (
+    <div className="p2-feature" key={text}>
+      <span className="p2-check">&#10003;</span>
+      {text}
+    </div>
+  );
+
   return (
     <div className="p2-wrap">
+      {/* ── Page heading ── */}
+      <div className="p2-hero-head">
+        <h2 className="p2-title">
+          Discover. Automate. <em>Sell.</em>
+        </h2>
+        <p className="p2-subtitle">Three options. Compare and choose.</p>
+      </div>
 
-      {planGroups.map((group) => {
-        const meta = getSectionMeta(group.productName);
-        const cards = group.plans;
-        const isAds = !!meta.isAds;
-        const isWebstore = !!meta.isWebstore;
-        return (
-          <section key={group.productName} className="p2-section">
-            <div className="p2-head">
-              <div className="p2-eyebrow">{meta.eyebrow}</div>
-              <h2 className="p2-title">
-                {meta.titlePre}
-                <em>{meta.titleAccent}</em>
-              </h2>
-              <p className="p2-subtitle">{meta.subtitle}</p>
-            </div>
+      {/* ── Three option cards ── */}
+      <div className="p2-hero-grid">
+        {/* CARD 1 — Discovery */}
+        <div className="p2-card">
+          <div className="p2-eyebrow p2-eyebrow--card">GET DISCOVERED</div>
+          <div className="p2-card__name">Le Stores Discovery</div>
+          <div className="p2-price">
+            <span className="p2-price__num">Free</span>
+          </div>
+          <div className="p2-price__sub">
+            449 DKK / month from 1 May 2027 · excl. VAT
+          </div>
+          <div className="p2-features">
+            {["Consumer Discovery app", "Store and products visible", "Unlimited products"].map(
+              feature,
+            )}
+          </div>
+          {renderCta(discovery, "Join free", { primary: false })}
+        </div>
 
-            <div
-              className="p2-grid"
-              style={{ gridTemplateColumns: `repeat(${cards.length}, minmax(0, 1fr))` }}
+        {/* CARD 2 — Le Stores AI */}
+        <div className="p2-card">
+          <div className="p2-eyebrow p2-eyebrow--card">AUTOMATE</div>
+          <div className="p2-card__name">Le Stores AI</div>
+          <div className="p2-price">
+            <span className="p2-price__num">549</span>
+            <span className="p2-price__unit">DKK / month</span>
+          </div>
+          <div className="p2-price__sub">MONTHLY · excl. VAT</div>
+          <div className="p2-card__tagline">ONE PHOTO = COMPLETE PRODUCT</div>
+          <div className="p2-features">
+            {[
+              "AI product creation",
+              "Descriptions and product information",
+              "Price assistance",
+              "Barcodes and labels",
+              "Inventory workflow and synchronization",
+              "Unlimited products",
+            ].map(feature)}
+          </div>
+          {renderCta(ai, "Get Le Stores AI", { primary: true })}
+        </div>
+
+        {/* CARD 3 — Le Stores Web + AI (recommended) */}
+        <div className="p2-card p2-card--popular">
+          <div className="p2-badge">Recommended</div>
+          <div className="p2-eyebrow p2-eyebrow--card">AUTOMATE + SELL ONLINE</div>
+          <div className="p2-card__name">Le Stores Web + AI</div>
+          <div className="p2-price">
+            <span className="p2-price__num">5,900</span>
+            <span className="p2-price__unit">DKK · web setup · one time</span>
+          </div>
+          <div className="p2-price__sub">
+            399 DKK / month (instead of 549 DKK) · LE STORES AI · MONTHLY
+          </div>
+          <div className="p2-price__fee">
+            4% only when you sell · excl. VAT · 12-month commitment
+          </div>
+          <div className="p2-features">
+            {[
+              "Everything in Le Stores AI, included",
+              "Your own branded Web Store",
+              "Automatic product synchronization",
+              "Synchronized inventory",
+            ].map(feature)}
+          </div>
+          {renderCta(web, "Get your webstore", { primary: true })}
+          <p className="p2-card__note">
+            Refer a shop, get 500 DKK back, up to two referrals. Terms
+          </p>
+        </div>
+      </div>
+
+      {/* ── Pro / 3+ locations strip ── */}
+      <div className="p2-pro">
+        <div className="p2-pro__row">
+          <div className="p2-pro__text">3+ store locations? Custom Pro pricing.</div>
+          <div className="p2-pro__actions">
+            <a href={`mailto:${CONTACT_EMAIL}`} className="p2-cta p2-cta--outline p2-cta--inline">
+              Contact us
+            </a>
+            <button
+              type="button"
+              className="p2-pro__toggle"
+              onClick={() => setShowProDetails((v) => !v)}
+              aria-expanded={showProDetails}
             >
-              {cards.map((plan) => renderCard(plan, { isAds, isWebstore }))}
-            </div>
-          </section>
-        );
-      })}
+              {showProDetails ? "Hide details" : "See details"}
+            </button>
+          </div>
+        </div>
+        {showProDetails && (
+          <div className="p2-pro__details">
+            {[
+              "Unlimited products on Discovery, AI and Web",
+              "Standard pricing covers up to 2 store locations",
+              "Le Stores Web is powered and synchronized through Le Stores AI",
+              "Discovery and AI have no commitment. Web has a 12-month commitment",
+              "Referral credit: 500 DKK per activated paying store, maximum 2 referrals, maximum 1,000 DKK",
+            ].map(feature)}
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom contact block ── */}
+      <div className="p2-bottom">
+        <div className="p2-bottom__title">Not sure which option fits your store?</div>
+        <div className="p2-bottom__actions">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="p2-cta">
+            Contact us
+          </a>
+          <span className="p2-bottom__phone">
+            Call Mia · <a href={`tel:${CONTACT_PHONE.replace(/\s/g, "")}`}>{CONTACT_PHONE}</a>
+          </span>
+        </div>
+      </div>
 
       <p className="p2-vat-note">VAT is added where applicable.</p>
     </div>
