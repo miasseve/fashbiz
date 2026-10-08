@@ -45,7 +45,7 @@ export default function PricingSections({
 
   const discovery = findPlan(newPlans, "Le Stores Discovery");
   const ai = findPlan(newPlans, "lestores-ai");
-  const web = findPlan(newPlans, "Le Stores Web", "lestores-web");
+  const web = findPlan(newPlans, "lestores-ai-web");
 
   const isSubscribedTo = (plan) =>
     !readOnly &&
@@ -120,7 +120,7 @@ export default function PricingSections({
               feature,
             )}
           </div>
-          {renderCta(discovery, "Join free", { primary: false })}
+          <Link href="/register" className="p2-cta">Join free</Link>
         </div>
 
         {/* CARD 2 — Le Stores AI */}
