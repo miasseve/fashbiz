@@ -2,10 +2,7 @@
    2hand2go-style pricing sections (V2).
    All classes are prefixed `p2-` so they never collide with the
    existing `pc-` / `pcr-` stacking-card styles.
-   Fonts come from next/font CSS vars set on <html> in layout.js:
-     --font-instrument-serif  (serif display heading)
-     --font-playfair          (italic accent word)
-     --font-bricolage         (sans body / labels / titles)
+   Font: Inter ("Inter", ui-sans-serif, system-ui, sans-serif) per DESIGN.md.
    Cards sit on top of the site's existing gradient theme — we do
    NOT set a section background, only style the white boxes.
    ─────────────────────────────────────────────────────────────── */
@@ -26,7 +23,7 @@ const PRICING_V2_CSS = `
   /* ── Section heading (sits on the gradient → light text) ── */
   .p2-head { text-align: center; margin-bottom: clamp(28px, 4vw, 48px); }
   .p2-eyebrow {
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-weight: 700;
     font-size: 13px;
     letter-spacing: 0.18em;
@@ -35,7 +32,7 @@ const PRICING_V2_CSS = `
     margin-bottom: 14px;
   }
   .p2-title {
-    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     color: #ffffff;
     font-size: clamp(34px, 5.2vw, 60px);
@@ -43,12 +40,12 @@ const PRICING_V2_CSS = `
     letter-spacing: -0.01em;
   }
   .p2-title em {
-    font-family: var(--font-playfair), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-style: italic;
     font-weight: 500;
   }
   .p2-subtitle {
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     color: rgba(255,255,255,0.92);
     font-size: clamp(14px, 1.5vw, 17px);
@@ -73,20 +70,20 @@ const PRICING_V2_CSS = `
     border: 1px solid #ececec;
     border-radius: 20px;
     padding: clamp(22px, 2.4vw, 32px);
-    box-shadow: 0 18px 50px rgba(0,0,0,0.16);
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
   .p2-card--popular {
-    border: 1.5px solid #ff2e7e;
-    box-shadow: 0 24px 64px rgba(255,46,126,0.28);
+    border: 1.5px solid #ca2356;
+    box-shadow: 0 4px 16px rgba(202,35,86,0.12);
   }
   .p2-badge {
     position: absolute;
     top: -13px;
     left: 50%;
     transform: translateX(-50%);
-    background: #ff2e7e;
-    color: #fff;
+    background: #fce7f0;
+    color: #ca2356;
     font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.08em;
@@ -97,11 +94,11 @@ const PRICING_V2_CSS = `
   }
 
   .p2-card__name {
-    font-family: var(--font-playfair), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-style: italic;
     font-weight: 600;
     font-size: clamp(22px, 2.4vw, 28px);
-    color: #ff2e7e;
+    color: #ca2356;
     line-height: 1.1;
   }
   .p2-card__desc {
@@ -132,7 +129,7 @@ const PRICING_V2_CSS = `
     margin-top: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: #ff2e7e;
+    color: #ca2356;
   }
   .p2-price__commitment {
     margin-top: 4px;
@@ -150,7 +147,7 @@ const PRICING_V2_CSS = `
     text-align: center;
     font-size: 12px;
     color: rgba(255,255,255,0.75);
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
   /* features */
@@ -172,7 +169,7 @@ const PRICING_V2_CSS = `
   .p2-check {
     flex-shrink: 0;
     margin-top: 1px;
-    color: #ff2e7e;
+    color: #ca2356;
     font-weight: 800;
     font-size: 14px;
   }
@@ -187,17 +184,17 @@ const PRICING_V2_CSS = `
     text-decoration: none;
     border-radius: 999px;
     padding: 13px 22px;
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    border: 1.5px solid #ff2e7e;
-    background: #ff2e7e;
+    border: 1.5px solid #ca2356;
+    background: #ca2356;
     color: #fff;
     transition: background 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
   }
-  .p2-cta:hover { box-shadow: 0 8px 22px rgba(255,46,126,0.35); transform: translateY(-1px); }
-  .p2-cta--outline { background: #fff; color: #ff2e7e; }
+  .p2-cta:hover { background: #b80049; box-shadow: 0 8px 22px rgba(202,35,86,0.28); transform: translateY(-1px); }
+  .p2-cta--outline { background: #fff; color: #ca2356; }
   .p2-cta--outline:hover { background: #fff5f9; }
   .p2-cta--subscribed,
   .p2-cta--subscribed:hover {
@@ -219,9 +216,9 @@ const PRICING_V2_CSS = `
     background: #ffffff;
     border: 1px solid #ececec;
     border-radius: 20px;
-    box-shadow: 0 18px 50px rgba(0,0,0,0.16);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     overflow: hidden;
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
   .p2-status__left {
     width: clamp(180px, 26%, 260px);
@@ -232,7 +229,7 @@ const PRICING_V2_CSS = `
     padding: clamp(22px, 2.6vw, 34px);
   }
   .p2-status__title {
-    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     color: #111827;
     font-size: clamp(28px, 3.4vw, 40px);
@@ -240,10 +237,10 @@ const PRICING_V2_CSS = `
     letter-spacing: -0.01em;
   }
   .p2-status__title em {
-    font-family: var(--font-playfair), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-style: italic;
     font-weight: 600;
-    color: #ff2e7e;
+    color: #ca2356;
   }
   .p2-status__sub { font-size: 14px; color: #6b7280; font-weight: 500; }
   .p2-status__right {
@@ -317,7 +314,7 @@ const PRICING_V2_CSS = `
     border: none;
     border-radius: 999px;
     padding: 11px 26px;
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-size: 15px;
     font-weight: 700;
     color: #fff;
@@ -342,7 +339,7 @@ const PRICING_V2_CSS = `
     align-items: stretch;
   }
   .p2-eyebrow--card {
-    color: #ff2e7e;
+    color: #ca2356;
     margin-bottom: 8px;
   }
   .p2-card__tagline {
@@ -377,7 +374,7 @@ const PRICING_V2_CSS = `
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.10);
     padding: clamp(18px, 2.2vw, 26px);
-    font-family: var(--font-bricolage), system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
   .p2-pro__row {
     display: flex;
@@ -391,7 +388,7 @@ const PRICING_V2_CSS = `
   .p2-pro__toggle {
     background: none;
     border: none;
-    color: #ff2e7e;
+    color: #ca2356;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
@@ -420,14 +417,14 @@ const PRICING_V2_CSS = `
     padding: clamp(24px, 3vw, 36px) 0;
   }
   .p2-bottom__title {
-    font-family: var(--font-instrument-serif), Georgia, serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     color: #ffffff;
     font-size: clamp(22px, 3vw, 34px);
     line-height: 1.1;
   }
   .p2-bottom__actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
-  .p2-bottom__phone { color: #ffffff; font-weight: 600; font-size: 15px; font-family: var(--font-bricolage), system-ui, sans-serif; }
+  .p2-bottom__phone { color: #ffffff; font-weight: 600; font-size: 15px; font-family: "Inter", ui-sans-serif, system-ui, sans-serif; }
   .p2-bottom__phone a { color: #ffe3ee; text-decoration: underline; }
 
   /* ── Responsive: collapse to a single column ── */
