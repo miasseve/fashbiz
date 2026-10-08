@@ -146,7 +146,7 @@ const PRICING_V2_CSS = `
   .p2-vat-note {
     text-align: center;
     font-size: 12px;
-    color: rgba(255,255,255,0.75);
+    color: #6b7280;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
