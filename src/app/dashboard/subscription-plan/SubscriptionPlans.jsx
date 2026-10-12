@@ -272,7 +272,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
       <style>{PRICING_V2_CSS}</style>
 
 
-      {/* {readOnly ? (
+      {readOnly ? (
         <div className="p2-status">
           <div className="p2-status__left">
             <div className="p2-status__title">
@@ -311,7 +311,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
           <div className="p2-status__right">
             <div className="p2-status__main">
-            
+
               <div className="p2-status__dates">
                 <div>
                   <span className="p2-status__date-label">Start: </span>
@@ -324,7 +324,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
                 </div>
               </div>
-            
+
               <div className="p2-status__features">
                 {activePlan?.features?.length > 0 ? (
                   activePlan.features.map((f, i) => (
@@ -342,10 +342,6 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                     const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
                     const users = isPro ? "5" : isBasic ? "2" : "1";
                     const fallbackFeatures = [
-                      // leStores AI (the "Add" plans) prices automation, not
-                      // product capacity — uploads via Discovery are unlimited
-                      // regardless of plan. Other plan types (Webstore/Plug-In)
-                      // are a separate product, unaffected by that change.
                       isAdd ? "Unlimited product uploads" : `Upload up to ${limit} products per month`,
                       `Up to ${users} users access`,
                       "Instagram integration",
@@ -360,7 +356,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   })()
                 )}
               </div>
-              
+
               {user.subscriptionType !== "free" &&
                 (() => {
                   const startDate = new Date(user.subscriptionStart);
@@ -387,8 +383,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             </div>
           </div>
         </div>
-      ) : null} 
- */}
+      ) : null}
       
       {/* No-plan status card removed per client request — it listed paid-only
           features (Instagram, webstore sync) with checkmarks on a screen
