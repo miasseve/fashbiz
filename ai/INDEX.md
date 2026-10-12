@@ -209,6 +209,7 @@
 | `CronLogs.js` | Cron job execution logs |
 | `FabricOption.js` | Admin-managed fabric vocabulary |
 | `PointRule.js` | DKK points rules by category/brand type |
+| `ProcessedWebhookEvent.js` | Stripe webhook idempotency: eventId + processedAt |
 | `ContactSupport.js` | Support tickets with chat |
 | `SiteSetting.js` | Key/value config store (encrypted) |
 | `Session.js` | Auth sessions |

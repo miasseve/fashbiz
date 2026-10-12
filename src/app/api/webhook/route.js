@@ -1,8 +1,10 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
 import AddOnPurchase from "@/models/AddOnPurchase";
+import ProcessedWebhookEvent from "@/models/ProcessedWebhookEvent";
 import { productPurchased } from "@/mails/ProductPurchased";
 import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
@@ -53,6 +55,15 @@ export async function POST(req, res) {
       { error: `Webhook Error: ${err.message}` },
       { status: 400 }
     );
+  }
+
+  await dbConnect();
+
+  if (event.id) {
+    const existing = await ProcessedWebhookEvent.findOne({ eventId: event.id });
+    if (existing) {
+      return NextResponse.json({ message: "Event already processed" }, { status: 200 });
+    }
   }
 
   // Handle the event
@@ -132,8 +143,6 @@ export async function POST(req, res) {
       const subscriptionId = session.subscription;
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-      // Update user in MongoDB
-      await dbConnect();
       await User.findByIdAndUpdate(userId, {
         subscriptionType: subscription.items.data[0].plan.nickname || "Pro",
         subscriptionStart: new Date(subscription.current_period_start * 1000),
@@ -440,9 +449,38 @@ export async function POST(req, res) {
       break;
     }
 
-    // You can handle other event types here if needed
+    case "invoice.payment_failed": {
+      const invoice = event.data.object;
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      if (customerId) {
+        const user = await User.findOne({ stripeCustomerId: customerId });
+        if (user) {
+          await Subscription.findOneAndUpdate(
+            { userId: user._id },
+            { status: "past_due" }
+          );
+          console.log(
+            `Invoice payment failed for user ${user.email} (customer ${customerId}), subscription marked past_due`
+          );
+        } else {
+          console.warn(
+            `invoice.payment_failed: no user found for customer ${customerId}`
+          );
+        }
+      }
+      break;
+    }
+
     default:
       console.log(`Unhandled event type: ${event.type}`);
+  }
+
+  if (event.id) {
+    await ProcessedWebhookEvent.create({ eventId: event.id }).catch(() => {});
   }
 
   return NextResponse.json({ message: "Event received" }, { status: 200 });
