@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import { subscriptionService } from "@/lib/subscriptionService";
 
 export async function GET(req) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await dbConnect();
-    const userId = req.nextUrl.searchParams.get("userId");
-
-    if (!userId) return NextResponse.json({ subscription: null });
+    const userId = session.user.id;
 
     const subscription = await subscriptionService.getUserSubscription(
       userId,
@@ -20,9 +24,16 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
   try {
     await dbConnect();
-    const { userId, action, priceId, paymentMethodId, referredBy } = await req.json();
+    const { action, priceId, paymentMethodId, referredBy } = await req.json();
 
     let result;
 

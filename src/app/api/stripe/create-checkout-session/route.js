@@ -1,4 +1,6 @@
 import Stripe from "stripe";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import { decrypt } from "@/actions/encryption";
 import RefferralDetails from "@/models/Referral";
@@ -6,10 +8,17 @@ import RefferralDetails from "@/models/Referral";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
   try {
     await dbConnect();
     const body = await req.json();
-    const { priceId, userId, referral } = body;
+    const { priceId, referral } = body;
     let referralCode = null;
     if (referral) {
       try {

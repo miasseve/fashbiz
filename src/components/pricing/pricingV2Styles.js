@@ -1,75 +1,62 @@
 /* ───────────────────────────────────────────────────────────────
-   2hand2go-style pricing sections (V2).
-   All classes are prefixed `p2-` so they never collide with the
-   existing `pc-` / `pcr-` stacking-card styles.
-   Font: Inter ("Inter", ui-sans-serif, system-ui, sans-serif) per DESIGN.md.
-   Cards sit on top of the site's existing gradient theme — we do
-   NOT set a section background, only style the white boxes.
+   leStoresworld.com pricing page styles (V7 — pixel-perfect).
+   All classes prefixed `p2-`.
+   Font: Inter per DESIGN.md.
    ─────────────────────────────────────────────────────────────── */
 const PRICING_V2_CSS = `
+  /* === Full-bleed background override === */
+  .p2-page-bg {
+    background: #fff5f7;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    margin: -20px -15px -4px;
+    padding: 0;
+  }
+
+  /* === Base wrap === */
   .p2-wrap {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: clamp(48px, 7vw, 96px);
-    padding: clamp(24px, 5vw, 56px) 0 clamp(40px, 6vw, 80px);
+    gap: clamp(40px, 5vw, 64px);
+    padding: clamp(48px, 6vw, 80px) 24px;
+    background: #fff5f7;
   }
 
-  .p2-section {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-  }
-
-  /* ── Section heading (sits on the gradient → light text) ── */
-  .p2-head { text-align: center; margin-bottom: clamp(28px, 4vw, 48px); }
-  .p2-eyebrow {
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #ffe3ee;
-    margin-bottom: 14px;
+  /* === Page heading === */
+  .p2-hero-head {
+    text-align: center;
+    margin-bottom: clamp(24px, 3vw, 40px);
   }
   .p2-title {
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-weight: 400;
-    color: #ffffff;
-    font-size: clamp(34px, 5.2vw, 60px);
+    font-weight: 500;
+    color: #111827;
+    font-size: clamp(40px, 5vw, 60px);
     line-height: 1.05;
     letter-spacing: -0.01em;
   }
-  .p2-title em {
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-style: italic;
-    font-weight: 500;
-  }
-  .p2-subtitle {
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-weight: 400;
-    color: rgba(255,255,255,0.92);
-    font-size: clamp(14px, 1.5vw, 17px);
-    line-height: 1.5;
-    max-width: 620px;
-    margin: 14px auto 0;
-  }
 
-  /* ── Card grid ── */
-  .p2-grid {
+  /* === Card grid (2 columns) === */
+  .p2-hero-grid {
+    width: min(1200px, 100%);
+    margin: 0 auto;
     display: grid;
-    gap: clamp(16px, 2vw, 24px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
     align-items: stretch;
   }
 
-  /* ── Card ── */
+  /* === Card === */
   .p2-card {
     position: relative;
     display: flex;
     flex-direction: column;
     background: #ffffff;
-    border: 1px solid #ececec;
-    border-radius: 20px;
-    padding: clamp(22px, 2.4vw, 32px);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: clamp(24px, 2.4vw, 32px);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
@@ -93,55 +80,114 @@ const PRICING_V2_CSS = `
     white-space: nowrap;
   }
 
-  .p2-card__name {
+  /* Card separator line */
+  .p2-card__separator {
+    width: 100%;
+    height: 1px;
+    background: #e5e7eb;
+    margin: 16px 0;
+  }
+
+  /* Card heading */
+  .p2-card__heading {
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-style: italic;
     font-weight: 600;
-    font-size: clamp(22px, 2.4vw, 28px);
-    color: #ca2356;
-    line-height: 1.1;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.15;
+    color: #111827;
+    margin: 0;
   }
   .p2-card__desc {
     margin-top: 8px;
     font-size: 14px;
     line-height: 1.5;
     color: #6b7280;
-    min-height: 42px;
+  }
+  .p2-card__tagline {
+    margin-top: 12px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #111827;
+    line-height: 1.4;
+  }
+  .p2-card__subdesc {
+    margin-top: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #6b7280;
   }
 
-  /* price */
+  /* Card description bullets (checkmarks) */
+  .p2-card__bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  /* === Badge pill (inline) === */
+  .p2-pill {
+    display: inline-block;
+    margin-top: 0;
+    background: #fce7f0;
+    color: #ca2356;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    align-self: flex-start;
+  }
+
+  /* === Price === */
   .p2-price {
-    margin-top: 18px;
+    margin-top: 16px;
     display: flex;
     align-items: baseline;
     gap: 8px;
     flex-wrap: wrap;
   }
   .p2-price__num {
-    font-weight: 800;
-    font-size: clamp(30px, 4vw, 42px);
+    font-weight: 500;
+    font-size: clamp(30px, 4vw, 48px);
     color: #111827;
     line-height: 1;
     letter-spacing: -0.02em;
   }
-  .p2-price__unit { font-size: 14px; font-weight: 600; color: #6b7280; }
+  .p2-price__unit {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    line-height: 1.2;
+  }
+  .p2-price__meta {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
   .p2-price__fee {
-    margin-top: 6px;
+    margin-top: 8px;
     font-size: 13px;
     font-weight: 600;
     color: #ca2356;
   }
   .p2-price__commitment {
     margin-top: 4px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
-    color: #9ca3af;
+    color: #6b7280;
   }
   .p2-price__vat {
-    margin-top: 2px;
-    font-size: 11px;
+    margin-top: 4px;
+    font-size: 12px;
     font-weight: 500;
-    color: #9ca3af;
+    color: #6b7280;
   }
   .p2-vat-note {
     text-align: center;
@@ -150,40 +196,136 @@ const PRICING_V2_CSS = `
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* features */
+  /* === Price row (pink bg, for right card) === */
+  .p2-price-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fce7f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .p2-price-row__label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111827;
+  }
+  .p2-price-row__right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .p2-price-row__amount {
+    font-weight: 500;
+    font-size: clamp(18px, 2vw, 24px);
+    color: #111827;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .p2-price-row__meta {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .p2-price-row__linkdesc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+
+  /* === Features (checkmark list) === */
   .p2-features {
-    margin-top: 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1;
   }
   .p2-feature {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     font-size: 14px;
-    line-height: 1.45;
+    line-height: 1.5;
     color: #374151;
   }
   .p2-check {
     flex-shrink: 0;
     margin-top: 1px;
     color: #ca2356;
-    font-weight: 800;
+    font-weight: 500;
     font-size: 14px;
   }
 
-  /* ── CTA button (functionality preserved from old design) ── */
+  /* "Not included" items (✕) */
+  .p2-excluded {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #9ca3af;
+  }
+  .p2-cross {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #9ca3af;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* === Accordion === */
+  .p2-accordion__toggle {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    background: none;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: #111827;
+    cursor: pointer;
+    transition: color 0.18s;
+  }
+  .p2-accordion__toggle:hover { color: #ca2356; }
+  .p2-accordion__chevron {
+    font-size: 16px;
+    transition: transform 0.2s;
+    color: #6b7280;
+  }
+  .p2-accordion__chevron--open { transform: rotate(180deg); }
+  .p2-accordion__content { padding: 0 0 16px; }
+  .p2-accordion__section-title {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin: 16px 0 8px;
+  }
+  .p2-accordion__section-title:first-child { margin-top: 0; }
+
+  /* === CTA button === */
   .p2-cta {
-    margin-top: 24px;
+    margin-top: 16px;
     width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     border-radius: 999px;
-    padding: 13px 22px;
+    padding: 13px 24px;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     font-size: 15px;
     font-weight: 700;
@@ -193,9 +335,13 @@ const PRICING_V2_CSS = `
     color: #fff;
     transition: background 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
   }
-  .p2-cta:hover { background: #b80049; box-shadow: 0 8px 22px rgba(202,35,86,0.28); transform: translateY(-1px); }
-  .p2-cta--outline { background: #fff; color: #ca2356; }
-  .p2-cta--outline:hover { background: #fff5f9; }
+  .p2-cta:hover {
+    background: #b80049;
+    box-shadow: 0 8px 20px rgba(202,35,86,0.28);
+    transform: translateY(-1px);
+  }
+  .p2-cta--outline { background: transparent; color: #ca2356; }
+  .p2-cta--outline:hover { background: #fff0f5; }
   .p2-cta--subscribed,
   .p2-cta--subscribed:hover {
     background: #9ca3af;
@@ -207,15 +353,324 @@ const PRICING_V2_CSS = `
   }
   .p2-cta--readonly { opacity: 0.9; }
 
-  /* ── Status banner (Preview Plans / No Plan) — matches the white cards ── */
+  /* Text link CTA */
+  .p2-cta--text {
+    background: none;
+    border: none;
+    padding: 0;
+    display: inline-block;
+    cursor: pointer;
+    color: #ca2356;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    text-decoration: none;
+    transition: color 0.18s;
+  }
+  .p2-cta--text:hover { color: #b80049; }
+  .p2-cta--text-muted {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* === Dark banner (Head Start) — 2-column layout === */
+  .p2-banner {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    background: linear-gradient(160deg, #1a1028, #2a1538);
+    border-radius: 16px;
+    padding: clamp(32px, 4vw, 48px);
+    color: #ffffff;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .p2-banner__eyebrow {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ca2356;
+    margin-bottom: 16px;
+  }
+  .p2-banner__layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(24px, 3vw, 48px);
+    align-items: start;
+  }
+  .p2-banner__left {
+    display: flex;
+    flex-direction: column;
+  }
+  .p2-banner__right {
+    display: flex;
+    flex-direction: column;
+  }
+  .p2-banner__title {
+    font-weight: 700;
+    font-size: clamp(20px, 2.5vw, 28px);
+    line-height: 1.2;
+    color: #ffffff;
+    margin: 0 0 16px;
+  }
+  .p2-banner__subtitle {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.7);
+    margin: 0 0 20px;
+    font-weight: 400;
+  }
+  .p2-banner__see-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #ca2356;
+    text-decoration: none;
+    transition: color 0.18s;
+    cursor: default;
+  }
+  .p2-banner__see-detail:hover { color: #ff6b9d; }
+
+  /* Bordered table card inside dark banner */
+  .p2-banner__table-card {
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: clamp(16px, 2vw, 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .p2-banner__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.8);
+    padding: 4px 0;
+  }
+  .p2-banner__row--total {
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 12px;
+    margin-top: 4px;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 14px;
+    align-items: baseline;
+  }
+  .p2-banner__total-label {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+  .p2-banner__total-value {
+    font-weight: 500;
+    font-size: clamp(28px, 4vw, 44px);
+    color: #ca2356;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .p2-banner__footnote {
+    margin-top: 16px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* === "Already have part of it?" === */
+  .p2-partial {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: clamp(24px, 3vw, 32px);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .p2-partial__title {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #111827;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .p2-partial__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .p2-partial__col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 16px;
+    border-right: 1px solid #e5e7eb;
+  }
+  .p2-partial__col:last-child { border-right: none; }
+  .p2-partial__eyebrow {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #ca2356;
+    margin-bottom: 8px;
+  }
+  .p2-partial__name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #111827;
+  }
+  .p2-partial__desc {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+  .p2-partial__desc--secondary {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+  .p2-partial__price {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+  .p2-partial__price--bold {
+    font-weight: 700;
+    font-size: 14px;
+    color: #111827;
+  }
+  /* Plain text list for the Link column (no checkmarks) */
+  .p2-partial__plain-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .p2-partial__plain-list p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6b7280;
+  }
+  .p2-partial__col .p2-cta--text { margin-top: auto; padding-top: 8px; }
+
+  /* === Pro / 3+ locations strip === */
+  .p2-pro {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    padding: clamp(18px, 2.2vw, 26px);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .p2-pro__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .p2-pro__text {
+    font-weight: 700;
+    font-size: clamp(15px, 1.8vw, 19px);
+    color: #111827;
+  }
+  .p2-pro__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .p2-pro__toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.18s;
+  }
+  .p2-pro__toggle:hover { color: #111827; }
+  .p2-pro__details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .p2-pro__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px clamp(24px, 4vw, 48px);
+  }
+
+  /* === Bottom contact block === */
+  .p2-bottom {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+  }
+  .p2-bottom__card {
+    background: #fce7f0;
+    border-radius: 16px;
+    padding: clamp(32px, 4vw, 48px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .p2-bottom__title {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    color: #111827;
+    font-size: clamp(20px, 2.5vw, 28px);
+    line-height: 1.2;
+  }
+  .p2-bottom__actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .p2-bottom__phone {
+    color: #111827;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .p2-bottom__phone-icon {
+    color: #111827;
+    flex-shrink: 0;
+  }
+  .p2-bottom__phone a { color: #ca2356; text-decoration: underline; }
+  .p2-bottom .p2-cta {
+    padding: 13px 32px;
+    width: auto;
+    min-width: 200px;
+  }
+
+  /* === Status banner (Preview Plans / No Plan) === */
   .p2-status {
     position: relative;
     display: flex;
-    width: min(1120px, 100%);
+    width: min(1200px, 100%);
     margin: 0 auto clamp(28px, 4vw, 44px);
     background: #ffffff;
-    border: 1px solid #ececec;
-    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     overflow: hidden;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -250,7 +705,7 @@ const PRICING_V2_CSS = `
     justify-content: space-between;
     gap: clamp(20px, 4vw, 56px);
     padding: clamp(20px, 2.6vw, 32px);
-    border-left: 1px solid #f1f1f1;
+    border-left: 1px solid #e5e7eb;
     flex-wrap: wrap;
   }
   .p2-status__main {
@@ -260,13 +715,25 @@ const PRICING_V2_CSS = `
     flex-direction: column;
     gap: 14px;
   }
-  .p2-status__heading { font-weight: 700; font-size: clamp(14px, 1.6vw, 18px); color: #111827; line-height: 1.3; }
+  .p2-status__heading {
+    font-weight: 700;
+    font-size: clamp(14px, 1.6vw, 18px);
+    color: #111827;
+    line-height: 1.3;
+  }
   .p2-status__features {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px clamp(20px, 3vw, 40px);
   }
-  .p2-status__feature { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #374151; line-height: 1.45; }
+  .p2-status__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.45;
+  }
   .p2-status__badge {
     position: absolute;
     top: 14px;
@@ -281,6 +748,7 @@ const PRICING_V2_CSS = `
     white-space: nowrap;
   }
   .p2-status__badge--inactive { background: #ff4d6d; }
+  .p2-status__badge--active { background: #22c55e; }
   .p2-status__cta {
     flex-shrink: 0;
     align-self: center;
@@ -288,9 +756,6 @@ const PRICING_V2_CSS = `
     margin-top: 0;
     padding: 13px 30px;
   }
-  .p2-status__badge--active { background: #22c55e; }
-
-  /* Active-subscription banner extras */
   .p2-status__dates {
     display: flex;
     gap: clamp(16px, 3vw, 32px);
@@ -328,122 +793,38 @@ const PRICING_V2_CSS = `
     transform: translateY(-1px);
   }
 
-  /* ── leStoresworld 3-option layout (added) ── */
-  .p2-hero-head { text-align: center; margin-bottom: clamp(24px, 4vw, 40px); }
-  .p2-hero-grid {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(16px, 2vw, 24px);
-    align-items: stretch;
+  /* === Responsive === */
+  @media (min-width: 1024px) {
+    .p2-page-bg {
+      margin: -20px;
+    }
   }
-  .p2-eyebrow--card {
-    color: #ca2356;
-    margin-bottom: 8px;
-  }
-  .p2-card__tagline {
-    margin-top: 10px;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #111827;
-  }
-  .p2-price__sub {
-    margin-top: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #6b7280;
-    line-height: 1.4;
-  }
-  .p2-card__note {
-    margin-top: 12px;
-    font-size: 12px;
-    color: #9ca3af;
-    line-height: 1.5;
-    text-align: center;
-  }
-
-  /* Pro / 3+ locations strip */
-  .p2-pro {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-    background: #ffffff;
-    border: 1px solid #ececec;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.10);
-    padding: clamp(18px, 2.2vw, 26px);
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-  }
-  .p2-pro__row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .p2-pro__text { font-weight: 700; font-size: clamp(15px, 1.8vw, 19px); color: #111827; }
-  .p2-pro__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .p2-pro__toggle {
-    background: none;
-    border: none;
-    color: #ca2356;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    text-decoration: underline;
-    font-family: inherit;
-  }
-  .p2-pro__details {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #f1f1f1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .p2-cta--inline { width: auto; margin-top: 0; padding: 10px 22px; }
-
-  /* Bottom contact block */
-  .p2-bottom {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: clamp(24px, 3vw, 36px) 0;
-  }
-  .p2-bottom__title {
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-weight: 400;
-    color: #ffffff;
-    font-size: clamp(22px, 3vw, 34px);
-    line-height: 1.1;
-  }
-  .p2-bottom__actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
-  .p2-bottom__phone { color: #ffffff; font-weight: 600; font-size: 15px; font-family: "Inter", ui-sans-serif, system-ui, sans-serif; }
-  .p2-bottom__phone a { color: #ffe3ee; text-decoration: underline; }
-
-  /* ── Responsive: collapse to a single column ── */
   @media (max-width: 860px) {
-    .p2-grid { grid-template-columns: 1fr !important; }
     .p2-hero-grid { grid-template-columns: 1fr !important; }
-    .p2-card__desc { min-height: 0; }
+    .p2-partial__grid { grid-template-columns: 1fr; }
+    .p2-partial__col {
+      border-right: none;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 0;
+    }
+    .p2-partial__col:last-child { border-bottom: none; }
+    .p2-pro__grid { grid-template-columns: 1fr; }
+    .p2-banner__layout { grid-template-columns: 1fr; }
   }
   @media (max-width: 760px) {
     .p2-status { flex-direction: column; }
     .p2-status__left { width: 100%; }
     .p2-status__right {
       border-left: none;
-      border-top: 1px solid #f1f1f1;
+      border-top: 1px solid #e5e7eb;
       flex-direction: column;
       align-items: flex-start;
     }
     .p2-status__features { grid-template-columns: 1fr; }
     .p2-status__cta { align-self: flex-start; }
+  }
+  @media (max-width: 640px) {
+    .p2-bottom__actions { flex-direction: column; }
   }
 `;
 

@@ -271,8 +271,8 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
       <style>{PRICING_CSS}</style>
       <style>{PRICING_V2_CSS}</style>
 
-      {/* ── Status card ── */}
-      {readOnly ? (
+
+      {/* {readOnly ? (
         <div className="p2-status">
           <div className="p2-status__left">
             <div className="p2-status__title">
@@ -311,7 +311,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
           <div className="p2-status__right">
             <div className="p2-status__main">
-              {/* Dates */}
+            
               <div className="p2-status__dates">
                 <div>
                   <span className="p2-status__date-label">Start: </span>
@@ -324,7 +324,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
                 </div>
               </div>
-              {/* Features */}
+            
               <div className="p2-status__features">
                 {activePlan?.features?.length > 0 ? (
                   activePlan.features.map((f, i) => (
@@ -360,7 +360,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   })()
                 )}
               </div>
-              {/* Cancel / lock notice */}
+              
               {user.subscriptionType !== "free" &&
                 (() => {
                   const startDate = new Date(user.subscriptionStart);
@@ -387,7 +387,9 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             </div>
           </div>
         </div>
-      ) : null}
+      ) : null} 
+ */}
+      
       {/* No-plan status card removed per client request — it listed paid-only
           features (Instagram, webstore sync) with checkmarks on a screen
           shown to stores who haven't subscribed to anything yet, implying
