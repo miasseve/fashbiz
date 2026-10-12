@@ -307,12 +307,9 @@ export const subscriptionService = {
     subscription.cancelAtPeriodEnd = true;
     subscription.status = stripeSubscription.status;
     await subscription.save();
-    // Send cancellation email
     const user = await User.findById(userId);
     if (user) {
-      // Keep user active until subscription end
-      user.isActive = false; // still active until period ends
-      user.subscriptionEnd = subscription.endDate || user.subscriptionEnd; // actual end date
+      user.subscriptionEnd = subscription.endDate || user.subscriptionEnd;
       await user.save();
     }
 
