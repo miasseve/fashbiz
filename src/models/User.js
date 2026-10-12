@@ -93,6 +93,7 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: String, default: null },
   stripeCustomerId: { type: String },
+  stripeSubscriptionId: { type: String, default: null },
   //for the DKK Store loyalty points program
   points_mode: {
     type: Boolean,
