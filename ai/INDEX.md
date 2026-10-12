@@ -20,6 +20,7 @@
 | File | Purpose |
 |------|---------|
 | `backfill-shopify-ids.js` | Backfill Shopify IDs on existing products |
+| `backfill-stripe-subscriptions.js` | Backfill stripeSubscriptionId on User documents from Subscription collection |
 | `make-favicon.mjs` | Generate favicon |
 | `register-shopify-webhook.js` | Register Shopify webhooks |
 
