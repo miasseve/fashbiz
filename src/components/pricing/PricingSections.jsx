@@ -41,6 +41,7 @@ export default function PricingSections({
   const discovery = findPlan(newPlans, "Le Stores Discovery");
   const ai = findPlan(newPlans, "lestores-ai");
   const web = findPlan(newPlans, "lestores-ai-web");
+  const webOneTime = findPlan(newPlans, "lestores-web");
 
   const isSubscribedTo = (plan) =>
     !readOnly &&
@@ -277,7 +278,7 @@ export default function PricingSections({
             </div>
           )}
 
-          {renderCta(web, "Get webshop now", { primary: true })}
+          {renderCta(webOneTime || web, "Get webshop now", { primary: true })}
         </div>
       </div>
 
