@@ -9,7 +9,11 @@ const CODE_TTL_MS = 2 * 60 * 1000; // 2 minutes — just long enough for the red
 // app's callback at /api/mobile/v1/auth/callback/<state>. Exact origins only:
 // no wildcards, no prefix matching, no custom schemes.
 function allowedDiscoverOrigins() {
-  return [process.env.DISCOVER_APP_ORIGIN, ...(process.env.DISCOVER_APP_EXTRA_ORIGINS ?? "").split(",")]
+  return [
+    process.env.DISCOVER_APP_ORIGIN,
+    process.env.MOBILE_PREVIEW_ORIGIN,
+    ...(process.env.DISCOVER_APP_EXTRA_ORIGINS ?? "").split(","),
+  ]
     .map((o) => (o ?? "").trim())
     .filter(Boolean)
     .map((o) => {
@@ -30,6 +34,7 @@ export function validateDiscoverRedirect(redirectUri) {
   if (!allowed.length) {
     return { ok: false, status: 500, error: "Discover connection is not configured" };
   }
+
   let redirectOrigin;
   try {
     redirectOrigin = new URL(redirectUri).origin;
