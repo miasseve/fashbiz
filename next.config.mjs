@@ -35,6 +35,14 @@ const nextConfig = {
           { key: "Access-Control-Allow-Headers", value: "Content-Type, x-api-key" },
         ],
       },
+      {
+        source: "/api/mobile/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "https://earnest-dolphin-228ace.netlify.app" },
+          { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, x-api-key" },
+        ],
+      },
     ];
   },
 };
