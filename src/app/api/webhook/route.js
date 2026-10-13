@@ -139,6 +139,31 @@ export async function POST(req, res) {
         break;
       }
 
+      // Handle one-time plan purchases (lestores-web, link, old Webstore/Plug-In)
+      if (session.metadata.type === "plan_purchase") {
+        const planPriceId = session.metadata.planPriceId;
+        const price = await stripe.prices.retrieve(planPriceId);
+        const product = await stripe.products.retrieve(price.product);
+        const planName = price.nickname || product.name || "Unknown Plan";
+
+        const user = await User.findById(userId);
+        if (user) {
+          user.subscriptionType = planName;
+          user.isActive = true;
+          user.subscriptionStart = new Date();
+          user.subscriptionEnd = new Date("2099-12-31");
+          await user.save();
+        }
+
+        const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link"];
+        if (user && brandingPlans.includes(planName)) {
+          applyBrandingToThemeForUser(user._id).catch(err => console.error("Branding error:", err));
+          bulkCreateShopifyProducts(user._id).catch(err => console.error("Bulk create error:", err));
+        }
+
+        break;
+      }
+
       // Get subscription details
       const subscriptionId = session.subscription;
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);

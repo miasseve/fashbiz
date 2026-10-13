@@ -81,8 +81,8 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
     }
   };
 
-  const hasActiveSubscription =
-    !readOnly && user?.subscriptionEnd && dayjs().isBefore(dayjs(user.subscriptionEnd));
+  const hasActiveSubscription = !readOnly && user?.isActive &&
+    (user?.subscriptionEnd ? dayjs().isBefore(dayjs(user.subscriptionEnd)) : true);
 
   useEffect(() => {
     if (!readOnly) setUserRole(user?.role);
@@ -160,6 +160,23 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
 
   const handleCheckout = async (priceId) => {
     if (readOnly || !user) return;
+
+    const plan = plans.find(p => p.id === priceId);
+    if (plan?.planType === "one-time") {
+      try {
+        const res = await fetch("/api/stripe/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceId }),
+        });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+      } catch (err) {
+        console.error("One-time checkout error:", err);
+      }
+      return;
+    }
+
     setSelectedPriceId(priceId);
     if (userRole === "store") setIsOpen(true);
     if (userRole !== "store") {
@@ -318,10 +335,19 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   <span className="p2-status__date-val">{dayjs(user.subscriptionStart).format("DD MMM YYYY")}</span>
                 </div>
                 <div>
-                  <span className="p2-status__date-label">
-                    {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
-                  </span>
-                  <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+                  {new Date(user.subscriptionEnd).getFullYear() >= 2099 ? (
+                    <>
+                      <span className="p2-status__date-label">Access: </span>
+                      <span className="p2-status__date-val">Permanent</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="p2-status__date-label">
+                        {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
+                      </span>
+                      <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+                    </>
+                  )}
                 </div>
               </div>
 

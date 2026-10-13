@@ -45,13 +45,15 @@ export async function POST(req) {
         ? process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL
         : process.env.NEXT_PUBLIC_FRONTEND_URL;
 
-    // Create a Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+    const stripePrice = await stripe.prices.retrieve(priceId);
+    const isOneTime = stripePrice.type === "one_time";
+
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: isOneTime ? "payment" : "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId, // must be a valid Stripe Price ID
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -60,10 +62,11 @@ export async function POST(req) {
       client_reference_id: userId,
       metadata: {
         userId,
+        ...(isOneTime && { type: "plan_purchase", planPriceId: priceId }),
       },
     });
 
-    return Response.json({ url: session.url });
+    return Response.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("Stripe error:", error);
     return Response.json({ error: error.message }, { status: 500 });
