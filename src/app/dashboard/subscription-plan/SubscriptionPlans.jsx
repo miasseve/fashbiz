@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
@@ -42,6 +43,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
   const [selectedPriceId, setSelectedPriceId] = useState(null);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const router = useRouter();
+  const { update } = useSession();
   const [terms, setTerms] = useState({
     term1: false,
   });
@@ -88,6 +90,13 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
     if (!readOnly) setUserRole(user?.role);
     fetchPlans();
   }, [hasActiveSubscription, user]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session_id")) {
+      update();
+    }
+  }, []);
 
   const fetchPlans = async () => {
     try {
@@ -214,6 +223,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             toast.success(
               data.message || "Subscription will cancel at period end",
             );
+            await update();
             router.refresh();
           } else {
             toast.error(`Error: ${data.error}`);
