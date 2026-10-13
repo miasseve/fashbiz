@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import Account from "@/models/Account";
 import dbConnect from "@/lib/db";
 
@@ -9,6 +10,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export async function GET(req) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 10000,
@@ -27,12 +31,15 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     await dbConnect();
-    const { 
-      payment_method, 
-      userId, 
-      userName, 
+    const {
+      payment_method,
+      userId,
+      userName,
       userEmail, 
       customerName,
       customerEmail,

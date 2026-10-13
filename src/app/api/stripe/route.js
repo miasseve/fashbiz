@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient()
 });
 
 export async function GET(req) {
-  try { 
-    
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
     const account = await stripe.accounts.create({
       type: "express",
       business_type: "individual", 
@@ -42,6 +45,9 @@ export async function GET(req) {
 
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const { accountId } = await req.json();
   
