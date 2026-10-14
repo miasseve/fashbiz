@@ -57,8 +57,8 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/subscription-plan?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/cancel`,
+      success_url: `${baseUrl}/dashboard/subscription-plan?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/dashboard/subscription-plan`,
       client_reference_id: userId,
       metadata: {
         userId,

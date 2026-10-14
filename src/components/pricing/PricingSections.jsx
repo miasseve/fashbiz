@@ -43,11 +43,11 @@ export default function PricingSections({
   const web = findPlan(newPlans, "lestores-ai-web");
   const webOneTime = findPlan(newPlans, "lestores-web");
 
-  const isSubscribedTo = (plan) =>
-    !readOnly &&
-    plan &&
-    activePlan &&
-    (activePlan.nickname === plan.nickname || activePlan.name === plan.name);
+  const isSubscribedTo = (plan) => {
+    if (readOnly || !plan || !activePlan) return false;
+    const eq = (a, b) => a && b && a.toLowerCase() === b.toLowerCase();
+    return eq(activePlan.nickname, plan.nickname) || eq(activePlan.name, plan.name);
+  };
 
   const renderCta = (plan, label, { primary = false, href } = {}) => {
     const cls = `p2-cta${primary ? "" : " p2-cta--outline"}`;
@@ -197,7 +197,7 @@ export default function PricingSections({
             </div>
           )}
 
-          {renderCta(ai, "Get started", { href: "https://lestores-ai.com/try/add-product" })}
+          {renderCta(ai, "Get started", readOnly ? { href: "https://lestores-ai.com/try/add-product" } : {})}
         </div>
 
         {/* RIGHT — Maximum visibility (featured) */}
