@@ -135,7 +135,7 @@ function CheckoutForm({ plan, userId }) {
             body: JSON.stringify({ userId }),
           });
         }
-        router.push("dashboard/subscription-plan");
+        router.push("/dashboard/subscription-plan");
         router.refresh();
       } else {
         setError(data.error || "Payment failed");
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!userId || !priceId) {
-      router.push("dashboard/subscription-plan");
+      router.push("/dashboard/subscription-plan");
       return;
     }
 
@@ -317,9 +317,9 @@ export default function CheckoutPage() {
       .then((plans) => {
         const selectedPlan = plans.find((p) => p.id === priceId);
         if (selectedPlan) setPlan(selectedPlan);
-        else router.push("dashboard/subscription-plan");
+        else router.push("/dashboard/subscription-plan");
       })
-      .catch(() => router.push("dashboard/subscription-plan"))
+      .catch(() => router.push("/dashboard/subscription-plan"))
       .finally(() => setLoading(false));
   }, [priceId, userId, router]);
 
@@ -354,7 +354,7 @@ export default function CheckoutPage() {
           </Elements>
 
           <button
-            onClick={() => router.push("dashboard/subscription-plan")}
+            onClick={() => router.push("/dashboard/subscription-plan")}
             className="w-full mt-5 text-[12px] text-gray-400 hover:text-gray-600 transition"
           >
             ← Back to Plans
