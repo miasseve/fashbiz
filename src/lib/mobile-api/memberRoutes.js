@@ -207,8 +207,51 @@ export function checkSubmission(body) {
     }
     return { ok: true, value: { payload, storeId } };
 }
+// ── Store capture validation ────────────────────────────────────────────────
+const STORE_SUBMIT_KEYS = ["name", "address", "city", "country", "lat", "lng"];
+const STORE_TEXT_LIMITS = { name: 200, address: 300, city: 100, country: 10 };
+export function checkStoreSubmission(body) {
+    const bad = { ok: false, status: 400, code: "invalid_request" };
+    if (hasUnknownKeys(body, STORE_SUBMIT_KEYS))
+        return bad;
+    const name = body.name;
+    if (typeof name !== "string" || !name.trim() || name.length > STORE_TEXT_LIMITS.name)
+        return bad;
+    const payload = { name: name.trim() };
+    for (const [key, limit] of Object.entries(STORE_TEXT_LIMITS)) {
+        if (key === "name")
+            continue;
+        const value = body[key];
+        if (value === undefined || value === null)
+            continue;
+        if (typeof value !== "string" || value.length > limit)
+            return bad;
+        payload[key] = value;
+    }
+    if (body.lat !== undefined && body.lat !== null) {
+        if (typeof body.lat !== "number" || !Number.isFinite(body.lat) || body.lat < -90 || body.lat > 90)
+            return bad;
+        payload.lat = body.lat;
+    }
+    if (body.lng !== undefined && body.lng !== null) {
+        if (typeof body.lng !== "number" || !Number.isFinite(body.lng) || body.lng < -180 || body.lng > 180)
+            return bad;
+        payload.lng = body.lng;
+    }
+    return { ok: true, value: { payload } };
+}
+export function checkStorePhoto(raw, maxImageBytes) {
+    if (typeof raw !== "string")
+        return { ok: false, status: 400, code: "invalid_request" };
+    const match = DATA_URL.exec(raw);
+    if (!match)
+        return { ok: false, status: 400, code: "invalid_request" };
+    if (decodedBytes(match[2]) > maxImageBytes)
+        return { ok: false, status: 413, code: "payload_too_large" };
+    return { ok: true, value: { contentType: `image/${match[1]}`, base64: match[2] } };
+}
 // ── Routes ───────────────────────────────────────────────────────────────────
-export function registerMemberRoutes(app, config, sessions, upstream) {
+export function registerMemberRoutes(app, config, sessions, upstream, storefronts) {
     const auth = requireSession(sessions);
     const HOUR = 60 * 60 * 1000;
     const allowAnalyze = createRateLimiter(config.captureRateLimitPerHour, Date.now, HOUR);
@@ -411,6 +454,46 @@ export function registerMemberRoutes(app, config, sessions, upstream) {
                 createdAt: str(created.createdAt),
             },
         }, 201);
+    });
+    // ── Boutique Capture ──
+    const allowStoreSubmit = createRateLimiter(config.captureRateLimitPerHour, Date.now, HOUR);
+    const allowPhotoUpload = createRateLimiter(config.captureRateLimitPerHour, Date.now, HOUR);
+    app.post("/v1/capture/stores", auth, smallBody, perUser(allowStoreSubmit), async (c) => {
+        const body = await jsonBody(c);
+        if (!body)
+            return fail(c, 400, "invalid_request");
+        const checked = checkStoreSubmission(body);
+        if (!checked.ok)
+            return fail(c, checked.status, checked.code);
+        const result = await upstream({ kind: "storeSubmit", payload: checked.value.payload });
+        if (!result.ok)
+            return failUpstream(c, result.error);
+        if (!isObject(result.body))
+            return fail(c, 502, "upstream_error");
+        const storeId = str(result.body.storeId);
+        const status = str(result.body.status);
+        if (!storeId || !ID_PATTERN.test(storeId) || !status)
+            return fail(c, 502, "upstream_error");
+        return c.json({ store: { id: storeId, status } }, result.status === 201 ? 201 : 200);
+    });
+    app.post("/v1/capture/stores/:storeId/photo", auth, captureBody, perUser(allowPhotoUpload), async (c) => {
+        const storeId = c.req.param("storeId");
+        if (!ID_PATTERN.test(storeId))
+            return fail(c, 404, "not_found");
+        if (!config.supabaseUrl || !config.supabaseServiceRoleKey)
+            return fail(c, 503, "upstream_not_configured");
+        const body = await jsonBody(c);
+        if (!body || hasUnknownKeys(body, ["photo"]))
+            return fail(c, 400, "invalid_request");
+        const photo = checkStorePhoto(body.photo, config.captureMaxImageBytes);
+        if (!photo.ok)
+            return fail(c, photo.status, photo.code);
+        const storeResult = await upstream({ kind: "store", id: storeId });
+        if (!storeResult.ok)
+            return failUpstream(c, storeResult.error);
+        const buffer = Buffer.from(photo.value.base64, "base64");
+        const signedUrl = await storefronts.upload(storeId, buffer, photo.value.contentType);
+        return c.json({ storefront: signedUrl }, 201);
     });
     /** Collect is a boutique action. It is deliberately not exposed to shoppers. */
 }

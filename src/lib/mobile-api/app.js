@@ -195,7 +195,7 @@ export function createApp(config, fetcher = fetch, options = {}) {
         return c.json({ store: withPhoto });
     });
     registerAuthRoutes(app, config, sessions, upstream);
-    registerMemberRoutes(app, config, sessions, upstream);
+    registerMemberRoutes(app, config, sessions, upstream, storefronts);
     // Every known path answers any other method with 405, never 404.
     const KNOWN = [
         "/v1/products",
@@ -215,6 +215,8 @@ export function createApp(config, fetcher = fetch, options = {}) {
         "/v1/reservations/:id/cancel",
         "/v1/capture/analyze",
         "/v1/capture/products",
+        "/v1/capture/stores",
+        "/v1/capture/stores/:storeId/photo",
     ];
     for (const path of KNOWN)
         app.all(path, (c) => fail(c, 405, "method_not_allowed"));
