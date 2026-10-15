@@ -41,6 +41,8 @@ export function upstreamRequest(route) {
             return { method: "POST", path: "/api/public/analyze-product", body: { images: route.images }, slow: true };
         case "productCreate":
             return { method: "POST", path: "/api/public/products", body: route.payload, slow: true };
+        case "storeSubmit":
+            return { method: "POST", path: "/api/public/stores", body: route.payload };
     }
 }
 /** Path only, kept for the read routes' diagnostics and tests. */

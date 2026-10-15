@@ -94,5 +94,50 @@ export function createStorefrontSource(config, fetcher = fetch, now = Date.now) 
             });
             return inflight;
         },
+        async upload(storeId, imageBuffer, contentType) {
+            if (!base || !key)
+                throw new Error("supabase_not_configured");
+            const path = `${storeId}/storefront`;
+            const signal = AbortSignal.timeout(config.upstreamTimeoutMs);
+            const uploadRes = await fetcher(`${base}/storage/v1/object/${BUCKET}/${path}`, {
+                method: "POST",
+                headers: { ...headersFor(key), "content-type": contentType, "x-upsert": "true" },
+                body: imageBuffer,
+                redirect: "error",
+                signal,
+            });
+            if (!uploadRes.ok)
+                throw new Error(`storefront upload ${uploadRes.status}`);
+            const upsertRes = await fetcher(`${base}/rest/v1/store_photos`, {
+                method: "POST",
+                headers: {
+                    ...headersFor(key),
+                    "content-type": "application/json",
+                    accept: "application/json",
+                    prefer: "resolution=merge-duplicates",
+                },
+                body: JSON.stringify({ store_id: storeId, storefront_path: path }),
+                redirect: "error",
+                signal: AbortSignal.timeout(config.upstreamTimeoutMs),
+            });
+            if (!upsertRes.ok)
+                throw new Error(`store_photos upsert ${upsertRes.status}`);
+            cached = null;
+            const signRes = await fetcher(`${base}/storage/v1/object/sign/${BUCKET}`, {
+                method: "POST",
+                headers: { ...headersFor(key), "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ expiresIn: SIGNED_URL_SECONDS, paths: [path] }),
+                redirect: "error",
+                signal: AbortSignal.timeout(config.upstreamTimeoutMs),
+            });
+            if (!signRes.ok)
+                throw new Error(`storefront sign ${signRes.status}`);
+            const links = (await signRes.json());
+            const link = Array.isArray(links) ? links[0] : null;
+            const signedURL = typeof link?.signedURL === "string" ? link.signedURL : null;
+            if (!signedURL)
+                throw new Error("storefront sign empty");
+            return signedURL.startsWith("https://") ? signedURL : `${base}/storage/v1${signedURL}`;
+        },
     };
 }
