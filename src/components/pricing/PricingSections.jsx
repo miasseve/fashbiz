@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import LinkInquiryModal from "@/components/pricing/LinkInquiryModal";
 
 /* ───────────────────────────────────────────────────────────────
    leStoresworld.com pricing page — V7 pixel-perfect match.
@@ -37,6 +38,7 @@ export default function PricingSections({
   const [showProDetails, setShowProDetails] = useState(false);
   const [leftAccordionOpen, setLeftAccordionOpen] = useState(false);
   const [rightAccordionOpen, setRightAccordionOpen] = useState(false);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
 
   const discovery = findPlan(newPlans, "Le Stores Discovery");
   const ai = findPlan(newPlans, "lestores-ai");
@@ -230,6 +232,13 @@ export default function PricingSections({
             <div className="p2-price-row__right">
               <span className="p2-price-row__amount">6,500 DKK</span>
               <span className="p2-price-row__meta">EXCL. VAT &middot; ONE-TIME</span>
+              <button
+                type="button"
+                className="p2-cta--text"
+                onClick={() => setLinkModalOpen(true)}
+              >
+                Get it now &#8594;
+              </button>
             </div>
           </div>
 
@@ -369,12 +378,13 @@ export default function PricingSections({
               <p>Already subscribed? No second subscription.</p>
               <p>No Le-Stores Web purchase needed.</p>
             </div>
-            <a
-              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Link · Connect my webshop")}`}
+            <button
+              type="button"
               className="p2-cta--text"
+              onClick={() => setLinkModalOpen(true)}
             >
               Connect my webshop &#8594;
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -444,6 +454,8 @@ export default function PricingSections({
 
       <p className="p2-vat-note">VAT is added where applicable.</p>
     </div>
+
+    <LinkInquiryModal isOpen={linkModalOpen} onClose={() => setLinkModalOpen(false)} />
     </div>
   );
 }
