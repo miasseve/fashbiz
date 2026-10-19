@@ -167,8 +167,11 @@ export async function POST(req, res) {
       const subscriptionId = session.subscription;
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
+      const fallbackPrice = await stripe.prices.retrieve(subscription.items.data[0].price.id);
+      const fallbackProduct = await stripe.products.retrieve(fallbackPrice.product);
+
       await User.findByIdAndUpdate(userId, {
-        subscriptionType: subscription.items.data[0].plan.nickname || "Pro",
+        subscriptionType: fallbackPrice.nickname || fallbackProduct.name || "Unknown Plan",
         subscriptionStart: new Date(subscription.current_period_start * 1000),
         subscriptionEnd: new Date(subscription.current_period_end * 1000),
         stripeSubscriptionId: subscription.id,
@@ -449,6 +452,7 @@ export async function POST(req, res) {
 
       // User is no longer active
       user.isActive = false;
+      user.subscriptionType = "free";
       await user.save();
 
       await Subscription.findOneAndUpdate(
