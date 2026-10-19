@@ -233,7 +233,6 @@ export default function PricingSections({
             </div>
           </div>
 
-          <div className="p2-price__fee">4% on your webshop sales</div>
           <div className="p2-price__commitment">12-month commitment</div>
 
           <div className="p2-card__separator" />
