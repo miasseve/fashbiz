@@ -11,7 +11,6 @@ import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
 import RefferralDetails from "@/models/Referral";
-import { user } from "@heroui/theme";
 import { archiveProduct } from "@/actions/productActions";
 import { unarchiveProduct } from "@/actions/productActions";
 import {
