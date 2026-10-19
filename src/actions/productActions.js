@@ -881,7 +881,7 @@ export async function getInstagramPostStatus(productIds) {
     const logs = await InstagramPostLog.find({
       productIds: { $in: productIds },
       userId: session.user.id,
-    }).select("productId status instagramPostId postedAt errorLog");
+    }).select("productIds status instagramPostId postedAt errorLog");
 
     return {
       status: 200,

@@ -408,10 +408,7 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Tabs — visible to store users with webstore access (subscription or add-on) */}
-      {isStore &&
-        (user?.subscriptionType === "Pro" ||
-          user?.subscriptionType === "Business" ||
-          hasWebstoreAccess) && (
+      {isStore && hasWebstoreAccess && (
           <div className="px-6 pt-5 pb-0">
             <div className="inline-flex bg-gray-100 rounded-lg p-1 gap-1">
               <button
