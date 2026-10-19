@@ -171,7 +171,10 @@ export async function POST(req) {
           });
           if (!existingTx) {
             // Calculate platform fee based on store owner's subscription
-            const feeRate = PLATFORM_FEE_RATES[owner.subscriptionType] || 0;
+            const normalizedSubType = (owner.subscriptionType || "").toLowerCase().trim();
+            const feeRate = Object.entries(PLATFORM_FEE_RATES).find(
+              ([key]) => key.toLowerCase() === normalizedSubType
+            )?.[1] || 0;
             const saleAmount = Math.round(parseFloat(item.price || event.total_price) * 100);
             const feeAmount = feeRate > 0 ? Math.round(saleAmount * feeRate) : 0;
 
