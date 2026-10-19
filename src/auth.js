@@ -39,6 +39,8 @@ export async function computeHasWebstoreAccess(userId, subscriptionType) {
   }
 }
 
+export { canPostToInstagram } from "@/lib/planGating";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },

@@ -1,6 +1,7 @@
 import React from "react";
 import { getProductById } from "@/actions/productActions";
 import { auth } from "@/auth";
+import { canPostToInstagram } from "@/lib/planGating";
 import ImageCarousel from "@/app/product/components/ImageCarousel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -34,14 +35,7 @@ const Page = async ({ params }) => {
   const parsedUser = JSON.parse(user);
 
   const session = await auth();
-  // Paid automation plans only (free = Discovery-only). Old names kept, new added.
-  const canPostToInstagram =
-    session?.user?.subscriptionType === "Pro" ||
-    session?.user?.subscriptionType === "Business" ||
-    session?.user?.subscriptionType === "lestores-ai" ||
-    session?.user?.subscriptionType === "lestores-ai-web" ||
-    session?.user?.subscriptionType === "lestores-web" ||
-    session?.user?.subscriptionType === "link";
+  const canPostIG = canPostToInstagram(session?.user?.subscriptionType);
   // Free-plan stores don't get automatic Shopify-sync delisting, so they
   // need the manual "Mark Sold / Delist" button; paid subscribers already
   // have that happen automatically via the real Shopify sale webhook.
@@ -254,7 +248,7 @@ const Page = async ({ params }) => {
               first. */}
           <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OmnichannelConnections
-              canPostToInstagram={canPostToInstagram}
+              canPostToInstagram={canPostIG}
               webstoreUrl={shopifyProductUrl}
             />
             {!isBrandOrCollectItem && (

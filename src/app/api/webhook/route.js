@@ -154,7 +154,7 @@ export async function POST(req, res) {
           await user.save();
         }
 
-        const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link"];
+        const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link", "Webstore Basic", "Webstore Pro", "Plug-In Basic", "Plug-In Pro"];
         if (user && brandingPlans.includes(planName)) {
           applyBrandingToThemeForUser(user._id).catch(err => console.error("Branding error:", err));
           bulkCreateShopifyProducts(user._id).catch(err => console.error("Bulk create error:", err));
@@ -374,7 +374,7 @@ export async function POST(req, res) {
       // Old plan names kept intact; new leStoresworld web plans added so their
       // subscribers also get branding. "lestores-ai" (automation only, no web
       // store) is intentionally excluded.
-      const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link"];
+      const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link", "Webstore Basic", "Webstore Pro", "Plug-In Basic", "Plug-In Pro"];
       const oldSubType = user.subscriptionType;
       const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
       const product = await stripe.products.retrieve(price.product);
