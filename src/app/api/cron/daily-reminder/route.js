@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 
 function isAuthorized(req, session) {
   const authHeader = req.headers.get("authorization");
-  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
   const role = session?.user?.role;
   return role === "admin" || role === "developer";
 }
