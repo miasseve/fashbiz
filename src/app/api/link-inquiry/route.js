@@ -4,7 +4,7 @@ import { linkInquiry } from "@/mails/linkInquiry";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { storeName, contactEmail, webshopUrl, message } = body;
+    const { name, storeName, contactEmail, webshopUrl, message } = body;
 
     if (!storeName || !storeName.trim()) {
       return NextResponse.json({ error: "Store name is required" }, { status: 400 });
@@ -21,6 +21,7 @@ export async function POST(req) {
     }
 
     await linkInquiry({
+      name: (name || "").trim(),
       storeName: storeName.trim(),
       contactEmail: contactEmail.trim(),
       webshopUrl: webshopUrl.trim(),

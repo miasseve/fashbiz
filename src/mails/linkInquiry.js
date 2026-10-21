@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export async function linkInquiry({ storeName, contactEmail, webshopUrl, message }) {
+export async function linkInquiry({ name, storeName, contactEmail, webshopUrl, message }) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
@@ -18,7 +18,7 @@ export async function linkInquiry({ storeName, contactEmail, webshopUrl, message
     from: process.env.EMAIL_USER,
     to: "mia@le-stores.com",
     replyTo: contactEmail,
-    subject: `Link inquiry from ${storeName}`,
+    subject: `Link inquiry from ${name || storeName}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1a1a1a; border-bottom: 2px solid #e5e5e5; padding-bottom: 12px;">
@@ -26,18 +26,22 @@ export async function linkInquiry({ storeName, contactEmail, webshopUrl, message
         </h2>
         <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
           <tr>
-            <td style="padding: 10px 12px; font-weight: bold; color: #555; width: 140px; vertical-align: top;">Store Name</td>
-            <td style="padding: 10px 12px;">${storeName}</td>
+            <td style="padding: 10px 12px; font-weight: bold; color: #555; width: 140px; vertical-align: top;">Name</td>
+            <td style="padding: 10px 12px;">${name || "—"}</td>
           </tr>
           <tr style="background: #f9f9f9;">
+            <td style="padding: 10px 12px; font-weight: bold; color: #555; vertical-align: top;">Store / Company</td>
+            <td style="padding: 10px 12px;">${storeName}</td>
+          </tr>
+          <tr>
             <td style="padding: 10px 12px; font-weight: bold; color: #555; vertical-align: top;">Contact Email</td>
             <td style="padding: 10px 12px;"><a href="mailto:${contactEmail}">${contactEmail}</a></td>
           </tr>
-          <tr>
+          <tr style="background: #f9f9f9;">
             <td style="padding: 10px 12px; font-weight: bold; color: #555; vertical-align: top;">Webshop URL</td>
             <td style="padding: 10px 12px;"><a href="${webshopUrl}" target="_blank">${webshopUrl}</a></td>
           </tr>
-          <tr style="background: #f9f9f9;">
+          <tr>
             <td style="padding: 10px 12px; font-weight: bold; color: #555; vertical-align: top;">Message</td>
             <td style="padding: 10px 12px;">${message || "<em>No message provided</em>"}</td>
           </tr>
