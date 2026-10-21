@@ -125,6 +125,7 @@ const PRICING_V2_CSS = `
     flex-direction: column;
     gap: 12px;
     margin-top: 16px;
+    flex: 1;
   }
 
   /* === Badge pill (inline) === */
@@ -318,9 +319,8 @@ const PRICING_V2_CSS = `
 
   /* === CTA button === */
   .p2-card > .p2-cta,
-  .p2-card > .p2-cta--outline,
   .p2-card > a.p2-cta,
-  .p2-card > a.p2-cta--outline { margin-top: auto; }
+  .p2-card > button.p2-cta { margin-top: auto; }
   .p2-cta {
     margin-top: 16px;
     width: 100%;
