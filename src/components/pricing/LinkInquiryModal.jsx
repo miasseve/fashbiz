@@ -42,8 +42,8 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
   const markTouched = (field) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  const isInvalid = (field, value) => touched[field] && !value.trim();
-  const isEmailInvalid =
+  const fieldInvalid = (field, value) => touched[field] && !value.trim();
+  const emailFormatInvalid =
     touched.email && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
@@ -92,16 +92,15 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
       onClose={handleClose}
       isDismissable={false}
       placement="center"
-      size="2xl"
+      size="lg"
       classNames={{
-        base: "rounded-xl mx-4 sm:mx-8 border border-[#ca2356]/30",
+        base: "rounded-xl mx-4 sm:mx-8",
         body: "px-6 sm:px-8",
         header: "px-6 sm:px-8 pt-6",
         footer: "px-6 sm:px-8 pb-6",
       }}
-      style={{ background: "linear-gradient(180deg, #fff5f7 0%, #ffffff 40%)" }}
     >
-      <ModalContent style={{ background: "linear-gradient(180deg, #fff5f7 0%, #ffffff 40%)" }}>
+      <ModalContent>
         {success ? (
           <>
             <ModalHeader className="flex flex-col items-center gap-1 pt-8">
@@ -147,102 +146,82 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Name"
+                  labelPlacement="outside"
                   placeholder="Your name"
                   value={name}
                   onValueChange={setName}
                   onBlur={() => markTouched("name")}
                   isRequired
-                  isInvalid={isInvalid("name", name)}
-                  errorMessage={isInvalid("name", name) ? "Name is required" : undefined}
+                  isInvalid={fieldInvalid("name", name)}
+                  errorMessage={fieldInvalid("name", name) ? "Name is required" : undefined}
                   variant="bordered"
-                  fullWidth
-                  radius="md"
-                  size="lg"
-                  classNames={{
-                    inputWrapper: "border-[#ca2356]/30 hover:border-[#ca2356]/60 focus-within:border-[#ca2356] bg-white",
-                    label: "text-gray-500 text-sm",
-                  }}
+                  radius="sm"
+                  size="md"
                 />
                 <Input
                   label="Email"
+                  labelPlacement="outside"
                   placeholder="your@email.com"
                   type="email"
                   value={email}
                   onValueChange={setEmail}
                   onBlur={() => markTouched("email")}
                   isRequired
-                  isInvalid={isInvalid("email", email) || isEmailInvalid}
+                  isInvalid={fieldInvalid("email", email) || emailFormatInvalid}
                   errorMessage={
-                    isInvalid("email", email)
+                    fieldInvalid("email", email)
                       ? "Email is required"
-                      : isEmailInvalid
+                      : emailFormatInvalid
                         ? "Enter a valid email"
                         : undefined
                   }
                   variant="bordered"
-                  fullWidth
-                  radius="md"
-                  size="lg"
-                  classNames={{
-                    inputWrapper: "border-[#ca2356]/30 hover:border-[#ca2356]/60 focus-within:border-[#ca2356] bg-white",
-                    label: "text-gray-500 text-sm",
-                  }}
+                  radius="sm"
+                  size="md"
                 />
               </div>
 
               <Input
                 label="Store / company"
+                labelPlacement="outside"
                 placeholder="Your store or company name"
                 value={storeCompany}
                 onValueChange={setStoreCompany}
                 onBlur={() => markTouched("storeCompany")}
                 isRequired
-                isInvalid={isInvalid("storeCompany", storeCompany)}
-                errorMessage={isInvalid("storeCompany", storeCompany) ? "Store / company is required" : undefined}
+                isInvalid={fieldInvalid("storeCompany", storeCompany)}
+                errorMessage={fieldInvalid("storeCompany", storeCompany) ? "Store / company is required" : undefined}
                 variant="bordered"
-                fullWidth
-                radius="md"
-                size="lg"
-                classNames={{
-                  inputWrapper: "border-[#ca2356]/30 hover:border-[#ca2356]/60 focus-within:border-[#ca2356] bg-white",
-                  label: "text-gray-500 text-sm",
-                }}
+                radius="sm"
+                size="md"
               />
 
               <Input
                 label="Webshop URL"
+                labelPlacement="outside"
                 placeholder="https://yourstore.dk"
                 type="url"
                 value={webshopUrl}
                 onValueChange={setWebshopUrl}
                 onBlur={() => markTouched("webshopUrl")}
                 isRequired
-                isInvalid={isInvalid("webshopUrl", webshopUrl)}
-                errorMessage={isInvalid("webshopUrl", webshopUrl) ? "Webshop URL is required" : undefined}
+                isInvalid={fieldInvalid("webshopUrl", webshopUrl)}
+                errorMessage={fieldInvalid("webshopUrl", webshopUrl) ? "Webshop URL is required" : undefined}
                 variant="bordered"
-                fullWidth
-                radius="md"
-                size="lg"
-                classNames={{
-                  inputWrapper: "border-[#ca2356]/30 hover:border-[#ca2356]/60 focus-within:border-[#ca2356] bg-white",
-                  label: "text-gray-500 text-sm",
-                }}
+                radius="sm"
+                size="md"
               />
 
               <Textarea
                 label="Request details"
+                labelPlacement="outside"
                 placeholder="Tell us about your needs..."
                 value={message}
                 onValueChange={setMessage}
                 variant="bordered"
-                fullWidth
-                radius="md"
-                size="lg"
+                radius="sm"
+                size="md"
                 minRows={3}
-                classNames={{
-                  inputWrapper: "border-[#ca2356]/30 hover:border-[#ca2356]/60 focus-within:border-[#ca2356] bg-white",
-                  label: "text-gray-500 text-sm",
-                }}
               />
 
               {error && (
