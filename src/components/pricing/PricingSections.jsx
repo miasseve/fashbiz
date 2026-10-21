@@ -8,8 +8,6 @@ import LinkInquiryModal from "@/components/pricing/LinkInquiryModal";
 
    Matches the live reference at lestoresworld.com/pricing:
    · Head Start = 2-column (text left, table right, always visible)
-   · "See the detail →" = static link, not toggle
-   · Card accordions = INCLUDED / NOT INCLUDED subsections
    · Link column in "Already have part of it?" = plain text
    · Pro details = 2-column grid, 6 items
    · Excludes the Questions FAQ section
@@ -36,8 +34,6 @@ export default function PricingSections({
   readOnly = false,
 }) {
   const [showProDetails, setShowProDetails] = useState(false);
-  const [leftAccordionOpen, setLeftAccordionOpen] = useState(false);
-  const [rightAccordionOpen, setRightAccordionOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
 
   const discovery = findPlan(newPlans, "Le Stores Discovery");
@@ -157,48 +153,6 @@ export default function PricingSections({
             {feature("One picture. AI does the repetitive work.")}
           </div>
 
-          <button
-            type="button"
-            className="p2-accordion__toggle"
-            onClick={() => setLeftAccordionOpen((v) => !v)}
-            aria-expanded={leftAccordionOpen}
-          >
-            What is included
-            <span
-              className={`p2-accordion__chevron${leftAccordionOpen ? " p2-accordion__chevron--open" : ""}`}
-            >
-              &#9662;
-            </span>
-          </button>
-          {leftAccordionOpen && (
-            <div className="p2-accordion__content">
-              <div className="p2-accordion__section-title">INCLUDED</div>
-              <div className="p2-features">
-                {[
-                  "AI-vision: one picture fills in the listing",
-                  "Brand, category, size, colour, material, condition, paragraph description",
-                  "Barcode ready to print, including size and price. Paste it on your pretty store tag.",
-                  "AI suggested price after 300 manual pieces: it learns YOUR pricing",
-                  "Delisted everywhere automatically when sold",
-                  "Consignment management: seller portal · commission management · payouts",
-                  "Your pieces in the Le-Stores App",
-                  "Free Discovery until 1 May 2027",
-                ].map(feature)}
-              </div>
-              <div className="p2-accordion__section-title">NOT INCLUDED</div>
-              <div className="p2-features">
-                <div className="p2-excluded">
-                  <span className="p2-cross">&#10005;</span>
-                  Your own webshop (Le-Stores Web)
-                </div>
-                <div className="p2-excluded">
-                  <span className="p2-cross">&#10005;</span>
-                  Custom webshop design
-                </div>
-              </div>
-            </div>
-          )}
-
           {renderCta(ai, "Get started", readOnly ? { href: "https://lestores-ai.com/try/add-product" } : {})}
         </div>
 
@@ -252,40 +206,6 @@ export default function PricingSections({
             {feature("One picture. AI does the repetitive work.")}
           </div>
 
-          <button
-            type="button"
-            className="p2-accordion__toggle"
-            onClick={() => setRightAccordionOpen((v) => !v)}
-            aria-expanded={rightAccordionOpen}
-          >
-            Your store online &amp; automatic
-            <span
-              className={`p2-accordion__chevron${rightAccordionOpen ? " p2-accordion__chevron--open" : ""}`}
-            >
-              &#9662;
-            </span>
-          </button>
-          {rightAccordionOpen && (
-            <div className="p2-accordion__content">
-              <div className="p2-accordion__section-title">INCLUDED</div>
-              <div className="p2-features">
-                {[
-                  "Same as lestores-ai: every feature",
-                  "Your own secondhand webshop, already built",
-                  "Add your logo and pictures, adjust the look",
-                  "Link: connection to lestores-ai and testing before you start",
-                ].map(feature)}
-              </div>
-              <div className="p2-accordion__section-title">NOT INCLUDED</div>
-              <div className="p2-features">
-                <div className="p2-excluded">
-                  <span className="p2-cross">&#10005;</span>
-                  Custom design beyond the ready webshop (on quote)
-                </div>
-              </div>
-            </div>
-          )}
-
           {renderCta(webOneTime || web, "Get webshop now", { primary: true })}
         </div>
       </div>
@@ -302,9 +222,6 @@ export default function PricingSections({
               You get a webshop that is already built. Our model combines a starting cost,
               a lestores-ai subscription and a commission linked to your sales.
             </p>
-            <span className="p2-banner__see-detail">
-              See the detail &#8594;
-            </span>
           </div>
           <div className="p2-banner__right">
             <div className="p2-banner__table-card">

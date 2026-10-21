@@ -317,6 +317,10 @@ const PRICING_V2_CSS = `
   .p2-accordion__section-title:first-child { margin-top: 0; }
 
   /* === CTA button === */
+  .p2-card > .p2-cta,
+  .p2-card > .p2-cta--outline,
+  .p2-card > a.p2-cta,
+  .p2-card > a.p2-cta--outline { margin-top: auto; }
   .p2-cta {
     margin-top: 16px;
     width: 100%;
