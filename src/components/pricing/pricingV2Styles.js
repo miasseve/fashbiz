@@ -505,7 +505,7 @@ const PRICING_V2_CSS = `
   }
   .p2-partial__grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
   }
   .p2-partial__col {
@@ -565,6 +565,76 @@ const PRICING_V2_CSS = `
     color: #6b7280;
   }
   .p2-partial__col .p2-cta--text { margin-top: auto; padding-top: 8px; }
+
+  /* === Standalone Link section === */
+  .p2-link {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+  }
+  .p2-link__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 800px;
+  }
+  .p2-link__card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: clamp(24px, 2.4vw, 32px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .p2-link__eyebrow {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #ca2356;
+    margin-bottom: 8px;
+  }
+  .p2-link__title {
+    font-weight: 600;
+    font-size: clamp(18px, 2vw, 22px);
+    line-height: 1.25;
+    color: #111827;
+    margin: 0 0 12px;
+  }
+  .p2-link__price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .p2-link__amount {
+    font-weight: 500;
+    font-size: clamp(24px, 3vw, 32px);
+    color: #111827;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .p2-link__meta {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    line-height: 1.3;
+  }
+  .p2-link__desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #6b7280;
+    margin: 0 0 16px;
+  }
+  .p2-link__features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .p2-link__card .p2-cta--text { margin-top: auto; }
 
   /* === Pro / 3+ locations strip === */
   .p2-pro {
@@ -813,6 +883,7 @@ const PRICING_V2_CSS = `
     }
     .p2-partial__col:last-child { border-bottom: none; }
     .p2-pro__grid { grid-template-columns: 1fr; }
+    .p2-link__grid { grid-template-columns: 1fr; }
     .p2-banner__layout { grid-template-columns: 1fr; }
   }
   @media (max-width: 760px) {

@@ -125,7 +125,7 @@ export default function PricingSections({
     <div className="p2-wrap">
       {/* ── Page heading ── */}
       <div className="p2-hero-head">
-        <h2 className="p2-title">Pricing</h2>
+        <h2 className="p2-title">Subscription Plan</h2>
       </div>
 
       {/* ── Two main cards ── */}
@@ -278,31 +278,43 @@ export default function PricingSections({
               href: "https://lestoresworld.com/ai",
             })}
           </div>
+        </div>
+      </div>
 
-          {/* Column 3 — Link (plain text, no checkmarks) */}
-          <div className="p2-partial__col">
-            <div className="p2-partial__eyebrow">LINK</div>
-            <div className="p2-partial__name">Already have a webshop? Add Link.</div>
-            <p className="p2-partial__desc">
-              Keep your webshop. Get the simplicity of lestores-ai.
-            </p>
-            <div className="p2-partial__price p2-partial__price--bold">
-              6,500 DKK excl. VAT &middot; one-time
+      {/* ── Standalone Link section ── */}
+      <div className="p2-link">
+        <div className="p2-link__grid">
+          {/* Left — Link product card */}
+          <div className="p2-link__card">
+            <div className="p2-link__eyebrow">LINK</div>
+            <h3 className="p2-link__title">
+              Already have a webshop? Connect it to lestores-ai.
+            </h3>
+            <div className="p2-link__price">
+              <span className="p2-link__amount">6,500 DKK</span>
+              <span className="p2-link__meta">
+                excl. VAT &middot; 8,125 DKK incl. VAT &middot; one-time
+              </span>
             </div>
-            <div className="p2-partial__plain-list">
-              <p>Webshop compatibility checked before you order.</p>
-              <p>Active lestores-ai subscription needed. Standard price: 549 DKK/month excl. VAT.</p>
-              <p>Already subscribed? No second subscription.</p>
-              <p>No Le-Stores Web purchase needed.</p>
+            <p className="p2-link__desc">
+              Connection to your own webshop and testing included.
+              No new Le-Stores Web webshop needed.
+              Needs an active lestores-ai subscription.
+            </p>
+            <div className="p2-link__features">
+              {feature("Publishing control — Shopify draft vs live check")}
+              {feature("Sync status — success status & direct link to published pieces")}
+              {feature("Brand and tags — AI-detected brands as vendors, material/condition as tags")}
             </div>
             <button
               type="button"
               className="p2-cta--text"
               onClick={() => setLinkModalOpen(true)}
             >
-              Connect my webshop &#8594;
+              Get it now &#8594;
             </button>
           </div>
+
         </div>
       </div>
 
