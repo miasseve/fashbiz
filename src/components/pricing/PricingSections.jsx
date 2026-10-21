@@ -315,20 +315,6 @@ export default function PricingSections({
             </button>
           </div>
 
-          {/* Right — Contact/quote card */}
-          <div className="p2-link__card p2-link__card--quote">
-            <h3 className="p2-link__title">Need a larger solution?</h3>
-            <p className="p2-link__desc">
-              Contact us for a quote tailored to your store and requirements.
-            </p>
-            <button
-              type="button"
-              className="p2-cta"
-              onClick={() => setLinkModalOpen(true)}
-            >
-              Request a quote
-            </button>
-          </div>
         </div>
       </div>
 

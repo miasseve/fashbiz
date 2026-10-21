@@ -573,9 +573,9 @@ const PRICING_V2_CSS = `
   }
   .p2-link__grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: 1fr;
     gap: 24px;
-    align-items: stretch;
+    max-width: 800px;
   }
   .p2-link__card {
     display: flex;
@@ -586,13 +586,6 @@ const PRICING_V2_CSS = `
     padding: clamp(24px, 2.4vw, 32px);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-  }
-  .p2-link__card--quote {
-    background: #fce7f0;
-    border-color: transparent;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
   }
   .p2-link__eyebrow {
     font-weight: 700;
@@ -642,11 +635,6 @@ const PRICING_V2_CSS = `
     margin-bottom: 16px;
   }
   .p2-link__card .p2-cta--text { margin-top: auto; }
-  .p2-link__card--quote .p2-cta {
-    width: auto;
-    min-width: 200px;
-    margin-top: 16px;
-  }
 
   /* === Pro / 3+ locations strip === */
   .p2-pro {
