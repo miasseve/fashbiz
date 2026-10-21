@@ -6,10 +6,13 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Input,
-  Textarea,
   Button,
 } from "@heroui/react";
+
+const inputClass =
+  "w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#ca2356]/40 focus:border-[#ca2356] transition-colors placeholder:text-gray-400";
+const inputErrorClass =
+  "w-full border border-red-400 rounded-lg px-4 py-3 text-gray-800 text-base bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400 transition-colors placeholder:text-gray-400";
 
 export default function LinkInquiryModal({ isOpen, onClose }) {
   const [name, setName] = useState("");
@@ -20,9 +23,9 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [touched, setTouched] = useState({});
+  const [didSubmit, setDidSubmit] = useState(false);
 
-  const resetForm = () => {
+  const handleClose = () => {
     setName("");
     setEmail("");
     setStoreCompany("");
@@ -31,31 +34,20 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
     setLoading(false);
     setSuccess(false);
     setError("");
-    setTouched({});
-  };
-
-  const handleClose = () => {
-    resetForm();
+    setDidSubmit(false);
     onClose();
   };
 
-  const markTouched = (field) =>
-    setTouched((prev) => ({ ...prev, [field]: true }));
-
-  const fieldInvalid = (field, value) => touched[field] && !value.trim();
-  const emailFormatInvalid =
-    touched.email && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
+    setDidSubmit(true);
     setError("");
-    setTouched({ name: true, email: true, storeCompany: true, webshopUrl: true });
 
     if (!name.trim() || !email.trim() || !storeCompany.trim() || !webshopUrl.trim()) {
-      setError("Please fill in all required fields.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
+    if (!emailValid) {
       return;
     }
 
@@ -85,165 +77,171 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
     }
   };
 
+  if (success) {
+    return (
+      <Modal
+        backdrop="blur"
+        isOpen={isOpen}
+        onClose={handleClose}
+        placement="center"
+        size="lg"
+        classNames={{ base: "rounded-2xl" }}
+      >
+        <ModalContent className="py-10">
+          <ModalBody className="flex flex-col items-center gap-6">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-50">
+              <svg
+                className="w-10 h-10 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-gray-900">Inquiry sent</h3>
+              <p className="text-sm text-gray-500 max-w-xs">
+                Thank you for your request. You will receive a confirmation shortly.
+              </p>
+            </div>
+            <Button
+              className="bg-[#ca2356] text-white font-medium rounded-full px-10 mt-2"
+              size="lg"
+              onPress={handleClose}
+            >
+              Close
+            </Button>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       backdrop="blur"
       isOpen={isOpen}
       onClose={handleClose}
-      isDismissable={false}
+      isDismissable
       placement="center"
-      size="lg"
-      classNames={{
-        base: "rounded-xl mx-4 sm:mx-8",
-        body: "px-6 sm:px-8",
-        header: "px-6 sm:px-8 pt-6",
-        footer: "px-6 sm:px-8 pb-6",
-      }}
+      size="3xl"
+      scrollBehavior="inside"
+      classNames={{ base: "rounded-2xl" }}
     >
       <ModalContent>
-        {success ? (
-          <>
-            <ModalHeader className="flex flex-col items-center gap-1 pt-8">
-              <span className="text-2xl font-bold text-gray-900">Inquiry Sent</span>
-            </ModalHeader>
-            <ModalBody className="flex flex-col items-center py-6 gap-4">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
-                <svg
-                  className="w-9 h-9 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-base text-center text-gray-600 max-w-sm">
-                Thank you for your request, you will receive a confirmation shortly.
-              </p>
-            </ModalBody>
-            <ModalFooter className="flex flex-col items-center gap-3 pb-8">
-              <Button
-                className="bg-[#ca2356] text-white font-semibold rounded-full px-8"
-                size="lg"
-                onPress={handleClose}
-              >
-                Close
-              </Button>
-              <p className="text-xs text-gray-400">
-                mia@le-stores.com &middot; 81 93 82 68 &middot; Copenhagen, Denmark
-              </p>
-            </ModalFooter>
-          </>
-        ) : (
-          <>
-            <ModalHeader className="flex flex-col items-center gap-1 pt-6 pb-0">
-              <span className="text-2xl font-bold text-gray-900">Connect your webshop</span>
-              <span className="text-sm font-normal text-gray-500">Send us the essentials</span>
-            </ModalHeader>
+        <ModalHeader className="flex flex-col items-center gap-1 pb-0 pt-10">
+          <h2 className="text-3xl font-bold text-gray-900">Connect your webshop</h2>
+          <p className="text-base font-normal text-gray-400 mt-1">Send us the essentials</p>
+        </ModalHeader>
 
-            <ModalBody className="flex flex-col gap-4 pt-5 pb-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Name"
-                  labelPlacement="outside"
+        <ModalBody className="px-10 sm:px-14 pt-8 pb-4">
+          <div className="flex flex-col gap-6">
+            {/* Row 1: Name + Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Name <span className="text-[#ca2356]">*</span>
+                </label>
+                <input
+                  type="text"
                   placeholder="Your name"
                   value={name}
-                  onValueChange={setName}
-                  onBlur={() => markTouched("name")}
-                  isRequired
-                  isInvalid={fieldInvalid("name", name)}
-                  errorMessage={fieldInvalid("name", name) ? "Name is required" : undefined}
-                  variant="bordered"
-                  radius="sm"
-                  size="md"
+                  onChange={(e) => setName(e.target.value)}
+                  className={didSubmit && !name.trim() ? inputErrorClass : inputClass}
                 />
-                <Input
-                  label="Email"
-                  labelPlacement="outside"
-                  placeholder="your@email.com"
-                  type="email"
-                  value={email}
-                  onValueChange={setEmail}
-                  onBlur={() => markTouched("email")}
-                  isRequired
-                  isInvalid={fieldInvalid("email", email) || emailFormatInvalid}
-                  errorMessage={
-                    fieldInvalid("email", email)
-                      ? "Email is required"
-                      : emailFormatInvalid
-                        ? "Enter a valid email"
-                        : undefined
-                  }
-                  variant="bordered"
-                  radius="sm"
-                  size="md"
-                />
+                {didSubmit && !name.trim() && (
+                  <p className="text-xs text-red-500 mt-1">Name is required</p>
+                )}
               </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email <span className="text-[#ca2356]">*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={didSubmit && (!email.trim() || !emailValid) ? inputErrorClass : inputClass}
+                />
+                {didSubmit && !email.trim() && (
+                  <p className="text-xs text-red-500 mt-1">Email is required</p>
+                )}
+                {didSubmit && email.trim() && !emailValid && (
+                  <p className="text-xs text-red-500 mt-1">Enter a valid email</p>
+                )}
+              </div>
+            </div>
 
-              <Input
-                label="Store / company"
-                labelPlacement="outside"
+            {/* Row 2: Store / company */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Store / company <span className="text-[#ca2356]">*</span>
+              </label>
+              <input
+                type="text"
                 placeholder="Your store or company name"
                 value={storeCompany}
-                onValueChange={setStoreCompany}
-                onBlur={() => markTouched("storeCompany")}
-                isRequired
-                isInvalid={fieldInvalid("storeCompany", storeCompany)}
-                errorMessage={fieldInvalid("storeCompany", storeCompany) ? "Store / company is required" : undefined}
-                variant="bordered"
-                radius="sm"
-                size="md"
+                onChange={(e) => setStoreCompany(e.target.value)}
+                className={didSubmit && !storeCompany.trim() ? inputErrorClass : inputClass}
               />
+              {didSubmit && !storeCompany.trim() && (
+                <p className="text-xs text-red-500 mt-1">Store / company is required</p>
+              )}
+            </div>
 
-              <Input
-                label="Webshop URL"
-                labelPlacement="outside"
-                placeholder="https://yourstore.dk"
+            {/* Row 3: Webshop URL */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Webshop URL <span className="text-[#ca2356]">*</span>
+              </label>
+              <input
                 type="url"
+                placeholder="https://yourstore.dk"
                 value={webshopUrl}
-                onValueChange={setWebshopUrl}
-                onBlur={() => markTouched("webshopUrl")}
-                isRequired
-                isInvalid={fieldInvalid("webshopUrl", webshopUrl)}
-                errorMessage={fieldInvalid("webshopUrl", webshopUrl) ? "Webshop URL is required" : undefined}
-                variant="bordered"
-                radius="sm"
-                size="md"
+                onChange={(e) => setWebshopUrl(e.target.value)}
+                className={didSubmit && !webshopUrl.trim() ? inputErrorClass : inputClass}
               />
+              {didSubmit && !webshopUrl.trim() && (
+                <p className="text-xs text-red-500 mt-1">Webshop URL is required</p>
+              )}
+            </div>
 
-              <Textarea
-                label="Request details"
-                labelPlacement="outside"
+            {/* Row 4: Request details */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Request details
+              </label>
+              <textarea
                 placeholder="Tell us about your needs..."
                 value={message}
-                onValueChange={setMessage}
-                variant="bordered"
-                radius="sm"
-                size="md"
-                minRows={3}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                className={`${inputClass} resize-none`}
               />
+            </div>
 
-              {error && (
-                <p className="text-sm text-red-500 text-center">{error}</p>
-              )}
-            </ModalBody>
+            {error && (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            )}
+          </div>
+        </ModalBody>
 
-            <ModalFooter className="flex flex-col items-center gap-3 pt-2 pb-6">
-              <Button
-                className="bg-[#ca2356] text-white font-semibold rounded-full px-8"
-                size="lg"
-                onPress={handleSubmit}
-                isLoading={loading}
-              >
-                {loading ? "Sending..." : "Send"}
-              </Button>
-              <p className="text-xs text-gray-400">
-                mia@le-stores.com &middot; 81 93 82 68 &middot; Copenhagen, Denmark
-              </p>
-            </ModalFooter>
-          </>
-        )}
+        <ModalFooter className="flex flex-col items-center gap-4 px-10 sm:px-14 pt-4 pb-10">
+          <Button
+            className="bg-[#ca2356] text-white font-semibold rounded-full px-14 text-base"
+            size="lg"
+            onPress={handleSubmit}
+            isLoading={loading}
+          >
+            {loading ? "Sending..." : "Send"}
+          </Button>
+          <p className="text-xs text-gray-400">
+            mia@le-stores.com &middot; 81 93 82 68 &middot; Copenhagen, Denmark
+          </p>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );
