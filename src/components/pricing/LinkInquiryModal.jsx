@@ -65,21 +65,40 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg" placement="center">
+    <Modal
+      backdrop="blur"
+      isOpen={isOpen}
+      onClose={handleClose}
+      isDismissable={false}
+      placement="center"
+      size="2xl"
+      className="rounded-xl mx-6 sm:mx-8"
+    >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
+        <ModalHeader className="flex justify-center items-center text-2xl font-semibold">
           {success ? "Inquiry Sent" : "Connect your webshop"}
         </ModalHeader>
-        <ModalBody>
+
+        <ModalBody className="flex flex-col gap-4">
           {success ? (
-            <div className="py-4 text-center">
-              <div className="text-4xl mb-3">&#10003;</div>
-              <p className="text-base">
-                Thank you for your request, you will receive a confirmation shortly
+            <div className="flex flex-col items-center py-6 gap-3">
+              <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-lg text-center text-default-700">
+                Thank you for your request, you will receive a confirmation shortly.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <>
               <Input
                 label="Store Name"
                 placeholder="Your store name"
@@ -87,23 +106,32 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
                 onValueChange={setStoreName}
                 isRequired
                 variant="bordered"
+                fullWidth
+                radius="md"
+                size="lg"
               />
               <Input
                 label="Contact Email"
-                placeholder="you@example.com"
+                placeholder="your@email.com"
                 type="email"
                 value={contactEmail}
                 onValueChange={setContactEmail}
                 isRequired
                 variant="bordered"
+                fullWidth
+                radius="md"
+                size="lg"
               />
               <Input
                 label="Webshop URL"
-                placeholder="https://yourstore.dk"
+                placeholder="https://yourstore.com"
                 value={webshopUrl}
                 onValueChange={setWebshopUrl}
                 isRequired
                 variant="bordered"
+                fullWidth
+                radius="md"
+                size="lg"
               />
               <Textarea
                 label="Message / Special Request"
@@ -111,17 +139,21 @@ export default function LinkInquiryModal({ isOpen, onClose }) {
                 value={message}
                 onValueChange={setMessage}
                 variant="bordered"
+                fullWidth
+                radius="md"
+                size="lg"
                 minRows={3}
               />
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="text-sm text-red-500 text-center">{error}</p>
               )}
-            </div>
+            </>
           )}
         </ModalBody>
-        <ModalFooter>
+
+        <ModalFooter className="flex justify-center gap-3">
           {success ? (
-            <Button color="primary" onPress={handleClose}>
+            <Button color="primary" size="lg" onPress={handleClose}>
               Close
             </Button>
           ) : (
