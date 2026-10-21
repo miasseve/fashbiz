@@ -114,7 +114,7 @@ export async function createProduct(formData) {
         : null;
     }
 
-    if (collect === false) {
+    if (collect === false && !isDemo) {
       try {
         // Fetch store name for Shopify metafield
         const storeUser = await User.findById(session.user.id).select("storename brandname");
@@ -303,40 +303,7 @@ export async function createGuestProduct(formData) {
       : "XXX";
     const barcodeValue = `REE-${brandCode}${sku}${year}`;
 
-    // Create on Shopify
-    try {
-      const shopifyResponse = await createShopifyProduct({
-        ...formData,
-        barcodeValue,
-      });
-      if (shopifyResponse.status === 200) {
-        shopifyProductId = shopifyResponse.productId;
-        shopifyVariantId = shopifyResponse.variantId;
-        shopifyInventoryItemId = shopifyResponse.inventoryItemId;
-        shopifyProductHandle = shopifyResponse.productHandle;
-        createdShopifyProduct = true;
-      } else {
-        return {
-          status: 400,
-          error: shopifyResponse.error || "Failed to create product on Shopify. Please try again.",
-        };
-      }
-    } catch (error) {
-      if (error.response) {
-        const { status, data } = error.response;
-        if (
-          status === 400 &&
-          data?.message === "requirement failed: product.sku is not unique"
-        ) {
-          return { status: 400, error: "SKU already exists" };
-        }
-        return { status: 400, error: data?.message };
-      }
-      return {
-        status: 400,
-        error: error.response?.data?.message || error?.message,
-      };
-    }
+    // Guest/demo products are saved to MongoDB only — never synced to Shopify
 
     // Save in MongoDB
     const newProduct = new Product({

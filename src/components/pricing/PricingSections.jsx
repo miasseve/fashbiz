@@ -50,11 +50,11 @@ export default function PricingSections({
   const renderCta = (plan, label, { primary = false, href } = {}) => {
     const cls = `p2-cta${primary ? "" : " p2-cta--outline"}`;
 
-    if (href) {
+    if (isSubscribedTo(plan)) {
       return (
-        <a href={href} className={cls} target="_blank" rel="noopener noreferrer">
-          {label}
-        </a>
+        <button className={`${cls} p2-cta--subscribed`} disabled>
+          Subscribed
+        </button>
       );
     }
     if (readOnly) {
@@ -64,11 +64,11 @@ export default function PricingSections({
         </Link>
       );
     }
-    if (isSubscribedTo(plan)) {
+    if (href) {
       return (
-        <button className={`${cls} p2-cta--subscribed`} disabled>
-          Subscribed
-        </button>
+        <a href={href} className={cls} target="_blank" rel="noopener noreferrer">
+          {label}
+        </a>
       );
     }
     if (!plan?.id) {
@@ -86,12 +86,8 @@ export default function PricingSections({
   };
 
   const renderTextLink = (plan, label, { href } = {}) => {
-    if (href) {
-      return (
-        <a href={href} className="p2-cta--text" target="_blank" rel="noopener noreferrer">
-          {label}
-        </a>
-      );
+    if (isSubscribedTo(plan)) {
+      return <span className="p2-cta--text p2-cta--text-muted">Subscribed</span>;
     }
     if (readOnly) {
       return (
@@ -100,8 +96,12 @@ export default function PricingSections({
         </Link>
       );
     }
-    if (isSubscribedTo(plan)) {
-      return <span className="p2-cta--text p2-cta--text-muted">Subscribed</span>;
+    if (href) {
+      return (
+        <a href={href} className="p2-cta--text" target="_blank" rel="noopener noreferrer">
+          {label}
+        </a>
+      );
     }
     if (!plan?.id) {
       return <span className="p2-cta--text p2-cta--text-muted">Coming soon</span>;
