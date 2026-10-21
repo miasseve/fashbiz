@@ -2,13 +2,17 @@ import cloudinary from "@/lib/cloudinary";
 import { NextResponse } from "next/server";
 import User from "@/models/User";
 import dbConnect from "@/lib/db";
+import { auth } from "@/auth";
+
 export async function POST(req) {
   try {
     await dbConnect();
+    const session = await auth().catch(() => null);
+
     const formData = await req.formData();
     const file = formData.get("file");
     const isProfileImage = formData.get("isProfileImage");
-    const userId = formData.get("userId");
+    const userId = session?.user?.id || formData.get("userId");
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -44,7 +48,7 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.log(error.message, "error.message");
+    console.error("[upload]", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

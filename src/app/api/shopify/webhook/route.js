@@ -35,8 +35,6 @@ function verifyShopifyWebhook(body, hmacHeader, secret) {
 }
 
 export async function POST(req) {
-  console.log("[Shopify Webhook] Received request");
-
   const body = await req.text();
   const hmacHeader = req.headers.get("x-shopify-hmac-sha256");
 
@@ -48,7 +46,6 @@ export async function POST(req) {
     const storeRecord = await ShopifyStore.findOne({ storeDomain: shopDomain.toLowerCase() });
     if (storeRecord) {
       webhookSecret = decrypt(storeRecord.apiSecret);
-      console.log(`[Shopify Webhook] Using per-store secret for domain: ${shopDomain}`);
     }
   }
 
@@ -63,7 +60,6 @@ export async function POST(req) {
   }
 
   const topic = req.headers.get("x-shopify-topic");
-  console.log("[Shopify Webhook] Topic:", topic);
 
   let event;
   try {
@@ -75,28 +71,23 @@ export async function POST(req) {
   switch (topic) {
     case "orders/create": {
       const lineItems = event.line_items || [];
-      console.log(`[Shopify Webhook] Order #${event.order_number || event.id} with ${lineItems.length} line item(s)`);
 
       for (const item of lineItems) {
         const shopifyGid = `gid://shopify/Product/${item.product_id}`;
-        console.log(`[Shopify Webhook] Looking up product: ${shopifyGid}`);
 
         const product = await Product.findOne({ shopifyProductId: shopifyGid });
 
         if (!product) {
-          console.log(`[Shopify Webhook] No product found in DB for ${shopifyGid}`);
           continue;
         }
 
         if (product.sold) {
-          console.log(`[Shopify Webhook] Product ${product._id} already marked as sold`);
           continue;
         }
 
         product.sold = true;
         product.soldVia = "shopify";
         await product.save();
-        console.log(`[Shopify Webhook] Marked product ${product._id} as sold via shopify`);
 
         // Sync inventory to 0 and disable product on Shopify
         try {
@@ -110,9 +101,6 @@ export async function POST(req) {
               await updateInventory(inventoryItemId, activeLocation.id, 0);
             }
             await disableShopifyProduct(product.shopifyProductId);
-            console.log(
-              `[Shopify Webhook] Inventory set to 0 and product disabled for ${product._id}`,
-            );
           }
         } catch (invErr) {
           console.error(
@@ -124,12 +112,10 @@ export async function POST(req) {
         // Create sold notification for the store owner
         const owner = await User.findById(product.userId);
         if (!owner) {
-          console.log(`[Shopify Webhook] Owner not found for userId: ${product.userId}`);
           continue;
         }
 
         if (owner.soldNotifications === false) {
-          console.log(`[Shopify Webhook] Owner ${owner._id} has notifications disabled`);
           continue;
         }
 
@@ -161,7 +147,6 @@ export async function POST(req) {
             currency: event.currency,
           },
         });
-        console.log(`[Shopify Webhook] Notification created: ${notification._id}`);
 
         // Create transaction record with platform fee
         try {
@@ -209,7 +194,6 @@ export async function POST(req) {
               platformFeeRate: feeRate,
               platformFeeAmount: feeAmount,
             });
-            console.log(`[Shopify Webhook] Transaction created for product ${product._id} (fee: ${feeRate * 100}% = ${feeAmount})`);
           }
         } catch (txErr) {
           console.error(
@@ -224,18 +208,11 @@ export async function POST(req) {
       const inventoryItemGid = `gid://shopify/InventoryItem/${event.inventory_item_id}`;
       const newQuantity = event.available;
 
-      console.log(
-        `[Shopify Webhook] Inventory level set: item=${inventoryItemGid}, qty=${newQuantity}`,
-      );
-
       const product = await Product.findOne({
         shopifyInventoryItemId: inventoryItemGid,
       });
 
       if (!product) {
-        console.log(
-          `[Shopify Webhook] No product found for inventory item ${inventoryItemGid}`,
-        );
         break;
       }
 
@@ -244,9 +221,6 @@ export async function POST(req) {
         product.sold = true;
         product.soldVia = "shopify";
         await product.save();
-        console.log(
-          `[Shopify Webhook] Product ${product._id} marked as sold (inventory set to 0)`,
-        );
 
         const owner = await User.findById(product.userId);
         if (owner && owner.soldNotifications !== false) {
@@ -263,9 +237,6 @@ export async function POST(req) {
         product.sold = false;
         product.soldVia = undefined;
         await product.save();
-        console.log(
-          `[Shopify Webhook] Product ${product._id} unmarked as sold (inventory restored to ${newQuantity})`,
-        );
 
         // Re-enable the product on Shopify (set to ACTIVE)
         if (product.shopifyProductId) {
@@ -294,9 +265,6 @@ export async function POST(req) {
                 },
               },
             });
-            console.log(
-              `[Shopify Webhook] Product ${product._id} reactivated on Shopify`,
-            );
           } catch (reactivateErr) {
             console.error(
               `[Shopify Webhook] Failed to reactivate product: ${reactivateErr.message}`,
@@ -308,7 +276,7 @@ export async function POST(req) {
       break;
     }
     default:
-      console.log(`[Shopify Webhook] Unhandled topic: ${topic}`);
+      break;
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

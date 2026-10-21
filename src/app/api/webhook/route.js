@@ -491,7 +491,7 @@ export async function POST(req, res) {
             { userId: user._id },
             { status: "past_due" }
           );
-          console.log(
+          console.warn(
             `Invoice payment failed for user ${user.email} (customer ${customerId}), subscription marked past_due`
           );
         } else {
@@ -504,7 +504,7 @@ export async function POST(req, res) {
     }
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      break;
   }
 
   if (event.id) {

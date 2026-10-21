@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import dbConnect from "@/lib/db";
 import FabricOption from "@/models/FabricOption";
+import { auth } from "@/auth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,6 +10,11 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
+    const session = await auth().catch(() => null);
+    if (!session) {
+      console.warn("[google-vision] Unauthenticated request (guest/demo)");
+    }
+
     const { imageUrl } = await req.json();
     if (!imageUrl) {
       return NextResponse.json(
