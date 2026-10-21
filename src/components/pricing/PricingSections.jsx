@@ -125,7 +125,7 @@ export default function PricingSections({
     <div className="p2-wrap">
       {/* ── Page heading ── */}
       <div className="p2-hero-head">
-        <h2 className="p2-title">Pricing</h2>
+        <h2 className="p2-title">Subscription Plan</h2>
       </div>
 
       {/* ── Two main cards ── */}
