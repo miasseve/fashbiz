@@ -67,6 +67,7 @@ const Main = ({
 
   const steps = ["Select Client", "Product Details", "Finish"];
   const isInDemoMode =
+    isDemo &&
     stripedata?.accountId == null &&
     stripedata?.mode === "demo" &&
     !demoLimitReached;

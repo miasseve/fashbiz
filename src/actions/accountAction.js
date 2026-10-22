@@ -343,7 +343,7 @@ export async function checkvalidReferralCode(referralCode) {
     return { status: 200, message: "Valid referral code" };
   } catch (error) {
     console.error("Error checking referral code:", error);
-    return { status: 500, error: error.message || "Server error" };
+    return { status: 500, message: error.message || "Something went wrong" };
   }
 }
 export async function getRewardAmount() {

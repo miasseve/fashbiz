@@ -85,12 +85,10 @@ export async function createProduct(formData) {
     });
     if (demoAccount) {
       isDemo = true;
-      // The demo cap only applies to NO-PLAN (free) users. Once subscribed
-      // (isActive), the plan limit governs instead — enforced on the
-      // add-product page — so subscribing lifts the demo cap even before
-      // Stripe is connected.
       const subscriber = await User.findById(session.user.id).select("isActive");
-      if (!subscriber?.isActive) {
+      if (subscriber?.isActive) {
+        isDemo = false;
+      } else {
         const demoProductCount = await Product.countDocuments({
           userId: session.user.id,
           isDemo: true,
