@@ -13,8 +13,6 @@ const esc = (v = "") =>
 // Build the branded HTML body. Kept separate from sending so it can be rendered
 // and checked without dispatching a real email.
 export function renderLinkInquiryHtml({ name, storeName, contactEmail, webshopUrl, message }) {
-  const logoURL = `${process.env.NEXT_PUBLIC_FRONTEND_LIVE_URL}/images/fash.png`;
-
   // Brand tokens (DESIGN.md)
   const primary = "#ca2356";
   const pageBg = "#fff5f7";
@@ -51,10 +49,8 @@ export function renderLinkInquiryHtml({ name, storeName, contactEmail, webshopUr
                 <!-- Header -->
                 <tr>
                   <td style="background-color:${primary};border-radius:16px 16px 0 0;padding:28px 32px;text-align:center;">
-                    <img src="${logoURL}" alt="leStores AI" width="140" style="max-width:140px;height:auto;display:inline-block;border:0;outline:none;text-decoration:none;" />
-                    <div style="margin-top:14px;color:#ffffff;font-size:20px;font-weight:700;line-height:1.3;">
-                      New webshop connection request
-                    </div>
+                    <div style="color:#ffffff;font-size:26px;font-weight:800;letter-spacing:0.01em;line-height:1.2;">leStores AI</div>
+                    <div style="margin-top:10px;color:#ffffff;font-size:16px;font-weight:600;line-height:1.3;opacity:0.92;">New webshop connection request</div>
                   </td>
                 </tr>
 
