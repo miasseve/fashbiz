@@ -1,170 +1,179 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Spinner } from "@heroui/react";
+import { Spinner, Button } from "@heroui/react";
 import { IoIosCamera } from "react-icons/io";
-import { filters } from "@/lib/constants";
 import { toast } from "react-toastify";
-// import { removeBackground } from "@imgly/background-removal";
 import { useDispatch, useSelector } from "react-redux";
-import { useRef } from "react";
+import axios from "axios";
 import { setUploadedImagesOfProduct } from "@/features/productSlice";
-import {
-  Input,
-  Slider,
-  Select,
-  SelectItem,
-  Checkbox,
-  Button,
-} from "@heroui/react";
-import CropImage from "./CropImage";
-import RemoveImage from "./RemoveImage";
-import { updateCloudinaryImage } from "@/actions/cloudinaryActions";
+import { resizeImageFile } from "./resizeImage";
 
-// Fixed order the 4 view slots fill in when bulk-selecting multiple photos
-// at once — 1st photo picked -> frontView, 2nd -> sideView, etc.
-const VIEW_ORDER = ["frontView", "sideView", "backView", "detailView"];
+// Up to 4 photos per product — matches what the AI analysis uses (it caps at 4).
+const MAX_IMAGES = 4;
+
+// A returning user may still have the old { frontView, sideView, ... } object
+// persisted in localStorage (key "fash"). Turn either shape into an ordered
+// array, dropping empty slots — Object.values keeps the front -> side -> back
+// -> detail order, so the old "main" (front) photo stays first.
+const toImageArray = (stored) =>
+  Array.isArray(stored)
+    ? stored.filter(Boolean)
+    : Object.values(stored || {}).filter(Boolean);
 
 const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   const dispatch = useDispatch();
+  const topRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Completed uploads, in the order they were added.
+  const [images, setImages] = useState([]);
+  // How many photos are still uploading right now (drives spinners + disables).
+  const [uploadingCount, setUploadingCount] = useState(0);
+  // Index currently being removed, or null.
+  const [deletingIndex, setDeletingIndex] = useState(null);
+
+  // Camera state
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [currentFacingMode, setCurrentFacingMode] = useState("environment");
   const [camerasDetected, setCamerasDetected] = useState(false);
-
-  const [selectedView, setSelectedView] = useState("frontView");
-  const topRef = useRef(null);
   const cameraContainerRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const streamRef = useRef(null);
-
-  const [uploadedImagesWithView, setUploadedImagesWithView] = useState({
-    frontView: null,
-    sideView: null,
-    backView: null,
-    detailView: null,
-  });
 
   const storedProductImages = useSelector(
     (state) => state.product.uploadedImages,
   );
 
+  // Restore any photos already added earlier in this add-product flow.
   useEffect(() => {
-    const isEmpty = Object.values(storedProductImages).every(
-      (value) => value === null,
-    );
-    if (!isEmpty) {
-      setUploadedImagesWithView(storedProductImages);
-    }
+    const restored = toImageArray(storedProductImages);
+    if (restored.length > 0) setImages(restored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [croppingImage, setCroppingImage] = useState(null);
-  // Remaining {viewType, fileUrl} pairs still waiting for their turn in the
-  // crop screen during a bulk (multi-select) upload. Empty outside of that.
-  const [uploadQueue, setUploadQueue] = useState([]);
+  const remainingSlots = MAX_IMAGES - images.length - uploadingCount;
+  const atLimit = remainingSlots <= 0;
 
-  //loading and error handling
-  const [imageUploadError, setImageUploadError] = useState([]);
-  const [uploadImageLoader, setUploadImageLoader] = useState(false);
-  const [deleteImageLoader, setDeleteImageLoader] = useState({});
-  const [removeBackgroundLoader, setRemoveBackgroundLoader] = useState({});
+  // ── Upload one already-validated file ──
+  const uploadOne = async (file) => {
+    const resized = await resizeImageFile(file);
+    const formData = new FormData();
+    formData.append("file", resized);
+    formData.append("isProfileImage", false);
 
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-
-  const getCloudinaryBgRemovedUrl = (originalUrl) => {
-    return originalUrl.replace("/upload/", "/upload/e_background_removal/");
-  };
-
-  const handleGalleryClick = (viewType) => {
-    setIsCameraOpen(false);
-    setSelectedView(viewType);
-    const fileInput = document.getElementById("fileInput");
-    fileInput.value = "";
-    fileInput.click();
-  };
-
-  const updateImageTransformationsWithView = (viewType, value, prefix) => {
-    setUploadedImagesWithView((prevImages) => {
-      const updatedImages = { ...prevImages };
-      const baseUrl = updatedImages[viewType]?.originalUrl.split("/upload")[0];
-      const remaining =
-        updatedImages[viewType]?.originalUrl.split("/upload")[1];
-
-      if (!remaining) return prevImages;
-
-      const transformations = remaining.split("/").filter((trans) => trans);
-      const transformationIndex = transformations.findIndex((trans) =>
-        trans.startsWith(prefix),
-      );
-
-      if (value === 0 || value == "") {
-        // Remove the transformation if the value is 0
-        if (transformationIndex !== -1) {
-          transformations.splice(transformationIndex, 1);
-        }
-      } else {
-        if (transformationIndex !== -1) {
-          transformations[transformationIndex] = `${prefix}${value}`;
-        } else {
-          transformations.unshift(`${prefix}${value}`);
-        }
-      }
-
-      const newUrl = `${baseUrl}/upload/${transformations.join("/")}`;
-      let removeBgUrl = updatedImages[viewType]?.removeBgUrl;
-      if (updatedImages[viewType]?.removeBgUrl) {
-        const removeBaseUrl =
-          updatedImages[viewType]?.removeBgUrl.split("/upload")[0];
-        const removeRemaining =
-          updatedImages[viewType]?.removeBgUrl.split("/upload")[1];
-
-        if (!removeRemaining) return prevImages;
-
-        const removeTransformations = removeRemaining
-          .split("/")
-          .filter((trans) => trans);
-        const removeTransformationIndex = removeTransformations.findIndex(
-          (trans) => trans.startsWith(prefix),
-        );
-
-        if (value === 0 || value == "") {
-          // Remove the transformation if the value is 0
-          if (removeTransformationIndex !== -1) {
-            removeTransformations.splice(removeTransformationIndex, 1);
-          }
-        } else {
-          if (removeTransformationIndex !== -1) {
-            removeTransformations[removeTransformationIndex] =
-              `${prefix}${value}`;
-          } else {
-            removeTransformations.unshift(`${prefix}${value}`);
-          }
-        }
-
-        removeBgUrl = `${removeBaseUrl}/upload/${removeTransformations.join(
-          "/",
-        )}`;
-      }
-      updatedImages[viewType] = {
-        ...updatedImages[viewType],
-        url: updatedImages[viewType].isBgRemovedImage ? removeBgUrl : newUrl,
-        originalUrl: newUrl,
-        removeBgUrl: removeBgUrl,
-      };
-
-      return updatedImages;
+    const response = await axios.post("/api/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 30000,
     });
+
+    return {
+      url: response.data.url,
+      publicId: response.data.publicId,
+      originalUrl: response.data.url,
+      originalPublicId: response.data.publicId,
+    };
   };
+
+  const addFile = async (file) => {
+    setUploadingCount((c) => c + 1);
+    try {
+      const uploaded = await uploadOne(file);
+      setImages((prev) => [...prev, uploaded]);
+    } catch (error) {
+      const message =
+        error.code === "ECONNABORTED"
+          ? "Upload timed out. Please check your connection and try again."
+          : error.response?.data?.error ||
+            error.message ||
+            "Failed to upload image.";
+      toast.error(message);
+    } finally {
+      setUploadingCount((c) => c - 1);
+    }
+  };
+
+  const openFilePicker = () => {
+    setIsCameraOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFilesSelected = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    // Only images — reject the batch if anything else is in it.
+    const allImages = files.every((file) => file.type.startsWith("image/"));
+    if (!allImages) {
+      toast.error("Please upload images only.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    if (remainingSlots <= 0) {
+      toast.error(`You can add up to ${MAX_IMAGES} photos.`);
+      return;
+    }
+
+    const filesToUse = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      toast.warn(
+        `Only ${remainingSlots} photo slot${
+          remainingSlots > 1 ? "s" : ""
+        } available — added the first ${filesToUse.length}.`,
+      );
+    }
+
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+
+    // One at a time, so photos land in the order they were picked.
+    for (const file of filesToUse) {
+      // eslint-disable-next-line no-await-in-loop
+      await addFile(file);
+    }
+  };
+
+  const handleRemove = async (index) => {
+    const image = images[index];
+    if (!image) return;
+    setDeletingIndex(index);
+    try {
+      await axios.delete(
+        `/api/upload?publicId=${image.publicId}&removeBgPublicId=${
+          image.removePublicId || ""
+        }`,
+      );
+      setImages((prev) => prev.filter((_, i) => i !== index));
+      toast.success("Image deleted successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      toast.error("Error deleting image. Please try again.");
+    } finally {
+      setDeletingIndex(null);
+    }
+  };
+
+  // ── Camera ──
   const detectCameras = async () => {
     if (camerasDetected) return;
-
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(
         (device) => device.kind === "videoinput",
       );
-
       setAvailableCameras(videoDevices);
 
       const backCameraIndex = videoDevices.findIndex(
@@ -173,30 +182,28 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           device.label.toLowerCase().includes("rear") ||
           device.label.toLowerCase().includes("environment"),
       );
-
-      if (backCameraIndex !== -1) {
-        setCurrentCameraIndex(backCameraIndex);
-      }
-
+      if (backCameraIndex !== -1) setCurrentCameraIndex(backCameraIndex);
       setCamerasDetected(true);
     } catch (err) {
       console.error("Camera detection failed", err);
     }
   };
 
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+    }
+  };
+
   const startCamera = async (cameraIndex = null, facingMode = null) => {
     try {
-      // Stop any existing stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      stopStream();
 
       let constraints;
-
-      // Method 1: Try using specific deviceId (works best in Safari and Chrome)
       if (cameraIndex !== null && availableCameras[cameraIndex]?.deviceId) {
         constraints = {
           video: {
@@ -205,9 +212,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
             height: { ideal: 1080 },
           },
         };
-      }
-      // Method 2: Fallback to facingMode (works on mobile browsers)
-      else if (facingMode) {
+      } else if (facingMode) {
         constraints = {
           video: {
             facingMode: { ideal: facingMode },
@@ -215,9 +220,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
             height: { ideal: 1080 },
           },
         };
-      }
-      // Method 3: Default to environment/back camera
-      else {
+      } else {
         constraints = {
           video: {
             facingMode: { ideal: "environment" },
@@ -228,41 +231,24 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        streamRef.current = stream; // Store stream reference
+        streamRef.current = stream;
       }
-
-      setTimeout(() => {
-        detectCameras();
-      }, 500);
-
-      if (cameraIndex !== null) {
-        setCurrentCameraIndex(cameraIndex);
-      }
-      if (facingMode) {
-        setCurrentFacingMode(facingMode);
-      }
+      setTimeout(() => detectCameras(), 500);
+      if (cameraIndex !== null) setCurrentCameraIndex(cameraIndex);
+      if (facingMode) setCurrentFacingMode(facingMode);
     } catch (err) {
       console.error("Error accessing camera:", err);
-
       try {
-        const fallbackConstraints = {
-          video: {
-            facingMode: "environment",
-          },
-        };
-        const stream =
-          await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           streamRef.current = stream;
         }
-        setTimeout(() => {
-          detectCameras();
-        }, 500);
+        setTimeout(() => detectCameras(), 500);
       } catch (fallbackErr) {
         console.error("Fallback camera access failed:", fallbackErr);
         toast.error("Could not access camera. Please check permissions.");
@@ -270,11 +256,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     }
   };
 
-  const handleCameraClick = async (viewType = "frontView") => {
+  const handleCameraClick = () => {
+    if (atLimit) {
+      toast.error(`You can add up to ${MAX_IMAGES} photos.`);
+      return;
+    }
     setIsCameraOpen(true);
-    setSelectedView(viewType);
-    setCroppingImage(null);
-
     setTimeout(() => {
       cameraContainerRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -282,16 +269,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       });
     }, 300);
 
-    // Detect cameras AFTER permission
-    // await detectCameras();
-
     const backCameraIndex = availableCameras.findIndex(
       (device) =>
         device.label.toLowerCase().includes("back") ||
         device.label.toLowerCase().includes("rear") ||
         device.label.toLowerCase().includes("environment"),
     );
-
     startCamera(backCameraIndex !== -1 ? backCameraIndex : null, "environment");
   };
 
@@ -308,238 +291,64 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   };
 
   const captureImage = () => {
-    if (canvasRef.current && videoRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      context.drawImage(videoRef.current, 0, 0);
-      const imageData = canvasRef.current.toDataURL("image/png");
-      setCroppingImage(imageData);
-      setIsCameraOpen(false);
+    if (!canvasRef.current || !videoRef.current) return;
+    const context = canvasRef.current.getContext("2d");
+    canvasRef.current.width = videoRef.current.videoWidth;
+    canvasRef.current.height = videoRef.current.videoHeight;
+    context.drawImage(videoRef.current, 0, 0);
 
-      // Clean up camera stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
-    }
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
-
-  const handleBrightnessWithView = (value, viewType) => {
-    setUploadedImagesWithView((prevImages) => ({
-      ...prevImages,
-      [viewType]: prevImages[viewType]
-        ? { ...prevImages[viewType], brightness: value }
-        : null,
-    }));
-
-    updateImageTransformationsWithView(viewType, value, "e_brightness:");
-  };
-
-  const handleContrastWithView = (value, viewType) => {
-    setUploadedImagesWithView((prevImages) => ({
-      ...prevImages,
-      [viewType]: prevImages[viewType]
-        ? { ...prevImages[viewType], contrast: value }
-        : null,
-    }));
-    updateImageTransformationsWithView(viewType, value, "e_contrast:");
-  };
-
-  const handleFilterWithView = (value, viewType) => {
-    setUploadedImagesWithView((prevImages) => ({
-      ...prevImages,
-      [viewType]: prevImages[viewType]
-        ? { ...prevImages[viewType], filter: value }
-        : null,
-    }));
-    updateImageTransformationsWithView(viewType, value, "e_art:");
-  };
-
-  const removeBackgroundHandlerWithView = async (e, viewType) => {
-    const isChecked = e.target.checked;
-
-    if (!uploadedImagesWithView[viewType]) return;
-
-    if (isChecked) {
-      setRemoveBackgroundLoader((prev) => ({
-        ...prev,
-        [viewType]: { loading: true },
-      }));
-
-      try {
-        const image = uploadedImagesWithView[viewType];
-
-        // If already generated, just switch
-        if (image.removeBgUrl) {
-          setUploadedImagesWithView((prev) => ({
-            ...prev,
-            [viewType]: {
-              ...image,
-              url: image.removeBgUrl,
-              isBgRemovedImage: true,
-            },
-          }));
+    canvasRef.current.toBlob(
+      async (blob) => {
+        setIsCameraOpen(false);
+        stopStream();
+        if (!blob) return;
+        if (remainingSlots <= 0) {
+          toast.error(`You can add up to ${MAX_IMAGES} photos.`);
           return;
         }
-
-        // Cloudinary server-side background removal
-        const bgRemovedUrl = getCloudinaryBgRemovedUrl(image.originalUrl);
-
-        setUploadedImagesWithView((prev) => ({
-          ...prev,
-          [viewType]: {
-            ...image,
-            removeBgUrl: bgRemovedUrl,
-            url: bgRemovedUrl,
-            isBgRemovedImage: true,
-          },
-        }));
-      } catch (err) {
-        console.error("Background removal failed", err);
-        toast.error("Background removal failed");
-        setRemoveBackgroundLoader({});
-      }
-    } else {
-      // Restore original
-      setUploadedImagesWithView((prev) => ({
-        ...prev,
-        [viewType]: {
-          ...prev[viewType],
-          url: prev[viewType].originalUrl,
-          isBgRemovedImage: false,
-        },
-      }));
-    }
+        const file = new File([blob], "camera-photo.jpeg", {
+          type: "image/jpeg",
+        });
+        await addFile(file);
+      },
+      "image/jpeg",
+      0.9,
+    );
   };
 
-  const handleImageError = (e, index) => {
-    setImageUploadError((prevErrors) => {
-      const newErrors = [...prevErrors];
-      newErrors[index] = "Failed To change background.Something went wrong !!";
-      return newErrors;
-    });
-  };
+  // Stop the camera when leaving the step.
+  useEffect(() => {
+    return () => stopStream();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const step2Handler = () => {
-    dispatch(setUploadedImagesOfProduct(uploadedImagesWithView));
+  // ── Step navigation ──
+  const commitImages = () => dispatch(setUploadedImagesOfProduct(images));
+
+  const handleNext = () => {
+    commitImages();
     handleSaveUrl();
   };
 
-  const handleFileSelection = async (e) => {
-    const files = Array.from(e.target.files);
-    // Check if any of the selected files are videos
-    const invalidFile = files.some((file) => {
-      const fileExtension = file.name.split(".").pop().toLowerCase();
-      return ["mp4", "avi", "mov", "mkv", "webm", "gif"].includes(
-        fileExtension,
-      );
-    });
-
-    // If a video is found, show an error and prevent upload
-    if (invalidFile) {
-      toast.error("Please upload an image only.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
-
-    // Scroll to the top of the page after selecting the image
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-    setCroppingImage(URL.createObjectURL(files[0]));
-    e.target.value = "";
+  const handleBack = () => {
+    // Commit first so photos added since the last step aren't dropped.
+    commitImages();
+    handleBackStep();
   };
 
-  // Bulk path: user selects multiple photos at once instead of picking one
-  // box at a time. Still reuses the exact same crop screen and per-box
-  // upload logic — just queues the rest and walks through them one by one.
-  const handleBulkFileSelection = (e) => {
-    const files = Array.from(e.target.files);
-    e.target.value = "";
-    if (files.length === 0) return;
-
-    const invalidFile = files.some((file) => {
-      const fileExtension = file.name.split(".").pop().toLowerCase();
-      return ["mp4", "avi", "mov", "mkv", "webm", "gif"].includes(
-        fileExtension,
-      );
-    });
-    if (invalidFile) {
-      toast.error("Please upload images only.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
-
-    const emptyViews = VIEW_ORDER.filter(
-      (viewType) => !uploadedImagesWithView[viewType],
-    );
-
-    if (emptyViews.length === 0) {
-      toast.error("All 4 photo slots are already filled.");
-      return;
-    }
-
-    const filesToUse = files.slice(0, emptyViews.length);
-    if (files.length > emptyViews.length) {
-      toast.warn(
-        `Only ${emptyViews.length} photo slot${emptyViews.length > 1 ? "s" : ""} available — added the first ${filesToUse.length}.`,
-      );
-    }
-
-    const queue = filesToUse.map((file, i) => ({
-      viewType: emptyViews[i],
-      fileUrl: URL.createObjectURL(file),
-    }));
-
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-
-    const [first, ...rest] = queue;
-    setSelectedView(first.viewType);
-    setCroppingImage(first.fileUrl);
-    setUploadQueue(rest);
-  };
-
-  // Passed to CropImage in place of the raw setCroppingImage setter. It
-  // always gets called with `null` on a successful crop+upload — outside a
-  // bulk sequence that just closes the crop screen as before; mid-sequence
-  // it instead advances to the next queued photo automatically.
-  const handleCropScreenClose = () => {
-    setUploadQueue((prevQueue) => {
-      if (prevQueue.length === 0) {
-        setCroppingImage(null);
-        return prevQueue;
-      }
-      const [next, ...rest] = prevQueue;
-      setSelectedView(next.viewType);
-      setCroppingImage(next.fileUrl);
-      return rest;
-    });
-  };
+  const busy = uploadingCount > 0 || deletingIndex !== null;
 
   return (
-    <div ref={topRef} className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]">
+    <div
+      ref={topRef}
+      className="bg-white shadow rounded-lg p-6 mt-[2rem] mb-[90px]"
+    >
       <div className="text-center">
         {isCameraOpen && (
-          <div ref={cameraContainerRef} className="camera-container relative lg:w-[50%] w-full m-auto scroll-mt-36">
-            {/* Video + overlay buttons wrapper */}
+          <div
+            ref={cameraContainerRef}
+            className="camera-container relative lg:w-[50%] w-full m-auto scroll-mt-36"
+          >
             <div className="relative">
               <video
                 ref={videoRef}
@@ -548,10 +357,7 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 muted
                 className="border rounded-lg shadow-lg w-full max-h-[75vh] object-cover"
               />
-
-              {/* Overlay controls on the video feed */}
               <div className="absolute bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-10">
-                {/* Flip Camera Button - only show if multiple cameras available */}
                 {availableCameras.length > 1 && (
                   <Button
                     onPress={flipCamera}
@@ -575,9 +381,8 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                     </svg>
                   </Button>
                 )}
-
-                {/* Capture Button - large shutter button */}
                 <button
+                  type="button"
                   onClick={captureImage}
                   className="w-16 h-16 rounded-full bg-white/40 backdrop-blur-sm border-4 border-white shadow-lg flex items-center justify-center active:scale-90 transition-transform"
                   aria-label="Capture photo"
@@ -586,258 +391,123 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                 </button>
               </div>
             </div>
-
             <canvas ref={canvasRef} className="hidden" />
           </div>
         )}
 
-        <Input
+        {/* Hidden multi-select input behind the "+" frame */}
+        <input
+          ref={fileInputRef}
           type="file"
-          id="fileInput"
-          accept="image/*"
-          onChange={handleFileSelection}
-          className="w-full text-[1.4rem] hidden"
-          isClearable
-        />
-        <Input
-          type="file"
-          id="bulkFileInput"
           accept="image/*"
           multiple
-          onChange={handleBulkFileSelection}
-          className="w-full text-[1.4rem] hidden"
+          onChange={handleFilesSelected}
+          className="hidden"
         />
+
         <p className="lg:text-[1.4rem] text-[2rem]">Add product image</p>
         <p className="text-[1.2rem] text-gray-500 mt-0">
-          ( User can upload up to 4 images for each product )
+          ( Add up to {MAX_IMAGES} photos — they can be selected all at once )
         </p>
-        <div className="mt-2">
-          <Button
-            type="button"
-            isDisabled={
-              !!croppingImage ||
-              uploadImageLoader ||
-              Object.values(uploadedImagesWithView).every((v) => v !== null)
-            }
-            onPress={() => document.getElementById("bulkFileInput").click()}
-            className="auth-btn"
-          >
-            Upload Multiple Photos
-          </Button>
+
+        {/* Ordered list of photos, with the "+" frame at the end */}
+        <div className="grid lg:grid-cols-3 grid-cols-2 gap-4 mt-6">
+          {images.map((image, index) => (
+            <div
+              key={image.publicId || index}
+              className="relative border rounded-lg p-2 bg-[#f1f3f1] flex items-center justify-center aspect-square"
+            >
+              <Button
+                isIconOnly
+                isDisabled={busy}
+                onPress={() => handleRemove(index)}
+                aria-label={`Remove photo ${index + 1}`}
+                className={`absolute right-2 top-2 z-10 min-w-0 w-9 h-9 rounded-full text-white shadow-lg ${
+                  busy
+                    ? "bg-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {deletingIndex === index ? (
+                  <Spinner size="sm" color="white" />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                )}
+              </Button>
+              <Image
+                src={image.url}
+                alt={`Product photo ${index + 1}`}
+                width="300"
+                height="300"
+                layout="intrinsic"
+                className="rounded max-h-full w-auto object-contain"
+                unoptimized
+              />
+            </div>
+          ))}
+
+          {/* One spinner tile per in-flight upload */}
+          {Array.from({ length: uploadingCount }).map((_, i) => (
+            <div
+              key={`uploading-${i}`}
+              className="border rounded-lg p-2 bg-[#f1f3f1] flex flex-col items-center justify-center aspect-square"
+            >
+              <Spinner size="sm" color="success" />
+              <p className="text-[1rem] text-gray-500 mt-2">Uploading…</p>
+            </div>
+          ))}
+
+          {/* The "+" frame — add more photos */}
+          {!atLimit && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg bg-[#f1f3f1] flex flex-col items-center justify-center aspect-square gap-3 p-4">
+              <Button
+                isIconOnly
+                type="button"
+                isDisabled={busy}
+                onPress={openFilePicker}
+                aria-label="Add photos"
+                className="dark-btn w-16 h-16 min-w-0 rounded-full text-[2.4rem] leading-none"
+              >
+                +
+              </Button>
+              <Button
+                type="button"
+                isDisabled={busy}
+                onPress={handleCameraClick}
+                aria-label="Take a photo with the camera"
+                className="dark-btn"
+              >
+                <IoIosCamera />
+              </Button>
+            </div>
+          )}
         </div>
-        {uploadQueue.length > 0 && (
-          <p className="text-[1.2rem] text-gray-500 mt-2">
-            {uploadQueue.length} more photo{uploadQueue.length > 1 ? "s" : ""}{" "}
-            waiting after this one
+
+        {atLimit && (
+          <p className="text-[1.2rem] text-gray-500 mt-4">
+            You&apos;ve added the maximum of {MAX_IMAGES} photos. Remove one to
+            add another.
           </p>
         )}
 
-        {croppingImage && (
-          <div className="text-center">
-            <CropImage
-              cropImage={croppingImage}
-              selectedView={selectedView}
-              uploadImageLoader={uploadImageLoader}
-              setCroppingImage={handleCropScreenClose}
-              setUploadImageLoader={setUploadImageLoader}
-              setUploadedImagesWithView={setUploadedImagesWithView}
-            />
-            {uploadQueue.length > 0 && (
-              <p className="text-[1.2rem] text-gray-500 mt-2">
-                {uploadQueue.length} more to go after this one
-              </p>
-            )}
-          </div>
-        )}
-
-        {uploadImageLoader && (
-          <div>
-            <p className="text-[1.4rem] text-gray-800">
-              Uploading image, please wait...
-            </p>
-            <div className="ml-2 ">
-              <Spinner size="sm" color="success" />{" "}
-            </div>
-          </div>
-        )}
-        <div className="grid lg:grid-cols-2 grid-cols-1  gap-4 mt-4">
-          {Object.entries(uploadedImagesWithView).map(
-            ([viewType, imageData]) => (
-              <div
-                key={viewType}
-                className="border p-8 rounded mb-4 bg-[#f1f3f1] "
-              >
-                {imageData != null ? (
-                  // Image is uploaded -> Show Image and Controls
-                  <div className="mt-4 w-full">
-                    <div className="border p-4 rounded bg-white">
-                      <div className="flex justify-between">
-                        <div className="w-[49%] pr-[2rem] h-full relative">
-                          <RemoveImage
-                            viewType={viewType}
-                            disabled={
-                              Object.keys(removeBackgroundLoader).length >
-                                0 || false
-                            }
-                            publicId={imageData?.publicId}
-                            setDeleteImageLoader={setDeleteImageLoader}
-                            deleteImageLoader={deleteImageLoader}
-                            uploadedImagesWithView={uploadedImagesWithView}
-                            setUploadedImagesWithView={
-                              setUploadedImagesWithView
-                            }
-                          />
-                          <Image
-                            src={imageData.url}
-                            alt={`${viewType} Image`}
-                            width="300"
-                            height="300"
-                            layout="intrinsic"
-                            onError={(e) => handleImageError(e, viewType)}
-                            onLoad={() => {
-                              if (removeBackgroundLoader[viewType]?.loading) {
-                                setRemoveBackgroundLoader((prev) => {
-                                  const next = { ...prev };
-                                  delete next[viewType];
-                                  return next;
-                                });
-                              }
-                            }}
-                            className="rounded"
-                            unoptimized
-                          />
-                        </div>
-
-                        <div className="w-[60%] lg:mt-[10px] mt-0 relative">
-                          <div className="flex justify-between w-full">
-                            <Slider
-                              defaultValue={imageData?.brightness || 0}
-                              label="Brightness"
-                              maxValue={99}
-                              minValue={-99}
-                              onChangeEnd={(value) =>
-                                handleBrightnessWithView(value, viewType)
-                              }
-                              step={1}
-                            />
-                          </div>
-
-                          <div className="flex my-5 justify-between w-full">
-                            <Slider
-                              defaultValue={imageData?.contrast || 0}
-                              label="Contrast"
-                              maxValue={99}
-                              minValue={-99}
-                              onChangeEnd={(value) =>
-                                handleContrastWithView(value, viewType)
-                              }
-                              step={1}
-                            />
-                          </div>
-
-                          <div className="custom-select text-start">
-                            <Select
-                              defaultSelectedKeys={[imageData?.filter || ""]}
-                              onChange={(e) =>
-                                handleFilterWithView(e.target.value, viewType)
-                              }
-                              placeholder="Select filter option"
-                              className="custom-select"
-                              style={{
-                                background: "#fff",
-                                border: "1px solid #e5e7eb",
-                              }}
-                            >
-                              <SelectItem key="" value="">
-                                -- Select a filter --
-                              </SelectItem>
-                              {filters.map((filterOption) => (
-                                <SelectItem
-                                  key={filterOption.key}
-                                  value={filterOption.key}
-                                  className="custom-select"
-                                >
-                                  {filterOption.label}
-                                </SelectItem>
-                              ))}
-                            </Select>
-                          </div>
-
-                          <div className="flex my-5">
-                            <div className="text-start">
-                              <Checkbox
-                                size="sm"
-                                defaultSelected={
-                                  imageData?.isBgRemovedImage || false
-                                }
-                                isDisabled={
-                                  Object.keys(removeBackgroundLoader).length > 0
-                                }
-                                onChange={(e) =>
-                                  removeBackgroundHandlerWithView(e, viewType)
-                                }
-                              >
-                                <span className="pr-[2rem]">
-                                  Remove Background
-                                </span>
-                              </Checkbox>
-                              {removeBackgroundLoader[viewType]?.loading && (
-                                <Spinner size="sm" color="success" />
-                              )}
-                            </div>
-                          </div>
-
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // No Image Uploaded -> Show Upload Button
-                  <div>
-                    <p>
-                      {viewType
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())}
-                    </p>
-                    <div className="flex  items-center justify-center mt-4  gap-2">
-                      <Button
-                        type="button"
-                        isDisabled={!!croppingImage || uploadImageLoader}
-                        onPress={() => handleCameraClick(viewType)}
-                        className="dark-btn"
-                      >
-                        <IoIosCamera />
-                      </Button>
-                      <span>/</span>
-                      <Button
-                        type="button"
-                        isDisabled={!!croppingImage || uploadImageLoader}
-                        onPress={() => handleGalleryClick(viewType)}
-                        className="dark-btn"
-                      >
-                        Upload
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ),
-          )}
-        </div>
-        <div className="flex  items-center w-full justify-between  p-0">
-          <div className="text-start mt-5 ">
+        <div className="flex items-center w-full justify-between p-0">
+          <div className="text-start mt-5">
             <Button
-              isDisabled={
-                uploadImageLoader ||
-                Object.keys(removeBackgroundLoader).length > 0
-              }
-              onPress={() => {
-                // Previously only "Next" committed uploads to Redux, so
-                // going Back (this step unmounts) silently dropped any
-                // photos uploaded since the last "Next".
-                dispatch(setUploadedImagesOfProduct(uploadedImagesWithView));
-                handleBackStep();
-              }}
+              isDisabled={busy}
+              onPress={handleBack}
               className="auth-btn"
             >
               Back
@@ -846,14 +516,8 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           <div className="flex mt-5 items-center">
             <div className="text-start pl-[1rem]">
               <Button
-                isDisabled={
-                  uploadImageLoader ||
-                  Object.keys(removeBackgroundLoader).length > 0 ||
-                  Object.values(uploadedImagesWithView).every(
-                    (value) => value === null,
-                  )
-                }
-                onPress={step2Handler}
+                isDisabled={busy || images.length === 0}
+                onPress={handleNext}
                 className="danger-btn"
               >
                 Next
