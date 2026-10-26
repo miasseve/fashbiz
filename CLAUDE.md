@@ -87,6 +87,10 @@ See `.env.example` for the full list. Secrets include MongoDB URI, Stripe keys, 
 ## Git conventions
 
 - Default branch: `master`.
+- Base branch for current tasks: `feat/pricing-alignment`.
+  Create task branches from it and merge back into it.
+  Do not merge directly into `master` — the whole branch
+  will be merged to master once the work is reviewed.
 - Feature branches: `feat/<description>`.
 - Commit style: `type(scope): message` (e.g. `fix(pricing): ...`, `feat(auth): ...`).
 
