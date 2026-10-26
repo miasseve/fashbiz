@@ -314,7 +314,6 @@ export default function PricingSections({
               Get it now &#8594;
             </button>
           </div>
-
         </div>
       </div>
 
@@ -323,12 +322,7 @@ export default function PricingSections({
         <div className="p2-pro__row">
           <div className="p2-pro__text">3+ store locations? Custom Pro pricing.</div>
           <div className="p2-pro__actions">
-            <a
-              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Pro quote for 3+ stores")}`}
-              className="p2-cta--text"
-            >
-              Contact us &#8594;
-            </a>
+
             <button
               type="button"
               className="p2-pro__toggle"
