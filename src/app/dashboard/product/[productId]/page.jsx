@@ -13,6 +13,7 @@ import GenerateBarcode from "./GenerateBarcode";
 import UnlinkProduct from "./UnlinkProduct";
 import ShopifyLink from "./ShopifyLink";
 import EditablePrice from "./EditablePrice";
+import EditableColor from "./EditableColor";
 import SoldDelistButton from "./SoldDelistButton";
 import OmnichannelConnections, {
   WebstoreUpsellCard,
@@ -78,7 +79,7 @@ const Page = async ({ params }) => {
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Color</div>
-                <div className="text-xl text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Sub Category</div>
@@ -152,7 +153,7 @@ const Page = async ({ params }) => {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Color</div>
-                    <div className="text-base text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                    <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Category</div>
@@ -313,7 +314,7 @@ const Page = async ({ params }) => {
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-red-300 transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Color</div>
-                <div className="text-xl text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-red-300 transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Sub Category</div>

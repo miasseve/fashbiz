@@ -103,8 +103,16 @@ export async function PATCH(request, { params }) {
         : String(body.size).split(",").map((s) => s.trim()).filter(Boolean);
     }
 
-    if (body.colorName !== undefined) {
-      update.color = { ...product.color, name: String(body.colorName).trim() || "No Color" };
+    // Colour: accept the name and the value (hex) together so they can't drift apart.
+    if (body.colorName !== undefined || body.colorHex !== undefined) {
+      const base = product.color || {};
+      update.color = {
+        name:
+          body.colorName !== undefined
+            ? String(body.colorName).trim() || "No Color"
+            : base.name,
+        hex: body.colorHex !== undefined ? String(body.colorHex).trim() : base.hex,
+      };
     }
 
     // Reassigning a product to a different store — admin-only, no ownership
