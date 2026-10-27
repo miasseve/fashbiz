@@ -100,4 +100,6 @@ See `.env.example` for the full list. Secrets include MongoDB URI, Stripe keys, 
 - `DESIGN.md` in the repo root contains design tokens for the pricing page specifically.
 - Remnants of a prior Wix integration exist in comments; Shopify is the current storefront.
 - Unclaimed stores use `@ree-unclaimed.internal` emails. Matching happens on real-owner signup.
-- Demo mode: accounts start with a 200-product limit until they subscribe or connect Stripe.
+- No demo mode. Stores get unlimited free AI listing — no product limit.
+  Everything beyond listing (barcode/labels, Instagram, webshop connection,
+  sync/multichannel) requires a subscription.
