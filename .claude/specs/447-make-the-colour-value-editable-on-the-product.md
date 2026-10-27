@@ -1,7 +1,7 @@
 # Make the colour value editable on the product details page
 
 `447` · Feature · Medium size · **Medium risk** — changes how an existing stored product field (the colour) is written on live products and feeds the connected webshop listing
-**Status:** Draft (revised again — name field and picker now sync both ways; needs re-approval) · 2026-10-27 · **Approved by:** — · **Skill:** kodion-create-spec v2.2.1
+**Status:** Approved · 2026-10-27 · **Approved by:** navtej0110 · **Skill:** kodion-create-spec v2.2.1
 **Task:** `.claude/tasks/447/task.json` · **Branch:** `feature/447-make-the-colour-value-editable-on-the-product` (created by /start-task) · **Depends on:** none (colour list confirmed) · **Follows:** none
 **Based on:** task description · add-product and product details screens · screenshot attached (worked from the description and the screens, screenshot not inspected)
 
