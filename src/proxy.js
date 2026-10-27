@@ -38,6 +38,7 @@ export async function proxy(req) {
     "/admin/support",
     "/admin/reports",
     "/admin/developer",
+    "/admin/shopify-connections",
   ];
 
   const isPublic = publicRoutes.includes(nextUrl.pathname);
