@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-10-22 · Matches create-spec v2.4.0
+
+- **The approver check is gone.** Approval has no role gate any more, so a Medium or High-risk
+  spec approved by whoever reviewed it is not an issue. Only an **unapproved** spec is.
+- **New review-layout check:** the report says whether Part A has the `AT A GLANCE` box and how
+  many drawings it holds. A missing box, or more than one drawing, is listed as an issue.
+
 ## 1.1.0 — 2026-10-21 · Works with small specs and the updated skills
 
 - **Small specs** (kodion-create-spec v2.2): compared with `spec-small.md`, and their short plans need only files and checks. They're no longer marked "wrong format" or "incomplete".

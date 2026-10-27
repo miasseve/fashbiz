@@ -1,8 +1,12 @@
 # Kodion – Create Spec
 
-**Version 2.2.1** · see [CHANGELOG.md](CHANGELOG.md) for what changed
+**Version 2.6.0** · see [CHANGELOG.md](CHANGELOG.md) for what changed
 
 A Claude Code skill that turns a short task description into a clear requirements spec that anyone can read. The same file is then filled in by plan mode, and after coding by the developer.
+
+**It's built to be reviewed in about a minute.** Every spec opens with an `AT A GLANCE` box — the goal, what changes, what we won't do, what must not change, the danger, the counts, what's blocking, and a verdict — plus at most one small plain-text drawing. If the box looks right, reply `approve`. The file is about ten lines longer than before; the part anyone has to read drops from about sixty lines to ten.
+
+Reads the screenshots attached to the task, and works whether or not the project is on git.
 
 ## What's inside
 
@@ -12,11 +16,12 @@ kodion-create-spec/
 ├── README.md                     This file
 ├── CHANGELOG.md                  What changed in each version
 ├── references/
-│   ├── quality-rules.md          Writing rules, 12 blockers, 100-point score
+│   ├── quality-rules.md          Writing rules, 14 blockers, 100-point score
 │   ├── risk-matrix.md            Size vs Risk, and what each Risk level needs
 │   ├── safety-checklist.md       The 16 safety rows in every spec
 │   ├── coverage-checklist.md     Every place it appears, its whole life, tester misses
-│   └── lessons-learned.md        Mistakes from past tasks (a person adds to it)
+│   ├── lessons-learned.md        Mistakes from past tasks (a person adds to it)
+│   └── visuals.md                The At a glance box, the one drawing, and the limits
 ├── templates/
 │   ├── spec-template.md          Full spec (Medium / Large, or Medium / High risk)
 │   └── spec-small.md             Small spec (Small size and Low risk)
@@ -24,7 +29,7 @@ kodion-create-spec/
 │   ├── example-spec.md           A finished full spec (testimonial section)
 │   └── example-spec-small.md     A finished small spec (footer colour)
 └── tests/
-    └── test-cases.md             63 tests to check the skill works
+    └── test-cases.md             96 tests to check the skill works
 ```
 
 ## Install
@@ -80,7 +85,7 @@ The skill picks one automatically:
 | | **Small spec** | **Full spec** |
 |---|---|---|
 | **For** | Small size **and** Low risk: text, colour, label, one field, a small fix on one screen | Everything else, including small changes that touch money, login, permissions, saved data or personal data |
-| **To review** | About 40 lines, about 1 minute | Part A, about 60 lines, about 2 minutes |
+| **To review** | The 10-line box, then ~55 lines if a row looks wrong | The 10-line box, then ~70 lines of Part A if a row looks wrong |
 | **Questions** | Only if needed, at most 2 | Up to 2 rounds |
 | **Plan** | Short: files and one check per requirement | Full: every layer |
 
@@ -88,9 +93,13 @@ Force one with `/kodion-create-spec <ID> --small` or `--full`. `--small` doesn't
 
 ## Approving
 
-Type `approve`. Your name comes from `git config user.name`; you're never asked to type it.
-- **Low risk** (every small spec): approved straight away.
-- **Medium or High risk:** one yes/no question: "Are you approving as the senior?" Type `approve as senior` to skip it. If you say no, the spec stays Draft until a senior approves it.
+Type `approve`. That's it — **there is no role check.** Whoever reviews the spec can approve it, at
+any risk level: no senior question, no client sign-off, no waiting. Your name comes from
+`git config user.name`; you're never asked to type it.
+
+- Approving on someone else's behalf (they said yes in chat or on a call): type `approve for <their name>`.
+- A spec is still never approved while a §10 question blocks planning.
+- Risk decides how much care the spec and plan need, not who signs them off.
 
 ## Changes after a task is finished
 
@@ -106,16 +115,20 @@ Every full spec has three parts. A small spec has only Parts A and C.
 
 | Part | What's in it | Who reads it |
 |---|---|---|
-| **A — Review this** | Summary, requirements, decisions to check, questions | Reviewer: about 2 minutes |
+| **A — Review this** | At a glance box, one drawing (or none), why + quality, requirements, decisions to check, questions, the reply line | Reviewer: the box first, the rest only if a row looks wrong |
 | **B — Details** (folded) | Who uses it, where it appears, what can go wrong, all checks, safety, today's page | Only if something in Part A looks wrong |
 | **C — For plan mode** (folded) | Plan-mode instructions, technical summary, done report, quality check | No review needed |
 
 Folded parts open with one click in GitHub and in VS Code's Markdown preview.
 
+**Replying:** the end of Part A tells you exactly what to type — `approve`, or `D1 change: <what instead>`, or `Q2: <your answer>`. You don't have to write a paragraph.
+
+**The drawing** is a Mermaid block — a real diagram in VS Code preview (with the Markdown Preview Mermaid Support extension), on GitHub and in the Claude app, and code in the Claude Code session. Put `mermaid+text` in `.claude/spec-visuals` and a plain-text copy goes under it for whoever reviews in the terminal; `mermaid` gives the diagram alone. Install `mermaid-ascii` and the copy is generated instead of hand-drawn. There is never more than one drawing per spec, and only when it replaces words.
+
 ## Which version do I have?
 
 - Open `SKILL.md`: the version is at the top.
-- Every spec header shows the version that made it: `Skill: kodion-create-spec v2.2.1`.
+- Every spec header shows the version that made it: `Skill: kodion-create-spec v2.6.0`.
 - To update: replace your `kodion-create-spec` folder with the latest one from the team's shared location, then restart Claude Code.
 
 ## The flow
@@ -128,7 +141,7 @@ Folded parts open with one click in GitHub and in VS Code's Markdown preview.
 | 4 | Reviewer says `approve` | Status → Approved | `review_spec` |
 | 5 | Plan mode (§12) | `.claude/plans/<ID>-<slug>.md`, §13 | `plan` |
 | 6 | Developer + Claude | Code, §14 | `implement` · `validate` · `iterate` |
-| 7 | `/ship` | Commit, push, PR | `commit` · `push` · `pr_merge` · `back_to_main` · `delete_branch` |
+| 7 | `/ship` | Commit, push, PR — doesn't run on a project with no git | `commit` · `push` · `pr_merge` · `back_to_main` · `delete_branch` |
 
 Every step is sent with `bash .claude/skills/start-task/scripts/log-step.sh <ID> <step>`. It also writes a line to `.claude/tasks/<ID>/log.jsonl`. If the timesheet can't be reached, the step waits there and is resent on the next run.
 
@@ -145,13 +158,14 @@ Every step is sent with `bash .claude/skills/start-task/scripts/log-step.sh <ID>
 
 ## Testing
 
-Work through `tests/test-cases.md` in a real project. Start with tests 1, 2, 8 and 13 (the estimate-edit test), then 40–44 for the flow with `/start-task`, then 51–63 for small specs, approval and follow-ups. Send the filled-in table back, with the specs it produced.
+Work through `tests/test-cases.md` in a real project. Start with tests 1, 2, 8 and 13 (the estimate-edit test), then 40–44 for the flow with `/start-task`, then 51–63 for small specs, approval and follow-ups, then 64–70 for the review layout, 71–79 for screenshots and projects with no git, 80–87 for the Mermaid drawings, and 88–96 for the v2.6.0 speed fixes. Send the filled-in table back, with the specs it produced.
 
 ## Changing the skill
 
 | To change | Edit |
 |---|---|
 | Sections of the spec | `templates/spec-template.md`, and the Step 4 table in `SKILL.md` |
+| The At a glance box, or which drawings are allowed | `references/visuals.md`, and the box in both templates |
 | What counts as High risk | `references/risk-matrix.md` |
 | Blockers or the score | `references/quality-rules.md` |
 | Safety rows | `references/safety-checklist.md`, and the §7 table in the template |

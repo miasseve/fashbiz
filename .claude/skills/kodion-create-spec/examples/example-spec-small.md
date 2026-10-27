@@ -1,23 +1,33 @@
 # Footer text colour
 
 `318` · Feature · **Small spec** · Low risk — visual only, one screen part, nothing saved
-**Status:** Draft · 2026-10-21 · **Approved by:** — · **Skill:** kodion-create-spec v2.2.1
+**Status:** Draft · 2026-10-21 · **Approved by:** — · **Skill:** kodion-create-spec v2.6.0
 **Task:** `.claude/tasks/318/task.json` · **Branch:** `feature/318-footer-text-colour` (created by /start-task) · **Follows:** none
+**Based on:** task description · `.claude/attachments/318.png`
 
-> **Reviewer:** read everything above Part C (about 1 minute), then reply **approve**, or say what to change.
-> This is a **Small spec**: one small, low-risk change. If it turns out bigger, ask for the full spec (`/kodion-create-spec 318 --full`).
+> **Reviewer:** read the box. If every row looks right, reply **approve** — anyone can approve.
+> **Small spec:** one small, low-risk change. If it's bigger, ask for `/kodion-create-spec 318 --full`.
 
 ---
 
 # Part A — Review this
 
-## 1–3. Summary
-**What and why:** The footer text is black, which looks heavy on the dark footer. It should be the design guide's "Mid grey", so it matches the rest of the site.
+```
+┌─ AT A GLANCE ─────────────────────────────────────────────────────┐
+│ Goal     Footer text is Mid grey, matching the rest of the site   │
+│ Changes  Footer text colour, every page, desktop and phone        │
+│ Won't    Link hover colour, footer layout, link order             │
+│ Keep     Where the links go, the logo, other page sections        │
+│ Danger   none — visual only, nothing saved                        │
+│ Size     2 requirements · 3 checks · 2 places · Low risk          │
+│ Needs    nothing                                                  │
+│ Verdict  Ready to approve · check D1                              │
+└───────────────────────────────────────────────────────────────────┘
+```
 
-| | |
-|---|---|
-| **Must not change** | Where footer links go, their order, the footer layout, the logo, every other page section |
-| **Safety** | Visual only: nothing saved, no login, no money, no personal data |
+## 1–3. Summary
+**Why:** the footer text is black, which looks heavy on the dark footer. It should be the design guide's "Mid grey", so it matches the rest of the site.
+**Low risk because:** visual only — nothing saved, no login, no money, no personal data.
 
 ## 4.3 Requirements
 | ID | Requirement | Priority | Source |
@@ -50,111 +60,44 @@ None.
 - Footer text is black on every page.
 
 **Could break:** link hover colour (AC-03).
+**Attachments:** `318.png` — the footer today, black text on the dark background.
+
+**To reply:** `approve` · or `D1 change: <what instead>`
 
 ---
 
 # Part C — For plan mode (no review needed)
 
-<details>
-<summary><b>12. Instructions for plan mode (short plan)</b></summary>
-
 ## 12. Instructions for plan mode
-1. Stop if **Status** is not **Approved**, or if any question in §10 blocks "Planning".
-2. **This is a Small spec.** Keep the plan short: the files to change, one check per AC, nothing else.
-   **If the code shows it's bigger than this spec says** (saved data, login or permissions, money, personal data, more than one screen, or more than about 3 files), stop and say: *"This needs a full spec. Run `/kodion-create-spec 318 --full`."* Don't plan or code.
-   **For this task type (Feature):** Reuse existing parts (components, messages, patterns) before making new ones, and name them in §13. If it adds or changes an API, list in the plan: request, success and error responses, who can call it, input checks, and the app's existing error format.
-   **Lessons that apply:** L3: one check per place the change appears.
-3. **Detect the tech stack** from the project's own files, and **find this project's own checks** (lint, type check, build, tests) from its config and scripts. Run them and record the "before" results in §13. If a check doesn't exist, write "none". Never invent a command.
-4. Write the plan to `.claude/plans/318-footer-text-colour.md`: the files to change, what changes in each, and one check per AC.
-5. **Then fill §13 below.** Change nothing above Part C.
-6. Ask for approval of the plan before coding.
-   **Branch:** the header says "created by /start-task", so you're already on it. Check with `git branch --show-current`, and never create another branch.
-   **Never commit, push, merge, deploy or open a PR**, even if the task says so. `/ship` does that later.
-7. After coding, fill §14. Never write "Pass" without proof.
-8. **Timesheet logging.** Run each once, when it becomes true:
-   - plan approved and saved → `bash .claude/skills/start-task/scripts/log-step.sh 318 plan`
-   - code written and the edits reviewed → `bash .claude/skills/start-task/scripts/log-step.sh 318 implement`
-   - §14 filled, every AC checked with proof → `bash .claude/skills/start-task/scripts/log-step.sh 318 validate`
-   - fixes made after validation, then checked again → `bash .claude/skills/start-task/scripts/log-step.sh 318 iterate`
-   Also set `"plan": ".claude/plans/318-footer-text-colour.md"` in the task file once the plan is saved. If a log prints `ERROR`, report it in one line and carry on.
+Follow the **Small spec** section of `.claude/rules/plan-mode.md`.
 
-</details>
-
-<details>
-<summary><b>13. Technical summary (filled by plan mode)</b></summary>
+| | |
+|---|---|
+| **Task** | `318` · plan file: `.claude/plans/318-footer-text-colour.md` |
+| **Type** | Bug fix |
+| **Lessons that apply** | L3: one check per place |
+| **Also for this task** | nothing |
 
 ## 13. Technical summary
-*Filled by plan mode. Leave empty until then.*
+**Plan file:** `.claude/plans/318-footer-text-colour.md` · **Tech stack:** React + Tailwind · **Still small?** yes — 1 file
 
-**Plan file:** — · **Tech stack:** — · **Still small?** —
-
-| Check (lint, type check, build, tests) | Command | Result before any change |
-|---|---|---|
-| | | |
-
-| File | Add / change | What changes |
-|---|---|---|
-| | | |
-
-**Database / settings / new libraries:** —
-
-| AC | Plan task | How it's checked |
-|---|---|---|
-| AC-01 | | |
-| AC-02 | | |
-| AC-03 | | |
-
-**How to undo:** —
-**Plan approved by:** —
-
-</details>
-
-<details>
-<summary><b>14. Done report (filled after coding)</b></summary>
+| AC | How it was proven |
+|---|---|
+| AC-01 | Chrome at 1280 px: footer text computed colour `rgb(100,116,139)` |
+| AC-02 | Chrome at 375 px: same colour |
+| AC-03 | Hover on "Contact" → unchanged from baseline screenshot |
 
 ## 14. Done report
-*Filled after coding. Leave empty until then.*
+**Result:** ✅ Done · **Date:** 2026-10-21 · **Branch:** `feature/318-footer-text-colour`
 
-**Result:** ⏸ Not started · **Date:** — · **Branch / commit:** —
-
-| AC | Result | Proof (command output, screenshot, or test name) |
+| AC | Result | Proof |
 |---|---|---|
-| AC-01 | ⏸ | |
-| AC-02 | ⏸ | |
-| AC-03 | ⏸ | |
+| AC-01 | ✅ | `footer.test.tsx` "footer text uses the muted token" |
+| AC-02 | ✅ | Same test at the mobile breakpoint |
+| AC-03 | ✅ | Hover state untouched; `git diff` shows one changed line |
 
-| File actually changed | In §13? | Change |
-|---|---|---|
-| | | |
-
-| Check | Command | Result |
-|---|---|---|
-| Lint / build / tests | | |
-
-**Different from the plan · not done:** —
-
-**Key:** ✅ Pass · ❌ Fail · ⏸ Not tested yet (give the reason)
-
-</details>
-
-<details>
-<summary><b>Quality check (blockers only · none found)</b></summary>
+**Checks:** lint ✅ · tests ✅ same as the known-failures list · build ✅
+**Different from the plan · not done:** nothing
 
 ## Quality check
-*Filled by `/kodion-create-spec`. Small specs are checked for blockers only; there's no score.*
-
-| Blocker | Result |
-|---|---|
-| B1 Every requirement has a check | ✅ |
-| B2 Every requirement has Priority and Source | ✅ |
-| B3 Every AI choice is listed in §9 | ✅ |
-| B4 No technical words above Part C | ✅ |
-| B6 Risk has a reason | ✅ |
-| B8 Every question says what it blocks | N/A (no questions) |
-| B9 No leftover placeholders above Part C, or in §12 | ✅ |
-| B10 Every place in §4.4 has a check | ✅ |
-| B11 Everything asked in the task is covered | ✅ ("footer text" and "grey" → FR-01) |
-| B12 No vague words, no real personal data | ✅ |
-| S1 Still Small and Low risk | ✅ |
-
-</details>
+**Blockers:** none

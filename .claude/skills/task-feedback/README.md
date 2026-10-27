@@ -1,6 +1,6 @@
 # Kodion – Task Feedback
 
-**Version 1.1.0** · see [CHANGELOG.md](CHANGELOG.md)
+**Version 1.2.0** · see [CHANGELOG.md](CHANGELOG.md)
 
 The last step of the Kodion spec-driven flow. After `/ship`, Claude reviews how the task's session went and writes a short report. The developer confirms it, and only then is it saved on the task in the Kodion Timesheet.
 

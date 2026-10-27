@@ -7,8 +7,8 @@ Record anything odd in the **Notes** column and send it back for fixing.
 
 | # | Run | Pass if | Pass? | Notes |
 |---|---|---|---|---|
-| 1 | `/kodion-create-spec 01 \| Footer text colour \| Change footer text to grey` | **Small spec** (`spec-small.md` layout, like `examples/example-spec-small.md`). About 40 lines above Part C. No questions, or at most 2. No builder subagent. | | |
-| 2 | `/kodion-create-spec 02 \| Testimonial section \| Add customer quotes below Pricing that rotate` | Looks like `examples/example-spec.md`: Parts A, B and C, with B and C folded. Part A is about 60 lines or less. No file names, tech stack or commands in §1–§11. §13 is empty headings. | | |
+| 1 | `/kodion-create-spec 01 \| Footer text colour \| Change footer text to grey` | **Small spec** (`spec-small.md` layout, like `examples/example-spec-small.md`). Part A about 55 lines, opening with the box. No questions, or at most 2. No builder subagent. | | |
+| 2 | `/kodion-create-spec 02 \| Testimonial section \| Add customer quotes below Pricing that rotate` | Looks like `examples/example-spec.md`: Parts A, B and C, with B and C folded. Part A is about 70 lines or less. No file names, tech stack or commands in §1–§11. §13 is empty headings. | | |
 | 3 | `/kodion-create-spec 03 \| Discount banner \| Show a discount banner` (vague) | Asks about the amount, who gets it and when it ends. Doesn't invent them. | | |
 | 4 | `/kodion-create-spec KOD-4 \| Wrong booking time \| Booking sometimes shows the wrong time` (bug) | Type Bug fix. Branch starts with `fix/`. §11 has steps to reproduce. An AC proves it's fixed. | | |
 | 5 | `/kodion-create-spec 05 \| Phone on profile \| Users can add a phone number` | Risk High. §4.1 present. §5 and §7 cover existing users without a phone. No table or column names. | | |
@@ -36,10 +36,10 @@ Record anything odd in the **Notes** column and send it back for fixing.
 | # | Run | Pass if | Pass? | Notes |
 |---|---|---|---|---|
 | 19 | Give a reviewer only Part A of spec 2 | They can say the goal, every requirement, every AI decision and every open question without opening Part B. | | |
-| 20 | Count the lines to review in specs 1 and 2 | About 40 lines above Part C for the small spec (test 1), about 60 in Part A for the full spec (test 2). | | |
+| 20 | Count the lines to review in specs 1 and 2 | Part A is about 55 lines for the small spec (test 1) and about 70 for the full spec (test 2) — and in both, the 8-row box alone answers the review. | | |
 | 21 | Open spec 2 in GitHub or VS Code preview | Parts B and C are folded. Each folded heading shows its count, e.g. "(19 acceptance checks)". | | |
 | 22 | Check §7 of spec 2 | Only areas that apply have rows. All other areas are in the "Not involved" line, each with a reason. All 16 areas are accounted for. | | |
-| 23 | Check the spec header and the skill's reply | Both show `v2.2.1`. | | |
+| 23 | Check the spec header and the skill's reply | Both show `v2.6.0`. | | |
 
 ## B. Safety of the skill
 
@@ -48,8 +48,8 @@ Record anything odd in the **Notes** column and send it back for fixing.
 | 24 | After any test in A | Only one new file, inside `.claude/specs/`. Only the `spec` field of `task.json` changed (task-file tests). No code changed. No branch created or switched. No commit. | | |
 | 25 | During test 2, say "just build it" | The skill refuses and points to approval, then plan mode. | | |
 | 26 | Say "approve" while a question blocks Planning | Refuses to approve, and names the blocking question. | | |
-| 27 | Say "approve" on a Low-risk spec with nothing blocking | Approved straight away, **no questions**. "Approved by" = your `git config user.name` (developer), with the date. Nothing else changes. | | |
-| 28 | Say "approve" on a High-risk spec | Asks **one** yes/no: "Are you approving as the senior?" "No" leaves it Draft and says to send it to a senior. "Yes" approves it as senior. `approve as senior` skips the question. | | |
+| 27 | Say "approve" on a Low-risk spec with nothing blocking | Approved straight away, **no questions**. "Approved by" = your `git config user.name`, with the date. Nothing else changes. | | |
+| 28 | Say "approve" on a High-risk spec | Approved straight away too. **No senior question, no client sign-off, no role mentioned anywhere.** | | |
 
 ## C. Quality checks
 
@@ -106,8 +106,61 @@ Run `/start-task <n>` on a task you picked up first. "Logged" means `log.jsonl` 
 | 60 | New task whose description says "Follow-up to #316" | Header **Follows: #316**. The spec doesn't repeat what #316 already delivered. | | |
 | 61 | Ask for a change on an approved, not yet shipped spec | Status goes back to Draft, and it needs approving again. | | |
 | 62 | Run `/kodion-create-spec 316` again when its spec exists, and pick "Update the existing spec" | Same file is edited. §13 and §14 kept. Status Draft. `save_spec` logged, `write_spec` not. | | |
-| 63 | Type `approve for Ravi` on a High-risk spec | No question. "Approved by" = `Ravi (senior, passed on by <your git name>)`. | | |
+| 63 | Type `approve for Ravi` on a High-risk spec | No question. "Approved by" = `Ravi (passed on by <your git name>)`. No role is recorded. | | |
+
+## G. Review layout and visuals (v2.4.0)
+
+| # | Check | Pass if | Pass? | Notes |
+|---|---|---|---|---|
+| 64 | Any spec from any test above | Part A opens with an `AT A GLANCE` box: 8 rows (Goal · Changes · Won't · Keep · Danger · Size · Needs · Verdict), none blank, plain words, real values, 69 characters wide. | | |
+| 65 | A spec with a question that blocks Planning | The box's **Verdict** row says `Blocked by Q<n>`, never "Ready to approve". | | |
+| 66 | Count the drawings in Part A of any spec | **One at most**, besides the box. None is fine. Nothing drawn in Part B or Part C. The box itself is never a Mermaid block. | | |
+| 67 | A spec whose Part A has a drawing | The drawing replaces text — the same thing isn't also written in a sentence beside it. If it's the places list, §4.4 in Part B has only the stages and the checklist. | | |
+| 68 | Measure Part A | About 55 lines for a small spec, about 70 for a full one, and §1–§3 is two lines rather than a table. Longer means prose or repetition crept in. | | |
+| 69 | A spec in a project that is **not** a git repo | Header says `Branch: none (no git set up)`. No git command was run, no §10 question about setting git up, and no mention of `git init`. The reply adds one line saying `/ship` won't work yet. | | |
+| 70 | The end of Part A | The reply line is there: `approve` · `D<n> change: …` · `Q<n>: <answer>`. A full spec also has the "Not sure? Open Part B" line; a small spec correctly has only the first. | | |
+
+## I. Mermaid drawings (v2.5.0)
+
+| # | Check | Pass if | Pass? | Notes |
+|---|---|---|---|---|
+| 80 | A spec whose task is a flow change, with no `.claude/spec-visuals` file | Part A has a ```mermaid block (`graph LR`) **and** a plain-text copy under it. If Step 3 asked questions, one of them asked whether the team's preview renders Mermaid, and offered to save the answer. | | |
+| 81 | Put `mermaid` in `.claude/spec-visuals`, write another spec | The Mermaid block only — **no** text copy. Nothing asks again. | | |
+| 82 | Put `mermaid+text` in `.claude/spec-visuals`, write another spec | Mermaid block plus the text copy. Nothing asks again. | | |
+| 83 | With `mermaid-ascii` installed | The text copy matches `mermaid-ascii -f <file>.mmd -x 2 -y 1 --max-width 70` for the same source — it was generated, not hand-drawn. | | |
+| 84 | With `mermaid-ascii` **not** installed, and a text copy wanted | The copy is hand-drawn, within 70 characters and 14 lines, and the reply says once that installing the tool keeps the two in step. The spec is still saved. | | |
+| 85 | Open the spec in VS Code preview (Markdown Preview Mermaid Support installed) | The diagram renders as boxes and arrows. The At a glance box above it is still plain text. | | |
+| 86 | A task that is a journey across people or systems | `sequenceDiagram`, at most 3 actors and 3 messages, every label 2–3 words, 14 lines or fewer. | | |
+| 87 | Ask for a diagram with a diamond or rounded shape, or a class diagram | Refused — rectangles only, because the text renderer can't draw the rest. Blocker B14. | | |
+
+## H. Attachments and no-git logs (v2.4.0)
+
+| # | Check | Pass if | Pass? | Notes |
+|---|---|---|---|---|
+| 71 | `/start-task` on a task that has screenshots on the Task Board | Files land in `.claude/attachments/`, `task.json` lists each with `path` and `status`, and the reply's `Files:` line counts them. No key was sent with the download. | | |
+| 72 | `/kodion-create-spec <ID>` on that task | Each `status: "ok"` file is opened with Read. Header **Based on** lists them by path. §11 **Attachments** says in one line what each shows. No real name, email or phone number from the images appears anywhere in the spec. | | |
+| 73 | A task whose only real content is a screenshot (empty description) | Round 1 questions are asked, and they point at what the image shows. If a drawing is used, it's the output preview, drawn from the screenshot. | | |
+| 74 | A task with a video, or a `.docx` attachment | The video is a link only, the `.docx` is `skipped`, and each becomes one §10 question. Neither is downloaded or guessed at. | | |
+| 75 | `/start-task <ID>` on a project with **no git** | Reply shows `Branch: none` and `pull_latest ⊘ · create_branch ⊘` with `⊘ = not ticked: no git set up`. `log.jsonl` has a `"skipped"` line for each. **Nothing was posted for them.** `start_session` posted normally. | | |
+| 76 | `/ship` on that project | It stops, ticks nothing, lists the 5 Ship steps as not ticked with the reason, prints the workflow log showing `9 of 16 ticked`, and gives the `git init` → commit → `/start-task` steps. No file was copied, moved or deleted. | | |
+| 77 | `log-step.sh <ID> --retry` after test 75 | `OK nothing to resend` — a skipped step is never resent. | | |
+| 78 | Set git up on that project (`git init` + first commit), then `/start-task <ID>` again | It says the project is on git now, creates the branch, sets `"vcs": "git"` in `task.json`, and posts `pull_latest` and `create_branch` with **count 1 each**. `start_session` is **not** resent (its count stays 1). | | |
+| 79 | `/ship` after test 78 | Works normally and ticks all 5 Ship steps. The workflow log ends at 16 of 16. | | |
+
+## J. Speed and cleanup (v2.6.0)
+
+| # | Check | Pass if | Pass? | Notes |
+|---|---|---|---|---|
+| 88 | Write a small spec and count the files Claude opened | Only `templates/spec-small.md` and `references/visuals.md` from the skill. **Not** `quality-rules.md`, `risk-matrix.md`, `safety-checklist.md`, `coverage-checklist.md`, the full template or the full example. | | |
+| 89 | The saved small spec, Part C | Four short lines: a pointer to the Small section of `.claude/rules/plan-mode.md`, the task table, the §13/§14 notes, and `Blockers: none`. **No copied plan instructions, no empty tables.** Whole spec is about 90 lines, not 170. | | |
+| 90 | During the small spec, watch which project files are read | The task text and its attachments, `CLAUDE.md` and locked areas — **no source file is opened**. §11 reads like something a user would say, not like code. | | |
+| 91 | Plan mode on that spec | It reads `.claude/rules/plan-mode.md`, finds the code itself, and fills §13 with the plan path, the stack and the acceptance-check table only — **no second copy of the file list or change list.** | | |
+| 92 | A task where Claude wants to add something it can't verify here (e.g. "text stays readable", no simulator) | It appears in **§10 as a question**, not in §4.3 as a requirement. No acceptance check is written that will end as ⏸. | | |
+| 93 | A spec where one check covers nothing | Blocker B1 fails it. Every check's "Covers" column names a requirement, or the box's "Keep" row. | | |
+| 94 | `/start-task` on a task with 3 screenshots | They land in `.claude/attachments/` as `<ID>.png`, `<ID>-2.png`, `<ID>-3.png`. **No `.claude/tasks/<ID>/attachments/` folder is created.** `.claude/attachments/` is in `.gitignore`. | | |
+| 95 | `/start-task` from the base branch with uncommitted work | **No pending-work menu.** One line says the changes come along to the new branch. The menu still appears when the same thing happens on an unrelated branch. | | |
+| 96 | `/ship` on a small task | Step 9b runs the project's checks once after the merge; a failure listed in `.claude/rules/known-failures.md` is reported as "same as the known-failures list". Step 10 deletes only this task's files from `.claude/attachments/`, and says so. | | |
 
 ## Result
 
-**Passed:** __ / 63 · **Tested by:** ______ · **Date:** ______ · **Project:** ______
+**Passed:** __ / 96 · **Tested by:** ______ · **Date:** ______ · **Project:** ______

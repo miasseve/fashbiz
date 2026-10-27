@@ -3,13 +3,13 @@ name: task-feedback
 description: Kodion – Task Feedback. The last step of the Kodion spec-driven flow. After /ship, reviews how this task's Claude Code session went: was the spec in the right format, was the plan complete, was it built in one attempt, how many questions Claude asked, how often the developer corrected it, and whether the tests were run and passed. It writes a feedback report and asks the developer to confirm, then sends it to the Kodion Timesheet against the task. Runs automatically at the end of /ship when .claude/tasks/<ID>/task.json exists, or when the developer types /task-feedback <ID>.
 argument-hint: <task number>   (optional: taken from the branch name)
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(bash .claude/skills/task-feedback/scripts/collect-metrics.sh:*), Bash(bash .claude/skills/task-feedback/scripts/post-feedback.sh:*), Bash(git branch --show-current), Bash(git diff --name-only:*), Bash(git log --oneline:*), Bash(date:*)
 ---
 
 # Kodion – Task Feedback
 
-**Version 1.1.0** · what changed: [CHANGELOG.md](CHANGELOG.md)
+**Version 1.2.0** · what changed: [CHANGELOG.md](CHANGELOG.md)
 
 You write an **honest, evidence-based review of how Claude did on one task**, show it to the developer, and send it to the timesheet **only if they say Submit**. The report answers fixed questions, so tasks can be compared over time and the skills and rules can be improved.
 
@@ -82,7 +82,8 @@ Label each line of `prompts.tsv` as exactly one of these:
 - **Which format:** if the header says **Small spec**, compare its `##` headings with `.claude/skills/kodion-create-spec/templates/spec-small.md`. Otherwise use `templates/spec-template.md`. If neither template exists, only check that the spec has a goal, scope, acceptance criteria and a verification list.
   A small spec is meant to be short. Never count the full template's sections as missing from it.
 - Note `approved`: the header says `Status: Approved` (written as `**Status:** Approved`), or `review_spec` is in `log.jsonl`.
-- **Right approver:** read the header's **Risk** and **Approved by**. If the risk is Medium or High and the approver's role is `developer`, add an issue: "Medium/High-risk spec approved by a developer, not a senior." 
+- **Approval:** read the header's **Approved by**. There is no role check — any reviewer may approve any risk level — so only an **unapproved** spec is an issue: "Spec was not approved before planning." Never raise an issue about who approved it.
+- **Review helpers:** note whether the header's Part A has an `AT A GLANCE` box, and how many plain-text drawings Part A holds. More than one drawing, or a missing box, is an issue: "Spec doesn't follow the v2.5.0 review layout."
 - `revisions` = `workflow_log.save_spec` − 1, with a minimum of 0.
 
 **Plan:**
@@ -138,11 +139,11 @@ Then set `scores`, `one_shot` and `summary` using the rules in the schema file.
 4. Show the report in this shape, and nothing more:
 
 ```
-📋 Task #<ID> feedback · /task-feedback v1.1.0  (session <duration> min · <total> developer prompts)
+📋 Task #<ID> feedback · /task-feedback v1.2.0  (session <duration> min · <total> developer prompts)
 
 Scores     Spec <n>/5 · Plan <n>/5 · Implementation <n>/5 · One shot: <Yes|No>
 
-Spec        <Small | Full> · <format ok | missing: …> · <revisions> revision(s) · <approved by developer|senior | not approved>
+Spec        <Small | Full> · <format ok | missing: …> · <revisions> revision(s) · <approved by <name> | not approved> · <at-a-glance ✓ | missing> · <n> drawing(s)
 Plan        <complete | missing: …> · <revisions> revision(s)
 Rework      <Yes|No> — <note>
 Iterations  <count> — <note>

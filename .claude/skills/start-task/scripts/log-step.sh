@@ -2,12 +2,19 @@
 # Kodion Timesheet: tell the timesheet one workflow step is done for a task.
 #
 # Usage:   bash .claude/skills/start-task/scripts/log-step.sh <task_number> <step>
+#          bash .claude/skills/start-task/scripts/log-step.sh <task_number> <step> --skip "<reason>"
 #          bash .claude/skills/start-task/scripts/log-step.sh <task_number> --retry
 #          (resends every line with "posted":false, oldest first, except 404/422, which can't succeed,
 #           and except steps already posted later, which are marked "superseded":true instead)
 # API:     POST https://timesheetv2.kodionsoftwares.com/api/dev-workflow/tasks/<task_number>/logs  {"step":"<step>"}
 # Local:   always adds one line to .claude/tasks/<task_number>/log.jsonl, posted or not,
 #          so a failed post can be sent again later. The key is never printed.
+#
+# --skip:  the step did NOT happen and never will for this task as it stands (e.g. create_branch
+#          on a project with no git). Nothing is posted and nothing is sent to the API. One line
+#          is written with "skipped":"<reason>" so the reason survives the session, and --retry
+#          never resends it. If the step later becomes true (git is set up), just send it normally:
+#          the skipped line stays as a record, and readers take the newest line for each step.
 #
 # Steps (exact names, in flow order):
 #   start_session rename_session pull_latest create_branch
@@ -23,6 +30,8 @@ set -u
 ID="${1:-}"
 ID="${ID#\#}"
 STEP="${2:-}"
+MODE="${3:-}"
+REASON="${4:-}"
 
 case "$ID" in
   ''|*[!0-9]*) echo "ERROR BAD_INPUT: task number must be digits only, got '$ID'. Usage: log-step.sh <task_number> <step>"; exit 2 ;;
@@ -36,6 +45,24 @@ DIR=".claude/tasks/$ID"
 LOG="$DIR/log.jsonl"
 mkdir -p "$DIR"
 NOW=$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
+
+# ---------- --skip: record why a step did not happen. Posts nothing. ----------
+if [ "$MODE" = "--skip" ]; then
+  if [ "$STEP" = "--retry" ]; then
+    echo "ERROR BAD_INPUT: --skip needs a step name, not --retry."; exit 2
+  fi
+  if [ -z "$REASON" ]; then
+    echo "ERROR BAD_INPUT: --skip needs a reason, e.g. log-step.sh $ID create_branch --skip \"no git set up\""; exit 2
+  fi
+  # Keep the reason on one JSON line: no quotes, backslashes or newlines.
+  SAFE=$(printf '%s' "$REASON" | tr -d '"\\' | tr '\n\r\t' '   ' | cut -c1-120)
+  printf '{"step":"%s","at":"%s","posted":false,"count":null,"skipped":"%s"}\n' "$STEP" "$NOW" "$SAFE" >> "$LOG"
+  echo "OK skipped $STEP for task #$ID — not ticked: $SAFE"
+  exit 0
+fi
+if [ -n "$MODE" ]; then
+  echo "ERROR BAD_INPUT: unknown option '$MODE'. Use --skip \"<reason>\", or nothing."; exit 2
+fi
 
 log_line() {  # $1 posted(true/false)  $2 count or null  $3 error or empty
   if [ -n "$3" ]; then
@@ -63,12 +90,12 @@ if [ -z "$KEY" ]; then
 fi
 # ---------- --retry: resend failed lines, keep the file in order ----------
 if [ "$STEP" = "--retry" ]; then
-  if [ ! -f "$LOG" ] || ! grep '"posted":false' "$LOG" | grep -vq '"superseded":true'; then echo "OK nothing to resend"; exit 0; fi
+  if [ ! -f "$LOG" ] || ! grep '"posted":false' "$LOG" | grep -v '"skipped":' | grep -vq '"superseded":true'; then echo "OK nothing to resend"; exit 0; fi
   case "$KEY" in ''|*PASTE_YOUR_KEY_HERE*|kdw_xxx*) echo "ERROR NO_KEY: no Kodion key found, so nothing was resent."; exit 3 ;; esac
   NEW="$DIR/.log.new"; : > "$NEW"; SENT=0; LEFT=0; STOP=0; LN=0
   while IFS= read -r line || [ -n "$line" ]; do
     LN=$((LN+1))
-    if printf '%s' "$line" | grep -q '"posted":false' && ! printf '%s' "$line" | grep -q '"superseded":true' && ! printf '%s' "$line" | grep -q '"error":"\(404\|422\)"'; then
+    if printf '%s' "$line" | grep -q '"posted":false' && ! printf '%s' "$line" | grep -q '"skipped":' && ! printf '%s' "$line" | grep -q '"superseded":true' && ! printf '%s' "$line" | grep -q '"error":"\(404\|422\)"'; then
       s=$(printf '%s' "$line" | sed -n 's/.*"step":"\([a-z_]*\)".*/\1/p')
       at=$(printf '%s' "$line" | sed -n 's/.*"at":"\([^"]*\)".*/\1/p')
       # Already sent later (e.g. by a newer run)? Then resending would only raise the count twice.

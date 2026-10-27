@@ -14,7 +14,7 @@ Rules:
   "task_id": 164,
   "branch": "feature/164-testimonial-section",
   "generated_at": "2026-10-16T17:40:00+05:30",
-  "skill_versions": { "start-task": "1.2.1", "kodion-create-spec": "2.2.1", "ship": "1.1.0", "task-feedback": "1.1.0" },
+  "skill_versions": { "start-task": "1.5.0", "kodion-create-spec": "2.6.0", "ship": "1.3.0", "task-feedback": "1.2.0" },
 
   "session": {
     "duration_minutes": 95,
