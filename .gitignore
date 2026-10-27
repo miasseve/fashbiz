@@ -56,3 +56,4 @@ PLUGIN_MULTISTORE_SCOPE.md
 # claude code task workflow (local only, never commit)
 .claude/settings.local.json
 .claude/tasks/
+.claude/attachments/

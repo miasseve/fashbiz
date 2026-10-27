@@ -5,8 +5,25 @@ const UserSchema = new mongoose.Schema({
     url: { type: String },
     publicId: { type: String },
   },
-  firstname: { type: String, required: true },
-  lastname: { type: String, required: true },
+  // Names are not required for stores (the store sign-up form no longer collects
+  // them — task #448; a store-name placeholder is set at registration instead).
+  // Other roles still require a name. Note: on document .save() `this` is the
+  // doc (role is set); under update validators `this` is the query and role is
+  // absent, so treat an unknown role as not-required — the Yup profileSchema
+  // (validated with the session role) is the authoritative gate on updates,
+  // matching how the other role-gated fields (storename, businessNumber) behave.
+  firstname: {
+    type: String,
+    required: function () {
+      return this.role != null && this.role !== "store";
+    },
+  },
+  lastname: {
+    type: String,
+    required: function () {
+      return this.role != null && this.role !== "store";
+    },
+  },
   storename: {
     type: String,
     required: function () {
