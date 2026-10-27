@@ -5,6 +5,8 @@ import { Spinner } from "@heroui/react";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaTrash, FaStore, FaEdit } from "react-icons/fa";
 import { CATEGORIES, SUBCATEGORIES } from "@/lib/taxonomy";
+import ColorPicker from "@/components/ColorPicker";
+import { nameToHex, nearestColorName } from "@/lib/colorNaming";
 
 // Full address shown alongside every store name in the reassign picker —
 // two stores can share a name (or a very similar one), and only the address
@@ -21,6 +23,7 @@ const emptyForm = {
   size: "",
   fabric: "",
   colorName: "",
+  colorHex: "",
   condition_grade: "",
   condition_notes: "",
   description: "",
@@ -76,6 +79,7 @@ const AdminProductDetailPage = () => {
       size: p.size?.join(", ") || "",
       fabric: p.fabric || "",
       colorName: p.color?.name || "",
+      colorHex: p.color?.hex || "",
       condition_grade: p.condition_grade || "",
       condition_notes: p.condition_notes || "",
       description: p.description || "",
@@ -137,7 +141,7 @@ const AdminProductDetailPage = () => {
         ...form,
         price: Number(form.price),
         size: form.size.split(",").map((s) => s.trim()).filter(Boolean),
-        color: { ...prev.color, name: form.colorName },
+        color: { name: form.colorName, hex: form.colorHex },
         ...(reassignStore ? { userId: reassignStore } : {}),
       }));
       toast.success("Product updated");
@@ -396,11 +400,24 @@ const AdminProductDetailPage = () => {
                 </label>
                 <label className="block">
                   <span className="text-sm uppercase text-gray-500 font-semibold tracking-wide">Color</span>
-                  <input
-                    value={form.colorName}
-                    onChange={(e) => setForm((f) => ({ ...f, colorName: e.target.value }))}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
-                  />
+                  <div className="mt-1 flex items-center gap-3">
+                    <input
+                      value={form.colorName}
+                      onChange={(e) => {
+                        const colorName = e.target.value;
+                        const hex = nameToHex(colorName);
+                        setForm((f) => ({ ...f, colorName, ...(hex ? { colorHex: hex } : {}) }));
+                      }}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base"
+                    />
+                    <ColorPicker
+                      value={form.colorHex || nameToHex(form.colorName) || "#ffffff"}
+                      onChange={(hex) => {
+                        const nm = nearestColorName(hex);
+                        setForm((f) => ({ ...f, colorHex: hex, ...(nm ? { colorName: nm } : {}) }));
+                      }}
+                    />
+                  </div>
                 </label>
 
                 <label className="block">

@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { CATEGORIES } from "@/lib/taxonomy";
+import ColorPicker from "@/components/ColorPicker";
+import { nameToHex, nearestColorName } from "@/lib/colorNaming";
 
 /**
  * ProductFormFields — shared form inputs used by both SecondStep and TrySecondStep.
@@ -26,6 +29,22 @@ const ProductFormFields = ({
   priceSuggestion = null,
   isDemo = false,
 }) => {
+  const currentName = watch("color.name") || "";
+  const currentHex = watch("color.hex") || colorHex || "";
+  const effectiveHex = currentHex || nameToHex(currentName) || "#ffffff";
+
+  // If the AI gave a colour name but no value, fill the value from the name so the
+  // swatch isn't blank and the stored value matches the shown colour.
+  useEffect(() => {
+    if (currentName && !currentHex) {
+      const resolved = nameToHex(currentName);
+      if (resolved) setValue("color.hex", resolved, { shouldDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentName]);
+
+  const colorNameField = register("color.name");
+
   return (
     <>
       {/* Category — only shown when full AI pipeline is active */}
@@ -148,35 +167,35 @@ const ProductFormFields = ({
         )}
       </div>
 
-      {/* Color */}
+      {/* Color — editable name field and a free colour picker, kept in sync both ways */}
       <div>
         <label className="text-sm font-medium">Color</label>
         <div className="flex items-center gap-4">
           <input
             type="text"
             placeholder="white"
-            {...register("color.name")}
+            {...colorNameField}
+            onChange={(e) => {
+              colorNameField.onChange(e);
+              // Typing a recognised colour name moves the picker to that colour.
+              const hex = nameToHex(e.target.value);
+              if (hex) setValue("color.hex", hex, { shouldDirty: true });
+            }}
             className="border border-gray-300 rounded-md px-3 py-2 w-full"
           />
-          <input type="hidden" {...register("color.hex")} value={colorHex || ""} />
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "8px",
-              border: "1px solid #D3D3D3",
-              backgroundColor:
-                colorHex && colorHex !== "transparent"
-                  ? colorHex
-                  : watch("color.name")?.trim()
-                  ? watch("color.name")
-                  : "transparent",
-              transition: "background-color 0.3s ease",
+          <input type="hidden" {...register("color.hex")} />
+          <ColorPicker
+            value={effectiveHex}
+            onChange={(hex) => {
+              setValue("color.hex", hex, { shouldDirty: true });
+              // Picking a colour writes its closest common name into the field.
+              const name = nearestColorName(hex);
+              if (name) setValue("color.name", name, { shouldDirty: true });
             }}
           />
         </div>
-        {errors.color && (
-          <p className="text-red-500 text-sm mt-1">{errors.color.message}</p>
+        {errors.color?.name && (
+          <p className="text-red-500 text-sm mt-1">{errors.color.name.message}</p>
         )}
       </div>
 
