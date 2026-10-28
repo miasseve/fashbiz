@@ -187,6 +187,12 @@ const page = async ({ searchParams }) => {
   const res = await getUser();
   const user = res?.data ? JSON.parse(res.data) : null;
 
+  // Any store on an active paid plan should drop straight into the product
+  // steps — the "Go to Stripe Connect" gate is only for stores with no active
+  // plan (who still go through the connect / free-demo screen). An active plan
+  // (Link, webstore, plugin or any subscription) bypasses the gate entirely.
+  const requiresStripe = user?.isActive !== true;
+
   if (user?.isActive === false) {
     // No plan yet. Either send them into free demo mode (client-requested flow)
     // or show the strict "Subscription Required" wall — controlled by the flag.
@@ -223,6 +229,7 @@ const page = async ({ searchParams }) => {
       isDemo={response.isDemo}
       demoLimitReached={response.demoLimitReached}
       showProductLimitUpsell={showProductLimitUpsell}
+      requiresStripe={requiresStripe}
     />
   );
 };

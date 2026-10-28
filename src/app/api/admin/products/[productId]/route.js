@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import User from "@/models/User";
 import { deleteShopifyProduct } from "@/actions/shopifyAction";
+import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
 import { CATEGORIES, ALL_SUBCATEGORIES } from "@/lib/taxonomy";
 
 function json(data, status = 200) {
@@ -153,7 +154,9 @@ export async function DELETE(request, { params }) {
 
     if (product.shopifyProductId) {
       try {
-        await deleteShopifyProduct([product]);
+        // Route to the product owner's connected Shopify, same as create.
+        const storeConfig = await resolveStoreConfigForUser(product.userId);
+        await deleteShopifyProduct([product], storeConfig);
       } catch (err) {
         // Don't block the DB deletion if Shopify is unreachable.
         console.error("Shopify cleanup during admin product delete failed:", err);

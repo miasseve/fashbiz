@@ -18,6 +18,7 @@ const Main = ({
   demoLimitReached,
   addonPurchase,
   showProductLimitUpsell,
+  requiresStripe = true,
 }) => {
   const currentStep = useSelector((state) => state.product.currentStep);
   const [count, setCount] = useState(productCount || 0);
@@ -141,7 +142,7 @@ const Main = ({
           </div>
         </div>
       )}
-      {stripeResponse?.status !== 200 ? (
+      {stripeResponse?.status !== 200 && requiresStripe ? (
         <div className="flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
           {/* Primary CTA - Stripe Connect */}
           <Link

@@ -85,3 +85,23 @@ export async function resolveStoreForUser(userId) {
     return envFallbackConfig();
   }
 }
+
+/**
+ * Convenience wrapper that returns a storeConfig suitable to hand straight to
+ * the Shopify action helpers (createShopifyProduct, updateShopifyProduct,
+ * deleteShopifyProduct, ...), exactly as createProduct builds it:
+ *
+ *   - an OAuth-connected store  -> the resolved { storeDomain, accessToken, apiVersion }
+ *   - anything else (no userId, no connection, decrypt failure) -> undefined
+ *
+ * Passing `undefined` makes those helpers take their byte-identical base-store
+ * path (buildShopifyClient's no-storeConfig branch), so a store with no
+ * connected Shopify behaves exactly as before.
+ *
+ * @param {string|mongoose.Types.ObjectId} userId  the product OWNER's id
+ * @returns {Promise<object|undefined>}
+ */
+export async function resolveStoreConfigForUser(userId) {
+  const resolved = await resolveStoreForUser(userId);
+  return resolved?.source === "oauth" ? resolved : undefined;
+}

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import { deleteShopifyProduct } from "@/actions/shopifyAction";
+import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
 
 // Models — every collection that references a user is cleaned up here so a
 // deleted user leaves no orphaned data behind.
@@ -146,7 +147,10 @@ export async function DELETE(request, { params }) {
     let shopifyResult = { attempted: shopifyProducts.length, error: null };
     if (shopifyProducts.length > 0) {
       try {
-        await deleteShopifyProduct(shopifyProducts);
+        // All these products belong to the user being deleted, so one
+        // resolution routes the whole batch to their connected Shopify.
+        const storeConfig = await resolveStoreConfigForUser(userId);
+        await deleteShopifyProduct(shopifyProducts, storeConfig);
       } catch (err) {
         // Don't block the DB deletion if Shopify is unreachable.
         console.error("Shopify cleanup during user delete failed:", err);
