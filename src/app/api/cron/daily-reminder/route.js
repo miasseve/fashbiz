@@ -3,6 +3,14 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Product from "@/models/Product";
 import Notification from "@/models/Notification";
+import { auth } from "@/auth";
+
+function isAuthorized(req, session) {
+  const authHeader = req.headers.get("authorization");
+  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+  const role = session?.user?.role;
+  return role === "admin" || role === "developer";
+}
 
 // Daily nudge for free-plan stores with active listings — since a free
 // store isn't synced with Ree, there's no way to know what actually sold in
@@ -10,7 +18,12 @@ import Notification from "@/models/Notification";
 // to automate it"), not based on any detected sale. Only stores that
 // currently have at least one live (not sold, not archived) product get
 // one — an empty free store has nothing to remind them to delist.
-export async function GET() {
+export async function GET(req) {
+  const session = await auth();
+  if (!isAuthorized(req, session)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await dbConnect();
 
@@ -58,6 +71,6 @@ export async function GET() {
   }
 }
 
-export async function POST() {
-  return GET();
+export async function POST(req) {
+  return GET(req);
 }

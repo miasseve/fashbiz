@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Kodion Timesheet: fetch one task's title and description.
+# Kodion Timesheet: fetch one task from the timesheet API (title, description, and whatever else it sends).
 #
 # Usage:   bash .claude/skills/start-task/scripts/fetch-task.sh <task_number> [out_dir]
 # Output:  saves the API response to <out_dir>/raw.json (default out_dir: .claude/tasks/<task_number>)

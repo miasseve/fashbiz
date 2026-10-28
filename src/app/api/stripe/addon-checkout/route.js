@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import AddOnPurchase from "@/models/AddOnPurchase";
 import User from "@/models/User";
@@ -7,13 +8,17 @@ import { ADD_ONS, calculateTotal } from "@/lib/addOnConfig";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     await dbConnect();
-    const { userId, addOns, paymentMethodId } = await req.json();
+    const { addOns, paymentMethodId } = await req.json();
+    const userId = session.user.id;
 
-    if (!userId || !addOns || !Array.isArray(addOns) || addOns.length === 0) {
+    if (!addOns || !Array.isArray(addOns) || addOns.length === 0) {
       return Response.json(
-        { error: "userId and addOns array are required" },
+        { error: "addOns array is required" },
         { status: 400 }
       );
     }

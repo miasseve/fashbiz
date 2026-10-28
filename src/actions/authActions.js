@@ -76,8 +76,11 @@ export async function registerUser(data) {
         savedUser = await User.findByIdAndUpdate(
           candidates[0]._id,
           {
-            firstname,
-            lastname,
+            // Store sign-up no longer collects a name (task #448); use the store
+            // name as a non-blank placeholder so downstream displays/emails stay
+            // meaningful. This block only runs for role === "store".
+            firstname: storename,
+            lastname: "",
             email,
             password: hashedPassword,
             phone: phone || undefined,
@@ -93,8 +96,11 @@ export async function registerUser(data) {
 
     if (!savedUser) {
       const user = new User({
-        firstname,
-        lastname: role === "brand" ? undefined : lastname,
+        // Store sign-up no longer collects a name (task #448); use the store name
+        // as a non-blank placeholder. Brand/consignor keep their submitted name.
+        firstname: role === "store" ? storename : firstname,
+        lastname:
+          role === "store" ? "" : role === "brand" ? undefined : lastname,
         email,
         password: hashedPassword,
         role,
@@ -300,8 +306,13 @@ export async function updateUser(updatedData) {
       return { status: 400, error: "Invalid User" };
     }
 
-    // Validate updated data using Yup
-    await profileSchema.validate(updatedData, { abortEarly: false });
+    // Validate updated data using Yup. role drives the .when("role") rules
+    // (store names are optional — task #448); derive it from the session, never
+    // trust a client-supplied role.
+    await profileSchema.validate(
+      { ...updatedData, role: session.user.role },
+      { abortEarly: false },
+    );
 
     // Connect to the database
     await dbConnect();
@@ -309,6 +320,9 @@ export async function updateUser(updatedData) {
     // Coordinates are optional — avoid Mongoose CastError on "" and don't
     // clobber a previously saved value when the field is left untouched.
     const dataToSave = { ...updatedData };
+    // Never persist a client-supplied role — prevents privilege escalation
+    // through the profile update payload.
+    delete dataToSave.role;
     for (const key of ["latitude", "longitude"]) {
       if (dataToSave[key] === "" || dataToSave[key] === undefined || dataToSave[key] === null) {
         delete dataToSave[key];

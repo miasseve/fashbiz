@@ -15,7 +15,13 @@ export async function computeHasWebstoreAccess(userId, subscriptionType) {
     subType.includes("plugin") ||
     subType.includes("plug") ||
     subType === "pro" ||
-    subType === "business"
+    subType === "business" ||
+    // New leStoresworld plans that include a web store. Deliberately NOT the
+    // plain "lestores-ai" automation plan (549) — it has no web store — so
+    // these tokens match "lestores-ai-web"/"lestores-web"/"link" only.
+    subType.includes("ai-web") ||
+    subType.includes("lestores-web") ||
+    subType === "link"
   ) {
     return true;
   }
@@ -33,12 +39,14 @@ export async function computeHasWebstoreAccess(userId, subscriptionType) {
   }
 }
 
+export { canPostToInstagram } from "@/lib/planGating";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -49,6 +57,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.points_mode=user.points_mode;
         token.subscriptionType=user.subscriptionType;
         token.hasWebstoreAccess = await computeHasWebstoreAccess(user.id, user.subscriptionType);
+      }
+
+      if (trigger === "update") {
+        try {
+          const { default: dbConn } = await import("@/lib/db");
+          const { default: User } = await import("@/models/User");
+          await dbConn();
+          const freshUser = await User.findById(token.id).lean();
+          if (freshUser) {
+            token.isActive = freshUser.isActive;
+            token.subscriptionType = freshUser.subscriptionType || "free";
+            token.hasWebstoreAccess = await computeHasWebstoreAccess(
+              freshUser._id.toString(),
+              freshUser.subscriptionType
+            );
+          }
+        } catch (err) {
+          console.error("Session refresh error:", err);
+        }
       }
 
       return token;

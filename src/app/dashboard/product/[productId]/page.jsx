@@ -1,6 +1,7 @@
 import React from "react";
 import { getProductById } from "@/actions/productActions";
 import { auth } from "@/auth";
+import { canPostToInstagram } from "@/lib/planGating";
 import ImageCarousel from "@/app/product/components/ImageCarousel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,6 +13,7 @@ import GenerateBarcode from "./GenerateBarcode";
 import UnlinkProduct from "./UnlinkProduct";
 import ShopifyLink from "./ShopifyLink";
 import EditablePrice from "./EditablePrice";
+import EditableColor from "./EditableColor";
 import SoldDelistButton from "./SoldDelistButton";
 import OmnichannelConnections, {
   WebstoreUpsellCard,
@@ -34,10 +36,7 @@ const Page = async ({ params }) => {
   const parsedUser = JSON.parse(user);
 
   const session = await auth();
-  const canPostToInstagram =
-    session?.user?.subscriptionType === "free" ||
-    session?.user?.subscriptionType === "Pro" ||
-    session?.user?.subscriptionType === "Business";
+  const canPostIG = canPostToInstagram(session?.user?.subscriptionType);
   // Free-plan stores don't get automatic Shopify-sync delisting, so they
   // need the manual "Mark Sold / Delist" button; paid subscribers already
   // have that happen automatically via the real Shopify sale webhook.
@@ -80,7 +79,7 @@ const Page = async ({ params }) => {
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Color</div>
-                <div className="text-xl text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Sub Category</div>
@@ -154,7 +153,7 @@ const Page = async ({ params }) => {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Color</div>
-                    <div className="text-base text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                    <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-1">Category</div>
@@ -250,7 +249,7 @@ const Page = async ({ params }) => {
               first. */}
           <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OmnichannelConnections
-              canPostToInstagram={canPostToInstagram}
+              canPostToInstagram={canPostIG}
               webstoreUrl={shopifyProductUrl}
             />
             {!isBrandOrCollectItem && (
@@ -315,7 +314,7 @@ const Page = async ({ params }) => {
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-red-300 transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Color</div>
-                <div className="text-xl text-gray-900 font-semibold">{parsedProduct.color?.name || "N/A"}</div>
+                <EditableColor productId={parsedProduct._id} color={parsedProduct.color} />
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-red-300 transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <div className="text-sm uppercase text-gray-500 font-semibold tracking-wide mb-1.5">Sub Category</div>

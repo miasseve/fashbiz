@@ -401,6 +401,7 @@ const TrySecondStep = ({ handleBackStep, handleAddMoreProducts }) => {
                   register={register}
                   errors={errors}
                   watch={watch}
+                  setValue={setValue}
                   fabricOptions={fabricOptions}
                   colorHex={colorHex}
                   showPriceField

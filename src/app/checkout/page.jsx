@@ -122,20 +122,32 @@ function CheckoutForm({ plan, userId }) {
       const data = await res.json();
 
       if (data.success) {
-        await fetch("/api/referral/update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, referralCode }),
-        });
-        await unarchiveProduct(userId);
-        if (userRole === "brand") {
-          await fetch("/api/brand", {
+        try {
+          await fetch("/api/referral/update", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId }),
+            body: JSON.stringify({ userId, referralCode }),
           });
+        } catch (e) {
+          console.error("Referral update failed:", e);
         }
-        router.push("dashboard/subscription-plan");
+        try {
+          await unarchiveProduct(userId);
+        } catch (e) {
+          console.error("Unarchive failed:", e);
+        }
+        if (userRole === "brand") {
+          try {
+            await fetch("/api/brand", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId }),
+            });
+          } catch (e) {
+            console.error("Brand setup failed:", e);
+          }
+        }
+        router.push("/dashboard/subscription-plan?session_id=success");
         router.refresh();
       } else {
         setError(data.error || "Payment failed");
@@ -308,7 +320,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!userId || !priceId) {
-      router.push("dashboard/subscription-plan");
+      router.push("/dashboard/subscription-plan");
       return;
     }
 
@@ -317,9 +329,9 @@ export default function CheckoutPage() {
       .then((plans) => {
         const selectedPlan = plans.find((p) => p.id === priceId);
         if (selectedPlan) setPlan(selectedPlan);
-        else router.push("dashboard/subscription-plan");
+        else router.push("/dashboard/subscription-plan");
       })
-      .catch(() => router.push("dashboard/subscription-plan"))
+      .catch(() => router.push("/dashboard/subscription-plan"))
       .finally(() => setLoading(false));
   }, [priceId, userId, router]);
 
@@ -354,7 +366,7 @@ export default function CheckoutPage() {
           </Elements>
 
           <button
-            onClick={() => router.push("dashboard/subscription-plan")}
+            onClick={() => router.push("/dashboard/subscription-plan")}
             className="w-full mt-5 text-[12px] text-gray-400 hover:text-gray-600 transition"
           >
             ← Back to Plans

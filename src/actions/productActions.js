@@ -15,6 +15,7 @@ import {
   disableShopifyProduct,
   getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
+import { resolveStoreForUser } from "@/lib/shopifyStoreResolver";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
@@ -85,12 +86,10 @@ export async function createProduct(formData) {
     });
     if (demoAccount) {
       isDemo = true;
-      // The demo cap only applies to NO-PLAN (free) users. Once subscribed
-      // (isActive), the plan limit governs instead — enforced on the
-      // add-product page — so subscribing lifts the demo cap even before
-      // Stripe is connected.
       const subscriber = await User.findById(session.user.id).select("isActive");
-      if (!subscriber?.isActive) {
+      if (subscriber?.isActive) {
+        isDemo = false;
+      } else {
         const demoProductCount = await Product.countDocuments({
           userId: session.user.id,
           isDemo: true,
@@ -114,20 +113,33 @@ export async function createProduct(formData) {
         : null;
     }
 
-    if (collect === false) {
+    if (collect === false && !isDemo) {
       try {
         // Fetch store name for Shopify metafield
         const storeUser = await User.findById(session.user.id).select("storename brandname");
         const storeName = storeUser?.storename || storeUser?.brandname || "";
 
+        // Route to the store owner's own OAuth-connected Shopify when they have
+        // one; otherwise sync to the base store exactly as before. We pass a
+        // storeConfig ONLY for a real OAuth store — an env/base resolution is
+        // left undefined so createShopifyProduct takes its byte-identical
+        // no-storeConfig path (shared client, same API version, and the FB/IG
+        // publication cache + SHOPIFY_FACEBOOK_PUBLICATION_ID env shortcut).
+        const resolvedStore = await resolveStoreForUser(session.user.id);
+        const storeConfig =
+          resolvedStore?.source === "oauth" ? resolvedStore : undefined;
+
         // Create product in Shopify (points products get price=0 + metafields)
-        const shopifyResponse = await createShopifyProduct({
-          ...formData,
-          ...(pointsValue != null ? { price: 0 } : {}),
-          pointsValue,
-          storeName,
-          barcodeValue,
-        });
+        const shopifyResponse = await createShopifyProduct(
+          {
+            ...formData,
+            ...(pointsValue != null ? { price: 0 } : {}),
+            pointsValue,
+            storeName,
+            barcodeValue,
+          },
+          storeConfig,
+        );
         if (shopifyResponse.status === 200) {
           shopifyProductId = shopifyResponse.productId;
           shopifyVariantId = shopifyResponse.variantId;
@@ -303,40 +315,7 @@ export async function createGuestProduct(formData) {
       : "XXX";
     const barcodeValue = `REE-${brandCode}${sku}${year}`;
 
-    // Create on Shopify
-    try {
-      const shopifyResponse = await createShopifyProduct({
-        ...formData,
-        barcodeValue,
-      });
-      if (shopifyResponse.status === 200) {
-        shopifyProductId = shopifyResponse.productId;
-        shopifyVariantId = shopifyResponse.variantId;
-        shopifyInventoryItemId = shopifyResponse.inventoryItemId;
-        shopifyProductHandle = shopifyResponse.productHandle;
-        createdShopifyProduct = true;
-      } else {
-        return {
-          status: 400,
-          error: shopifyResponse.error || "Failed to create product on Shopify. Please try again.",
-        };
-      }
-    } catch (error) {
-      if (error.response) {
-        const { status, data } = error.response;
-        if (
-          status === 400 &&
-          data?.message === "requirement failed: product.sku is not unique"
-        ) {
-          return { status: 400, error: "SKU already exists" };
-        }
-        return { status: 400, error: data?.message };
-      }
-      return {
-        status: 400,
-        error: error.response?.data?.message || error?.message,
-      };
-    }
+    // Guest/demo products are saved to MongoDB only — never synced to Shopify
 
     // Save in MongoDB
     const newProduct = new Product({
@@ -881,7 +860,7 @@ export async function getInstagramPostStatus(productIds) {
     const logs = await InstagramPostLog.find({
       productIds: { $in: productIds },
       userId: session.user.id,
-    }).select("productId status instagramPostId postedAt errorLog");
+    }).select("productIds status instagramPostId postedAt errorLog");
 
     return {
       status: 200,

@@ -2,8 +2,18 @@
 import * as Yup from "yup";
 
 export const registerSchema = Yup.object({
-  firstname: Yup.string().trim().required("First name is required"),
-  lastname: Yup.string().trim().required("Last name is required"),
+  // First/last name are optional for stores (the store sign-up form no longer
+  // collects them — task #448). Other roles (e.g. consignor) still require them.
+  firstname: Yup.string().when("role", {
+    is: "store",
+    then: () => Yup.string().trim().nullable(),
+    otherwise: () => Yup.string().trim().required("First name is required"),
+  }),
+  lastname: Yup.string().when("role", {
+    is: "store",
+    then: () => Yup.string().trim().nullable(),
+    otherwise: () => Yup.string().trim().required("Last name is required"),
+  }),
   contactTitle: Yup.string().when("role", {
     is: "brand",
     then: () =>
@@ -90,8 +100,18 @@ export const loginSchema = Yup.object({
 });
 
 export const profileSchema = Yup.object({
-  firstname: Yup.string().trim().required("First name is required"),
-  lastname: Yup.string().trim().required("Last name is required"),
+  // Stores may have no name (task #448), so a store owner is never blocked from
+  // saving their profile for a missing name. Other roles still require it.
+  firstname: Yup.string().when("role", {
+    is: "store",
+    then: () => Yup.string().trim().nullable(),
+    otherwise: () => Yup.string().trim().required("First name is required"),
+  }),
+  lastname: Yup.string().when("role", {
+    is: "store",
+    then: () => Yup.string().trim().nullable(),
+    otherwise: () => Yup.string().trim().required("Last name is required"),
+  }),
   storename: Yup.string().when("role", {
     is: "store",
     then: () => Yup.string().trim().required("Store name is required"),

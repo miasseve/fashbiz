@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-shot snapshot of repo state before a /ship run.
+# One-shot summary of repo state before a /ship run.
 # Usage: bash <skill-dir>/assets/preflight.sh
 set -uo pipefail
 

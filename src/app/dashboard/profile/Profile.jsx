@@ -40,8 +40,18 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
   const [stateOptions, setStateOptions] = useState(sOptions || []);
 
   const profileSchema = Yup.object({
-    firstname: Yup.string().trim().required("First name is required"),
-    lastname: Yup.string().trim().required("Last name is required"),
+    // Stores may have no name (task #448), so don't block a store owner from
+    // saving for a missing name. Other roles still require it.
+    firstname: Yup.string().when("role", {
+      is: "store",
+      then: () => Yup.string().trim().nullable(),
+      otherwise: () => Yup.string().trim().required("First name is required"),
+    }),
+    lastname: Yup.string().when("role", {
+      is: "store",
+      then: () => Yup.string().trim().nullable(),
+      otherwise: () => Yup.string().trim().required("Last name is required"),
+    }),
     storename: Yup.string().when("role", {
       is: "store",
       then: () => Yup.string().trim().required("Store name is required"),
@@ -267,7 +277,13 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
   const onSubmit = async (data) => {
     try {
       setError("");
-      await profileSchema.validate(data, { abortEarly: false });
+      // role drives the .when("role") rules (store names are optional — task
+      // #448). It's a form default, not an editable field, so inject the real
+      // role here; the server re-derives it from the session, never the client.
+      await profileSchema.validate(
+        { ...data, role: user?.role },
+        { abortEarly: false },
+      );
 
       if (!isValidPhoneNumber(data.phone)) {
         setError("Invalid phone number");
@@ -408,10 +424,7 @@ const Profile = ({ user, stripeResponse, hasWebstoreAccess }) => {
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Tabs — visible to store users with webstore access (subscription or add-on) */}
-      {isStore &&
-        (user?.subscriptionType === "Pro" ||
-          user?.subscriptionType === "Business" ||
-          hasWebstoreAccess) && (
+      {isStore && hasWebstoreAccess && (
           <div className="px-6 pt-5 pb-0">
             <div className="inline-flex bg-gray-100 rounded-lg p-1 gap-1">
               <button

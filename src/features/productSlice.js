@@ -5,12 +5,10 @@ import { set } from "mongoose";
 const initialState = {
   consignor: {},
   currentStep: 1,
-  uploadedImages: {
-    frontView: null,
-    sideView: null,
-    backView: null,
-    detailView: null,
-  },
+  // Ordered list of uploaded product photos ({ url, publicId, ... }), in the
+  // order the owner added them. The first photo is treated as the main one
+  // by the AI analysis. (Previously a fixed { frontView, sideView, ... } object.)
+  uploadedImages: [],
 };
 
 const productSlice = createSlice({
@@ -24,7 +22,7 @@ const productSlice = createSlice({
       state.currentStep = action.payload; 
     },
     clearProductState: (state) => {
-      state.uploadedImages = {};
+      state.uploadedImages = [];
     },
     setConsignors: (state, action) => {
       state.consignor = action.payload;

@@ -3,13 +3,13 @@ name: task-feedback
 description: Kodion – Task Feedback. The last step of the Kodion spec-driven flow. After /ship, reviews how this task's Claude Code session went: was the spec in the right format, was the plan complete, was it built in one attempt, how many questions Claude asked, how often the developer corrected it, and whether the tests were run and passed. It writes a feedback report and asks the developer to confirm, then sends it to the Kodion Timesheet against the task. Runs automatically at the end of /ship when .claude/tasks/<ID>/task.json exists, or when the developer types /task-feedback <ID>.
 argument-hint: <task number>   (optional: taken from the branch name)
 metadata:
-  version: 1.0.0
+  version: 1.2.0
 allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(bash .claude/skills/task-feedback/scripts/collect-metrics.sh:*), Bash(bash .claude/skills/task-feedback/scripts/post-feedback.sh:*), Bash(git branch --show-current), Bash(git diff --name-only:*), Bash(git log --oneline:*), Bash(date:*)
 ---
 
 # Kodion – Task Feedback
 
-**Version 1.0.0**
+**Version 1.2.0** · what changed: [CHANGELOG.md](CHANGELOG.md)
 
 You write an **honest, evidence-based review of how Claude did on one task**, show it to the developer, and send it to the timesheet **only if they say Submit**. The report answers fixed questions, so tasks can be compared over time and the skills and rules can be improved.
 
@@ -79,13 +79,17 @@ Label each line of `prompts.tsv` as exactly one of these:
 
 **Spec:**
 - Path is `task.json.spec`; otherwise Glob `.claude/specs/<ID>-*.md`, then `.claude/spec/<ID>-*.md`.
-- Compare its `##` headings with the template. Use `.claude/skills/kodion-create-spec/templates/spec-template.md` if it exists; otherwise only check that the spec has a goal, scope, acceptance criteria and a verification list.
-- Note `approved`: the header says `Status: Approved`, or `review_spec` is in `log.jsonl`.
+- **Which format:** if the header says **Small spec**, compare its `##` headings with `.claude/skills/kodion-create-spec/templates/spec-small.md`. Otherwise use `templates/spec-template.md`. If neither template exists, only check that the spec has a goal, scope, acceptance criteria and a verification list.
+  A small spec is meant to be short. Never count the full template's sections as missing from it.
+- Note `approved`: the header says `Status: Approved` (written as `**Status:** Approved`), or `review_spec` is in `log.jsonl`.
+- **Approval:** read the header's **Approved by**. There is no role check — any reviewer may approve any risk level — so only an **unapproved** spec is an issue: "Spec was not approved before planning." Never raise an issue about who approved it.
+- **Review helpers:** note whether the header's Part A has an `AT A GLANCE` box, and how many plain-text drawings Part A holds. More than one drawing, or a missing box, is an issue: "Spec doesn't follow the v2.5.0 review layout."
 - `revisions` = `workflow_log.save_spec` − 1, with a minimum of 0.
 
 **Plan:**
 - Path is `task.json.plan`; otherwise Glob `.claude/plans/<ID>-*.md`, then a plan file with the same name as the spec.
 - **Required sections:**
+  - **Small spec:** only the files to change and one check per acceptance check. Nothing else is required.
   - If the project has `.claude/rules/planning.md`, use its "Every plan states" list.
   - Otherwise, check for these:
     - files to change
@@ -123,22 +127,23 @@ Follow [references/feedback-schema.md](references/feedback-schema.md) exactly.
    - **Issues** are things wrong or missing in what was delivered, measured against the spec.
    - **Risks** are things that could break elsewhere: global CSS, shared components, migrations, auth.
    - **Improvements** are concrete changes to the skills, rules or templates that would have avoided a problem in this task. These are the most valuable part, so be specific.
+   - **Timesheet ticks not sent:** Read `log.jsonl`. Count the lines with `"posted":false` that don't have `"superseded":true`. If there are any, add one issue: "<n> Task Board tick(s) not sent: <step names> (<errors>)". `log-step.sh <ID> --retry` resends them.
 
 Then set `scores`, `one_shot` and `summary` using the rules in the schema file.
 
 ## Step 5: Write and show the report
 
 1. `date -Iseconds` → `generated_at`.
-2. Write `.claude/tasks/<ID>/feedback.json` with the Write tool. Include every key, and set `developer` to `{"rating": null, "comment": null}`. Read the `version` lines in `task-feedback/SKILL.md` and `kodion-create-spec/SKILL.md` for `skill_versions`.
+2. Write `.claude/tasks/<ID>/feedback.json` with the Write tool. Include every key, and set `developer` to `{"rating": null, "comment": null}`. For `skill_versions`, read the `version:` line in the `SKILL.md` of `start-task`, `kodion-create-spec`, `ship` and `task-feedback`. Use `null` for a skill with no version line.
 3. Run `bash .claude/skills/task-feedback/scripts/post-feedback.sh <ID> --check`. On `ERROR BLOCKED`, remove the flagged text from `feedback.json` and run the check again.
 4. Show the report in this shape, and nothing more:
 
 ```
-📋 Task #<ID> feedback  (session <duration> min · <total> developer prompts)
+📋 Task #<ID> feedback · /task-feedback v1.2.0  (session <duration> min · <total> developer prompts)
 
 Scores     Spec <n>/5 · Plan <n>/5 · Implementation <n>/5 · One shot: <Yes|No>
 
-Spec        <format ok | missing: …> · <revisions> revision(s) · <approved|not approved>
+Spec        <Small | Full> · <format ok | missing: …> · <revisions> revision(s) · <approved by <name> | not approved> · <at-a-glance ✓ | missing> · <n> drawing(s)
 Plan        <complete | missing: …> · <revisions> revision(s)
 Rework      <Yes|No> — <note>
 Iterations  <count> — <note>

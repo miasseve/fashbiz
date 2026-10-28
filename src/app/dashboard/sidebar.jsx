@@ -13,6 +13,7 @@ import { RiProductHuntFill } from "react-icons/ri";
 
 import { FaHandHoldingUsd, FaInstagram, FaGlobe, FaTags, FaInfoCircle } from "react-icons/fa";
 import { FaBoxOpen } from "react-icons/fa6";
+import { canPostToInstagram } from "@/lib/planGating";
 import { toast } from "react-toastify";
 import { CiBoxList } from "react-icons/ci";
 import BarcodeScannerModal from "@/components/BarcodeScannerModal";
@@ -84,11 +85,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   // heuristic and the AddOnPurchase check, so "connected" means the same
   // thing here as on the product page and everywhere else.
   const hasWebstoreAccess = !!session.data?.user?.hasWebstoreAccess;
-  // Matches ProductList.jsx's canPostToInstagram check exactly.
-  const canPostToInstagram =
-    session.data?.user?.subscriptionType === "free" ||
-    session.data?.user?.subscriptionType === "Pro" ||
-    session.data?.user?.subscriptionType === "Business";
+  const canPostIG = canPostToInstagram(session.data?.user?.subscriptionType);
 
   const menuItems = [
     {
@@ -254,8 +251,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 key: "instagram",
                 label: "Instagram",
                 icon: <FaInstagram className="text-[1.1rem]" />,
-                active: canPostToInstagram,
-                href: canPostToInstagram ? "/dashboard/store" : "/dashboard/subscription-plan",
+                active: canPostIG,
+                href: canPostIG ? "/dashboard/store" : "/dashboard/subscription-plan",
               },
             ].map((c) =>
               c.comingSoon ? (

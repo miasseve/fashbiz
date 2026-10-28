@@ -14,7 +14,7 @@ Rules:
   "task_id": 164,
   "branch": "feature/164-testimonial-section",
   "generated_at": "2026-10-16T17:40:00+05:30",
-  "skill_versions": { "task-feedback": "1.0.0", "kodion-create-spec": "2.1.0" },
+  "skill_versions": { "start-task": "1.5.0", "kodion-create-spec": "2.6.0", "ship": "1.3.0", "task-feedback": "1.2.0" },
 
   "session": {
     "duration_minutes": 95,
@@ -107,7 +107,7 @@ Rules:
 
 | Score | Spec | Plan | Implementation |
 |---|---|---|---|
-| 5 | Template followed, approved first time, no missing sections | Every required section, approved first time | One shot: no rework, no corrections, every check passed first time |
+| 5 | Right template (small or full) followed, approved first time, no missing sections | Every required section, approved first time | One shot: no rework, no corrections, every check passed first time |
 | 4 | One revision round **or** one minor missing section | One revision **or** one minor missing section | One fix round **or** one correction, all checks passed in the end |
 | 3 | Two revisions, or a few missing sections | Two revisions, or a few missing sections | Several fix rounds or corrections, all checks passed in the end |
 | 2 | Wrong format or major sections missing | Missing the file list or steps | Repeated corrections or redirects, or scope creep |

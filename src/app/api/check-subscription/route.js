@@ -1,6 +1,7 @@
 // app/api/check-subscription/route.js
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
 import dbConnect from "@/lib/db";
@@ -11,8 +12,32 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
+function isAuthorized(req, session) {
+  const authHeader = req.headers.get("authorization");
+  if (
+    process.env.CRON_SECRET &&
+    authHeader === `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return true;
+  }
+
+  if (
+    session?.user?.role === "admin" ||
+    session?.user?.role === "developer"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export async function GET(req) {
   try {
+    const session = await auth();
+    if (!isAuthorized(req, session)) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await dbConnect();
 
     const subscriptions = await Subscription.find({});

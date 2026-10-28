@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import ProductItem from "./ProductItem";
 import { Button } from "@heroui/react";
 import { GridIcon, List, CheckSquare, X, InstagramIcon, Trash2 } from "lucide-react";
+import { canPostToInstagram } from "@/lib/planGating";
 import {
   unlinkProductFromWix,
   createBulkInstagramPosts,
@@ -14,7 +15,7 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
 const ProductList = ({ products, instagramPending, subscriptionType }) => {
-  const canPostToInstagram = subscriptionType === "free" || subscriptionType === "Pro" || subscriptionType === "Business";
+  const canPostIG = canPostToInstagram(subscriptionType);
   const hasPostInProgress = instagramPending?.hasPending || false;
   const [isGrid, setIsGrid] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -304,7 +305,7 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
           </div>
 
           {/* Bottom row: Instagram button (mobile bottom, desktop inline) - Pro and Business only */}
-          {canPostToInstagram && !selectionMode && !instagramMode && !deleteMode && (
+          {canPostIG && !selectionMode && !instagramMode && !deleteMode && (
             <Button
               onPress={toggleInstagramMode}
               className="font-semibold p-7 border border-blue-500 rounded-[4px] text-black bg-white w-full sm:w-[30%]"
@@ -404,7 +405,7 @@ const ProductList = ({ products, instagramPending, subscriptionType }) => {
       </div>
 
       {/* Instagram Processing Banner - Pro and Business only */}
-      {canPostToInstagram && hasPostInProgress && !instagramMode && (
+      {canPostIG && hasPostInProgress && !instagramMode && (
         <div className="mx-[15px] mb-4 p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2">
           <div className="animate-spin h-4 w-4 border-2 border-amber-600 border-t-transparent rounded-full" />
           <p className="text-sm text-amber-800">

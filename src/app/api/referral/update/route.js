@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import ReferralDetails from "@/models/Referral";
 import User from "@/models/User";
 
 export async function POST(req) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     await dbConnect();
 
-    const { userId, referralCode } = await req.json();
-
-    if (!userId) {
-      return NextResponse.json({ message: "User ID missing" }, { status: 400 });
-    }
+    const userId = session.user.id;
+    const { referralCode } = await req.json();
 
     // Mark user as active after successful payment
     await User.findByIdAndUpdate(userId, { isActive: true });

@@ -19,7 +19,7 @@ export default [
 
   // Correctly add parser as an object
   {
-    files: ['**/*.js', '**/*.ts'], // Specify the files that should use this configuration
+    files: ['**/*.js', '**/*.jsx'], // Specify the files that should use this configuration
     languageOptions: {
       parser: babelParser, // Use parser as an object (imported babel-parser)
       parserOptions: {

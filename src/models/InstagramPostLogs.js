@@ -47,10 +47,10 @@ const InstagramPostLogSchema = new mongoose.Schema(
 
 // Compound index for efficient querying
 InstagramPostLogSchema.index({ userId: 1, status: 1, createdAt: -1 });
-InstagramPostLogSchema.index({ productId: 1, status: 1 });
+InstagramPostLogSchema.index({ productIds: 1, status: 1 });
 
 // Prevent duplicate posts for the same product
-InstagramPostLogSchema.index({ productId: 1 }, { unique: false });
+InstagramPostLogSchema.index({ productIds: 1 }, { unique: false });
 
 const InstagramPostLog =
   mongoose.models.InstagramPostLog ||

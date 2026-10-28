@@ -78,34 +78,6 @@ const StoreForm = () => {
             {apiError}
           </span>
         )}
-        <div className="flex justify-between lg:flex-row flex-col w-full ">
-          <div className="relative mb-8 lg:w-[48%]">
-            <input
-              placeholder="First Name"
-              {...register("firstname", {
-                required: "First Name is required",
-              })}
-            />
-            {errors.firstname && (
-              <span className="text-red-500 font-bold text-[10px]  left-0">
-                {errors.firstname.message}
-              </span>
-            )}
-          </div>
-          <div className="relative mb-8 lg:w-[48%]">
-            <input
-              placeholder="Last Name"
-              {...register("lastname", {
-                required: "Last Name is required",
-              })}
-            />
-            {errors.lastname && (
-              <span className="text-red-500 font-bold text-[10px]  left-0">
-                {errors.lastname.message}
-              </span>
-            )}
-          </div>
-        </div>
         <div className="relative mb-8">
           <input
             placeholder="Store Name"

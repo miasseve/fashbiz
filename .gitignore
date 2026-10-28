@@ -53,10 +53,14 @@ IOS_APP_FLUTTER_SCOPE.md
 iOS App - Flutter Build Scope and Estimate.docx
 PLUGIN_MULTISTORE_SCOPE.md
 
-# claude task files
+# claude code task workflow (local only, never commit)
+.claude/settings.local.json
 .claude/tasks/
+.claude/attachments/
 
 # Claude Code personal files
 CLAUDE.local.md
-.claude/settings.local.json
 DESIGN.md
+
+# local setup doc shipped with the skills package — not part of the repo
+INSTALL.md

@@ -1,9 +1,15 @@
 ---
 name: ship
-description: Ship the current work — sync with the latest remote changes (resolving any merge conflicts), put pending work on a new branch, run a security check, push it, then merge it into main once the user explicitly confirms. Use when the user says "/ship", "ship this", "ship it", or asks to get their current changes onto main safely.
+description: Ship the current work — sync with the latest remote changes (resolving any merge conflicts), put pending work on a new branch, run a security check, push it, then merge it into main once the user explicitly confirms. On a project that is not on git it stops and explains instead, ticking nothing. On Kodion tasks it ticks the Ship steps (commit, push, pr_merge, back_to_main, delete_branch) and prints the task's full workflow log at the end. Use when the user says "/ship", "ship this", "ship it", or asks to get their current changes onto main safely.
+argument-hint: [task ID]   (only needed when the project isn't on git)
+metadata:
+  version: 1.3.0
+allowed-tools: Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Bash(bash .claude/skills/start-task/scripts/log-step.sh:*), Bash(bash .claude/skills/ship/assets/preflight.sh), Bash(git:*), Bash(gh:*), Bash(date:*), Bash(ls:*), Bash(grep:*), Bash(find:*), Bash(rm -f .claude/attachments/:*)
 ---
 
 # Ship
+
+**Version 1.3.0** · what changed: [CHANGELOG.md](CHANGELOG.md)
 
 Get whatever is sitting in the working tree (or on the current branch) onto `main`, safely:
 sync → branch → commit → **security check** → push → **confirm** → merge. Two gates are not
@@ -11,10 +17,26 @@ optional, no matter how clean the diff looks: nothing gets pushed with unresolve
 findings, and nothing gets merged into main without the user explicitly saying to, in this
 conversation.
 
-This skill assumes a GitHub-style remote named `origin` and a single shared default branch
-(usually `main`, sometimes `master`). It works from plain `git` — no `gh` CLI required, though
-if `gh` is installed and authenticated you may use it to open a PR instead of a bare local
-merge when the user prefers that trail (see Step 7).
+In git mode this skill assumes a GitHub-style remote named `origin` and a single shared default
+branch (usually `main`, sometimes `master`). It works from plain `git` — no `gh` CLI required,
+though if `gh` is installed and authenticated you may use it to open a PR instead of a bare
+local merge when the user prefers that trail (see Step 7).
+
+## Step 0 — Is this project on git?
+
+**Run this first, before the preflight:**
+
+```bash
+git rev-parse --is-inside-work-tree
+```
+
+| Result | What to do |
+|---|---|
+| prints `true` | Steps 1–12 below, as written |
+| fails ("not a git repository") | Skip Steps 1–11 and go to **No git? `/ship` has nothing to do** near the end of this file |
+
+With no git there is nothing to commit, push or merge, so `/ship` stops, ticks nothing, and says
+why. Never run `git init` yourself to make it work.
 
 ## Ground rules (apply throughout)
 
@@ -35,9 +57,56 @@ merge when the user prefers that trail (see Step 7).
   (leftover debug files, an unrelated half-finished edit), point them out and ask whether they
   belong in this ship before folding them into the commit.
 
+## Timesheet logs (Kodion task branches only)
+
+On a Kodion task, `/ship` ticks the five **Ship** steps in the task's *Developer Workflow Logs* on the Task Board, the same way `/start-task` ticks the Setup steps.
+
+**Is this a Kodion task?** Find `<ID>` like this, in order:
+1. `$ARGUMENTS` has a number (`/ship 325`) → use it, stripping a leading `#`.
+2. **Git mode:** take it from the current branch name (`<type>/<ID>-<slug>`, e.g. `feature/325-…` → `325`).
+3. **No branch name (a project with no git):** Glob `.claude/tasks/*/task.json` and Read each one. Use the single task whose `status` is `"in_progress"`. If there are several, ask which one in one AskUserQuestion. If there are none, it isn't a Kodion task.
+
+It's a Kodion task only if **both** are also true:
+- `.claude/tasks/<ID>/task.json` exists (Glob it)
+- `.claude/skills/start-task/scripts/log-step.sh` exists (Glob it)
+
+If either is missing, **don't send any steps and don't mention logging.** Remember `<ID>` now; in git mode Step 10 deletes the branch it came from, and Step 12 prints the log.
+
+If `/ship` creates a new branch in Step 4 (you started on `main`), that branch has no task number, so nothing is logged.
+
+**How to send a step:**
+```bash
+bash .claude/skills/start-task/scripts/log-step.sh <ID> <step>
+```
+- `OK posted …` → the step is ticked. Remember it as ✅.
+- `ERROR …` → remember it as ❌ with the reason. The script has already saved it in `.claude/tasks/<ID>/log.jsonl`, so it can be resent later.
+- **A log error never stops, blocks or undoes the ship.** Carry on and report it at the end.
+- Send each step **once**, right after the git action it describes **succeeds**. Never send a step for something that failed or was skipped, and never retry in a loop.
+
+| Step | Send it right after | Don't send it when |
+|---|---|---|
+| `commit` | Step 5: `git commit` succeeded, **or** the branch already had commits ready to ship (committed before `/ship`) | There is nothing committed on the branch |
+| `push` | Step 7: `git push -u origin <branch>` succeeded | The push failed or was skipped |
+| `pr_merge` | Step 9: the merge is on `origin/<default-branch>` (local merge + push, or `gh pr merge`) | The developer said no to the merge in Step 8 |
+| `back_to_main` | Step 9: you're on `<default-branch>` after the merge (`git branch --show-current`) | Still on the feature branch |
+| `delete_branch` | Step 10: the feature branch was deleted | The developer wants to keep the branch |
+
+**Resend earlier failures:** after Step 10 (or after Step 8 if the merge was declined), run once:
+```bash
+bash .claude/skills/start-task/scripts/log-step.sh <ID> --retry
+```
+It resends any step that failed earlier in this task (including from `/start-task`). Report only if it resent something or still has steps waiting.
+
+**End of the ship:** add one line to your final summary, then print the workflow log (Step 12):
+```
+Logged:  commit ✅ · push ✅ · pr_merge ✅ · back_to_main ✅ · delete_branch ✅   (Task Board → Developer Workflow Logs → Ship)
+```
+- List only the steps that applied. Use ❌ with a short reason for any that failed, plus: *"To send it later: `bash .claude/skills/start-task/scripts/log-step.sh <ID> --retry`"*.
+- For `401` / `404` / `NO_KEY`, give the fix in plain words: use your newest key · pick up the task on the Task Board · set up the key as in `/start-task`.
+
 ## Step 1 — Preflight
 
-Run the bundled snapshot script instead of piecing status together from several commands:
+Run the bundled script instead of piecing status together from several commands:
 
 ```bash
 bash <skill-dir>/assets/preflight.sh
@@ -146,6 +215,8 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 Write the message from what the diff actually does, not a generic "update files". If the user
 already gave you a description of the work in this conversation, ground the message in that.
 
+**Kodion task:** if the commit succeeded (or the branch already had commits to ship), send `commit` (see *Timesheet logs*).
+
 ## Step 6 — Security check (mandatory, every ship)
 
 Before anything is pushed to `origin`, run a security pass over exactly what's about to leave
@@ -215,6 +286,8 @@ gh pr create --base <default-branch> --head <branch-name> --title "<summary>" --
 
 Report the branch name (and PR link if opened) back to the user.
 
+**Kodion task:** if the push succeeded, send `push`.
+
 ## Step 8 — STOP. Ask for confirmation.
 
 Show a short summary — branch name, commit(s), files changed (`git diff <default-branch>...<branch-name> --stat`)
@@ -242,7 +315,23 @@ git push origin <default-branch>
 
 If you went the PR route in Step 7 instead, merge via `gh pr merge <number> --merge` (or
 whatever merge strategy the repo/user prefers) rather than merging locally, so GitHub's PR
-record stays accurate.
+record stays accurate. Then `git checkout <default-branch>` and `git pull origin <default-branch>`.
+
+**Kodion task:** once the merge is on `origin/<default-branch>`, send `pr_merge`. Then confirm
+`git branch --show-current` shows `<default-branch>` and send `back_to_main`.
+
+## Step 9b — Run the project's checks once
+
+The small-spec plan ran only the tests covering what changed (`.claude/rules/plan-mode.md`), so
+this is where the full suite runs — **once**, on the merged result.
+
+1. Find the project's own checks from its config and scripts (lint, type check, build, tests). If
+   there are none, say so and skip.
+2. Run them. Claude Code will ask permission for the project's own commands (they aren't in this skill's `allowed-tools` on purpose — they differ per project); tell the developer to approve. Read `.claude/rules/known-failures.md` if it exists: a failure listed there is
+   expected, so report it as "same as the known-failures list" and don't investigate it.
+3. **A failure that isn't listed is real.** Say so plainly. The merge has already happened, so
+   don't hide it — report it and offer to open a follow-up task.
+4. Skip this on a full spec: the full suite already ran before and after in plan mode.
 
 ## Step 10 — Clean up
 
@@ -253,19 +342,27 @@ git branch -d <branch-name>
 git push origin --delete <branch-name>
 ```
 
+**The task's screenshots.** Once the merge is on `origin`, the downloaded copies in
+`.claude/attachments/` have done their job: the images are still on the Task Board, and the spec
+records what each one showed. Delete this task's files only — `.claude/attachments/<ID>.*` and
+`.claude/attachments/<ID>-*.*`, nothing else — and say in one line that you did. Keep
+`.claude/tasks/<ID>/` (a few KB of text) as the record. Skip this if the merge didn't happen.
+
 Only delete the remote branch if you're confident the merge actually landed on `origin/<default-branch>`
 (re-check `git log origin/<default-branch> -1` if unsure). Skip cleanup entirely if the user
 wants to keep the branch around.
 
-## Step 11 — Task feedback (Kodion task branches only)
+**Kodion task:** if the branch was deleted, send `delete_branch`. Then run the `--retry` once
+(see *Timesheet logs*).
 
-Runs right after the merge (Step 9) and clean-up (Step 10) — the last thing `/ship` does.
+## Step 11 — Task feedback (Kodion tasks only)
 
-1. **Is this a Kodion task?** Take the task number from the branch that was just shipped
-   (`<type>/<ID>-<slug>`, e.g. `feature/325-…` → `325`; note it before Step 10 deletes the
-   branch). Glob `.claude/tasks/<ID>/task.json` and `.claude/skills/task-feedback/SKILL.md`.
-   If either is missing, or the branch has no task number, **skip this step silently** — say
-   nothing about feedback.
+The last thing `/ship` does: after the merge (Step 9), the clean-up (Step 10) and the workflow log (Step 12). Never run it on a project with no git — nothing was shipped.
+
+1. **Is this a Kodion task?** Use the `<ID>` you found in *Timesheet logs* (in git mode, note it
+   before Step 10 deletes the branch). Glob `.claude/tasks/<ID>/task.json` and
+   `.claude/skills/task-feedback/SKILL.md`. If either is missing, or there is no `<ID>`,
+   **skip this step silently** — say nothing about feedback.
 2. **Run it:** `Skill({ skill: "task-feedback", args: "<ID>" })`. It reviews the session, shows the
    report, and itself asks the developer **Submit / Add rating and comment / Don't submit** —
    nothing is sent without their Submit, so don't ask a second "run feedback?" question here.
@@ -273,8 +370,112 @@ Runs right after the merge (Step 9) and clean-up (Step 10) — the last thing `/
    or the developer picks Don't submit, end with one line: *"Feedback kept locally — run
    `/task-feedback <ID>` to send it later."*
 
-**If the developer said no to the merge in Step 8**, don't run feedback (the task isn't finished).
+**If the developer said no to the merge in Step 8**, don't run feedback — the task isn't finished.
 End with one line instead: *"When this is merged, run `/task-feedback <ID>` to review the session."*
+Only `commit` and `push` are logged in that case; `pr_merge`, `back_to_main` and `delete_branch` get ticked when you run `/ship` again to merge.
+
+---
+
+## Step 12 — Show the workflow log (always)
+
+Print this as part of the final summary, right before Step 11 (task feedback) runs. It runs whether or not the project is on git.
+
+The developer should not have to open the Task Board to see what was ticked. Read
+`.claude/tasks/<ID>/log.jsonl` and print the whole task's workflow in one block — all 16 steps,
+in order, so a missing one is obvious:
+
+```
+Workflow log · task #325
+  Setup     start_session ✅ · pull_latest ✅ · create_branch ✅
+  Spec      rename_session ✅ · write_spec ✅ · save_spec ✅✅ · review_spec ✅
+  Build     plan ✅ · implement ✅ · validate ✅ · iterate —
+  Ship      commit ✅ · push ✅ · pr_merge ✅ · back_to_main ✅ · delete_branch ✅
+```
+
+On a project with no git, the same block shows why the git steps aren't ticked:
+
+```
+Workflow log · task #325 · no git set up
+  Setup     start_session ✅ · pull_latest ⊘ · create_branch ⊘
+  Spec      rename_session ✅ · write_spec ✅ · save_spec ✅ · review_spec ✅
+  Build     plan ✅ · implement ✅ · validate ✅ · iterate ✅
+  Ship      commit ⊘ · push ⊘ · pr_merge ⊘ · back_to_main ⊘ · delete_branch ⊘
+  ⊘ = not ticked: no git set up
+```
+
+- Take the **newest line for each step**; a `"skipped"` line followed by a posted one means the
+  step happened later, and the posted line wins.
+- `✅` = a line with `"posted":true`. Repeat the tick once per posted line (`save_spec ✅✅` after
+  one revision), because that's what the board counts.
+- `⊘` = the newest line has `"skipped"`. Print the reason once under the block, not per step.
+- `❌ <reason>` = the newest line has `"posted":false` with an `"error"` and no later posted line.
+- `—` = the step never happened and no reason was recorded. That's normal for `iterate`, and for
+  `rename_session` on a manual task.
+- **Not a Kodion task, or no `log.jsonl`:** skip this step and print nothing about logging.
+- **Count what you actually printed**, don't state a total from memory: `<n> ticked · <n> not ticked (no git) · <n> not reached`. `iterate` is often `—`, so the total is rarely the same twice.
+- If any step shows `❌`, add one line under the block (a `⊘` is not a failure and needs no retry):
+  *"To send the missing ones: `bash .claude/skills/start-task/scripts/log-step.sh <ID> --retry`"*
+- Don't read or print the key, and don't call the timesheet API to check. `log.jsonl` is the
+  record.
+
+---
+
+# No git? `/ship` has nothing to do
+
+Reached from Step 0 when `git rev-parse` fails. There is no branch, no remote and no history, so
+there is nothing to commit, push or merge — and **nothing is logged.** Don't invent a meaning for
+a Ship step, don't copy files around, and don't run `git init`.
+
+1. **Record why the Ship steps aren't ticked**, so the reason survives the session. Only for a
+   Kodion task (see *Timesheet logs* for how `<ID>` is found; with no branch name, `/ship <ID>` or
+   the single `"in_progress"` task). Five calls, each posting nothing:
+   ```bash
+   bash .claude/skills/start-task/scripts/log-step.sh <ID> commit --skip "no git set up, nothing to commit"
+   ```
+   ```bash
+   bash .claude/skills/start-task/scripts/log-step.sh <ID> push --skip "no git set up, no remote"
+   ```
+   ```bash
+   bash .claude/skills/start-task/scripts/log-step.sh <ID> pr_merge --skip "no git set up, nothing to merge"
+   ```
+   ```bash
+   bash .claude/skills/start-task/scripts/log-step.sh <ID> back_to_main --skip "no git set up, no branches"
+   ```
+   ```bash
+   bash .claude/skills/start-task/scripts/log-step.sh <ID> delete_branch --skip "no git set up, no branch"
+   ```
+   Run each once. If `log.jsonl` already has a `"skipped"` line for a step, don't add another.
+   Not a Kodion task → skip this and say nothing about logging.
+
+2. **Stop and say so:**
+
+```
+/ship stopped — this project isn't on git.
+
+There's no branch, no remote and no history, so there's nothing to commit, push or merge.
+Ship steps not ticked: commit · push · pr_merge · back_to_main · delete_branch
+Reason saved against the task: no git set up.
+
+To ship properly:
+  1. git init
+  2. git add -A  and  git commit -m "first commit"   (check .gitignore first)
+  3. /start-task <ID>        — creates the branch and ticks pull_latest · create_branch
+  4. /ship                   — then works normally
+
+Your work is untouched. Nothing was copied, moved or deleted.
+```
+
+3. **Then print the workflow log** (Step 12), so the developer sees which steps are ticked and
+   which aren't, with the reason. Count the lines you print — don't claim a total. **Don't run Step 11** (task feedback) — the task isn't
+   shipped.
+
+4. **One offer, one line, nothing logged.** If the developer is about to hand this work over by
+   hand, a leaked key is the real risk, so you may add exactly one line:
+   *"Handing this over as files? Say so and I'll check the changed files for keys and passwords
+   first."* If they say yes, run the Step 6 security check over the changed files — report what you
+   find, tick nothing, and don't copy or move anything.
+
+Never suggest `git init` more than once in a session, and never run it yourself.
 
 ---
 

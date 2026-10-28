@@ -24,6 +24,16 @@ They are separate because a small job can be dangerous. Changing one word on the
 
 Sections a Small spec doesn't fill keep their heading with `N/A: Small task`. §13 and §14 are always included.
 
+**Which template:**
+
+| Size | Risk | Template |
+|---|---|---|
+| Small | Low | **Small spec** (`templates/spec-small.md`): Part A about 55 lines, only the box must be read, short plan |
+| Small | Medium or High | **Full spec**, with the Small sections above, plus §5 and §7 |
+| Medium or Large | any | **Full spec** |
+
+The developer can force one with `--small` or `--full`. `--small` doesn't work for Medium or High risk.
+
 **Risk overrides Size:** if Risk is Medium or High, §5 and §7 are always included, even in a Small spec.
 
 ---
@@ -52,22 +62,20 @@ If unsure between two levels, pick the higher one and add it to §9 "Decisions I
 | **§5 When things go wrong** | Main failure cases | All failure cases | All failure cases + what happens to existing data |
 | **§7 Safety checklist** | All 16 areas checked; short "Not involved" reasons are fine | All 16 areas checked | All 16 areas checked, rows in detail |
 | **§4.1 Who uses it** | Optional | If more than one user type | Required |
-| **Spec approval** | Developer or senior | Senior | Senior, plus the client if business rules change |
-| **Plan approval** | Developer or senior | Senior | Senior |
 | **Backup before coding** | No | No | **Yes**, written as a plan step |
 | **Rollback plan** | One line | Written steps | Written and tested steps |
 | **Tested on staging** | Optional | Yes | Yes, with real-like data |
-| **Go-live sign-off** | Developer | Senior | Senior + client |
 | **Done report §14** | AC table + files changed | Full | Full + proof of backup and rollback test |
 
 ---
 
 ## 4. Rules
 
-1. The spec skill sets Size and Risk. Plan mode can **raise** Risk if the code scan shows more danger, but never lower it without senior approval.
-2. Any change to Risk is written in §13 with the reason.
-3. Any open §10 question that blocks "Coding" → no coding starts, at any Risk level.
-4. The Git branch is never created, merged or deleted without the developer confirming.
+1. **Risk sets how much care the work needs, never who may approve it.** Whoever reviews the spec can approve it, at any risk level. The same goes for the plan.
+2. The spec skill sets Size and Risk. Plan mode can **raise** Risk if the code scan shows more danger, but never lower it — a task that turns out riskier keeps the higher level.
+3. Any change to Risk is written in §13 with the reason.
+4. Any open §10 question that blocks "Coding" → no coding starts, at any Risk level.
+5. A branch is never created, merged or deleted without the developer confirming. On a project that isn't on git there is no branch at all, and `/ship` does not run.
 
 ---
 

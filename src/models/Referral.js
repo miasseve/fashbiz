@@ -6,7 +6,6 @@ const referralSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique:true,
     },
     referralCode: {
       type: String,

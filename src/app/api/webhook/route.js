@@ -1,15 +1,16 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
 import AddOnPurchase from "@/models/AddOnPurchase";
+import ProcessedWebhookEvent from "@/models/ProcessedWebhookEvent";
 import { productPurchased } from "@/mails/ProductPurchased";
 import { transferSuccess } from "@/mails/TransferSuccess";
 import { transferFailed } from "@/mails/TransferFailed";
 import { consignorUpdate } from "@/mails/ConsignorUpdate";
 import { transferCreated } from "@/mails/TransferCreated";
 import RefferralDetails from "@/models/Referral";
-import { user } from "@heroui/theme";
 import { archiveProduct } from "@/actions/productActions";
 import { unarchiveProduct } from "@/actions/productActions";
 import {
@@ -24,9 +25,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
-// The secret you received when setting up the webhook endpoint in the Stripe dashboard
-const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
-// const endpointSecret = "whsec_817651dd8124d7d8557327bc20cda1f981e946abc7ad01c55a6b7d7294392b68";
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Middleware to handle raw body for webhook verification
 // export const config = {
@@ -37,6 +36,13 @@ const endpointSecret = "whsec_yuBUhVTxS5d7OFGKlAVf9isRMbeSB9qo";
 
 // Handle POST requests (webhook events)
 export async function POST(req, res) {
+  if (!endpointSecret) {
+    return NextResponse.json(
+      { error: "Webhook secret not configured" },
+      { status: 500 }
+    );
+  }
+
   const sig = req.headers.get("stripe-signature");
   let event;
 
@@ -48,6 +54,15 @@ export async function POST(req, res) {
       { error: `Webhook Error: ${err.message}` },
       { status: 400 }
     );
+  }
+
+  await dbConnect();
+
+  if (event.id) {
+    const existing = await ProcessedWebhookEvent.findOne({ eventId: event.id });
+    if (existing) {
+      return NextResponse.json({ message: "Event already processed" }, { status: 200 });
+    }
   }
 
   // Handle the event
@@ -123,14 +138,40 @@ export async function POST(req, res) {
         break;
       }
 
+      // Handle one-time plan purchases (lestores-web, link, old Webstore/Plug-In)
+      if (session.metadata.type === "plan_purchase") {
+        const planPriceId = session.metadata.planPriceId;
+        const price = await stripe.prices.retrieve(planPriceId);
+        const product = await stripe.products.retrieve(price.product);
+        const planName = price.nickname || product.name || "Unknown Plan";
+
+        const user = await User.findById(userId);
+        if (user) {
+          user.subscriptionType = planName;
+          user.isActive = true;
+          user.subscriptionStart = new Date();
+          user.subscriptionEnd = new Date("2099-12-31");
+          await user.save();
+        }
+
+        const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link", "Webstore Basic", "Webstore Pro", "Plug-In Basic", "Plug-In Pro"];
+        if (user && brandingPlans.includes(planName)) {
+          applyBrandingToThemeForUser(user._id).catch(err => console.error("Branding error:", err));
+          bulkCreateShopifyProducts(user._id).catch(err => console.error("Bulk create error:", err));
+        }
+
+        break;
+      }
+
       // Get subscription details
       const subscriptionId = session.subscription;
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-      // Update user in MongoDB
-      await dbConnect();
+      const fallbackPrice = await stripe.prices.retrieve(subscription.items.data[0].price.id);
+      const fallbackProduct = await stripe.products.retrieve(fallbackPrice.product);
+
       await User.findByIdAndUpdate(userId, {
-        subscriptionType: subscription.items.data[0].plan.nickname || "Pro",
+        subscriptionType: fallbackPrice.nickname || fallbackProduct.name || "Unknown Plan",
         subscriptionStart: new Date(subscription.current_period_start * 1000),
         subscriptionEnd: new Date(subscription.current_period_end * 1000),
         stripeSubscriptionId: subscription.id,
@@ -332,8 +373,11 @@ export async function POST(req, res) {
 
       const wasActive = user.isActive;
 
-      // Determine plan change for branding (Pro/Business only feature)
-      const brandingPlans = ["Pro", "Business"];
+      // Determine plan change for branding (branded web store feature).
+      // Old plan names kept intact; new leStoresworld web plans added so their
+      // subscribers also get branding. "lestores-ai" (automation only, no web
+      // store) is intentionally excluded.
+      const brandingPlans = ["Pro", "Business", "lestores-ai-web", "lestores-web", "link", "Webstore Basic", "Webstore Pro", "Plug-In Basic", "Plug-In Pro"];
       const oldSubType = user.subscriptionType;
       const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
       const product = await stripe.products.retrieve(price.product);
@@ -408,6 +452,7 @@ export async function POST(req, res) {
 
       // User is no longer active
       user.isActive = false;
+      user.subscriptionType = "free";
       await user.save();
 
       await Subscription.findOneAndUpdate(
@@ -432,9 +477,38 @@ export async function POST(req, res) {
       break;
     }
 
-    // You can handle other event types here if needed
+    case "invoice.payment_failed": {
+      const invoice = event.data.object;
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      if (customerId) {
+        const user = await User.findOne({ stripeCustomerId: customerId });
+        if (user) {
+          await Subscription.findOneAndUpdate(
+            { userId: user._id },
+            { status: "past_due" }
+          );
+          console.warn(
+            `Invoice payment failed for user ${user.email} (customer ${customerId}), subscription marked past_due`
+          );
+        } else {
+          console.warn(
+            `invoice.payment_failed: no user found for customer ${customerId}`
+          );
+        }
+      }
+      break;
+    }
+
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      break;
+  }
+
+  if (event.id) {
+    await ProcessedWebhookEvent.create({ eventId: event.id }).catch(() => {});
   }
 
   return NextResponse.json({ message: "Event received" }, { status: 200 });

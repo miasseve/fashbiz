@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { checkvalidReferralCode } from "@/actions/accountAction";
@@ -42,6 +43,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
   const [selectedPriceId, setSelectedPriceId] = useState(null);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const router = useRouter();
+  const { update } = useSession();
   const [terms, setTerms] = useState({
     term1: false,
   });
@@ -81,13 +83,20 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
     }
   };
 
-  const hasActiveSubscription =
-    !readOnly && user?.subscriptionEnd && dayjs().isBefore(dayjs(user.subscriptionEnd));
+  const hasActiveSubscription = !readOnly && user?.isActive &&
+    (user?.subscriptionEnd ? dayjs().isBefore(dayjs(user.subscriptionEnd)) : true);
 
   useEffect(() => {
     if (!readOnly) setUserRole(user?.role);
     fetchPlans();
   }, [hasActiveSubscription, user]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session_id")) {
+      update();
+    }
+  }, []);
 
   const fetchPlans = async () => {
     try {
@@ -160,6 +169,23 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
 
   const handleCheckout = async (priceId) => {
     if (readOnly || !user) return;
+
+    const plan = plans.find(p => p.id === priceId);
+    if (plan?.planType === "one-time") {
+      try {
+        const res = await fetch("/api/stripe/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceId }),
+        });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+      } catch (err) {
+        console.error("One-time checkout error:", err);
+      }
+      return;
+    }
+
     setSelectedPriceId(priceId);
     if (userRole === "store") setIsOpen(true);
     if (userRole !== "store") {
@@ -197,6 +223,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
             toast.success(
               data.message || "Subscription will cancel at period end",
             );
+            await update();
             router.refresh();
           } else {
             toast.error(`Error: ${data.error}`);
@@ -246,12 +273,32 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
     plans: groupedPlans[key].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
   }));
 
+  // Display-only filter for the NEW leStoresworld pricing page: show ONLY the
+  // new plans here. Old plans are deliberately NOT removed from `plans` (so the
+  // active-subscription status card above, activePlan matching, and the login
+  // seat-limit lookup via getSubscriptionPlans all keep working for existing
+  // subscribers) — they're just not rendered as purchasable cards on the new
+  // page. Matched by Stripe product name OR nickname.
+  const NEW_PLAN_IDENTIFIERS = [
+    "le stores discovery",
+    "lestores-ai",
+    "lestores-ai-web",
+    "le stores web",
+    "lestores-web",
+    "link",
+  ];
+  const newPlans = plans.filter(
+    (p) =>
+      NEW_PLAN_IDENTIFIERS.includes((p.name || "").toLowerCase()) ||
+      NEW_PLAN_IDENTIFIERS.includes((p.nickname || "").toLowerCase()),
+  );
+
   return (
     <section>
       <style>{PRICING_CSS}</style>
       <style>{PRICING_V2_CSS}</style>
 
-      {/* ── Status card ── */}
+
       {readOnly ? (
         <div className="p2-status">
           <div className="p2-status__left">
@@ -291,20 +338,29 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
           <div className="p2-status__right">
             <div className="p2-status__main">
-              {/* Dates */}
+
               <div className="p2-status__dates">
                 <div>
                   <span className="p2-status__date-label">Start: </span>
                   <span className="p2-status__date-val">{dayjs(user.subscriptionStart).format("DD MMM YYYY")}</span>
                 </div>
                 <div>
-                  <span className="p2-status__date-label">
-                    {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
-                  </span>
-                  <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+                  {new Date(user.subscriptionEnd).getFullYear() >= 2099 ? (
+                    <>
+                      <span className="p2-status__date-label">Access: </span>
+                      <span className="p2-status__date-val">Permanent</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="p2-status__date-label">
+                        {user.subscriptionType !== "free" ? "Renews On: " : "Ends On: "}
+                      </span>
+                      <span className="p2-status__date-val">{dayjs(user.subscriptionEnd).format("DD MMM YYYY")}</span>
+                    </>
+                  )}
                 </div>
               </div>
-              {/* Features */}
+
               <div className="p2-status__features">
                 {activePlan?.features?.length > 0 ? (
                   activePlan.features.map((f, i) => (
@@ -322,10 +378,6 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                     const limit = isPro ? "1000" : isBasic ? "300" : "Unlimited";
                     const users = isPro ? "5" : isBasic ? "2" : "1";
                     const fallbackFeatures = [
-                      // leStores AI (the "Add" plans) prices automation, not
-                      // product capacity — uploads via Discovery are unlimited
-                      // regardless of plan. Other plan types (Webstore/Plug-In)
-                      // are a separate product, unaffected by that change.
                       isAdd ? "Unlimited product uploads" : `Upload up to ${limit} products per month`,
                       `Up to ${users} users access`,
                       "Instagram integration",
@@ -340,7 +392,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                   })()
                 )}
               </div>
-              {/* Cancel / lock notice */}
+
               {user.subscriptionType !== "free" &&
                 (() => {
                   const startDate = new Date(user.subscriptionStart);
@@ -368,23 +420,21 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
           </div>
         </div>
       ) : null}
+      
       {/* No-plan status card removed per client request — it listed paid-only
           features (Instagram, webstore sync) with checkmarks on a screen
           shown to stores who haven't subscribed to anything yet, implying
           they were already included for free. The pricing cards below
           already show the correct feature list per real plan. */}
 
-      {/* ── NEW: 2hand2go-style stacked pricing sections ── */}
+      {/* ── NEW: leStoresworld-aligned 3-option pricing page ── */}
       {USE_NEW_PRICING ? (
-        planGroups.length > 0 && (
-          <PricingSections
-            planGroups={planGroups}
-            activePlan={activePlan}
-            handleCheckout={handleCheckout}
-            readOnly={readOnly}
-            tryMode={readOnly}
-          />
-        )
+        <PricingSections
+          newPlans={newPlans}
+          activePlan={activePlan}
+          handleCheckout={handleCheckout}
+          readOnly={readOnly}
+        />
       ) : (
       <>
       <h2 className="text-3xl md:text-6xl font-bold text-center text-gray-900 text-white mb-5">

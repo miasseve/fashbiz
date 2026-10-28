@@ -70,7 +70,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
-});
+}, { timestamps: true });
 
 const Product =
   mongoose.models.Product || mongoose.model("Product", productSchema);
