@@ -58,5 +58,9 @@ PLUGIN_MULTISTORE_SCOPE.md
 .claude/tasks/
 .claude/attachments/
 
+# Claude Code personal files
+CLAUDE.local.md
+DESIGN.md
+
 # local setup doc shipped with the skills package — not part of the repo
 INSTALL.md

@@ -48,3 +48,36 @@ export async function getReservationById(id) {
   const reservation = await Reservation.findById(id);
   return lazilyExpireIfNeeded(reservation);
 }
+
+// Discover's reservation rules (APP-lovable-discover reservation-rules.ts):
+// a member picks a 2- or 5-hour hold, and may hold up to 3 Finds per store
+// and 6 overall at the same time. The server owns the expiry: a client only
+// ever names one of these durations, never a timestamp.
+export const RESERVATION_DURATIONS_HOURS = [2, 5];
+export const MAX_ACTIVE_PER_STORE = 3;
+export const MAX_ACTIVE_GLOBAL = 6;
+
+/**
+ * The hold window for a create request. `undefined`/`null` keeps the legacy
+ * 8-hour window for clients that do not send a duration; anything other than
+ * a supported whole-hour choice is rejected (returns null).
+ */
+export function reservationWindowMs(durationHours) {
+  if (durationHours === undefined || durationHours === null) return RESERVATION_WINDOW_MS;
+  if (!RESERVATION_DURATIONS_HOURS.includes(durationHours)) return null;
+  return durationHours * 60 * 60 * 1000;
+}
+
+/** Every open, not-yet-expired hold a user has, soonest to end first. */
+export async function getActiveReservationsForUser(userId) {
+  const candidates = await Reservation.find({
+    userId,
+    state: { $in: OPEN_STATES },
+  });
+  const open = [];
+  for (const r of candidates) {
+    const settled = await lazilyExpireIfNeeded(r);
+    if (OPEN_STATES.includes(settled.state)) open.push(settled);
+  }
+  return open.sort((a, b) => a.expiresAt - b.expiresAt);
+}
