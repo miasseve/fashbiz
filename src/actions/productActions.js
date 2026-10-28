@@ -15,6 +15,7 @@ import {
   disableShopifyProduct,
   getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
+import { resolveStoreForUser } from "@/lib/shopifyStoreResolver";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
@@ -118,14 +119,27 @@ export async function createProduct(formData) {
         const storeUser = await User.findById(session.user.id).select("storename brandname");
         const storeName = storeUser?.storename || storeUser?.brandname || "";
 
+        // Route to the store owner's own OAuth-connected Shopify when they have
+        // one; otherwise sync to the base store exactly as before. We pass a
+        // storeConfig ONLY for a real OAuth store — an env/base resolution is
+        // left undefined so createShopifyProduct takes its byte-identical
+        // no-storeConfig path (shared client, same API version, and the FB/IG
+        // publication cache + SHOPIFY_FACEBOOK_PUBLICATION_ID env shortcut).
+        const resolvedStore = await resolveStoreForUser(session.user.id);
+        const storeConfig =
+          resolvedStore?.source === "oauth" ? resolvedStore : undefined;
+
         // Create product in Shopify (points products get price=0 + metafields)
-        const shopifyResponse = await createShopifyProduct({
-          ...formData,
-          ...(pointsValue != null ? { price: 0 } : {}),
-          pointsValue,
-          storeName,
-          barcodeValue,
-        });
+        const shopifyResponse = await createShopifyProduct(
+          {
+            ...formData,
+            ...(pointsValue != null ? { price: 0 } : {}),
+            pointsValue,
+            storeName,
+            barcodeValue,
+          },
+          storeConfig,
+        );
         if (shopifyResponse.status === 200) {
           shopifyProductId = shopifyResponse.productId;
           shopifyVariantId = shopifyResponse.variantId;
