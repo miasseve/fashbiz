@@ -57,3 +57,6 @@ PLUGIN_MULTISTORE_SCOPE.md
 .claude/settings.local.json
 .claude/tasks/
 .claude/attachments/
+
+# local setup doc shipped with the skills package — not part of the repo
+INSTALL.md
