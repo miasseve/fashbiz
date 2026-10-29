@@ -15,7 +15,7 @@ import {
   disableShopifyProduct,
   getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
-import { resolveStoreForUser } from "@/lib/shopifyStoreResolver";
+import { resolveStoreForUser, resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
@@ -245,7 +245,11 @@ export async function createProduct(formData) {
   } catch (error) {
     if (createdShopifyProduct && shopifyProductId) {
       try {
-        await deleteShopifyProduct(shopifyProductId);
+        // Roll back on the SAME store the product was created on, so the
+        // just-created listing is removed from the owner's connected Shopify
+        // rather than being left orphaned while a base-store delete no-ops.
+        const storeConfig = await resolveStoreConfigForUser(session.user.id);
+        await deleteShopifyProduct(shopifyProductId, storeConfig);
       } catch (rollbackError) {
         // Log for manual cleanup
         console.error("CRITICAL: Orphaned Shopify product", shopifyProductId);
@@ -1156,7 +1160,9 @@ export async function deleteProductByIdAndWix(
 
     if (deleteShopify && dbProduct?.shopifyProductId) {
       try {
-        await deleteShopifyProduct([dbProduct]);
+        // Route the delete to the owner's connected Shopify, same as create.
+        const storeConfig = await resolveStoreConfigForUser(dbProduct.userId);
+        await deleteShopifyProduct([dbProduct], storeConfig);
         await Product.updateOne({ _id }, { $unset: { shopifyProductId: "" } });
       } catch (error) {
         console.log(error, "error");
@@ -1193,7 +1199,9 @@ export async function deleteProductsByIds(productIds) {
 
       if (dbProduct.shopifyProductId) {
         try {
-          await deleteShopifyProduct([dbProduct]);
+          // Route to the owner's connected Shopify, same as create.
+          const storeConfig = await resolveStoreConfigForUser(dbProduct.userId);
+          await deleteShopifyProduct([dbProduct], storeConfig);
         } catch (error) {
           console.log(error, "error");
         }
@@ -1299,11 +1307,13 @@ export async function updateProduct(productId, data) {
         const storeName = storeUser?.storename || storeUser?.brandname || "";
         // Merge pointsValue from update data or existing product
         const pointsVal = data.pointsValue !== undefined ? data.pointsValue : product.pointsValue;
+        // Route the edit to the owner's connected Shopify, same as create.
+        const storeConfig = await resolveStoreConfigForUser(session.user.id);
         await updateShopifyProduct(product.shopifyProductId, {
           ...data,
           pointsValue: pointsVal,
           storeName,
-        });
+        }, storeConfig);
       } catch (error) {
         console.log(error, "error updating Shopify product");
       }

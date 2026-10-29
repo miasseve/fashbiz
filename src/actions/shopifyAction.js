@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getShopifyStorefrontPassword, buildStorefrontLink } from "@/lib/shopifySettings";
+import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
 
 const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const shopifyAccessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
@@ -754,8 +755,13 @@ export async function updateProductPrice(productId, newPrice) {
 }
 
 // UPDATE PRODUCT METAFIELD
-export async function updateProductMetafield(productId, namespace, key, value, type) {
+export async function updateProductMetafield(productId, namespace, key, value, type, storeConfig) {
   try {
+    // Shadow the module-level `shopify` with the resolved per-store client.
+    // No storeConfig -> buildShopifyClient returns the base-store client, so
+    // this is byte-identical to before for any non-connected store.
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
     const METAFIELDS_SET = `
       mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
         metafieldsSet(metafields: $metafields) {
@@ -948,8 +954,13 @@ export async function updateInventory(inventoryItemId, locationId, quantity, sto
 }
 
 //delete products from shopify
-export async function deleteShopifyProduct(products) {
+export async function deleteShopifyProduct(products, storeConfig) {
   try {
+    // Route the delete to the owner's connected Shopify when a storeConfig is
+    // given (resolved by the caller), otherwise shadow resolves to the shared
+    // base-store client — byte-identical to the previous behaviour.
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
     // Normalize input: allow single ID or array
     const productList = Array.isArray(products) ? products : [products];
 
@@ -1583,11 +1594,14 @@ export async function bulkRemoveShopifyProducts(userId) {
     shopifyProductId: { $exists: true, $ne: null },
   });
 
+  // Every product here belongs to `userId`, so one resolution covers the batch.
+  const storeConfig = await resolveStoreConfigForUser(userId);
+
   const results = { successful: 0, failed: 0 };
 
   for (const product of products) {
     try {
-      await deleteShopifyProduct([product]);
+      await deleteShopifyProduct([product], storeConfig);
       await Product.findByIdAndUpdate(product._id, {
         $unset: {
           shopifyProductId: "",
@@ -1734,8 +1748,12 @@ export async function getAllCollections() {
 }
 
 //not working as expected - needs testing and fixing
-export async function updateShopifyProduct(productId, formData) {
+export async function updateShopifyProduct(productId, formData, storeConfig) {
   try {
+    // Shadow the module-level `shopify` with the owner's resolved per-store
+    // client. No storeConfig -> base-store client, byte-identical to before.
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
     const {
       title,
       sku,
@@ -1753,10 +1771,10 @@ export async function updateShopifyProduct(productId, formData) {
 
     /* STEP 0: UPDATE METAFIELDS (points_value, store_label) if provided */
     if (pointsValue !== undefined) {
-      await updateProductMetafield(productId, "custom", "points_value", String(pointsValue), "number_integer");
+      await updateProductMetafield(productId, "custom", "points_value", String(pointsValue), "number_integer", storeConfig);
     }
     if (storeName) {
-      await updateProductMetafield(productId, "custom", "store_label", storeName, "single_line_text_field");
+      await updateProductMetafield(productId, "custom", "store_label", storeName, "single_line_text_field", storeConfig);
     }
 
     /* STEP 1: FETCH PRODUCT */
@@ -2054,7 +2072,7 @@ export async function updateShopifyProduct(productId, formData) {
     // Set inventory to 1 for each new variant (prevents inventory resetting to 0)
     let locationId = null;
     try {
-      const locations = await getShopifyLocations();
+      const locations = await getShopifyLocations(storeConfig);
       const activeLocation = locations.find((l) => l.isActive);
       locationId = activeLocation?.id;
     } catch (error) {
@@ -2079,7 +2097,7 @@ export async function updateShopifyProduct(productId, formData) {
             },
           });
 
-          await updateInventory(variant.inventoryItem.id, locationId, 1);
+          await updateInventory(variant.inventoryItem.id, locationId, 1, storeConfig);
         } catch (invError) {
           console.error(
             `Error setting inventory for variant ${variant.id}:`,

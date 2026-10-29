@@ -86,6 +86,15 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
   const hasActiveSubscription = !readOnly && user?.isActive &&
     (user?.subscriptionEnd ? dayjs().isBefore(dayjs(user.subscriptionEnd)) : true);
 
+  // The Link plan is a one-time payment with permanent access (subscriptionEnd
+  // far in the future) — NOT a recurring subscription. It has nothing to cancel
+  // and no 6-month lock, so the cancel button, the lock note and the
+  // "subscription" wording below must not apply to it.
+  const isOneTimePlan =
+    (user?.subscriptionType || "").toLowerCase() === "link" ||
+    (user?.subscriptionEnd &&
+      new Date(user.subscriptionEnd).getFullYear() >= 2099);
+
   useEffect(() => {
     if (!readOnly) setUserRole(user?.role);
     fetchPlans();
@@ -334,7 +343,9 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
                 : "Free"}{" "}
               <em>Plan</em>
             </div>
-            <div className="p2-status__sub">Your subscription is currently active.</div>
+            <div className="p2-status__sub">
+              Your {isOneTimePlan ? "plan" : "subscription"} is currently active.
+            </div>
           </div>
           <div className="p2-status__right">
             <div className="p2-status__main">
@@ -394,6 +405,7 @@ export default function SubscriptionPlans({ user, readOnly = false }) {
               </div>
 
               {user.subscriptionType !== "free" &&
+                !isOneTimePlan &&
                 (() => {
                   const startDate = new Date(user.subscriptionStart);
                   const sixMonthsLater = new Date(startDate);
