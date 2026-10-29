@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Spinner } from "@heroui/react";
 import {
   MdLock,
@@ -10,11 +10,11 @@ import {
   MdRefresh,
 } from "react-icons/md";
 import { FaShopify } from "react-icons/fa";
+import { isUnclaimedEmail } from "@/lib/storeMatching";
 
 const EMPTY_FORM = {
   userId: "",
   shopDomain: "",
-  email: "",
 };
 
 const STATUS_STYLES = {
@@ -40,7 +40,10 @@ const ShopifyConnectionsPage = () => {
   const [storeOwners, setStoreOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [ownerSearch, setOwnerSearch] = useState("");
+  const [ownerQuery, setOwnerQuery] = useState("");
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerHighlight, setOwnerHighlight] = useState(-1);
+  const ownerBoxRef = useRef(null);
   const [sending, setSending] = useState(false);
   const [resendingId, setResendingId] = useState(null);
   const [formError, setFormError] = useState("");
@@ -62,7 +65,13 @@ const ShopifyConnectionsPage = () => {
     try {
       const res = await fetch("/api/admin/users");
       const data = await res.json();
-      setStoreOwners((data.users || []).filter((u) => u.role === "store"));
+      // Only real store owners: unclaimed stubs carry a placeholder
+      // @ree-unclaimed.internal email that can't receive a connection link.
+      setStoreOwners(
+        (data.users || []).filter(
+          (u) => u.role === "store" && !isUnclaimedEmail(u.email)
+        )
+      );
     } catch {
       /* silent */
     }
@@ -73,10 +82,22 @@ const ShopifyConnectionsPage = () => {
     fetchStoreOwners();
   }, []);
 
-  // Search by store name, owner name or email.
+  // One combined "Store owner" control: the same text is both the search box
+  // and the chosen owner's label. Build the label exactly as the old dropdown
+  // did, so searching and the selection read the same.
+  const ownerLabel = (u) =>
+    u
+      ? `${u.storename || `${u.firstname || ""} ${u.lastname || ""}`.trim()} (${u.email})`
+      : "";
+
+  const selectedLabel = ownerLabel(storeOwners.find((u) => u._id === form.userId));
+
+  // Filter by store name, owner name or email. An empty query — or a query
+  // that still equals the current selection — shows the full list, so focusing
+  // the field (or re-opening it after a pick) reveals everyone.
   const filteredOwners = useMemo(() => {
-    const term = ownerSearch.trim().toLowerCase();
-    if (!term) return storeOwners;
+    const term = ownerQuery.trim().toLowerCase();
+    if (!term || ownerQuery === selectedLabel) return storeOwners;
     return storeOwners.filter((u) =>
       [u.storename, u.firstname, u.lastname, u.email]
         .filter(Boolean)
@@ -84,19 +105,57 @@ const ShopifyConnectionsPage = () => {
         .toLowerCase()
         .includes(term)
     );
-  }, [storeOwners, ownerSearch]);
+  }, [storeOwners, ownerQuery, selectedLabel]);
 
-  const selectedOwner = storeOwners.find((u) => u._id === form.userId) || null;
-
-  const handleSelectOwner = (userId) => {
-    const owner = storeOwners.find((u) => u._id === userId);
-    setForm((f) => ({
-      ...f,
-      userId,
-      // Prefill the registered login email, still editable below.
-      email: owner?.email || "",
-    }));
+  const selectOwner = (owner) => {
+    if (!owner) return;
+    setForm((f) => ({ ...f, userId: owner._id }));
+    setOwnerQuery(ownerLabel(owner));
+    setOwnerOpen(false);
+    setOwnerHighlight(-1);
   };
+
+  const handleOwnerChange = (value) => {
+    setOwnerQuery(value);
+    setOwnerOpen(true);
+    setOwnerHighlight(-1);
+    // Drop a stale selection once the text no longer matches it, so an edited
+    // field can't submit an owner the admin is no longer looking at.
+    if (form.userId && value !== selectedLabel) {
+      setForm((f) => ({ ...f, userId: "" }));
+    }
+  };
+
+  const handleOwnerKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOwnerOpen(true);
+      setOwnerHighlight((i) => Math.min(i + 1, filteredOwners.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setOwnerHighlight((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      if (ownerOpen && ownerHighlight >= 0 && filteredOwners[ownerHighlight]) {
+        e.preventDefault();
+        selectOwner(filteredOwners[ownerHighlight]);
+      }
+    } else if (e.key === "Escape") {
+      setOwnerOpen(false);
+      setOwnerHighlight(-1);
+    }
+  };
+
+  // Close the dropdown when clicking outside the control.
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (ownerBoxRef.current && !ownerBoxRef.current.contains(e.target)) {
+        setOwnerOpen(false);
+        setOwnerHighlight(-1);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,7 +163,7 @@ const ShopifyConnectionsPage = () => {
     setSuccessMessage("");
 
     if (!form.userId) {
-      setFormError("Please choose a store owner.");
+      setFormError("Please select a store owner.");
       return;
     }
     if (!form.shopDomain.trim()) {
@@ -120,7 +179,6 @@ const ShopifyConnectionsPage = () => {
         body: JSON.stringify({
           userId: form.userId,
           shopDomain: form.shopDomain.trim(),
-          email: form.email.trim(),
         }),
       });
       const data = await res.json();
@@ -132,7 +190,8 @@ const ShopifyConnectionsPage = () => {
 
       setSuccessMessage(data.message || "Connection link sent.");
       setForm(EMPTY_FORM);
-      setOwnerSearch("");
+      setOwnerQuery("");
+      setOwnerOpen(false);
       fetchConnections();
     } catch {
       setFormError("Network error. Please try again.");
@@ -142,11 +201,12 @@ const ShopifyConnectionsPage = () => {
   };
 
   const handleResend = async (connection) => {
-    const target = connection.recipientEmail || connection.userEmail;
     if (!connection.userId) {
       setFormError("This connection has no store owner attached, so no link can be sent.");
       return;
     }
+    // The link always goes to the owner's registered email now.
+    const target = connection.userEmail;
     if (!confirm(`Send a new connection link for ${connection.shopDomain} to ${target}?`)) {
       return;
     }
@@ -161,7 +221,6 @@ const ShopifyConnectionsPage = () => {
         body: JSON.stringify({
           userId: connection.userId,
           shopDomain: connection.shopDomain,
-          email: target,
         }),
       });
       const data = await res.json();
@@ -224,42 +283,69 @@ const ShopifyConnectionsPage = () => {
         <h3 className="text-2xl font-bold text-gray-900 mb-4">Send a connection link</h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Store owner search */}
-          <div>
-            <label className="block text-md font-semibold text-gray-700 mb-1.5">
-              Find store owner
+          {/* Store owner — one searchable field: search and select in one place */}
+          <div ref={ownerBoxRef} className="relative">
+            <label
+              htmlFor="store-owner-input"
+              className="block text-md font-semibold text-gray-700 mb-1.5"
+            >
+              Store owner
             </label>
             <input
+              id="store-owner-input"
               type="text"
-              value={ownerSearch}
-              onChange={(e) => setOwnerSearch(e.target.value)}
+              role="combobox"
+              aria-expanded={ownerOpen}
+              aria-controls="store-owner-listbox"
+              aria-autocomplete="list"
+              aria-activedescendant={
+                ownerOpen && ownerHighlight >= 0
+                  ? `store-owner-option-${ownerHighlight}`
+                  : undefined
+              }
+              autoComplete="off"
+              value={ownerQuery}
+              onChange={(e) => handleOwnerChange(e.target.value)}
+              onFocus={() => setOwnerOpen(true)}
+              onClick={() => setOwnerOpen(true)}
+              onKeyDown={handleOwnerKeyDown}
               placeholder="Search by store name, name or email"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
-          </div>
-
-          {/* Store owner select */}
-          <div>
-            <label className="block text-md font-semibold text-gray-700 mb-1.5">
-              Store owner
-            </label>
-            <select
-              value={form.userId}
-              onChange={(e) => handleSelectOwner(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              <option value="">— Select store owner —</option>
-              {filteredOwners.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.storename || `${u.firstname || ""} ${u.lastname || ""}`.trim()} ({u.email})
-                </option>
-              ))}
-            </select>
-            {ownerSearch && filteredOwners.length === 0 && (
-              <p className="text-md text-gray-500 mt-1.5">
-                No store owners match &ldquo;{ownerSearch}&rdquo;.
-              </p>
+            {ownerOpen && filteredOwners.length > 0 && (
+              <ul
+                id="store-owner-listbox"
+                role="listbox"
+                className="absolute z-10 mt-1 w-full max-h-60 overflow-auto bg-white border border-gray-300 rounded-lg shadow-lg"
+              >
+                {filteredOwners.map((u, i) => (
+                  <li
+                    key={u._id}
+                    id={`store-owner-option-${i}`}
+                    role="option"
+                    aria-selected={u._id === form.userId}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectOwner(u);
+                    }}
+                    onMouseEnter={() => setOwnerHighlight(i)}
+                    className={`px-3 py-2.5 text-md cursor-pointer ${
+                      i === ownerHighlight ? "bg-gray-100" : ""
+                    } ${u._id === form.userId ? "font-semibold" : ""}`}
+                  >
+                    {ownerLabel(u)}
+                  </li>
+                ))}
+              </ul>
             )}
+            {ownerOpen &&
+              ownerQuery.trim() &&
+              ownerQuery !== selectedLabel &&
+              filteredOwners.length === 0 && (
+                <p className="text-md text-gray-500 mt-1.5">
+                  No store owners match &ldquo;{ownerQuery}&rdquo;.
+                </p>
+              )}
           </div>
 
           {/* Shop domain */}
@@ -272,23 +358,6 @@ const ShopifyConnectionsPage = () => {
               value={form.shopDomain}
               onChange={(e) => setForm((f) => ({ ...f, shopDomain: e.target.value }))}
               placeholder="their-store.myshopify.com"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
-          </div>
-
-          {/* Recipient email */}
-          <div>
-            <label className="block text-md font-semibold text-gray-700 mb-1.5">
-              Send link to{" "}
-              <span className="text-gray-400 font-normal">
-                (prefilled with their registered email)
-              </span>
-            </label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder={selectedOwner?.email || "owner@example.com"}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
