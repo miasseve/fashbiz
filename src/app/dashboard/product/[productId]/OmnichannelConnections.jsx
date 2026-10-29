@@ -4,10 +4,14 @@ import { FiExternalLink } from "react-icons/fi";
 
 // Instagram reflects real subscription access; Vinted Pro always shows as
 // not-connected since there's no real integration built for it yet.
-// Webstore always shows Preview for every account (demo link, not gated by
-// subscription) — clicking only works when this specific product is
-// actually synced to Shopify (webstoreUrl present).
-const OmnichannelConnections = ({ canPostToInstagram, webstoreUrl }) => {
+// Webstore always shows Preview for every account (not gated by
+// subscription). It's a working link for every connected store: it opens
+// this product's storefront page when the product is synced (webstoreUrl),
+// otherwise it falls back to the store's webstore homepage (webstoreHomeUrl).
+// Only when neither is available does it stay a non-clickable label.
+const OmnichannelConnections = ({ canPostToInstagram, webstoreUrl, webstoreHomeUrl }) => {
+  // Prefer the per-product storefront page; fall back to the store homepage.
+  const webstoreLink = webstoreUrl || webstoreHomeUrl;
   const rows = [
     {
       key: "webstore",
@@ -39,7 +43,7 @@ const OmnichannelConnections = ({ canPostToInstagram, webstoreUrl }) => {
       </p>
       <div className="space-y-4">
         {rows.map((row) => {
-          const linkable = row.key === "webstore" && row.active && webstoreUrl;
+          const linkable = row.key === "webstore" && row.active && webstoreLink;
           const content = (
             <>
               <span className="flex items-center gap-2 text-gray-800 font-semibold text-base">
@@ -58,7 +62,7 @@ const OmnichannelConnections = ({ canPostToInstagram, webstoreUrl }) => {
           return linkable ? (
             <a
               key={row.key}
-              href={webstoreUrl}
+              href={webstoreLink}
               target="_blank"
               rel="noopener noreferrer"
               title="Open on your webstore"

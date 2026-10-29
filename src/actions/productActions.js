@@ -1102,6 +1102,35 @@ export async function getProductById(productId) {
       shopifyProductUrl = await getShopifyProductStorefrontUrl(product.shopifyProductId);
     }
 
+    // Resolve the owning store's live webstore homepage as a fallback, so the
+    // "Webstore / Preview" link works for every connected store — not only
+    // when THIS product is synced to Shopify. The per-product URL above is
+    // preferred; the homepage is used when the product isn't synced yet.
+    // Resolved from product.userId (the store that owns the product, not the
+    // consignor). Never blocks or crashes the page: any failure degrades to
+    // null, and the row simply stays a non-clickable label.
+    let webstoreHomeUrl = null;
+    try {
+      const { source, storeDomain } = await resolveStoreForUser(product.userId);
+      // OAuth stores use their own myshopify domain; the shared base store
+      // publishes under SHOPIFY_STOREFRONT_DOMAIN (its public storefront).
+      const storefrontDomain =
+        source === "oauth"
+          ? storeDomain
+          : process.env.SHOPIFY_STOREFRONT_DOMAIN || storeDomain;
+      if (storefrontDomain) {
+        // Route through the /go unlock page when the storefront is
+        // password-protected, exactly like the per-product link does.
+        webstoreHomeUrl = buildStorefrontLink(
+          `https://${storefrontDomain}/`,
+          await getShopifyStorefrontPassword(),
+        );
+      }
+    } catch (error) {
+      console.error("Error resolving webstore homepage URL:", error.message);
+      webstoreHomeUrl = null;
+    }
+
     return {
       status: 200, // Success status code
       message: "Product fetched successfully",
@@ -1110,6 +1139,7 @@ export async function getProductById(productId) {
         user: JSON.stringify(user),
         userRole: session.user.role,
         shopifyProductUrl,
+        webstoreHomeUrl,
       },
     }; // Return the product details
   } catch (error) {
