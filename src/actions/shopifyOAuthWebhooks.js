@@ -11,8 +11,15 @@ import axios from "axios";
 import { SHOPIFY_OAUTH_API_VERSION } from "@/lib/shopifyOAuth";
 
 // GraphQL enums matching the topic strings `/api/shopify/webhook` already
-// handles ("orders/create" and "inventory_levels/set").
-const WEBHOOK_TOPICS = ["ORDERS_CREATE", "INVENTORY_LEVELS_SET"];
+// handles ("orders/create" and "inventory_levels/update").
+//
+// NOTE: there is NO `INVENTORY_LEVELS_SET` webhook topic in Shopify's Admin
+// API — `inventory_levels/set` is a REST *action* endpoint, not a webhook
+// event. Subscribing to that enum is rejected by GraphQL ("invalid value"),
+// which is exactly why inventory registration used to come back as "error".
+// The quantity-change event the handler consumes is INVENTORY_LEVELS_UPDATE,
+// delivered with an `x-shopify-topic: inventory_levels/update` header.
+const WEBHOOK_TOPICS = ["ORDERS_CREATE", "INVENTORY_LEVELS_UPDATE"];
 
 const REGISTER_WEBHOOK = `
   mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
@@ -80,7 +87,7 @@ export function resolvePublicWebhookUrl() {
 }
 
 /**
- * Registers orders/create + inventory_levels/set for one connected shop.
+ * Registers orders/create + inventory_levels/update for one connected shop.
  *
  * Failures are reported, never thrown — a shop is still successfully connected
  * even if webhook registration can't complete (e.g. on localhost).
@@ -96,7 +103,7 @@ export async function registerWebhooksForStore({ shopDomain, accessToken }) {
     console.warn(
       `[shopify-oauth] Skipping webhook registration for ${shopDomain}: ${target.reason}. ` +
         `Set PUBLIC_APP_URL to a public HTTPS origin (e.g. an ngrok/Cloudflare tunnel or the deployed domain) ` +
-        `and re-run the connection to subscribe orders/create and inventory_levels/set.`
+        `and re-run the connection to subscribe orders/create and inventory_levels/update.`
     );
     return { skipped: true, reason: target.reason, results: [] };
   }
@@ -158,7 +165,9 @@ export async function registerWebhooksForStore({ shopDomain, accessToken }) {
 
   console.log(
     `[shopify-oauth] Webhook registration for ${shopDomain} -> ${target.url}:`,
-    results.map((r) => `${r.topic}=${r.status}`).join(", ")
+    results
+      .map((r) => (r.error ? `${r.topic}=${r.status} (${r.error})` : `${r.topic}=${r.status}`))
+      .join(", ")
   );
 
   return { skipped: false, callbackUrl: target.url, results };
