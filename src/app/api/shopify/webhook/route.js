@@ -221,7 +221,7 @@ export async function POST(req) {
       }
       break;
     }
-    case "inventory_levels/set": {
+    case "inventory_levels/update": {
       const inventoryItemGid = `gid://shopify/InventoryItem/${event.inventory_item_id}`;
       const newQuantity = event.available;
 

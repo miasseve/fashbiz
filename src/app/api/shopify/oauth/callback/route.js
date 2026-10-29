@@ -195,8 +195,13 @@ export async function GET(request) {
       if (outcome.skipped) {
         webhookNote = `Webhooks not registered: ${outcome.reason}. Set PUBLIC_APP_URL to a public HTTPS origin and reconnect to enable order/inventory sync.`;
       } else {
+        // Surface Shopify's own message (r.error) when a topic is skipped or
+        // errors, so a registration problem is visible here instead of being
+        // flattened to a bare "error".
         webhookNote = `Webhooks: ${outcome.results
-          .map((r) => `${r.topic} ${r.status}`)
+          .map((r) =>
+            r.error ? `${r.topic} ${r.status} — ${r.error}` : `${r.topic} ${r.status}`
+          )
           .join(", ")}`;
       }
     } catch (webhookError) {
