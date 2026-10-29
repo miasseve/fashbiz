@@ -5,6 +5,7 @@ import ShopifyStore from "@/models/ShopifyStore";
 import ShopifyOAuthState from "@/models/ShopifyOAuthState";
 import { createShopifyAuthorizeUrl, normalizeShopDomain } from "@/lib/shopifyOAuth";
 import { sendShopifyConnectRequestEmail } from "@/mails/shopifyConnectRequest";
+import { isUnclaimedEmail } from "@/lib/storeMatching";
 
 function json(body, status) {
   return new Response(JSON.stringify(body), {
@@ -139,7 +140,7 @@ export async function GET() {
  * Generates an authorization link for a store owner and emails it.
  * Also used by "Resend link".
  *
- * Body: { userId, shopDomain, email? }
+ * Body: { userId, shopDomain }
  */
 export async function POST(request) {
   try {
@@ -153,7 +154,7 @@ export async function POST(request) {
       return json({ error: "Request body must be JSON" }, 400);
     }
 
-    const { userId, shopDomain, email } = body || {};
+    const { userId, shopDomain } = body || {};
 
     if (!userId || !shopDomain) {
       return json({ error: "Please choose a store owner and enter a shop domain." }, 400);
@@ -187,8 +188,17 @@ export async function POST(request) {
       );
     }
 
-    // Default to the registered login email, but let the admin override it.
-    const recipientEmail = (email || "").trim() || targetUser.email;
+    // The link always goes to the owner's registered email — never an
+    // admin-supplied address. Unclaimed store stubs carry a placeholder
+    // @ree-unclaimed.internal email that can't receive mail, so refuse them.
+    if (isUnclaimedEmail(targetUser.email)) {
+      return json(
+        { error: "This store owner has no registered email address, so a connection link can't be sent." },
+        400
+      );
+    }
+
+    const recipientEmail = targetUser.email;
     if (!recipientEmail || !/^\S+@\S+\.\S+$/.test(recipientEmail)) {
       return json({ error: "Please provide a valid recipient email address." }, 400);
     }
