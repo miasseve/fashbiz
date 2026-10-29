@@ -31,7 +31,7 @@ const Page = async ({ params }) => {
     redirect("/");
   }
 
-  const { product, user, userRole, shopifyProductUrl } = response.data;
+  const { product, user, userRole, shopifyProductUrl, webstoreHomeUrl } = response.data;
   const parsedProduct = JSON.parse(product);
   const parsedUser = JSON.parse(user);
 
@@ -251,6 +251,7 @@ const Page = async ({ params }) => {
             <OmnichannelConnections
               canPostToInstagram={canPostIG}
               webstoreUrl={shopifyProductUrl}
+              webstoreHomeUrl={webstoreHomeUrl}
             />
             {!isBrandOrCollectItem && (
               <div className="space-y-3 pt-2">
