@@ -1695,8 +1695,25 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
 }
 
 //  GET ALL COLLECTIONS
-export async function getAllCollections() {
+/**
+ * Lists every collection on a store.
+ *
+ * @param {object} [storeConfig]  the owner's resolved store, from
+ *   resolveStoreConfigForUser(). Omitted -> the shared base store, exactly as
+ *   before (this function had no caller, so nothing changes for anyone).
+ *
+ * `ruleSet` is the only reliable way to tell a smart (automated) collection
+ * from a manual one: Shopify returns null for a manual collection and a rule
+ * list for an automated one. That distinction decides how a product gets into
+ * the collection — a manual one needs an explicit collectionAddProducts call,
+ * an automated one populates itself from the rules and must NOT be written to.
+ * See docs/cph-category-mapping.md §5.
+ */
+export async function getAllCollections(storeConfig) {
   try {
+    // No storeConfig -> buildShopifyClient returns the base-store client.
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
     const GET_COLLECTIONS = `
       query getAllCollections($cursor: String) {
         collections(first: 250, after: $cursor) {
@@ -1707,6 +1724,18 @@ export async function getAllCollections() {
               handle
               description
               updatedAt
+              sortOrder
+              productsCount {
+                count
+              }
+              ruleSet {
+                appliedDisjunctively
+                rules {
+                  column
+                  relation
+                  condition
+                }
+              }
             }
           }
           pageInfo {
@@ -1728,7 +1757,12 @@ export async function getAllCollections() {
       });
 
       if (response.data.errors) {
-        console.error("Shopify collection fetch error:", response.data.errors);
+        // Name the store and keep Shopify's own message — a per-store scope or
+        // API-version problem is otherwise invisible here.
+        console.error(
+          `[shopify-collections] Fetch failed for ${storeConfig?.storeDomain || shopifyStoreDomain}:`,
+          response.data.errors.map((e) => e.message).join("; ")
+        );
         break;
       }
 
@@ -1742,7 +1776,10 @@ export async function getAllCollections() {
 
     return allCollections;
   } catch (error) {
-    console.error("Error fetching all collections:", error);
+    console.error(
+      `[shopify-collections] Error fetching collections for ${storeConfig?.storeDomain || shopifyStoreDomain}:`,
+      error?.response?.data?.errors || error.message
+    );
     return [];
   }
 }
