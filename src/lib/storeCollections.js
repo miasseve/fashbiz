@@ -49,6 +49,13 @@ export function isManualCollection(collection) {
  * unaffected. It never throws: a Shopify or resolution failure degrades to an
  * empty list.
  *
+ * ⚠️ THIS FUNCTION DOES NO AUTHORIZATION. It returns the collection structure
+ * of whichever store `userId` owns, and trusts the caller to have earned that
+ * id. The only caller today is the admin-gated route, which is fine. When the
+ * upload path (analyze-product) starts calling this, take `userId` from the
+ * SESSION — never from the request body or a query parameter — or any user
+ * becomes able to read another store's categories by passing their id.
+ *
  * @param {string|mongoose.Types.ObjectId} userId  the store OWNER's id
  * @param {{ force?: boolean }} [options]  force skips the cache
  * @returns {Promise<Array<{ id, title, handle, description, updatedAt, sortOrder, productsCount, ruleSet, isManual }>>}
