@@ -5,6 +5,7 @@ import { normalizeProductResponse } from "@/lib/normalize";
 import { CATEGORIES, SUBCATEGORIES, NORMALIZED_FABRICS } from "@/lib/taxonomy";
 import { retrieveSimilarProducts, buildEmbeddingText } from "@/lib/embeddings";
 import { getStoreCollectionsForUser } from "@/lib/storeCollections";
+import { tagRulesForCollection } from "@/lib/collectionTagRules";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -107,10 +108,39 @@ const COLLECTION_REF_PREFIX = "c";
  */
 function buildCollectionRefMap(collections) {
   const map = new Map();
-  collections.forEach((c, i) => {
+  collections.filter(canBeSuggested).forEach((c, i) => {
     if (c?.id) map.set(`${COLLECTION_REF_PREFIX}${i + 1}`, c);
   });
   return map;
+}
+
+/**
+ * Whether a collection may be put in front of the model at all.
+ *
+ * Two reasons to withhold one, both of them about the collection rather than
+ * about any particular shop — nothing here knows a store name, a brand or a
+ * language:
+ *
+ *  1. The store's owner marked it "don't suggest". That is how a shop's brand
+ *     categories and its catch-all buckets ("all products", "our favourites",
+ *     "archive") are kept away from the model: they cannot be recognised from
+ *     their names (one real store's are in Danish) nor from how many products
+ *     they hold (catch-alls and real categories overlap in size). The owner can
+ *     still choose one by hand — only the model's list is filtered (FR-06, D1).
+ *  2. It fills itself from rules we cannot satisfy by tagging the product — a
+ *     rule about price or title, say. Nothing we do could put a product in it,
+ *     so suggesting it would promise a placement that silently never happens
+ *     (FR-04, AC-13). The form still shows it, carrying the "automatic" marker
+ *     it already had.
+ */
+function canBeSuggested(collection) {
+  if (!collection?.id) return false;
+  if (collection.isExcluded) return false;
+
+  const tagPlan = tagRulesForCollection(collection.ruleSet);
+  // null = a hand-kept collection, which we can always add a product to.
+  if (tagPlan === null) return true;
+  return tagPlan.eligible === true;
 }
 
 /**
@@ -156,15 +186,29 @@ function buildProductResponseSchema(refMap) {
 function buildCollectionPromptBlock(refMap) {
   if (refMap.size === 0) return "";
 
-  // JSON-encode the title and handle rather than hand-quoting them. A merchant
-  // can name a collection anything, including a quote or a newline, which would
+  // The URL handle is deliberately NOT shown. It was, and it lies: on a real
+  // store the collection titled "PRADA" has the handle "skjorter" ("shirts"),
+  // "SUPREME" has "t-shirts" and "GUCCI" has "sweatshirt". The one thing the
+  // model was given to tell two collections apart was the one thing that
+  // contradicted their contents. What is actually inside the collection is
+  // shown instead, in the store's own words.
+  //
+  // JSON-encode every merchant string rather than hand-quoting it. A collection
+  // can be named anything, including a quote or a newline, which would
   // otherwise break the shape of this list and let one row read as several.
   const lines = [...refMap.entries()]
-    .map(([ref, c]) => `  ${ref} = ${JSON.stringify(c.title || "")} (${JSON.stringify(c.handle || "")})`)
+    .map(([ref, c]) => {
+      const title = JSON.stringify(c.title || "");
+      return c.contents
+        ? `  ${ref} = ${title} — ${JSON.stringify(c.contents)}`
+        : `  ${ref} = ${title}`;
+    })
     .join("\n");
 
   return `
-        This store's own collections — pick the ONE that matches the garment, using store_collection_ref:
+        This store's own collections — pick the ONE that matches the garment, using store_collection_ref.
+        Where a collection says what is inside it, that description comes from the products actually
+        in it and is more reliable than its name:
 ${lines}
 
         Rules for store_collection_ref:
@@ -173,8 +217,8 @@ ${lines}
           label — brand placement is decided separately from the brand field, not from the image.
         - Do NOT choose a collection that describes a market segment, gender, price tier, or a
           curated/seasonal grouping ("new in", "all products", "our favourites", "sale").
-        - Two collections may share a title and differ only by handle. If you cannot tell which is
-          meant, return null rather than guessing.
+        - Two collections may share a title. Use what is inside each to tell them apart; if you
+          still cannot tell which is meant, return null rather than guessing.
         - Return null if no collection matches the garment type. Null is always better than a
           wrong collection.`;
 }
@@ -310,6 +354,18 @@ export async function analyzeProductImages(imageUrls, storeId, options = {}) {
 
   const collectionRefMap = buildCollectionRefMap(storeCollections);
   const responseSchema = buildProductResponseSchema(collectionRefMap);
+
+  // A store whose every collection is withheld from the model is a legitimate
+  // state (AC-26) but also what a mistyped exclusion list looks like, so say so
+  // once. The owner still gets the full list to choose from by hand.
+  if (storeCollections.length > 0 && collectionRefMap.size === 0) {
+    console.warn(
+      `[analyze-product] All ${storeCollections.length} collections for owner ` +
+        `${ownerUserId} are withheld from the AI (marked "don't suggest", or ` +
+        `rule-driven in a way tags can't satisfy). Nothing will be suggested; ` +
+        `the owner can still pick one by hand.`
+    );
+  }
 
   const imageContentBlocks = validatedUrls.map((url) => ({
     type: "image_url",
@@ -484,16 +540,20 @@ Condition grades: A/B/C`,
   return {
     ...normalized,
     storeCollection,
-    // The same list the model was shown, trimmed, so the form can offer it as
-    // a correctable dropdown. The handle goes with the title because a title
-    // alone can be ambiguous — two collections may read "Jakker" and differ
-    // only by handle, which a human can't disambiguate either.
+    // EVERY collection on the store, not the trimmed list the model saw. The
+    // owner stays in charge of their own shop: a collection withheld from the
+    // AI — one they marked "don't suggest", or one that fills itself from rules
+    // we can't satisfy — is still theirs to choose by hand (FR-06, D1, AC-15).
     // Empty for a guest or a store with no connected Shopify.
-    storeCollectionOptions: [...collectionRefMap.values()].map((c) => ({
+    storeCollectionOptions: storeCollections.map((c) => ({
       id: c.id,
       title: c.title,
       handle: c.handle,
       isManual: c.isManual,
+      // What is really inside it, in the store's own words. The form shows this
+      // in place of the handle, which contradicts the contents on a real store.
+      // Empty when we don't know yet — the row then shows the name alone.
+      contents: c.contents || "",
     })),
     _meta: {
       similarExamplesUsed: similarExamples.length,

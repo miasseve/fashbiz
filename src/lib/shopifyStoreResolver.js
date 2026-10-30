@@ -16,6 +16,9 @@ function envFallbackConfig() {
     storeDomain: process.env.SHOPIFY_STORE_DOMAIN,
     accessToken: process.env.SHOPIFY_ADMIN_ACCESS_TOKEN,
     apiVersion: ENV_STORE_API_VERSION,
+    // Always empty for the base store: the exclusion list is a per-store
+    // setting, and the base store is never the source of a storeCollection.
+    excludedCollectionIds: [],
   };
 }
 
@@ -38,7 +41,7 @@ function envFallbackConfig() {
  * as a second guard.
  *
  * @param {string|mongoose.Types.ObjectId} userId
- * @returns {Promise<{ source: "oauth"|"env", storeDomain: string, accessToken: string, apiVersion: string }>}
+ * @returns {Promise<{ source: "oauth"|"env", storeDomain: string, accessToken: string, apiVersion: string, excludedCollectionIds: string[] }>}
  */
 export async function resolveStoreForUser(userId) {
   if (!userId) {
@@ -76,6 +79,12 @@ export async function resolveStoreForUser(userId) {
       storeDomain: store.storeDomain,
       accessToken,
       apiVersion: SHOPIFY_OAUTH_API_VERSION,
+      // Comes free: the document above is already fetched and .lean()ed, so
+      // reading this costs no extra query. Collections the AI must never be
+      // offered for this store — see ShopifyStore.aiExcludedCollectionIds.
+      excludedCollectionIds: Array.isArray(store.aiExcludedCollectionIds)
+        ? store.aiExcludedCollectionIds
+        : [],
     };
   } catch (error) {
     console.error(

@@ -1,5 +1,9 @@
 import { getAllCollections } from "@/actions/shopifyAction";
 import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import {
+  getStoreCategoryFacts,
+  describeCategoryContents,
+} from "@/lib/storeCategoryFacts";
 
 /**
  * Reads a store's own Shopify collections, so a product can be placed in the
@@ -87,7 +91,7 @@ export function sanitizeStoreCollection(value) {
  *
  * @param {string|mongoose.Types.ObjectId} userId  the store OWNER's id
  * @param {{ force?: boolean }} [options]  force skips the cache
- * @returns {Promise<Array<{ id, title, handle, description, updatedAt, sortOrder, productsCount, ruleSet, isManual }>>}
+ * @returns {Promise<Array<{ id, title, handle, description, updatedAt, sortOrder, productsCount, ruleSet, isManual, isExcluded }>>}
  */
 export async function getStoreCollectionsForUser(userId, options = {}) {
   if (!userId) return [];
@@ -111,7 +115,7 @@ export async function getStoreCollectionsForUser(userId, options = {}) {
   const key = storeConfig.storeDomain;
   const hit = cache.get(key);
   if (!options.force && hit && Date.now() - hit.at < TTL_MS) {
-    return hit.collections;
+    return decorate(hit.collections, storeConfig);
   }
 
   const raw = await getAllCollections(storeConfig);
@@ -128,5 +132,40 @@ export async function getStoreCollectionsForUser(userId, options = {}) {
   }));
 
   cache.set(key, { at: Date.now(), collections });
-  return collections;
+  return decorate(collections, storeConfig);
+}
+
+/**
+ * Adds the two things that must NOT be cached with the collection list:
+ *
+ *  - `isExcluded` — whether this store's owner has marked the collection
+ *    "don't suggest" (their brand categories and catch-all buckets). Read fresh
+ *    from the store's record on every call, where it rides along on the resolved
+ *    storeConfig at no extra query, so changing it in the database takes effect
+ *    on the very next upload instead of waiting out the 10-minute cache
+ *    (AC-16). Excluded collections stay IN the list on purpose — the owner can
+ *    still choose one by hand, and only the model's list is filtered (FR-06, D1).
+ *
+ *  - `contents` — what is really inside the collection, in the store's own
+ *    words. Kept out of the cache because its own digest warms up separately and
+ *    on a different clock: an early call gets `""` and a later one gets the real
+ *    description, and a list frozen at the first answer would never catch up.
+ */
+function decorate(collections, storeConfig) {
+  const excluded = new Set(
+    Array.isArray(storeConfig?.excludedCollectionIds)
+      ? storeConfig.excludedCollectionIds
+      : []
+  );
+
+  // Never waits: answers with whatever is known and warms itself for next time,
+  // so the worst case is every `contents` coming back empty and callers showing
+  // names alone — a state the spec explicitly allows (§5).
+  const digest = getStoreCategoryFacts(storeConfig);
+
+  return collections.map((c) => ({
+    ...c,
+    isExcluded: excluded.has(c.id),
+    contents: digest ? describeCategoryContents(digest, c.id) : "",
+  }));
 }
