@@ -101,12 +101,15 @@ const ProductFormFields = ({
             {storeCollectionOptions.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title} ({c.handle})
+                {c.isManual === false ? " — automatic" : ""}
               </option>
             ))}
           </select>
           <span className="text-gray-500 text-[12px]">
-            Your store&apos;s own collection for this product. Saved with the product;
-            it is not sent to Shopify yet.
+            Your store&apos;s own collection for this product — the product is added
+            to it on your Shopify when you save. Collections marked
+            &quot;automatic&quot; fill themselves from the product&apos;s tags, so
+            Shopify decides those.
           </span>
         </div>
       )}

@@ -58,11 +58,12 @@ const productSchema = new mongoose.Schema({
   // EVERY FIELD HERE IS A SNAPSHOT, not a source of truth. The value round-trips
   // through the browser form, so a caller can submit a well-formed GID for a
   // collection they don't own along with any title/handle/isManual they like.
-  // That is harmless while nothing reads it, but anything that writes to Shopify
-  // must first re-resolve this GID against a fresh
-  // getStoreCollectionsForUser(<session user>) and use the live `ruleSet` —
-  // never the stored title, handle or isManual. A collection can also be
-  // switched between manual and automated in Shopify at any time.
+  // Anything acting on it must therefore re-read the collection LIVE from the
+  // owner's own store and use that `ruleSet`, never the stored title, handle or
+  // isManual — a collection can also be switched between manual and automated
+  // in Shopify at any time. addProductToStoreCollection() does exactly that:
+  // it resolves the id through the owner's client (so another store's id is
+  // simply not found) and refuses to run at all without a storeConfig.
   storeCollection: {
     type: {
       id: { type: String },

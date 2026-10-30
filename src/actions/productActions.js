@@ -9,6 +9,7 @@ import Account from "@/models/Account";
 import {
   updateShopifyProduct,
   createShopifyProduct,
+  addProductToStoreCollection,
   deleteShopifyProduct,
   getShopifyLocations,
   updateInventory,
@@ -147,6 +148,39 @@ export async function createProduct(formData) {
           shopifyVariantId = shopifyResponse.variantId;
           shopifyInventoryItemId = shopifyResponse.inventoryItemId;
           createdShopifyProduct = true;
+
+          // Place the product in the collection chosen during AI analysis, on
+          // the owner's own store. Wrapped so it can NEVER fail the upload: the
+          // product already exists on Shopify and in a moment will exist here,
+          // and a collection that didn't get set is a far smaller problem than
+          // an upload that errored. Every outcome is logged with the reason.
+          const pickedCollection = sanitizeStoreCollection(storeCollection);
+          if (pickedCollection) {
+            try {
+              const placement = await addProductToStoreCollection(
+                shopifyProductId,
+                pickedCollection.id,
+                storeConfig,
+              );
+              const label = placement.title || pickedCollection.title || pickedCollection.id;
+              if (placement.status === "added") {
+                console.log(
+                  `[collection] Added ${shopifyProductId} to "${label}"`,
+                );
+              } else {
+                console.warn(
+                  `[collection] ${placement.status} for ${shopifyProductId} -> "${label}": ${placement.reason}`,
+                );
+              }
+            } catch (collectionError) {
+              // Belt to the braces — addProductToStoreCollection already
+              // swallows its own failures and returns a status.
+              console.error(
+                `[collection] Unexpected failure placing ${shopifyProductId}:`,
+                collectionError.message,
+              );
+            }
+          }
         } else {
           return {
             status: 400,
@@ -220,9 +254,8 @@ export async function createProduct(formData) {
       shopifyInventoryItemId: shopifyInventoryItemId,
       needsReview: needsReview || false,
       aiConfidenceScore: aiConfidenceScore ?? null,
-      // Recorded only. Nothing in this release sends it to Shopify — placing
-      // the product in the collection is Phase C, which must re-read the
-      // collection's ruleSet live rather than trust the stored isManual.
+      // Stored as the record of what was chosen. The actual placement on
+      // Shopify happens above, from the live collection, not from this value.
       storeCollection: sanitizeStoreCollection(storeCollection),
     });
 
@@ -241,7 +274,11 @@ export async function createProduct(formData) {
       status: 200,
       message:
         collect === false
-          ? "Product created successfully and added to collection"
+          ? // Deliberately does not claim the collection was set. Placement is
+            // non-blocking and can legitimately be skipped (an automated
+            // collection fills itself from tags), so asserting it here would
+            // sometimes tell the owner something untrue.
+            "Product created successfully and synced to your store"
           : "Product saved successfully (Shopify creation skipped)",
       data: {
         link,

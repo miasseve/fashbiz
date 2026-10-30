@@ -613,12 +613,25 @@ export async function createShopifyProduct(formData, storeConfig) {
     //   await addProductToCollection(productId, colId);
     // }
 
-    if (formattedTags.length > 0) {
-      const smartCollectionId = await findOrCreateSmartCollectionByTags(
-        formattedTags,
-        subcategory
-      );
-    }
+    // Auto-creating a smart collection per tag combination used to happen here.
+    // Removed — it was pure harm:
+    //
+    //  1. Its return value was assigned and never used, so it did nothing for
+    //     the product being created.
+    //  2. It built the rules with `appliedDisjunctively: true` (match ANY tag)
+    //     over generic AI tags like "casual", "women", "white", so every new tag
+    //     combination produced another near-duplicate collection holding most
+    //     of the catalogue. The base store had accumulated 144 collections, 123
+    //     of them auto-generated this way.
+    //  3. It used the module-level base-store client, so a CONNECTED store's
+    //     product created on its own Shopify still created a junk collection on
+    //     OUR base store, named after that merchant's tags.
+    //
+    // Routing it per-store would have been worse, not better: it would spray
+    // those same junk collections across merchants' real storefronts. Putting a
+    // product in the right collection is a deliberate placement decision and is
+    // handled by the storeCollection work (see CPH-CATEGORY-MAPPING.md §6.1),
+    // not by inventing collections from tags.
 
     // Ensure Shopify order webhook is registered (idempotent)
     try {
@@ -1268,6 +1281,11 @@ export async function getCollectionByHandle(handle) {
 }
 
 // CREATE OR FIND SMART COLLECTION BY TAGS
+// UNUSED — the only caller was removed from createShopifyProduct; see the note
+// there. Kept for reference only. Do not call it: it writes to the base store
+// regardless of which store the product belongs to, and its OR-over-tags rules
+// generate near-duplicate collections. Deliberate placement belongs in the
+// storeCollection path instead.
 async function findOrCreateSmartCollectionByTags(tags, subcategory) {
   try {
     if (!tags || tags.length === 0) {
@@ -1691,6 +1709,144 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
   } catch (error) {
     console.error("Error in getAllVariantInventoryIds:", error);
     return [];
+  }
+}
+
+// These two calls run AFTER the product already exists on Shopify but BEFORE it
+// is saved to our database, so a hung connection here would leave a product on
+// Shopify that we never recorded. The axios clients carry no timeout, so one is
+// set per-request on these calls only — deliberately not on the shared client,
+// which would change the behaviour of every other Shopify call in this file.
+const COLLECTION_CALL_TIMEOUT_MS = 15000;
+
+/**
+ * Puts an already-created Shopify product into one collection on the owner's
+ * own store.
+ *
+ * Safe by construction — it can never break a product that has already been
+ * created:
+ *   - it never throws; every outcome is a returned status
+ *   - it reads the collection from the OWNER'S client, so a collection id that
+ *     doesn't belong to this store simply isn't found and is skipped
+ *   - it re-reads `ruleSet` LIVE rather than trusting anything stored, because
+ *     a collection can be switched between manual and automated in Shopify at
+ *     any time after we saved it
+ *
+ * An automated (smart) collection is deliberately skipped: Shopify rejects
+ * collectionAddProducts on one, and it populates itself from the product's tags,
+ * which are already sent on create.
+ *
+ * Note on "added": Shopify returns success with no userErrors even for a product
+ * id that doesn't exist (verified against a live store — the collection's count
+ * was unchanged). So "added" means "Shopify accepted the call", not "verified
+ * present". That's fine here because the only caller passes an id it just
+ * created, but don't read the status as proof of membership.
+ *
+ * @param {string} productId     Shopify product GID
+ * @param {string} collectionId  Shopify collection GID
+ * @param {object} [storeConfig] the owner's store; omitted -> base store
+ * @returns {Promise<{status:"added"|"skipped"|"error", reason?:string, title?:string}>}
+ */
+export async function addProductToStoreCollection(productId, collectionId, storeConfig) {
+  if (!productId || !collectionId) {
+    return { status: "skipped", reason: "missing product or collection id" };
+  }
+
+  // Refuse to resolve a collection id against the BASE store. A storeCollection
+  // can only originate from an OAuth store (getStoreCollectionsForUser returns
+  // [] otherwise, so no dropdown is shown), which means a call arriving here
+  // with no storeConfig is wrong by definition — either the submitted value was
+  // tampered with, or store resolution degraded to the base store between
+  // analysis and submit. Without this guard the id would be looked up on the
+  // base store and, on a numeric collision, the product would be added to an
+  // unrelated base-store collection.
+  if (!storeConfig) {
+    return {
+      status: "skipped",
+      reason: "no connected store — refusing to resolve a collection on the base store",
+    };
+  }
+
+  try {
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
+    // Live read. Also doubles as the ownership check: a collection belonging to
+    // some other store is not visible through this store's token.
+    const lookup = await shopify.post("", {
+      query: `
+        query collectionForAdd($id: ID!) {
+          collection(id: $id) {
+            id
+            title
+            ruleSet { appliedDisjunctively rules { column relation condition } }
+          }
+        }
+      `,
+      variables: { id: collectionId },
+    }, { timeout: COLLECTION_CALL_TIMEOUT_MS });
+
+    if (lookup.data.errors) {
+      return {
+        status: "error",
+        reason: lookup.data.errors.map((e) => e.message).join("; "),
+      };
+    }
+
+    const collection = lookup.data.data?.collection;
+    if (!collection) {
+      return {
+        status: "skipped",
+        reason: "collection not found on this store",
+      };
+    }
+
+    // ruleSet present -> automated. It fills itself from the tags we already
+    // send, and a direct write is rejected, so this is a success, not a failure.
+    if (collection.ruleSet) {
+      return {
+        status: "skipped",
+        reason: "automated collection — populated by its own tag rules",
+        title: collection.title,
+      };
+    }
+
+    const response = await shopify.post("", {
+      query: `
+        mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+          collectionAddProducts(id: $id, productIds: $productIds) {
+            collection { id title }
+            userErrors { field message }
+          }
+        }
+      `,
+      variables: { id: collectionId, productIds: [productId] },
+    }, { timeout: COLLECTION_CALL_TIMEOUT_MS });
+
+    if (response.data.errors) {
+      return {
+        status: "error",
+        reason: response.data.errors.map((e) => e.message).join("; "),
+        title: collection.title,
+      };
+    }
+
+    const userErrors = response.data.data?.collectionAddProducts?.userErrors;
+    if (userErrors?.length) {
+      return {
+        status: "error",
+        reason: userErrors.map((e) => `${e.field}: ${e.message}`).join("; "),
+        title: collection.title,
+      };
+    }
+
+    return { status: "added", title: collection.title };
+  } catch (error) {
+    return {
+      status: "error",
+      reason: error?.response?.data?.errors
+        ? JSON.stringify(error.response.data.errors)
+        : error.message,
+    };
   }
 }
 
