@@ -156,8 +156,11 @@ function buildProductResponseSchema(refMap) {
 function buildCollectionPromptBlock(refMap) {
   if (refMap.size === 0) return "";
 
+  // JSON-encode the title and handle rather than hand-quoting them. A merchant
+  // can name a collection anything, including a quote or a newline, which would
+  // otherwise break the shape of this list and let one row read as several.
   const lines = [...refMap.entries()]
-    .map(([ref, c]) => `  ${ref} = "${c.title}" (${c.handle})`)
+    .map(([ref, c]) => `  ${ref} = ${JSON.stringify(c.title || "")} (${JSON.stringify(c.handle || "")})`)
     .join("\n");
 
   return `

@@ -55,10 +55,14 @@ const productSchema = new mongoose.Schema({
   // (one live store has two collections both titled "Jakker"). See
   // CPH-CATEGORY-MAPPING.md §1.
   //
-  // `isManual` is a SNAPSHOT of what Shopify reported when the product was
-  // analysed, kept for debugging only. A collection can be switched between
-  // manual and automated in Shopify at any time, so anything that writes to
-  // Shopify must re-read `ruleSet` live at sync time rather than trust this.
+  // EVERY FIELD HERE IS A SNAPSHOT, not a source of truth. The value round-trips
+  // through the browser form, so a caller can submit a well-formed GID for a
+  // collection they don't own along with any title/handle/isManual they like.
+  // That is harmless while nothing reads it, but anything that writes to Shopify
+  // must first re-resolve this GID against a fresh
+  // getStoreCollectionsForUser(<session user>) and use the live `ruleSet` —
+  // never the stored title, handle or isManual. A collection can also be
+  // switched between manual and automated in Shopify at any time.
   storeCollection: {
     type: {
       id: { type: String },
