@@ -1712,6 +1712,122 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
   }
 }
 
+/**
+ * Puts an already-created Shopify product into one collection on the owner's
+ * own store.
+ *
+ * Safe by construction — it can never break a product that has already been
+ * created:
+ *   - it never throws; every outcome is a returned status
+ *   - it reads the collection from the OWNER'S client, so a collection id that
+ *     doesn't belong to this store simply isn't found and is skipped
+ *   - it re-reads `ruleSet` LIVE rather than trusting anything stored, because
+ *     a collection can be switched between manual and automated in Shopify at
+ *     any time after we saved it
+ *
+ * An automated (smart) collection is deliberately skipped: Shopify rejects
+ * collectionAddProducts on one, and it populates itself from the product's tags,
+ * which are already sent on create.
+ *
+ * Note on "added": Shopify returns success with no userErrors even for a product
+ * id that doesn't exist (verified against a live store — the collection's count
+ * was unchanged). So "added" means "Shopify accepted the call", not "verified
+ * present". That's fine here because the only caller passes an id it just
+ * created, but don't read the status as proof of membership.
+ *
+ * @param {string} productId     Shopify product GID
+ * @param {string} collectionId  Shopify collection GID
+ * @param {object} [storeConfig] the owner's store; omitted -> base store
+ * @returns {Promise<{status:"added"|"skipped"|"error", reason?:string, title?:string}>}
+ */
+export async function addProductToStoreCollection(productId, collectionId, storeConfig) {
+  if (!productId || !collectionId) {
+    return { status: "skipped", reason: "missing product or collection id" };
+  }
+
+  try {
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
+    // Live read. Also doubles as the ownership check: a collection belonging to
+    // some other store is not visible through this store's token.
+    const lookup = await shopify.post("", {
+      query: `
+        query collectionForAdd($id: ID!) {
+          collection(id: $id) {
+            id
+            title
+            ruleSet { appliedDisjunctively rules { column relation condition } }
+          }
+        }
+      `,
+      variables: { id: collectionId },
+    });
+
+    if (lookup.data.errors) {
+      return {
+        status: "error",
+        reason: lookup.data.errors.map((e) => e.message).join("; "),
+      };
+    }
+
+    const collection = lookup.data.data?.collection;
+    if (!collection) {
+      return {
+        status: "skipped",
+        reason: "collection not found on this store",
+      };
+    }
+
+    // ruleSet present -> automated. It fills itself from the tags we already
+    // send, and a direct write is rejected, so this is a success, not a failure.
+    if (collection.ruleSet) {
+      return {
+        status: "skipped",
+        reason: "automated collection — populated by its own tag rules",
+        title: collection.title,
+      };
+    }
+
+    const response = await shopify.post("", {
+      query: `
+        mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+          collectionAddProducts(id: $id, productIds: $productIds) {
+            collection { id title }
+            userErrors { field message }
+          }
+        }
+      `,
+      variables: { id: collectionId, productIds: [productId] },
+    });
+
+    if (response.data.errors) {
+      return {
+        status: "error",
+        reason: response.data.errors.map((e) => e.message).join("; "),
+        title: collection.title,
+      };
+    }
+
+    const userErrors = response.data.data?.collectionAddProducts?.userErrors;
+    if (userErrors?.length) {
+      return {
+        status: "error",
+        reason: userErrors.map((e) => `${e.field}: ${e.message}`).join("; "),
+        title: collection.title,
+      };
+    }
+
+    return { status: "added", title: collection.title };
+  } catch (error) {
+    return {
+      status: "error",
+      reason: error?.response?.data?.errors
+        ? JSON.stringify(error.response.data.errors)
+        : error.message,
+    };
+  }
+}
+
 //  GET ALL COLLECTIONS
 /**
  * Lists every collection on a store.
