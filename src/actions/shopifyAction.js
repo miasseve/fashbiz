@@ -613,12 +613,25 @@ export async function createShopifyProduct(formData, storeConfig) {
     //   await addProductToCollection(productId, colId);
     // }
 
-    if (formattedTags.length > 0) {
-      const smartCollectionId = await findOrCreateSmartCollectionByTags(
-        formattedTags,
-        subcategory
-      );
-    }
+    // Auto-creating a smart collection per tag combination used to happen here.
+    // Removed — it was pure harm:
+    //
+    //  1. Its return value was assigned and never used, so it did nothing for
+    //     the product being created.
+    //  2. It built the rules with `appliedDisjunctively: true` (match ANY tag)
+    //     over generic AI tags like "casual", "women", "white", so every new tag
+    //     combination produced another near-duplicate collection holding most
+    //     of the catalogue. The base store had accumulated 144 collections, 123
+    //     of them auto-generated this way.
+    //  3. It used the module-level base-store client, so a CONNECTED store's
+    //     product created on its own Shopify still created a junk collection on
+    //     OUR base store, named after that merchant's tags.
+    //
+    // Routing it per-store would have been worse, not better: it would spray
+    // those same junk collections across merchants' real storefronts. Putting a
+    // product in the right collection is a deliberate placement decision and is
+    // handled by the storeCollection work (see CPH-CATEGORY-MAPPING.md §6.1),
+    // not by inventing collections from tags.
 
     // Ensure Shopify order webhook is registered (idempotent)
     try {
@@ -1268,6 +1281,11 @@ export async function getCollectionByHandle(handle) {
 }
 
 // CREATE OR FIND SMART COLLECTION BY TAGS
+// UNUSED — the only caller was removed from createShopifyProduct; see the note
+// there. Kept for reference only. Do not call it: it writes to the base store
+// regardless of which store the product belongs to, and its OR-over-tags rules
+// generate near-duplicate collections. Deliberate placement belongs in the
+// storeCollection path instead.
 async function findOrCreateSmartCollectionByTags(tags, subcategory) {
   try {
     if (!tags || tags.length === 0) {
