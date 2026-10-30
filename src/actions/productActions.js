@@ -254,9 +254,8 @@ export async function createProduct(formData) {
       shopifyInventoryItemId: shopifyInventoryItemId,
       needsReview: needsReview || false,
       aiConfidenceScore: aiConfidenceScore ?? null,
-      // Recorded only. Nothing in this release sends it to Shopify — placing
-      // the product in the collection is Phase C, which must re-read the
-      // collection's ruleSet live rather than trust the stored isManual.
+      // Stored as the record of what was chosen. The actual placement on
+      // Shopify happens above, from the live collection, not from this value.
       storeCollection: sanitizeStoreCollection(storeCollection),
     });
 
@@ -275,7 +274,11 @@ export async function createProduct(formData) {
       status: 200,
       message:
         collect === false
-          ? "Product created successfully and added to collection"
+          ? // Deliberately does not claim the collection was set. Placement is
+            // non-blocking and can legitimately be skipped (an automated
+            // collection fills itself from tags), so asserting it here would
+            // sometimes tell the owner something untrue.
+            "Product created successfully and synced to your store"
           : "Product saved successfully (Shopify creation skipped)",
       data: {
         link,

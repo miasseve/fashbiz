@@ -1712,6 +1712,13 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
   }
 }
 
+// These two calls run AFTER the product already exists on Shopify but BEFORE it
+// is saved to our database, so a hung connection here would leave a product on
+// Shopify that we never recorded. The axios clients carry no timeout, so one is
+// set per-request on these calls only — deliberately not on the shared client,
+// which would change the behaviour of every other Shopify call in this file.
+const COLLECTION_CALL_TIMEOUT_MS = 15000;
+
 /**
  * Puts an already-created Shopify product into one collection on the owner's
  * own store.
@@ -1745,6 +1752,21 @@ export async function addProductToStoreCollection(productId, collectionId, store
     return { status: "skipped", reason: "missing product or collection id" };
   }
 
+  // Refuse to resolve a collection id against the BASE store. A storeCollection
+  // can only originate from an OAuth store (getStoreCollectionsForUser returns
+  // [] otherwise, so no dropdown is shown), which means a call arriving here
+  // with no storeConfig is wrong by definition — either the submitted value was
+  // tampered with, or store resolution degraded to the base store between
+  // analysis and submit. Without this guard the id would be looked up on the
+  // base store and, on a numeric collision, the product would be added to an
+  // unrelated base-store collection.
+  if (!storeConfig) {
+    return {
+      status: "skipped",
+      reason: "no connected store — refusing to resolve a collection on the base store",
+    };
+  }
+
   try {
     const { client: shopify } = buildShopifyClient(storeConfig);
 
@@ -1761,7 +1783,7 @@ export async function addProductToStoreCollection(productId, collectionId, store
         }
       `,
       variables: { id: collectionId },
-    });
+    }, { timeout: COLLECTION_CALL_TIMEOUT_MS });
 
     if (lookup.data.errors) {
       return {
@@ -1798,7 +1820,7 @@ export async function addProductToStoreCollection(productId, collectionId, store
         }
       `,
       variables: { id: collectionId, productIds: [productId] },
-    });
+    }, { timeout: COLLECTION_CALL_TIMEOUT_MS });
 
     if (response.data.errors) {
       return {
