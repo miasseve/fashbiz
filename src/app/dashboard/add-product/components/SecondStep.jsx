@@ -65,6 +65,9 @@ const SecondStep = ({
   const [rawAiOutput, setRawAiOutput] = useState(null);
   const [aiMeta, setAiMeta] = useState(null);
   const [confidenceScore, setConfidenceScore] = useState(null);
+  // The connected store's own Shopify collections, for the correctable
+  // dropdown. Stays empty for a store with no connected Shopify.
+  const [storeCollectionOptions, setStoreCollectionOptions] = useState([]);
 
   // ── AI price suggestion ──
   const [priceSuggestion, setPriceSuggestion] = useState(null);
@@ -221,6 +224,14 @@ const SecondStep = ({
             if (Array.isArray(data.shopify_tags)) {
               setValue("tags", data.shopify_tags);
             }
+
+            // The store's own Shopify collection. Both are empty/null for a
+            // store with no connected Shopify, which hides the field entirely
+            // and leaves this upload exactly as it was before.
+            setStoreCollectionOptions(
+              Array.isArray(data.storeCollectionOptions) ? data.storeCollectionOptions : []
+            );
+            setValue("storeCollection", data.storeCollection || null);
 
             // Price read directly off a visible tag — only set when the AI
             // was confident enough to return one (see price_tag_amount in
@@ -522,6 +533,7 @@ const SecondStep = ({
                   showCategoryField
                   priceSuggestion={priceSuggestion}
                   isDemo={isDemo}
+                  storeCollectionOptions={storeCollectionOptions}
                 />
               </CardBody>
               <CardFooter className="flex justify-between">

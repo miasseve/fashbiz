@@ -4,10 +4,17 @@ import FabricOption from "@/models/FabricOption";
 import { normalizeProductResponse } from "@/lib/normalize";
 import { CATEGORIES, SUBCATEGORIES, NORMALIZED_FABRICS } from "@/lib/taxonomy";
 import { retrieveSimilarProducts, buildEmbeddingText } from "@/lib/embeddings";
+import { getStoreCollectionsForUser } from "@/lib/storeCollections";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ── Required response schema for Structured Outputs ──
+//
+// Built fresh per request so the store's own collections can be injected as a
+// closed enum. With no collections (guest, or a store with no connected
+// Shopify) the result is byte-identical to the schema this was before the
+// per-store work — no extra property, no extra `required` entry — so those
+// callers are provably unchanged.
 const PRODUCT_RESPONSE_SCHEMA = {
   type: "json_schema",
   json_schema: {
@@ -82,6 +89,147 @@ const PRODUCT_RESPONSE_SCHEMA = {
   },
 };
 
+// Prefix for the opaque per-request collection refs handed to the model.
+const COLLECTION_REF_PREFIX = "c";
+
+/**
+ * Gives each of the store's collections a short, opaque ref (`c1`, `c2`, …) for
+ * this request only.
+ *
+ * The model is never shown a title, handle or GID to return, because none of
+ * them is safe to match on: handles contradict titles on real stores, and
+ * titles are not unique either — one live store has two separate collections
+ * both titled "Jakker". A ref maps back to exactly one GID, so an ambiguous
+ * title can no longer resolve to the wrong collection.
+ *
+ * @param {Array} collections  from getStoreCollectionsForUser()
+ * @returns {Map<string, object>} ref -> collection
+ */
+function buildCollectionRefMap(collections) {
+  const map = new Map();
+  collections.forEach((c, i) => {
+    if (c?.id) map.set(`${COLLECTION_REF_PREFIX}${i + 1}`, c);
+  });
+  return map;
+}
+
+/**
+ * The response schema for one request.
+ *
+ * @param {Map<string, object>} refMap  empty -> the unmodified base schema
+ */
+function buildProductResponseSchema(refMap) {
+  if (!refMap || refMap.size === 0) return PRODUCT_RESPONSE_SCHEMA;
+
+  const base = PRODUCT_RESPONSE_SCHEMA.json_schema.schema;
+  const refs = [...refMap.keys()];
+
+  return {
+    ...PRODUCT_RESPONSE_SCHEMA,
+    json_schema: {
+      ...PRODUCT_RESPONSE_SCHEMA.json_schema,
+      schema: {
+        ...base,
+        properties: {
+          ...base.properties,
+          store_collection_ref: {
+            // Nullable on purpose: declining is better than a forced wrong pick.
+            type: ["string", "null"],
+            enum: [...refs, null],
+            description:
+              "The ref of the ONE store collection this garment belongs in, chosen by garment type only, or null if none fits.",
+          },
+        },
+        required: [...base.required, "store_collection_ref"],
+      },
+    },
+  };
+}
+
+/**
+ * The collection list shown to the model.
+ *
+ * Both title and handle are included because the title alone can be ambiguous
+ * (two collections titled "Jakker" differ only by handle), and a human reading
+ * the same list in the form has the same problem.
+ */
+function buildCollectionPromptBlock(refMap) {
+  if (refMap.size === 0) return "";
+
+  // JSON-encode the title and handle rather than hand-quoting them. A merchant
+  // can name a collection anything, including a quote or a newline, which would
+  // otherwise break the shape of this list and let one row read as several.
+  const lines = [...refMap.entries()]
+    .map(([ref, c]) => `  ${ref} = ${JSON.stringify(c.title || "")} (${JSON.stringify(c.handle || "")})`)
+    .join("\n");
+
+  return `
+        This store's own collections — pick the ONE that matches the garment, using store_collection_ref:
+${lines}
+
+        Rules for store_collection_ref:
+        - Choose on the GARMENT TYPE you can actually see (a jacket goes in the jackets collection).
+        - Do NOT choose a collection named after a BRAND, even if you can read that brand on the
+          label — brand placement is decided separately from the brand field, not from the image.
+        - Do NOT choose a collection that describes a market segment, gender, price tier, or a
+          curated/seasonal grouping ("new in", "all products", "our favourites", "sale").
+        - Two collections may share a title and differ only by handle. If you cannot tell which is
+          meant, return null rather than guessing.
+        - Return null if no collection matches the garment type. Null is always better than a
+          wrong collection.`;
+}
+
+/**
+ * Turns the model's ref back into a real collection, or null.
+ *
+ * Two deterministic rejections, both store-agnostic — they classify nothing
+ * about a particular shop, they only drop answers another layer owns or that
+ * cannot be trusted:
+ *
+ *  1. An unknown ref (the enum should prevent it, but never trust a model's
+ *     output as a lookup key).
+ *  2. A collection whose title is the product's own brand. On a store with
+ *     dozens of brand collections these are the most tempting wrong answer —
+ *     the label is legible right there in the photo — and brand placement is
+ *     decided deterministically from the brand field, not from the image. So
+ *     a brand-shaped pick is dropped rather than acted on.
+ *
+ * @param {string|null} ref
+ * @param {Map<string, object>} refMap
+ * @param {string} brand  the normalized brand, used only for rejection 2
+ */
+function resolveStoreCollection(ref, refMap, brand) {
+  if (!ref || refMap.size === 0) return null;
+
+  const picked = refMap.get(ref);
+  if (!picked) {
+    console.warn(
+      `[analyze-product] Model returned unknown store_collection_ref "${ref}" — ignoring.`
+    );
+    return null;
+  }
+
+  const title = (picked.title || "").trim().toLowerCase();
+  const brandName = (brand || "").trim().toLowerCase();
+  if (title && brandName && title === brandName) {
+    console.warn(
+      `[analyze-product] Rejected store_collection_ref "${ref}" ("${picked.title}") — ` +
+        `it is the product's own brand collection, which is assigned from the brand ` +
+        `field, not from the image.`
+    );
+    return null;
+  }
+
+  return {
+    id: picked.id,
+    title: picked.title,
+    handle: picked.handle,
+    // Snapshot for debugging only. Anything writing to Shopify must re-read
+    // ruleSet live — a collection can be switched manual/automated at any time.
+    isManual: picked.isManual,
+  };
+}
+
 /**
  * Core vision-analysis pipeline shared by the dashboard's own
  * /api/ai/analyze-product route and the public Discover-facing endpoint —
@@ -95,8 +243,19 @@ const PRODUCT_RESPONSE_SCHEMA = {
  *
  * @param {string[]} imageUrls - 1-4 hosted (Cloudinary) image URLs
  * @param {string|undefined} storeId - optional; enables the similarity-refinement step
+ * @param {{ ownerUserId?: string }} [options]
+ *   ownerUserId — the store owner, taken from the SESSION by the caller, never
+ *   from the request body. Enables the store's own collections as an extra
+ *   `storeCollection` field. Omitted (guest, try-free, public endpoint) ->
+ *   `storeCollection: null` and everything else behaves exactly as before.
+ *
+ *   It is deliberately separate from `storeId`, which arrives in the request
+ *   body and is therefore caller-controlled; see SECURITY-ISSUES.md #1. A
+ *   store's category structure must not be readable by passing someone
+ *   else's id.
  */
-export async function analyzeProductImages(imageUrls, storeId) {
+export async function analyzeProductImages(imageUrls, storeId, options = {}) {
+  const { ownerUserId } = options;
   let validatedUrls = [];
   for (const url of imageUrls) {
     if (typeof url !== "string") continue;
@@ -118,6 +277,39 @@ export async function analyzeProductImages(imageUrls, storeId) {
   await dbConnect();
   const fabrics = await FabricOption.find({ active: true }).sort({ name: 1 });
   const fabricNames = fabrics.map((f) => f.name);
+
+  // The owner's own Shopify collections. Must NEVER break or block the upload:
+  // a Shopify error, a timeout or a failed token decrypt all degrade to "no
+  // collections", and analysis continues exactly as it does for a store with
+  // none. getStoreCollectionsForUser already swallows its own failures and
+  // returns [], and this try/catch is the belt to that braces.
+  let storeCollections = [];
+  if (ownerUserId) {
+    try {
+      storeCollections = await getStoreCollectionsForUser(ownerUserId);
+    } catch (err) {
+      console.error(
+        `[analyze-product] Collection fetch threw for owner ${ownerUserId} — continuing with no store collection:`,
+        err.message
+      );
+      storeCollections = [];
+    }
+
+    // Never fail silently: a connected store that yields nothing is either a
+    // real problem (decrypt, scopes, Shopify down) or an empty shop, and both
+    // are worth seeing. The upload still succeeds either way.
+    if (storeCollections.length === 0) {
+      console.warn(
+        `[analyze-product] Owner ${ownerUserId} produced NO store collections — ` +
+          `storeCollection will be null. Either no OAuth-connected Shopify, a token ` +
+          `decrypt failure, or a Shopify fetch error. See the [shopify-collections] ` +
+          `and [shopifyStoreResolver] logs above for the store domain and reason.`
+      );
+    }
+  }
+
+  const collectionRefMap = buildCollectionRefMap(storeCollections);
+  const responseSchema = buildProductResponseSchema(collectionRefMap);
 
   const imageContentBlocks = validatedUrls.map((url) => ({
     type: "image_url",
@@ -161,7 +353,8 @@ export async function analyzeProductImages(imageUrls, storeId) {
         - confidence_score: rate 0-1 based on image clarity and label visibility. Multiple clear images should increase confidence.
         - Description: write a short (1-2 sentence) resale-ready product description
         - Do NOT invent brands — if no brand visible, use "Unbranded"
-        - price_tag_amount: only set this if a physical price tag is visible AND its price is clearly, unambiguously legible. If there's no tag, or it's blurry/handwritten/obscured/uncertain in any way, return null — never guess a price`,
+        - price_tag_amount: only set this if a physical price tag is visible AND its price is clearly, unambiguously legible. If there's no tag, or it's blurry/handwritten/obscured/uncertain in any way, return null — never guess a price
+${buildCollectionPromptBlock(collectionRefMap)}`,
       },
       {
         role: "user",
@@ -176,7 +369,7 @@ export async function analyzeProductImages(imageUrls, storeId) {
         ],
       },
     ],
-    response_format: PRODUCT_RESPONSE_SCHEMA,
+    response_format: responseSchema,
     temperature: 0.2,
     max_tokens: 800,
   });
@@ -211,6 +404,15 @@ export async function analyzeProductImages(imageUrls, storeId) {
   let finalAiResult = visionResult;
   const needsRefinement = similarExamples.length > 0 && visionResult.confidence_score < 0.85;
 
+  // The refinement pass aligns WRITING STYLE against other approved listings.
+  // Collection placement is a factual call about this garment, and another
+  // product's style says nothing about it — so the refinement neither sees the
+  // ref (stripped here) nor is allowed to return one (its schema is the base
+  // PRODUCT_RESPONSE_SCHEMA, which has no such property). The vision pass's
+  // answer is carried forward verbatim below.
+  const { store_collection_ref: visionCollectionRef = null, ...visionForRefinement } =
+    visionResult;
+
   if (needsRefinement) {
     const examplesText = similarExamples
       .map((ex, i) => {
@@ -237,7 +439,7 @@ You have an initial analysis and similar approved listings from the store.
 Use the examples to align your output with the store's style and conventions.
 
 INITIAL ANALYSIS:
-${JSON.stringify(visionResult, null, 2)}
+${JSON.stringify(visionForRefinement, null, 2)}
 
 SIMILAR APPROVED LISTINGS:
 ${examplesText}
@@ -270,8 +472,29 @@ Condition grades: A/B/C`,
 
   const normalized = normalizeProductResponse(finalAiResult);
 
+  // Resolve the ref to a real collection. Done here, not in normalize.js —
+  // that module is the taxonomy-snapping layer and deliberately knows nothing
+  // about per-store data.
+  const storeCollection = resolveStoreCollection(
+    visionCollectionRef,
+    collectionRefMap,
+    normalized.brand
+  );
+
   return {
     ...normalized,
+    storeCollection,
+    // The same list the model was shown, trimmed, so the form can offer it as
+    // a correctable dropdown. The handle goes with the title because a title
+    // alone can be ambiguous — two collections may read "Jakker" and differ
+    // only by handle, which a human can't disambiguate either.
+    // Empty for a guest or a store with no connected Shopify.
+    storeCollectionOptions: [...collectionRefMap.values()].map((c) => ({
+      id: c.id,
+      title: c.title,
+      handle: c.handle,
+      isManual: c.isManual,
+    })),
     _meta: {
       similarExamplesUsed: similarExamples.length,
       refinedWithExamples: needsRefinement,

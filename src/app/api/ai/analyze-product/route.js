@@ -11,8 +11,9 @@ import { analyzeProductImages } from "@/lib/aiProductAnalysis";
 export async function POST(req) {
   try {
     // auth() is optional — demo/try mode works without a session.
+    let session = null;
     try {
-      await auth();
+      session = await auth();
     } catch {
       // Unauthenticated request — continue without session
     }
@@ -20,7 +21,17 @@ export async function POST(req) {
     const { imageUrl, imageUrls, storeId } = await req.json();
     const urls = Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls : imageUrl ? [imageUrl] : [];
 
-    const result = await analyzeProductImages(urls, storeId);
+    // `storeId` comes from the request body and is caller-controlled, so it is
+    // NOT usable for reading a store's own data (SECURITY-ISSUES.md #1). It
+    // keeps its existing meaning here — it drives the similarity search, and
+    // changing that is a separate fix.
+    //
+    // The owner for the store-collection lookup is taken from the SESSION
+    // only. No session -> no collections -> storeCollection: null, which is
+    // exactly how guest and try-free uploads already behave.
+    const ownerUserId = session?.user?.id;
+
+    const result = await analyzeProductImages(urls, storeId, { ownerUserId });
 
     return NextResponse.json({ message: "Product analyzed successfully", ...result }, { status: 200 });
   } catch (error) {

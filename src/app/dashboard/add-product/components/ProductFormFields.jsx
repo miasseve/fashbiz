@@ -28,6 +28,7 @@ const ProductFormFields = ({
   showCategoryField = false,
   priceSuggestion = null,
   isDemo = false,
+  storeCollectionOptions = [],
 }) => {
   const currentName = watch("color.name") || "";
   const currentHex = watch("color.hex") || colorHex || "";
@@ -65,6 +66,48 @@ const ProductFormFields = ({
               {errors.category.message}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Store collection — only when this store has a connected Shopify with
+          collections. The AI's pick is pre-selected and fully correctable: it
+          chooses by garment type only, and a human still has to settle cases
+          it can't, which is why the handle is shown next to every title. Two
+          collections can share a title and differ only by handle, so a title
+          on its own is unusable here — for the person as much as the model. */}
+      {storeCollectionOptions.length > 0 && (
+        <div>
+          <label className="text-sm font-medium">Shopify Collection</label>
+          <select
+            value={watch("storeCollection.id") || ""}
+            onChange={(e) => {
+              const picked = storeCollectionOptions.find((c) => c.id === e.target.value);
+              setValue(
+                "storeCollection",
+                picked
+                  ? {
+                      id: picked.id,
+                      title: picked.title,
+                      handle: picked.handle,
+                      isManual: picked.isManual,
+                    }
+                  : null,
+                { shouldDirty: true }
+              );
+            }}
+            className="w-full border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="">None — don&apos;t add to a collection</option>
+            {storeCollectionOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title} ({c.handle})
+              </option>
+            ))}
+          </select>
+          <span className="text-gray-500 text-[12px]">
+            Your store&apos;s own collection for this product. Saved with the product;
+            it is not sent to Shopify yet.
+          </span>
         </div>
       )}
 
