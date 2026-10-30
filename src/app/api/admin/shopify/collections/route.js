@@ -26,7 +26,7 @@ async function requireAdmin() {
  *
  * This is how we verify a connection end to end before handing a store the
  * connect link, and how the smart-vs-manual question in
- * docs/cph-category-mapping.md §7 gets settled the moment a store connects:
+ * CPH-CATEGORY-MAPPING.md §7 gets settled the moment a store connects:
  * `ruleSet` is not exposed on the public storefront API, only here.
  *
  * Admin/developer only — it reports another store's category structure.

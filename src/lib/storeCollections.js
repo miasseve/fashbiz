@@ -9,7 +9,7 @@ import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
  * SUBCATEGORIES are shared by every store and drive the vector-search
  * pre-filter, the price-history query, points and size normalization. A
  * store's collections are an ADDITIONAL field used only for Shopify
- * placement. See docs/cph-category-mapping.md §6.0.
+ * placement. See CPH-CATEGORY-MAPPING.md §6.0.
  */
 
 // Collections change rarely (a shop adds a category now and then), but
@@ -39,6 +39,35 @@ export function invalidateStoreCollections(storeDomain) {
 export function isManualCollection(collection) {
   if (!collection || !("ruleSet" in collection)) return null;
   return collection.ruleSet === null || collection.ruleSet === undefined;
+}
+
+/**
+ * Whitelists a `storeCollection` that arrived from a form submission.
+ *
+ * The add-product form round-trips the AI's pick through the browser, so the
+ * value coming back is client-controlled and must not be written to the
+ * database as-is. This keeps the four known fields, drops everything else, and
+ * requires the id to look like a Shopify collection GID.
+ *
+ * It deliberately does NOT verify the collection belongs to this store — that
+ * would cost a Shopify call on every product create. It doesn't need to: the
+ * Shopify write path operates through the owner's own store client, so a GID
+ * from somewhere else simply fails there rather than placing anything.
+ *
+ * @returns {{id,title,handle,isManual}|null}
+ */
+export function sanitizeStoreCollection(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const id = typeof value.id === "string" ? value.id.trim() : "";
+  if (!/^gid:\/\/shopify\/Collection\/\d+$/.test(id)) return null;
+
+  return {
+    id,
+    title: typeof value.title === "string" ? value.title.trim() : "",
+    handle: typeof value.handle === "string" ? value.handle.trim() : "",
+    isManual: typeof value.isManual === "boolean" ? value.isManual : null,
+  };
 }
 
 /**

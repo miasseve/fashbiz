@@ -16,6 +16,7 @@ import {
   getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
 import { resolveStoreForUser, resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import { sanitizeStoreCollection } from "@/lib/storeCollections";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
@@ -64,6 +65,7 @@ export async function createProduct(formData) {
       condition_notes = "",
       needsReview = false,
       aiConfidenceScore = null,
+      storeCollection = null,
     } = formData;
     await dbConnect();
     const formattedPrice = Number(parseFloat(price).toFixed(2));
@@ -218,6 +220,10 @@ export async function createProduct(formData) {
       shopifyInventoryItemId: shopifyInventoryItemId,
       needsReview: needsReview || false,
       aiConfidenceScore: aiConfidenceScore ?? null,
+      // Recorded only. Nothing in this release sends it to Shopify — placing
+      // the product in the collection is Phase C, which must re-read the
+      // collection's ruleSet live rather than trust the stored isManual.
+      storeCollection: sanitizeStoreCollection(storeCollection),
     });
 
     await newProduct.save();

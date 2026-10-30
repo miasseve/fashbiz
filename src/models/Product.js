@@ -47,7 +47,28 @@ const productSchema = new mongoose.Schema({
   shopifyProductId: { type: String, required: false },
   shopifyVariantId: { type: String, required: false },
   shopifyInventoryItemId: { type: String, required: false },
-  // shopifyCollectionId: { type: String, required: false },
+  // The collection on the OWNER'S OWN Shopify store that this product belongs
+  // in, chosen by the AI from that store's real collections. Optional: null for
+  // a store with no connected Shopify, and null when the AI had no good match.
+  //
+  // Keyed on the Shopify GID, never the title or handle — neither is unique
+  // (one live store has two collections both titled "Jakker"). See
+  // CPH-CATEGORY-MAPPING.md §1.
+  //
+  // `isManual` is a SNAPSHOT of what Shopify reported when the product was
+  // analysed, kept for debugging only. A collection can be switched between
+  // manual and automated in Shopify at any time, so anything that writes to
+  // Shopify must re-read `ruleSet` live at sync time rather than trust this.
+  storeCollection: {
+    type: {
+      id: { type: String },
+      title: { type: String },
+      handle: { type: String },
+      isManual: { type: Boolean },
+    },
+    required: false,
+    default: null,
+  },
   createdAt: { type: Date, default: Date.now },
   isDemo: {
     type: Boolean,

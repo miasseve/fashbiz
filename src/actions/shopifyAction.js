@@ -1707,7 +1707,7 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
  * list for an automated one. That distinction decides how a product gets into
  * the collection — a manual one needs an explicit collectionAddProducts call,
  * an automated one populates itself from the rules and must NOT be written to.
- * See docs/cph-category-mapping.md §5.
+ * See CPH-CATEGORY-MAPPING.md §5.
  */
 export async function getAllCollections(storeConfig) {
   try {
