@@ -72,9 +72,11 @@ const ProductFormFields = ({
       {/* Store collection — only when this store has a connected Shopify with
           collections. The AI's pick is pre-selected and fully correctable: it
           chooses by garment type only, and a human still has to settle cases
-          it can't, which is why the handle is shown next to every title. Two
-          collections can share a title and differ only by handle, so a title
-          on its own is unusable here — for the person as much as the model. */}
+          it can't. Each row says what is actually inside the collection,
+          because two collections can share a title and a collection's URL
+          handle contradicts its contents on a real store — the one titled
+          "PRADA" has the handle "skjorter" ("shirts"). The handle is therefore
+          never shown; what's in the collection is what tells them apart. */}
       {storeCollectionOptions.length > 0 && (
         <div>
           <label className="text-sm font-medium">Shopify Collection</label>
@@ -100,7 +102,8 @@ const ProductFormFields = ({
             <option value="">None — don&apos;t add to a collection</option>
             {storeCollectionOptions.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.title} ({c.handle})
+                {c.title}
+                {c.contents ? ` — ${c.contents}` : ""}
                 {c.isManual === false ? " — automatic" : ""}
               </option>
             ))}

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getShopifyStorefrontPassword, buildStorefrontLink } from "@/lib/shopifySettings";
 import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import { tagRulesForCollection } from "@/lib/collectionTagRules";
 
 const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const shopifyAccessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
@@ -1712,12 +1713,96 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
   }
 }
 
-// These two calls run AFTER the product already exists on Shopify but BEFORE it
-// is saved to our database, so a hung connection here would leave a product on
-// Shopify that we never recorded. The axios clients carry no timeout, so one is
-// set per-request on these calls only — deliberately not on the shared client,
-// which would change the behaviour of every other Shopify call in this file.
+// These calls — the collection lookup, collectionAddProducts, and tagsAdd —
+// run AFTER the product already exists on Shopify but BEFORE it is saved to our
+// database, so a hung connection here would leave a product on Shopify that we
+// never recorded. The axios clients carry no timeout, so one is set per-request
+// on these calls only — deliberately not on the shared client, which would
+// change the behaviour of every other Shopify call in this file.
 const COLLECTION_CALL_TIMEOUT_MS = 15000;
+
+/**
+ * Adds tags to an already-created Shopify product, on the owner's own store.
+ *
+ * Exists so a product can land in a collection that fills itself from tag
+ * rules: Shopify refuses a direct write to one, and the only thing that puts a
+ * product in it is carrying the tags its rules match.
+ *
+ * Uses `tagsAdd`, not `productUpdate`, on purpose. `tagsAdd` is ADDITIVE by
+ * definition, so it cannot drop a tag the product already had, while
+ * `productUpdate { tags }` REPLACES the whole set — and every collection on our
+ * shared base store is tag-ruled, so replacing would quietly drop products out
+ * of all of them. The guarantee comes from the mutation we picked rather than
+ * from our own merge logic being right.
+ *
+ * Same contract as addProductToStoreCollection: never throws, every outcome is
+ * a returned status, and it refuses to run without a storeConfig so a tag is
+ * never written to the base store on a connected store's behalf.
+ *
+ * @param {string} productId      Shopify product GID
+ * @param {string[]} tags         tags to add; the merchant's exact spelling
+ * @param {object} [storeConfig]  the owner's store; required in practice
+ * @returns {Promise<{status:"tagged"|"skipped"|"error", reason?:string, tags?:string[]}>}
+ */
+export async function addProductTags(productId, tags, storeConfig) {
+  if (!productId || !Array.isArray(tags) || tags.length === 0) {
+    return { status: "skipped", reason: "missing product id or no tags to add" };
+  }
+
+  // Same reasoning as addProductToStoreCollection's guard: a tag written for a
+  // rule-driven collection only makes sense on the store that collection lives
+  // on. Without a storeConfig this would tag a product on the BASE store.
+  if (!storeConfig) {
+    return {
+      status: "skipped",
+      reason: "no connected store — refusing to tag on the base store",
+    };
+  }
+
+  try {
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
+    const response = await shopify.post(
+      "",
+      {
+        query: `
+        mutation tagsAdd($id: ID!, $tags: [String!]!) {
+          tagsAdd(id: $id, tags: $tags) {
+            node { id }
+            userErrors { field message }
+          }
+        }
+      `,
+        variables: { id: productId, tags },
+      },
+      { timeout: COLLECTION_CALL_TIMEOUT_MS }
+    );
+
+    if (response.data.errors) {
+      return {
+        status: "error",
+        reason: response.data.errors.map((e) => e.message).join("; "),
+      };
+    }
+
+    const userErrors = response.data.data?.tagsAdd?.userErrors;
+    if (userErrors?.length) {
+      return {
+        status: "error",
+        reason: userErrors.map((e) => `${e.field}: ${e.message}`).join("; "),
+      };
+    }
+
+    return { status: "tagged", tags };
+  } catch (error) {
+    return {
+      status: "error",
+      reason: error?.response?.data?.errors
+        ? JSON.stringify(error.response.data.errors)
+        : error.message,
+    };
+  }
+}
 
 /**
  * Puts an already-created Shopify product into one collection on the owner's
@@ -1732,9 +1817,9 @@ const COLLECTION_CALL_TIMEOUT_MS = 15000;
  *     a collection can be switched between manual and automated in Shopify at
  *     any time after we saved it
  *
- * An automated (smart) collection is deliberately skipped: Shopify rejects
- * collectionAddProducts on one, and it populates itself from the product's tags,
- * which are already sent on create.
+ * A collection that fills itself from rules takes the other route: Shopify
+ * rejects collectionAddProducts on one, so the product is given the tags those
+ * rules match instead (see addProductTags), and the status comes back "tagged".
  *
  * Note on "added": Shopify returns success with no userErrors even for a product
  * id that doesn't exist (verified against a live store — the collection's count
@@ -1745,7 +1830,7 @@ const COLLECTION_CALL_TIMEOUT_MS = 15000;
  * @param {string} productId     Shopify product GID
  * @param {string} collectionId  Shopify collection GID
  * @param {object} [storeConfig] the owner's store; omitted -> base store
- * @returns {Promise<{status:"added"|"skipped"|"error", reason?:string, title?:string}>}
+ * @returns {Promise<{status:"added"|"tagged"|"skipped"|"error", reason?:string, title?:string, tags?:string[]}>}
  */
 export async function addProductToStoreCollection(productId, collectionId, storeConfig) {
   if (!productId || !collectionId) {
@@ -1800,14 +1885,31 @@ export async function addProductToStoreCollection(productId, collectionId, store
       };
     }
 
-    // ruleSet present -> automated. It fills itself from the tags we already
-    // send, and a direct write is rejected, so this is a success, not a failure.
+    // ruleSet present -> the collection fills itself from its own rules, and a
+    // direct write is rejected. The product only lands in it by carrying the
+    // tags those rules match, so work out which tags and set them.
+    //
+    // Read LIVE above, never from what was stored at upload time: a collection
+    // can be flipped between hand-kept and rule-driven at any moment, and the
+    // mechanism has to follow the collection as it is at THIS instant.
     if (collection.ruleSet) {
-      return {
-        status: "skipped",
-        reason: "automated collection — populated by its own tag rules",
-        title: collection.title,
-      };
+      const tagPlan = tagRulesForCollection(collection.ruleSet);
+
+      // Rules we can't satisfy by tagging — about price or title, say. Nothing
+      // we could write would put the product in it, so report why rather than
+      // claiming a placement. Such collections are also never suggested to the
+      // AI (see canBeSuggested in aiProductAnalysis.js), so reaching this is
+      // the owner having picked one by hand.
+      if (!tagPlan?.eligible) {
+        return {
+          status: "skipped",
+          reason: `rule-driven collection — ${tagPlan?.reason ?? "no usable tag rules"}`,
+          title: collection.title,
+        };
+      }
+
+      const tagResult = await addProductTags(productId, tagPlan.tags, storeConfig);
+      return { ...tagResult, title: collection.title };
     }
 
     const response = await shopify.post("", {
@@ -1940,6 +2042,114 @@ export async function getAllCollections(storeConfig) {
   }
 }
 
+// A store's catalogue is read in pages of 250, and a read that walks forever is
+// worse than one that stops short: this only ever feeds a descriptive hint and
+// a spelling lookup, so a cap is harmless and an unbounded crawl is not.
+const PRODUCT_FACTS_PAGE_LIMIT = 8; // up to ~2000 products
+const PRODUCT_FACTS_TIMEOUT_MS = 20000;
+
+/**
+ * Reads the bare facts about a store's own products: what each one is called a
+ * type of, by whom, and which collections it sits in.
+ *
+ * Why this exists: `getAllCollections` returns collection metadata only, so
+ * nothing in the app could say what is actually INSIDE a collection. Two things
+ * need that. A collection's title and handle can't be trusted to describe it —
+ * on one real store the collection titled "PRADA" has the handle "skjorter"
+ * ("shirts"), and two collections can share a title outright — so the only
+ * honest way to tell two apart, for a person or for the model, is what is in
+ * them. And a store writes its product types in its own spelling, typos
+ * included, which we have to match or its storefront filters stop working.
+ *
+ * Deliberately NOT a general product API: it selects the three fields those two
+ * jobs need and nothing else, so it stays cheap and has no other callers to
+ * keep happy.
+ *
+ * Same degrade-don't-throw contract as getAllCollections — a failure returns
+ * what it has (possibly nothing) and logs the reason, because every caller can
+ * work without it. Unlike getAllCollections it carries an explicit timeout:
+ * this walks several pages, and nothing it feeds is worth stalling an upload.
+ *
+ * @param {object} [storeConfig] the owner's store; omitted -> base store
+ * @returns {Promise<Array<{ productType: string, vendor: string, collectionIds: string[] }>>}
+ */
+export async function getStoreProductFacts(storeConfig) {
+  try {
+    const { client: shopify } = buildShopifyClient(storeConfig);
+
+    const GET_PRODUCT_FACTS = `
+      query getStoreProductFacts($cursor: String) {
+        products(first: 250, after: $cursor) {
+          edges {
+            node {
+              productType
+              vendor
+              collections(first: 20) {
+                nodes { id }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const facts = [];
+    let hasNextPage = true;
+    let cursor = null;
+    let pages = 0;
+
+    while (hasNextPage && pages < PRODUCT_FACTS_PAGE_LIMIT) {
+      const response = await shopify.post(
+        "",
+        { query: GET_PRODUCT_FACTS, variables: { cursor } },
+        { timeout: PRODUCT_FACTS_TIMEOUT_MS }
+      );
+
+      if (response.data.errors) {
+        console.error(
+          `[store-product-facts] Fetch failed for ${storeConfig?.storeDomain || shopifyStoreDomain}:`,
+          response.data.errors.map((e) => e.message).join("; ")
+        );
+        break;
+      }
+
+      const productsData = response.data.data.products;
+
+      facts.push(
+        ...productsData.edges.map((edge) => ({
+          productType: String(edge.node.productType ?? ""),
+          vendor: String(edge.node.vendor ?? ""),
+          collectionIds: (edge.node.collections?.nodes || []).map((n) => n.id),
+        }))
+      );
+
+      hasNextPage = productsData.pageInfo.hasNextPage;
+      cursor = productsData.pageInfo.endCursor;
+      pages += 1;
+    }
+
+    if (hasNextPage) {
+      console.warn(
+        `[store-product-facts] Stopped at ${facts.length} products for ` +
+          `${storeConfig?.storeDomain || shopifyStoreDomain} (page cap). The hints ` +
+          `and spellings are drawn from this sample, not the whole catalogue.`
+      );
+    }
+
+    return facts;
+  } catch (error) {
+    console.error(
+      `[store-product-facts] Error fetching products for ${storeConfig?.storeDomain || shopifyStoreDomain}:`,
+      error?.response?.data?.errors || error.message
+    );
+    return [];
+  }
+}
+
 //not working as expected - needs testing and fixing
 export async function updateShopifyProduct(productId, formData, storeConfig) {
   try {
@@ -2004,6 +2214,14 @@ export async function updateShopifyProduct(productId, formData, storeConfig) {
 
     /* STEP 2: UPDATE BASIC INFO */
 
+    // ⚠️ DO NOT add a `tags` key to the input below. `productUpdate` REPLACES
+    // the whole tag set rather than merging, and tags are what fill every
+    // rule-driven collection — including all of them on our shared base store,
+    // and any a product was tagged for on its own store. Sending tags here
+    // would silently drop products out of the collections they are in. The
+    // absence of this key is why editing a product can't strip its tags today.
+    // To ADD a tag, use addProductTags() (the `tagsAdd` mutation), which is
+    // additive by construction.
     await shopify.post("", {
       query: `
         mutation productUpdate($input: ProductInput!) {

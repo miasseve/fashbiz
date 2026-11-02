@@ -69,6 +69,27 @@ const ShopifyStoreSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Collections on this store that the AI must never be offered — a shop's
+    // brand categories and its catch-all buckets ("all products", "our
+    // favourites", "archive"). The store owner can still choose one by hand in
+    // the upload form; only the model's list is filtered. See
+    // .claude/specs/546-cphs-real-categories.md FR-06.
+    //
+    // Set BY HAND, per store, with scripts/set-store-ai-excluded-collections.js
+    // — deliberately no UI, like the status/connectedVia group above. It stays
+    // UI-free only while the two developer routes keep their explicit field
+    // whitelists (api/developer/shopify-stores/route.js POST and
+    // .../[storeId]/route.js PATCH); don't add this field to either.
+    //
+    // Shopify collection GIDs, never titles or handles: titles are not unique
+    // (one live store has two collections both titled "Jakker") and handles
+    // contradict their contents on a real store (the PRADA category's handle
+    // says "skjorter"). An id here whose collection has since been deleted is
+    // simply never matched, which is harmless.
+    aiExcludedCollectionIds: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );

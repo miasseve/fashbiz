@@ -18,6 +18,11 @@ import {
 } from "./shopifyAction";
 import { resolveStoreForUser, resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
 import { sanitizeStoreCollection } from "@/lib/storeCollections";
+import {
+  getStoreCategoryFacts,
+  storeSpellingForType,
+  storeTypeForCollection,
+} from "@/lib/storeCategoryFacts";
 import InstagramPostLog from "@/models/InstagramPostLogs";
 import Notification from "@/models/Notification";
 import Transaction from "@/models/Transaction";
@@ -132,11 +137,39 @@ export async function createProduct(formData) {
         const storeConfig =
           resolvedStore?.source === "oauth" ? resolvedStore : undefined;
 
+        // The product type written to Shopify should read in the store's OWN
+        // spelling, exactly as they already write it on their own products —
+        // including a typo of theirs, and their own choice between "t-shirt"
+        // and "T-shirt". Their storefront filters are case-sensitive, so our
+        // spelling of the same thing splits their filters in two.
+        //
+        // Two sources, in this order. The category the owner chose is the
+        // better one: whatever that category is full of is what this store
+        // calls these things, which is the only route from our "Accessories"
+        // to their `accesories` or from our "Jackets" to their `jakke`. Failing
+        // that — no category picked — a direct match on our own word can still
+        // settle a difference in case, their "t-shirt" against our "T-shirt".
+        //
+        // Only ever narrowed to a spelling the store actually uses; when
+        // neither source has an answer, the value is left exactly as it is
+        // today. Done here rather than inside createShopifyProduct on purpose:
+        // the other callers of that function sync to the BASE store, which has
+        // no "own spelling" to match.
+        let ownSpelling = "";
+        if (storeConfig) {
+          const facts = getStoreCategoryFacts(storeConfig);
+          const picked = sanitizeStoreCollection(storeCollection);
+          ownSpelling =
+            storeTypeForCollection(facts, picked?.id) ||
+            storeSpellingForType(facts, formData?.subcategory);
+        }
+
         // Create product in Shopify (points products get price=0 + metafields)
         const shopifyResponse = await createShopifyProduct(
           {
             ...formData,
             ...(pointsValue != null ? { price: 0 } : {}),
+            ...(ownSpelling ? { subcategory: ownSpelling } : {}),
             pointsValue,
             storeName,
             barcodeValue,
@@ -166,6 +199,17 @@ export async function createProduct(formData) {
               if (placement.status === "added") {
                 console.log(
                   `[collection] Added ${shopifyProductId} to "${label}"`,
+                );
+              } else if (placement.status === "tagged") {
+                // Equally a success, by the other mechanism: the collection
+                // fills itself from its rules, so the product was tagged to
+                // match instead of being written into the collection. Logged
+                // distinctly, and with the tags, because which mechanism ran is
+                // the only evidence that the live manual/rule-driven check is
+                // working.
+                console.log(
+                  `[collection] Tagged ${shopifyProductId} for "${label}" with ` +
+                    `[${(placement.tags || []).join(", ")}]`,
                 );
               } else {
                 console.warn(
