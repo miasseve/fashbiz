@@ -11,8 +11,12 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const file = formData.get("file");
-    const isProfileImage = formData.get("isProfileImage");
-    const userId = session?.user?.id || formData.get("userId");
+    // FormData sends booleans as strings, so `false` arrives as "false" —
+    // which is truthy. Only the exact string "true" marks a profile image.
+    const isProfileImage = formData.get("isProfileImage") === "true";
+    // The profile image is only ever written for the signed-in user. A
+    // userId in the form body is never trusted on its own.
+    const userId = session?.user?.id || null;
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });

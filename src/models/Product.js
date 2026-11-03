@@ -47,6 +47,9 @@ const productSchema = new mongoose.Schema({
   shopifyProductId: { type: String, required: false },
   shopifyVariantId: { type: String, required: false },
   shopifyInventoryItemId: { type: String, required: false },
+  // Shopify location GID the stock was placed at, so a sale zeroes the stock
+  // at the same shop. null on older products: they use the store's default.
+  shopifyLocationId: { type: String, default: null },
   // The collection on the OWNER'S OWN Shopify store that this product belongs
   // in, chosen by the AI from that store's real collections. Optional: null for
   // a store with no connected Shopify, and null when the AI had no good match.

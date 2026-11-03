@@ -57,6 +57,32 @@ const SecondStep = ({
 
   const [fabricOptions, setFabricOptions] = useState([]);
   const [colorHex, setColorHex] = useState("");
+
+  // The fabric dropdown only shows a value that is one of its options, and the
+  // AI spells fabrics its own way ("Cotton" vs "cotton", "Wool blend" vs
+  // "Wool"). Map the AI's answer onto the list: exact match ignoring case
+  // first, then a partial match; a fabric the list doesn't have is added as an
+  // option, so the AI's pick is never silently dropped.
+  const pickFabricOption = (aiFabrics) => {
+    const candidates = (aiFabrics || []).map((f) => String(f || "").trim()).filter(Boolean);
+    if (!candidates.length) return "";
+    const lower = (s) => s.toLowerCase();
+    for (const candidate of candidates) {
+      const exact = fabricOptions.find((o) => lower(o) === lower(candidate));
+      if (exact) return exact;
+    }
+    for (const candidate of candidates) {
+      const partial = fabricOptions.find(
+        (o) => lower(candidate).includes(lower(o)) || lower(o).includes(lower(candidate))
+      );
+      if (partial) return partial;
+    }
+    const added = candidates[0];
+    setFabricOptions((prev) => (prev.includes(added) ? prev : [...prev, added]));
+    // Set again once the new <option> exists, or the select stays blank.
+    setTimeout(() => setValue("fabric", added), 0);
+    return added;
+  };
   const [isCollectOpen, setIsCollectOpen] = useState(false);
   const [collectSelection, setCollectSelection] = useState(null);
   const [formData, setFormData] = useState(null);
@@ -217,7 +243,7 @@ const SecondStep = ({
 
             // Handle fabric — new format is array, form expects single string
             if (Array.isArray(data.fabric) && data.fabric.length > 0) {
-              setValue("fabric", data.fabric[0] || "");
+              setValue("fabric", pickFabricOption(data.fabric));
             }
 
             // Tags (sent to Shopify only — not stored on Product)
@@ -282,7 +308,7 @@ const SecondStep = ({
               setValue("color.hex", color?.hex || "");
               setValue("subcategory", subcategory || "");
               setValue("size", size || "");
-              setValue("fabric", fabric || "");
+              setValue("fabric", pickFabricOption(fabric ? [fabric] : []));
               setValue("tags", tags || []);
               setColorHex(color?.hex);
             }

@@ -3,6 +3,7 @@ import axios from "axios";
 import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import { resolveStoreForUser } from "@/lib/shopifyStoreResolver";
 
 const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const shopifyAccessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
@@ -28,6 +29,14 @@ export async function getActiveTheme() {
 
 // Shared helper: applies branding from a user object to the active Shopify theme
 async function _applyBrandingForUser(user) {
+  // This writes to the BASE store's theme. A store with its own connected
+  // Shopify keeps its own theme, so its branding must never land on ours.
+  const { source } = await resolveStoreForUser(user?._id);
+  if (source !== "env") {
+    console.log(`[branding] skipped for user ${user?._id}: store uses its own Shopify theme`);
+    return { status: 200, skipped: true, message: "Store uses its own Shopify theme" };
+  }
+
   if (!user?.branding) {
     return { status: 400, error: "No branding data configured" };
   }

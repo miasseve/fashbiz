@@ -48,7 +48,7 @@ export async function GET() {
 
     // Explicit field list — accessToken/apiSecret are deliberately excluded.
     const stores = await ShopifyStore.find({ isBaseStore: { $ne: true } })
-      .select("storeDomain userId status connectedVia connectedAt grantedScopes isActive updatedAt createdAt")
+      .select("storeDomain userId status connectedVia connectedAt grantedScopes isActive lastConnectionError updatedAt createdAt")
       .lean();
 
     const pendingStates = await ShopifyOAuthState.find({
@@ -101,6 +101,7 @@ export async function GET() {
           connectedAt: s.connectedAt || null,
           grantedScopes: s.grantedScopes || "",
           isActive: s.isActive !== false,
+          lastConnectionError: s.lastConnectionError || "",
           recipientEmail: user?.email || "",
           sortDate: s.connectedAt || s.updatedAt || s.createdAt || null,
         };
