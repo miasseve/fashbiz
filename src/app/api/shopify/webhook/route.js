@@ -7,12 +7,11 @@ import Notification from "@/models/Notification";
 import ShopifyStore from "@/models/ShopifyStore";
 import Transaction from "@/models/Transaction";
 import { decrypt } from "@/actions/encryption";
-import {
-  updateInventory,
-  getShopifyLocations,
-  disableShopifyProduct,
-  getAllVariantInventoryIds,
-} from "@/actions/shopifyAction";
+import { enableShopifyProduct } from "@/actions/shopifyAction";
+import { hideSoldProductOnShopify } from "@/lib/shopifySoldSync";
+import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import { invalidateStoreCollections } from "@/lib/storeCollections";
+import { invalidateStoreCategoryFacts } from "@/lib/storeCategoryFacts";
 
 // Platform transaction fee rates by subscription type.
 // Old plans kept exactly as-is so existing subscribers' fees never change.
@@ -49,7 +48,9 @@ export async function POST(req) {
   //   • connectedVia "oauth" → the Shopify app's client secret, which is what
   //     Shopify signs those shops' webhooks with.
   //   • everything else      → unchanged behaviour: the per-store secret when a
-  //     record exists, otherwise SHOPIFY_API_SECRET.
+  //     record exists, otherwise SHOPIFY_API_SECRET. This includes
+  //     connectedVia "client_credentials": that store's own app signs its
+  //     webhooks, and its apiSecret IS that app's Client Secret.
   await dbConnect();
   let webhookSecret = process.env.SHOPIFY_API_SECRET;
   const shopDomain = req.headers.get("x-shopify-shop-domain");
@@ -106,25 +107,11 @@ export async function POST(req) {
         product.soldVia = "shopify";
         await product.save();
 
-        // Sync inventory to 0 and disable product on Shopify
-        try {
-          const locations = await getShopifyLocations();
-          const activeLocation = locations.find((l) => l.isActive);
-          if (activeLocation && product.shopifyProductId) {
-            const inventoryItemIds = await getAllVariantInventoryIds(
-              product.shopifyProductId,
-            );
-            for (const inventoryItemId of inventoryItemIds) {
-              await updateInventory(inventoryItemId, activeLocation.id, 0);
-            }
-            await disableShopifyProduct(product.shopifyProductId);
-          }
-        } catch (invErr) {
-          console.error(
-            `[Shopify Webhook] Failed to sync inventory for product ${product._id}:`,
-            invErr.message,
-          );
-        }
+        // Stock 0 + DRAFT on the store the product lives on (the owner's own
+        // connected store, or the base store). Never throws.
+        const { storeDomain: productStoreDomain } = await hideSoldProductOnShopify(product);
+        const orderStoreDomain =
+          productStoreDomain || shopDomain || process.env.SHOPIFY_STORE_DOMAIN;
 
         // Create sold notification for the store owner
         const owner = await User.findById(product.userId);
@@ -144,7 +131,7 @@ export async function POST(req) {
           message: `Order from ${event.customer?.first_name || "Customer"} ${event.customer?.last_name || ""}`.trim(),
           orderDetails: {
             shopifyOrderId: String(event.id),
-            shopifyOrderUrl: `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/orders/${event.id}`,
+            shopifyOrderUrl: `https://${orderStoreDomain}/admin/orders/${event.id}`,
             customerName:
               `${event.customer?.first_name || ""} ${event.customer?.last_name || ""}`.trim(),
             customerEmail: event.customer?.email || "",
@@ -192,7 +179,7 @@ export async function POST(req) {
               currency: (event.currency || "DKK").toUpperCase(),
               paymentMethod: event.payment_gateway_names?.[0] || "SecondsToSee",
               status: "completed",
-              shopifyOrderUrl: `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/orders/${event.id}`,
+              shopifyOrderUrl: `https://${orderStoreDomain}/admin/orders/${event.id}`,
               shopifyOrderNumber: String(event.order_number || event.id),
               consignorName: product.consignorName || "",
               consignorEmail: product.consignorEmail || "",
@@ -246,7 +233,7 @@ export async function POST(req) {
             productId: product._id,
             type: "sold",
             title: `"${product.title}" inventory set to 0`,
-            message: "Inventory was manually adjusted in leStoresweb",
+            message: "Inventory was set to 0 in Shopify",
           });
         }
       } else if (newQuantity > 0 && product.sold) {
@@ -255,41 +242,42 @@ export async function POST(req) {
         product.soldVia = undefined;
         await product.save();
 
-        // Re-enable the product on Shopify (set to ACTIVE)
+        // Re-enable the product (ACTIVE) on the store it lives on.
         if (product.shopifyProductId) {
-          try {
-            const axios = (await import("axios")).default;
-            const shopifyClient = axios.create({
-              baseURL: `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-10/graphql.json`,
-              headers: {
-                "X-Shopify-Access-Token":
-                  process.env.SHOPIFY_ADMIN_ACCESS_TOKEN,
-                "Content-Type": "application/json",
-              },
-            });
-
-            await shopifyClient.post("", {
-              query: `mutation productUpdate($input: ProductInput!) {
-                productUpdate(input: $input) {
-                  product { id status }
-                  userErrors { field message }
-                }
-              }`,
-              variables: {
-                input: {
-                  id: product.shopifyProductId,
-                  status: "ACTIVE",
-                },
-              },
-            });
-          } catch (reactivateErr) {
-            console.error(
-              `[Shopify Webhook] Failed to reactivate product: ${reactivateErr.message}`,
-            );
+          const storeConfig = await resolveStoreConfigForUser(product.userId);
+          const result = await enableShopifyProduct(product.shopifyProductId, storeConfig);
+          if (!result?.success) {
+            console.error(`[Shopify Webhook] Failed to reactivate product ${product._id}`);
           }
         }
       }
 
+      break;
+    }
+    case "app/uninstalled": {
+      // The store removed our app (or its own app, for client_credentials).
+      // Mark the connection unusable so uploads stop with a clear error
+      // instead of failing, and never fall back to the base store.
+      const domain = (shopDomain || "").toLowerCase();
+      if (domain) {
+        await ShopifyStore.updateOne(
+          {
+            storeDomain: domain,
+            connectedVia: { $in: ["oauth", "client_credentials"] },
+            isBaseStore: { $ne: true },
+          },
+          {
+            $set: {
+              status: "failed",
+              isActive: false,
+              lastConnectionError: "App uninstalled in Shopify",
+            },
+          }
+        );
+        invalidateStoreCollections(domain);
+        invalidateStoreCategoryFacts(domain);
+        console.log(`[Shopify Webhook] App uninstalled for ${domain} — connection marked failed`);
+      }
       break;
     }
     default:

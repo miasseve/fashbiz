@@ -19,7 +19,8 @@ import { SHOPIFY_OAUTH_API_VERSION } from "@/lib/shopifyOAuth";
 // which is exactly why inventory registration used to come back as "error".
 // The quantity-change event the handler consumes is INVENTORY_LEVELS_UPDATE,
 // delivered with an `x-shopify-topic: inventory_levels/update` header.
-const WEBHOOK_TOPICS = ["ORDERS_CREATE", "INVENTORY_LEVELS_UPDATE"];
+// APP_UNINSTALLED lets the webhook route mark a removed connection unusable.
+const WEBHOOK_TOPICS = ["ORDERS_CREATE", "INVENTORY_LEVELS_UPDATE", "APP_UNINSTALLED"];
 
 const REGISTER_WEBHOOK = `
   mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {

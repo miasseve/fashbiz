@@ -17,6 +17,7 @@ import {
   getShopifyProductStorefrontUrl,
 } from "./shopifyAction";
 import { resolveStoreForUser, resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import { hideSoldProductOnShopify } from "@/lib/shopifySoldSync";
 import { sanitizeStoreCollection } from "@/lib/storeCollections";
 import {
   getStoreCategoryFacts,
@@ -41,6 +42,7 @@ export async function createProduct(formData) {
   let shopifyProductId = null;
   let shopifyVariantId = null;
   let shopifyInventoryItemId = null;
+  let shopifyLocationId = null;
   try {
     const session = await auth();
 
@@ -134,6 +136,19 @@ export async function createProduct(formData) {
         // no-storeConfig path (shared client, same API version, and the FB/IG
         // publication cache + SHOPIFY_FACEBOOK_PUBLICATION_ID env shortcut).
         const resolvedStore = await resolveStoreForUser(session.user.id);
+        // The owner has their own Shopify connected but it can't be used right
+        // now. Stop before any Shopify call: this product must never land on
+        // the base store instead.
+        if (resolvedStore?.source === "oauth-unavailable") {
+          console.error(
+            `[createProduct] Connection to ${resolvedStore.storeDomain} unavailable: ${resolvedStore.reason}`,
+          );
+          return {
+            status: 400,
+            error:
+              "Your Shopify connection is not active. Please contact leStores support to reconnect.",
+          };
+        }
         const storeConfig =
           resolvedStore?.source === "oauth" ? resolvedStore : undefined;
 
@@ -180,6 +195,7 @@ export async function createProduct(formData) {
           shopifyProductId = shopifyResponse.productId;
           shopifyVariantId = shopifyResponse.variantId;
           shopifyInventoryItemId = shopifyResponse.inventoryItemId;
+          shopifyLocationId = shopifyResponse.locationId || null;
           createdShopifyProduct = true;
 
           // Place the product in the collection chosen during AI analysis, on
@@ -224,6 +240,12 @@ export async function createProduct(formData) {
                 collectionError.message,
               );
             }
+          } else if (storeConfig) {
+            // Logged so a product missing from every collection on a connected
+            // store can be traced to "nothing was picked" in the Vercel logs.
+            console.warn(
+              `[collection] No collection picked for ${shopifyProductId} on ${storeConfig.storeDomain}`,
+            );
           }
         } else {
           return {
@@ -296,6 +318,7 @@ export async function createProduct(formData) {
       shopifyProductId: shopifyProductId,
       shopifyVariantId: shopifyVariantId,
       shopifyInventoryItemId: shopifyInventoryItemId,
+      shopifyLocationId,
       needsReview: needsReview || false,
       aiConfidenceScore: aiConfidenceScore ?? null,
       // Stored as the record of what was chosen. The actual placement on
@@ -797,7 +820,9 @@ Swipe to browse ${products.length} items 👉
       const shopifyUrls = await Promise.all(
         products.map((product) =>
           product.shopifyProductId
-            ? getShopifyProductStorefrontUrl(product.shopifyProductId)
+            ? resolveStoreConfigForUser(product.userId).then((storeConfig) =>
+                getShopifyProductStorefrontUrl(product.shopifyProductId, storeConfig)
+              )
             : Promise.resolve(null)
         )
       );
@@ -1184,9 +1209,14 @@ export async function getProductById(productId) {
     // }
 
     // Get Shopify storefront URL if the product is linked to Shopify
+    // Looked up on the store the product lives on (the owner's own store, or
+    // the base store).
     let shopifyProductUrl = null;
     if (product.shopifyProductId) {
-      shopifyProductUrl = await getShopifyProductStorefrontUrl(product.shopifyProductId);
+      shopifyProductUrl = await getShopifyProductStorefrontUrl(
+        product.shopifyProductId,
+        await resolveStoreConfigForUser(product.userId),
+      );
     }
 
     // Resolve the owning store's live webstore homepage as a fallback, so the
@@ -1201,11 +1231,18 @@ export async function getProductById(productId) {
       const { source, storeDomain } = await resolveStoreForUser(product.userId);
       // OAuth stores use their own myshopify domain; the shared base store
       // publishes under SHOPIFY_STOREFRONT_DOMAIN (its public storefront).
+      // An unusable own-store connection gets no link at all — never the base
+      // store's homepage. The base store's /go unlock page is only for the
+      // base store's own password.
       const storefrontDomain =
-        source === "oauth"
-          ? storeDomain
-          : process.env.SHOPIFY_STOREFRONT_DOMAIN || storeDomain;
-      if (storefrontDomain) {
+        source === "oauth-unavailable"
+          ? null
+          : source === "oauth"
+            ? storeDomain
+            : process.env.SHOPIFY_STOREFRONT_DOMAIN || storeDomain;
+      if (storefrontDomain && source === "oauth") {
+        webstoreHomeUrl = `https://${storefrontDomain}/`;
+      } else if (storefrontDomain) {
         // Route through the /go unlock page when the storefront is
         // password-protected, exactly like the per-product link does.
         webstoreHomeUrl = buildStorefrontLink(
@@ -1562,47 +1599,10 @@ export async function soldProductsByIds(productIds, transactionData = {}) {
       shopifyProductId: { $exists: true, $ne: null },
     });
 
-    if (soldProducts.length > 0) {
-      // Set inventory to 0 on Shopify
-      try {
-        const locations = await getShopifyLocations();
-        const activeLocation = locations.find((l) => l.isActive);
-        if (activeLocation) {
-          for (const product of soldProducts) {
-            try {
-              const { getAllVariantInventoryIds } = await import("./shopifyAction");
-              const inventoryItemIds = await getAllVariantInventoryIds(product.shopifyProductId);
-
-              if (inventoryItemIds.length > 0) {
-                for (const inventoryItemId of inventoryItemIds) {
-                  await updateInventory(inventoryItemId, activeLocation.id, 0);
-                }
-              } else if (product.shopifyInventoryItemId) {
-                await updateInventory(product.shopifyInventoryItemId, activeLocation.id, 0);
-              }
-            } catch (invErr) {
-              console.error(
-                `Failed to sync Shopify inventory for product ${product._id}:`,
-                invErr.message,
-              );
-            }
-          }
-        }
-      } catch (locErr) {
-        console.error("Failed to fetch Shopify locations:", locErr.message);
-      }
-
-      // Set products to DRAFT on Shopify to hide them from the store
-      for (const product of soldProducts) {
-        try {
-          await disableShopifyProduct(product.shopifyProductId);
-        } catch (draftErr) {
-          console.error(
-            `Failed to set Shopify product to DRAFT for product ${product._id}:`,
-            draftErr.message,
-          );
-        }
-      }
+    // Stock 0 + DRAFT on the store each product lives on — the owner's own
+    // connected store, or the base store. Never throws.
+    for (const product of soldProducts) {
+      await hideSoldProductOnShopify(product);
     }
 
     return {

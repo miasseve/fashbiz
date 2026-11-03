@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getShopifyStorefrontPassword, buildStorefrontLink } from "@/lib/shopifySettings";
-import { resolveStoreConfigForUser } from "@/lib/shopifyStoreResolver";
+import { resolveStoreConfigForUser, resolveStoreForUser } from "@/lib/shopifyStoreResolver";
 import { tagRulesForCollection } from "@/lib/collectionTagRules";
 
 const shopifyStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
@@ -63,6 +63,63 @@ function buildShopifyClient(storeConfig) {
   };
 }
 
+// Some stores (CPH Concept) show the size in the product title, as
+// "(Str. M)" or "(Str. 42,5)", because their storefront has no size filter.
+// Only applies when the store's sizeInTitle setting is on; every other store
+// keeps its title untouched. Any old "(Str. …)" is replaced, so an edit never
+// adds it twice.
+const SIZE_IN_TITLE_REGEX = /\s*\(Str\.[^)]*\)\s*$/i;
+
+function withSizeInTitle(title, sizesArray, storeConfig) {
+  if (!storeConfig?.sizeInTitle || typeof title !== "string") return title;
+  const base = title.replace(SIZE_IN_TITLE_REGEX, "").trim();
+  const sizes = (sizesArray || [])
+    .map((s) => String(s).trim().replace(/(\d)\.(\d)/g, "$1,$2"))
+    .filter(Boolean);
+  return sizes.length ? `${base} (Str. ${sizes.join(" / ")})` : base;
+}
+
+/**
+ * Publishes a product to the store's Online Store channel with GraphQL.
+ * Needs read_publications + write_publications. Never throws; returns true
+ * only when Shopify confirmed the publish.
+ */
+async function publishProductToOnlineStore(productId, storeConfig) {
+  try {
+    const { client } = buildShopifyClient(storeConfig);
+    const pubRes = await client.post("", {
+      query: `query { publications(first: 20) { edges { node { id name } } } }`,
+    });
+    if (pubRes.data?.errors) {
+      console.error("[Shopify] Could not list publications:", pubRes.data.errors);
+      return false;
+    }
+    const onlineStore = (pubRes.data?.data?.publications?.edges || []).find(
+      (e) => (e.node.name || "").toLowerCase() === "online store"
+    );
+    if (!onlineStore) {
+      console.warn("[Shopify] Online Store publication not found");
+      return false;
+    }
+    const res = await client.post("", {
+      query: `mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+        publishablePublish(id: $id, input: $input) { userErrors { field message } }
+      }`,
+      variables: { id: productId, input: [{ publicationId: onlineStore.node.id }] },
+    });
+    const errors = res.data?.errors || res.data?.data?.publishablePublish?.userErrors;
+    if (errors?.length) {
+      console.error("[Shopify] Online Store publish failed:", errors);
+      return false;
+    }
+    console.log(`[Shopify] Product ${productId} published to Online Store`);
+    return true;
+  } catch (error) {
+    console.error("[Shopify] Online Store publish threw:", error.message);
+    return false;
+  }
+}
+
 // CREATE PRODUCT
 export async function createShopifyProduct(formData, storeConfig) {
   try {
@@ -82,6 +139,7 @@ export async function createShopifyProduct(formData, storeConfig) {
       barcodeValue,
       pointsValue = null,
       storeName = "",
+      locationId: locationIdOverride = null,
     } = formData;
 
     // Resolve once. No storeConfig -> identical to the module-level `shopify`
@@ -97,7 +155,18 @@ export async function createShopifyProduct(formData, storeConfig) {
     let locationId;
     try {
       const locations = await getShopifyLocations(storeConfig);
-      const activeLocation = locations.find((l) => l.isActive);
+      // A connected store with several shops says which one gets the stock:
+      // the location chosen for this product (its segment), else the store's
+      // default. Either one missing or inactive falls back to the first
+      // active location, as before.
+      const preferred = locationIdOverride || storeConfig?.defaultLocationId || null;
+      const preferredLocation = preferred
+        ? locations.find((l) => l.isActive && l.id === preferred)
+        : null;
+      if (preferred && !preferredLocation) {
+        console.warn(`⚠ Location ${preferred} not found or inactive — using the first active location`);
+      }
+      const activeLocation = preferredLocation || locations.find((l) => l.isActive);
       locationId = activeLocation?.id;
 
       if (!locationId) {
@@ -175,7 +244,7 @@ export async function createShopifyProduct(formData, storeConfig) {
     }
 
     const productInput = {
-      title,
+      title: withSizeInTitle(title, sizesArray, storeConfig),
       descriptionHtml: description,
       vendor: storeName || brand,
       productType: subcategory,
@@ -645,7 +714,14 @@ export async function createShopifyProduct(formData, storeConfig) {
     // Publish product to the Online Store sales channel via REST API.
     // This uses published:true which only requires write_products scope,
     // avoiding the read_publications/write_publications scope requirement.
-    try {
+    // A connected store publishes through GraphQL first: the REST call below
+    // can fail on newer apps, and a product that is not on the Online Store
+    // channel never shows on any collection page. REST stays the fallback.
+    let publishedViaGraphql = false;
+    if (storeConfig) {
+      publishedViaGraphql = await publishProductToOnlineStore(productId, storeConfig);
+    }
+    if (!publishedViaGraphql) try {
       const numericProductId = productId.split("/").pop();
       await axios.put(
         `https://${targetStoreDomain}/admin/api/${targetApiVersion}/products/${numericProductId}.json`,
@@ -674,6 +750,7 @@ export async function createShopifyProduct(formData, storeConfig) {
       productHandle,
       variantId: firstVariantId,
       inventoryItemId: firstInventoryItemId,
+      locationId: locationId || null,
     };
   } catch (error) {
     return {
@@ -1065,8 +1142,19 @@ export async function deleteShopifyProduct(products, storeConfig) {
   }
 }
 
-export async function disableShopifyProduct(productId) {
+export async function disableShopifyProduct(productId, storeConfig) {
+  return setShopifyProductStatus(productId, "DRAFT", storeConfig);
+}
+
+// Re-activates a product (status ACTIVE) on the given store — the inverse of
+// disableShopifyProduct, used when a sold item is restocked in Shopify.
+export async function enableShopifyProduct(productId, storeConfig) {
+  return setShopifyProductStatus(productId, "ACTIVE", storeConfig);
+}
+
+async function setShopifyProductStatus(productId, status, storeConfig) {
   try {
+    const { client } = buildShopifyClient(storeConfig);
     const DISABLE_PRODUCT = `
       mutation productUpdate($input: ProductInput!) {
         productUpdate(input: $input) {
@@ -1076,30 +1164,30 @@ export async function disableShopifyProduct(productId) {
       }
     `;
 
-    const response = await shopify.post("", {
+    const response = await client.post("", {
       query: DISABLE_PRODUCT,
       variables: {
         input: {
           id: productId,
-          status: "DRAFT",
+          status,
         },
       },
     });
 
     if (response.data?.errors) {
-      console.error("Error disabling Shopify product:", response.data.errors);
+      console.error(`Error setting Shopify product status ${status}:`, response.data.errors);
       return { success: false, errors: response.data.errors };
     }
 
     const result = response.data?.data?.productUpdate;
     if (result?.userErrors?.length) {
-      console.error("User errors disabling Shopify product:", result.userErrors);
+      console.error(`User errors setting Shopify product status ${status}:`, result.userErrors);
       return { success: false, userErrors: result.userErrors };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Error in disableShopifyProduct:", error.message);
+    console.error(`Error setting Shopify product status ${status}:`, error.message);
     return { success: false, error: error.message };
   }
 }
@@ -1190,9 +1278,10 @@ async function publishProductToFacebookInstagram(shopifyProductGid, storeConfig)
 }
 
 // GET SHOPIFY PRODUCT STOREFRONT URL
-export async function getShopifyProductStorefrontUrl(shopifyProductId) {
+export async function getShopifyProductStorefrontUrl(shopifyProductId, storeConfig) {
   try {
     if (!shopifyProductId) return null;
+    const { client } = buildShopifyClient(storeConfig);
 
     const GET_PRODUCT_URL = `
       query getProductUrl($id: ID!) {
@@ -1203,13 +1292,22 @@ export async function getShopifyProductStorefrontUrl(shopifyProductId) {
       }
     `;
 
-    const response = await shopify.post("", {
+    const response = await client.post("", {
       query: GET_PRODUCT_URL,
       variables: { id: shopifyProductId },
     });
 
     const product = response.data?.data?.product;
     if (!product) return null;
+
+    // A connected store has its own storefront: link to it directly and never
+    // through the base store's password-unlock page.
+    if (storeConfig) {
+      if (product.onlineStoreUrl) return product.onlineStoreUrl;
+      return product.handle
+        ? `https://${storeConfig.storeDomain}/products/${product.handle}`
+        : null;
+    }
 
     let url = null;
     if (product.onlineStoreUrl) {
@@ -1558,29 +1656,62 @@ export async function bulkCreateShopifyProducts(userId) {
 
   const results = { successful: 0, failed: 0, errors: [] };
 
+  // Every product here belongs to `userId`: create them on that owner's own
+  // connected store when there is one. An own store that can't be used right
+  // now stops the run — these products must never land on the base store.
+  const resolved = await resolveStoreForUser(userId);
+  if (resolved.source === "oauth-unavailable") {
+    console.error(
+      `[bulkCreate] Skipped ${products.length} products: connection to ${resolved.storeDomain} unavailable (${resolved.reason})`,
+    );
+    return { ...results, skipped: products.length, reason: resolved.reason };
+  }
+  const storeConfig = resolved.source === "oauth" ? resolved : undefined;
+
+  const User =
+    mongoose.models.User || (await import("@/models/User")).default;
+  const owner = await User.findById(userId).select("storename brandname").lean();
+  const storeName = owner?.storename || owner?.brandname || "";
+
   for (const product of products) {
     try {
-      const shopifyResponse = await createShopifyProduct({
-        title: product.title,
-        sku: product.sku,
-        brand: product.brand,
-        description: product.description,
-        price: product.price,
-        images: product.images || [],
-        color: product.color?.name || "No Color",
-        size: product.size || [],
-        fabric: product.fabric || "",
-        subcategory: product.subcategory || "",
-        tags: [],
-        barcodeValue: product.barcode,
-      });
+      const shopifyResponse = await createShopifyProduct(
+        {
+          title: product.title,
+          sku: product.sku,
+          brand: product.brand,
+          description: product.description,
+          price: product.price,
+          images: product.images || [],
+          color: product.color?.name || "No Color",
+          size: product.size || [],
+          fabric: product.fabric || "",
+          subcategory: product.subcategory || "",
+          tags: [],
+          barcodeValue: product.barcode,
+          storeName,
+        },
+        storeConfig,
+      );
 
       if (shopifyResponse.status === 200) {
         await Product.findByIdAndUpdate(product._id, {
           shopifyProductId: shopifyResponse.productId,
           shopifyVariantId: shopifyResponse.variantId,
           shopifyInventoryItemId: shopifyResponse.inventoryItemId,
+          shopifyLocationId: shopifyResponse.locationId || null,
         });
+        if (storeConfig && product.storeCollection?.id) {
+          const placement = await addProductToStoreCollection(
+            shopifyResponse.productId,
+            product.storeCollection.id,
+            storeConfig,
+          );
+          console.log(
+            `[bulkCreate] collection ${placement.status} for ${shopifyResponse.productId}` +
+              (placement.reason ? `: ${placement.reason}` : ""),
+          );
+        }
         results.successful++;
       } else {
         results.failed++;
@@ -1650,6 +1781,7 @@ export async function getShopifyLocations(storeConfig) {
           edges {
             node {
               id
+              name
               isActive
             }
           }
@@ -1674,8 +1806,9 @@ export async function getShopifyLocations(storeConfig) {
 }
 
 // GET ALL VARIANT INVENTORY ITEM IDS FOR A PRODUCT
-export async function getAllVariantInventoryIds(shopifyProductId) {
+export async function getAllVariantInventoryIds(shopifyProductId, storeConfig) {
   try {
+    const { client } = buildShopifyClient(storeConfig);
     const GET_VARIANTS = `
       query getProductVariants($id: ID!) {
         product(id: $id) {
@@ -1693,7 +1826,7 @@ export async function getAllVariantInventoryIds(shopifyProductId) {
       }
     `;
 
-    const response = await shopify.post("", {
+    const response = await client.post("", {
       query: GET_VARIANTS,
       variables: { id: shopifyProductId },
     });
@@ -2233,8 +2366,18 @@ export async function updateShopifyProduct(productId, formData, storeConfig) {
       variables: {
         input: {
           id: productId,
-          ...(title && { title }),
-          ...(brand && { vendor: brand }),
+          ...(title && {
+            title: withSizeInTitle(
+              title,
+              Array.isArray(size)
+                ? size
+                : String(size || "").split(",").map((s) => s.trim()).filter(Boolean),
+              storeConfig
+            ),
+          }),
+          // Same rule as createShopifyProduct: the vendor is the store name,
+          // and the brand only when there is no store name.
+          ...((storeName || brand) && { vendor: storeName || brand }),
           ...(subcategory && { productType: subcategory }),
           ...(description && { descriptionHtml: description }),
         },

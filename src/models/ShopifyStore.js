@@ -44,11 +44,35 @@ const ShopifyStoreSchema = new mongoose.Schema(
       default: "connected",
     },
     // "manual" = token pasted into /admin/developer, "oauth" = store owner
-    // authorized the Shopify app.
+    // authorized the Shopify app, "client_credentials" = the store created its
+    // own app in its Shopify Dev Dashboard and gave us that app's Client ID and
+    // Secret. For "client_credentials", apiSecret holds THAT app's secret — it
+    // both mints the 24-hour access token and signs the store's webhooks.
     connectedVia: {
       type: String,
-      enum: ["manual", "oauth"],
+      enum: ["manual", "oauth", "client_credentials"],
       default: "manual",
+    },
+    // When the stored accessToken stops working. Only set for
+    // "client_credentials" (those tokens last 24 hours); the resolver renews
+    // the token shortly before this time. null = the token does not expire.
+    tokenExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    // Shopify location GID that receives the stock of new products, for a
+    // store with more than one shop. null = the first active location.
+    // Set with scripts/set-store-shopify-settings.js — no UI, same rule as
+    // aiExcludedCollectionIds below.
+    defaultLocationId: {
+      type: String,
+      default: null,
+    },
+    // Write the size into the product title as "(Str. M)", the way this
+    // store's own catalogue does it (CPH Concept). Off for every other store.
+    sizeInTitle: {
+      type: Boolean,
+      default: false,
     },
     // Which Shopify app this store authorized. Client IDs are public (they
     // appear in the authorize URL), so this is safe to persist and display.

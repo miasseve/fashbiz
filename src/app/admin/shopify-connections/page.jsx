@@ -15,7 +15,15 @@ import { isUnclaimedEmail } from "@/lib/storeMatching";
 const EMPTY_FORM = {
   userId: "",
   shopDomain: "",
+  clientId: "",
+  clientSecret: "",
 };
+
+// "link"        = email the owner a link to approve our Shopify app (OAuth)
+// "credentials" = the store made its own app in its Shopify Dev Dashboard and
+//                 sent us that app's Client ID and Client Secret
+const MODE_LINK = "link";
+const MODE_CREDENTIALS = "credentials";
 
 const STATUS_STYLES = {
   connected: {
@@ -48,6 +56,8 @@ const ShopifyConnectionsPage = () => {
   const [resendingId, setResendingId] = useState(null);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [mode, setMode] = useState(MODE_LINK);
+  const [connectResult, setConnectResult] = useState(null);
 
   const fetchConnections = async () => {
     try {
@@ -171,6 +181,11 @@ const ShopifyConnectionsPage = () => {
       return;
     }
 
+    if (mode === MODE_CREDENTIALS) {
+      await handleConnectWithCredentials();
+      return;
+    }
+
     setSending(true);
     try {
       const res = await fetch("/api/admin/shopify-connections", {
@@ -198,6 +213,59 @@ const ShopifyConnectionsPage = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleConnectWithCredentials = async () => {
+    setConnectResult(null);
+    if (!form.clientId.trim() || !form.clientSecret.trim()) {
+      setFormError("Please enter the app's Client ID and Client Secret.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await fetch("/api/admin/shopify-connections/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: form.userId,
+          shopDomain: form.shopDomain.trim(),
+          clientId: form.clientId.trim(),
+          clientSecret: form.clientSecret.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFormError(data.error || "Could not connect with these credentials.");
+        return;
+      }
+
+      setSuccessMessage(data.message || "Connected.");
+      setConnectResult(data);
+      // The secret is cleared from the page as soon as it has been saved.
+      setForm(EMPTY_FORM);
+      setOwnerQuery("");
+      setOwnerOpen(false);
+      fetchConnections();
+    } catch {
+      setFormError("Network error. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Pre-fills the credentials form for a store that connected with its own
+  // app — used to reconnect or to enter a rotated Client Secret.
+  const startUpdateCredentials = (connection) => {
+    const owner = storeOwners.find((u) => u._id === connection.userId);
+    setMode(MODE_CREDENTIALS);
+    setForm({ ...EMPTY_FORM, userId: connection.userId || "", shopDomain: connection.shopDomain });
+    setOwnerQuery(owner ? ownerLabel(owner) : "");
+    setFormError("");
+    setSuccessMessage("");
+    setConnectResult(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleResend = async (connection) => {
@@ -280,7 +348,36 @@ const ShopifyConnectionsPage = () => {
 
       {/* Send connection link */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-4">Send a connection link</h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-4">
+          {mode === MODE_CREDENTIALS ? "Connect with the store's own app" : "Send a connection link"}
+        </h3>
+
+        <div className="flex gap-2 mb-4" role="tablist">
+          {[
+            { key: MODE_LINK, label: "Connection link" },
+            { key: MODE_CREDENTIALS, label: "Store's own app (Client ID + Secret)" },
+          ].map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              role="tab"
+              aria-selected={mode === m.key}
+              onClick={() => {
+                setMode(m.key);
+                setFormError("");
+                setSuccessMessage("");
+                setConnectResult(null);
+              }}
+              className={`text-md font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                mode === m.key
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Store owner — one searchable field: search and select in one place */}
@@ -362,9 +459,69 @@ const ShopifyConnectionsPage = () => {
             />
           </div>
 
+          {mode === MODE_CREDENTIALS && (
+            <>
+              <div>
+                <label
+                  htmlFor="client-id-input"
+                  className="block text-md font-semibold text-gray-700 mb-1.5"
+                >
+                  Client ID
+                </label>
+                <input
+                  id="client-id-input"
+                  type="text"
+                  autoComplete="off"
+                  value={form.clientId}
+                  onChange={(e) => setForm((f) => ({ ...f, clientId: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md font-mono focus:outline-none focus:ring-2 focus:ring-gray-400"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="client-secret-input"
+                  className="block text-md font-semibold text-gray-700 mb-1.5"
+                >
+                  Client Secret
+                </label>
+                <input
+                  id="client-secret-input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={form.clientSecret}
+                  onChange={(e) => setForm((f) => ({ ...f, clientSecret: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md font-mono focus:outline-none focus:ring-2 focus:ring-gray-400"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Checked with Shopify before anything is saved. Stored encrypted and never shown again.
+                </p>
+              </div>
+            </>
+          )}
+
           {formError && <p className="text-md text-red-500 font-medium">{formError}</p>}
           {successMessage && (
             <p className="text-md text-green-700 font-medium">{successMessage}</p>
+          )}
+          {connectResult && (
+            <div className="text-md text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 space-y-1">
+              {connectResult.missingScopes?.length > 0 ? (
+                <p className="text-red-600 font-medium">
+                  Missing scopes: {connectResult.missingScopes.join(", ")}. Add them in the store's
+                  app, release a new version, and connect again.
+                </p>
+              ) : (
+                <p className="text-green-700">All required scopes granted.</p>
+              )}
+              <p>
+                Webhooks:{" "}
+                {connectResult.webhooks?.skipped
+                  ? `not registered (${connectResult.webhooks.reason})`
+                  : (connectResult.webhooks || [])
+                      .map((w) => `${w.topic} ${w.status}${w.error ? ` — ${w.error}` : ""}`)
+                      .join(", ")}
+              </p>
+            </div>
           )}
 
           <div className="flex gap-3 pt-1">
@@ -374,7 +531,13 @@ const ShopifyConnectionsPage = () => {
               className="flex items-center gap-2 bg-gray-900 text-white text-md font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
             >
               {sending ? <Spinner size="sm" color="white" /> : <MdSend />}
-              {sending ? "Sending..." : "Send connection link"}
+              {mode === MODE_CREDENTIALS
+                ? sending
+                  ? "Connecting..."
+                  : "Test and connect"
+                : sending
+                  ? "Sending..."
+                  : "Send connection link"}
             </button>
           </div>
         </form>
@@ -414,6 +577,11 @@ const ShopifyConnectionsPage = () => {
                           Added manually
                         </span>
                       )}
+                      {c.connectedVia === "client_credentials" && (
+                        <span className="inline-block mt-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                          Store&apos;s own app
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-gray-700">
                       {c.storeName ? (
@@ -436,11 +604,26 @@ const ShopifyConnectionsPage = () => {
                           Link expires {formatDate(c.linkExpiresAt)}
                         </div>
                       )}
+                      {c.status !== "connected" && c.lastConnectionError && (
+                        <div className="text-xs text-red-500 mt-0.5 max-w-xs">
+                          {c.lastConnectionError}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 text-md whitespace-nowrap">
                       {formatDate(c.connectedAt)}
                     </td>
                     <td className="px-4 py-3.5">
+                      {c.connectedVia === "client_credentials" ? (
+                        <button
+                          onClick={() => startUpdateCredentials(c)}
+                          disabled={!c.userId}
+                          className="flex items-center gap-1 text-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50"
+                        >
+                          <MdRefresh />
+                          Update credentials
+                        </button>
+                      ) : (
                       <button
                         onClick={() => handleResend(c)}
                         disabled={resendingId === c.id || !c.userId}
@@ -449,6 +632,7 @@ const ShopifyConnectionsPage = () => {
                         {resendingId === c.id ? <Spinner size="sm" /> : <MdRefresh />}
                         Resend link
                       </button>
+                      )}
                     </td>
                   </tr>
                 );
