@@ -7,6 +7,18 @@ export async function OPTIONS() {
   return handlePreflight();
 }
 
+// A single transient Cloudinary hiccup shouldn't silently reorder the photo
+// set — the first photo is treated as the hero/front-view image everywhere
+// downstream (dashboard, Discover, Shopify), so losing position 0 to a flaky
+// upload is worse than just retrying it once before giving up on it.
+async function uploadWithRetry(dataUrl) {
+  try {
+    return await cloudinary.v2.uploader.upload(dataUrl, { folder: "nm-demo", format: "webp" });
+  } catch {
+    return cloudinary.v2.uploader.upload(dataUrl, { folder: "nm-demo", format: "webp" });
+  }
+}
+
 // Runs a Discover capture through Ree's real product-recognition AI — the
 // same pipeline the dashboard's "add product" flow already uses, not a
 // separate/fake system. Uploads the photos once and returns both the
@@ -25,13 +37,13 @@ export async function POST(req) {
     // Uploaded in parallel (was sequential — each extra photo added its full
     // upload time on top of the last) and tolerant of a single bad image:
     // one corrupt/unsupported photo shouldn't sink the whole request when
-    // the other photo(s) are fine.
+    // the other photo(s) are fine. Promise.allSettled preserves the original
+    // index order of validDataUrls regardless of completion timing, so a
+    // retry (above) is what actually protects photo position — filtering
+    // alone only avoids losing order among whichever uploads succeed, not
+    // which one specifically failed.
     const validDataUrls = rawImages.filter((u) => typeof u === "string" && u.startsWith("data:"));
-    const uploadResults = await Promise.allSettled(
-      validDataUrls.map((dataUrl) =>
-        cloudinary.v2.uploader.upload(dataUrl, { folder: "nm-demo", format: "webp" })
-      )
-    );
+    const uploadResults = await Promise.allSettled(validDataUrls.map(uploadWithRetry));
     const images = uploadResults
       .filter((r) => r.status === "fulfilled")
       .map((r) => ({ url: r.value.secure_url, publicId: r.value.public_id }));
