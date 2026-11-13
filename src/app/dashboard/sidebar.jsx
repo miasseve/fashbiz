@@ -178,7 +178,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </>
         )}
       </div>
-      <nav className="flex flex-col items-center text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto">
+      <nav className="flex flex-col items-center text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto sidebar-scrollbar">
         {menuItems.map(({ href, label, icon, isActive }) => (
           <Link
             key={href}

@@ -85,12 +85,14 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   ].filter((item) => item.roles.includes(userRole));
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div className="logo text-[2rem] font-bold text-center bd-white border-b border-[#dedede]">
         <img src="/new_ree_icon.png" className="w-[150px] max-w-full mx-auto py-[12px]" />
         <div className="text-[1rem] text-gray-500 pb-2">Admin Panel</div>
       </div>
-      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar">
+      {/* flex-1 + overflow-y-auto so the menu scrolls instead of being cut
+          off on a shorter screen — same pattern as the dashboard sidebar. */}
+      <nav className="flex flex-col items-start text-lg w-full text-[1rem] navbar flex-1 overflow-y-auto sidebar-scrollbar">
         {menuItems.map(({ href, label, icon, isActive }) => (
           <Link
             key={href}

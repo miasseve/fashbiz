@@ -214,6 +214,26 @@ select {
   scrollbar-width: none;
 }
 
+/* Thin, visible scrollbar for the sidebar nav — default browser scrollbars
+   are either invisible or too heavy next to the sidebar's slim width. */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ffb3b3 transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #ffb3b3;
+  border-radius: 9999px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #ff8f8f;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
