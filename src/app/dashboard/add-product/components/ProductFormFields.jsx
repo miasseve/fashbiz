@@ -48,8 +48,15 @@ const ProductFormFields = ({
 
   return (
     <>
-      {/* Category — only shown when full AI pipeline is active */}
-      {showCategoryField && (
+      {/* Category — generic platform taxonomy. Shown only when the full AI
+          pipeline is active AND this store has no connected Shopify of its
+          own; a connected store sees its own Shopify categories below
+          instead, so only one of the two is ever on screen at once. The
+          underlying `category` value is still set from the AI response
+          either way (see SecondStep's setValue("category", ...)) — hiding
+          this field never stops it from being filled, since pricing, points
+          and search all key off it regardless of what's shown here. */}
+      {showCategoryField && storeCollectionOptions.length === 0 && (
         <div>
           <label className="text-sm font-medium">Category</label>
           <select
@@ -69,17 +76,19 @@ const ProductFormFields = ({
         </div>
       )}
 
-      {/* Store collection — only when this store has a connected Shopify with
-          collections. The AI's pick is pre-selected and fully correctable: it
-          chooses by garment type only, and a human still has to settle cases
-          it can't. Each row says what is actually inside the collection,
-          because two collections can share a title and a collection's URL
-          handle contradicts its contents on a real store — the one titled
-          "PRADA" has the handle "skjorter" ("shirts"). The handle is therefore
-          never shown; what's in the collection is what tells them apart. */}
+      {/* Shopify Category — only when this store has a connected Shopify with
+          collections; replaces the generic Category field above for these
+          stores (see comment there). The AI's pick is pre-selected and fully
+          correctable: it chooses by garment type only, and a human still has
+          to settle cases it can't. Each row says what is actually inside the
+          collection, because two collections can share a title and a
+          collection's URL handle contradicts its contents on a real store —
+          the one titled "PRADA" has the handle "skjorter" ("shirts"). The
+          handle is therefore never shown; what's in the collection is what
+          tells them apart. */}
       {storeCollectionOptions.length > 0 && (
         <div>
-          <label className="text-sm font-medium">Shopify Collection</label>
+          <label className="text-sm font-medium">Shopify Category</label>
           <select
             value={watch("storeCollection.id") || ""}
             onChange={(e) => {
@@ -109,8 +118,8 @@ const ProductFormFields = ({
             ))}
           </select>
           <span className="text-gray-500 text-[12px]">
-            Your store&apos;s own collection for this product — the product is added
-            to it on your Shopify when you save. Collections marked
+            Your store&apos;s own category for this product — the product is added
+            to it on your Shopify when you save. Categories marked
             &quot;automatic&quot; fill themselves from the product&apos;s tags, so
             Shopify decides those.
           </span>
