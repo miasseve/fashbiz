@@ -327,6 +327,14 @@ const SecondStep = ({
   }, []);
 
   const brandValue = watch("brand");
+  // storeCollection was never register()-ed as a field (it's a nested object
+  // set only via setValue), and watch() on an unregistered nested path is
+  // unreliable at triggering a re-render here. Watching it at this level
+  // (where watch() is already working correctly for other fields, e.g.
+  // brandValue above) and passing the id down as a plain prop sidesteps that
+  // — ProductFormFields no longer needs its own watch() call for it, so the
+  // dropdown's displayed value always matches what was actually selected.
+  const selectedStoreCollectionId = watch("storeCollection.id") || "";
 
   useEffect(() => {
     if (brandValue) {
@@ -560,6 +568,7 @@ const SecondStep = ({
                   priceSuggestion={priceSuggestion}
                   isDemo={isDemo}
                   storeCollectionOptions={storeCollectionOptions}
+                  storeCollectionValue={selectedStoreCollectionId}
                 />
               </CardBody>
               <CardFooter className="flex justify-between">

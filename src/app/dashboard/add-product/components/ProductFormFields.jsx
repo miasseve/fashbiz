@@ -29,6 +29,7 @@ const ProductFormFields = ({
   priceSuggestion = null,
   isDemo = false,
   storeCollectionOptions = [],
+  storeCollectionValue = "",
 }) => {
   const currentName = watch("color.name") || "";
   const currentHex = watch("color.hex") || colorHex || "";
@@ -90,7 +91,7 @@ const ProductFormFields = ({
         <div>
           <label className="text-sm font-medium">Shopify Category</label>
           <select
-            value={watch("storeCollection.id") || ""}
+            value={storeCollectionValue}
             onChange={(e) => {
               const picked = storeCollectionOptions.find((c) => c.id === e.target.value);
               setValue(
