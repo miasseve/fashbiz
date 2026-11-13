@@ -65,8 +65,12 @@ const AdminLayout = ({ children }) => {
           />
         )}
 
+        {/* bottom-0 + overflow-y-auto here (not just on the inner nav) because
+            on mobile this is `fixed` with only `h-full` set — that can fail
+            to resolve against the viewport reliably, leaving content below
+            the fold with nothing to scroll it into view. */}
         <div
-          className={`fixed lg:relative top-0 left-0 h-full w-[280px] sm:w-full bg-white transition-transform duration-300 border-r border-[#dedede]
+          className={`fixed lg:relative top-0 left-0 bottom-0 h-full w-[280px] sm:w-full bg-white transition-transform duration-300 border-r border-[#dedede] overflow-y-auto sidebar-scrollbar
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:col-span-2 z-50`}
         >
