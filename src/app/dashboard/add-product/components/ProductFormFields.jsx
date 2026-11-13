@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CATEGORIES } from "@/lib/taxonomy";
 import ColorPicker from "@/components/ColorPicker";
 import { nameToHex, nearestColorName } from "@/lib/colorNaming";
@@ -47,6 +47,19 @@ const ProductFormFields = ({
 
   const colorNameField = register("color.name");
 
+  // The select's displayed value is driven by this local state, not
+  // react-hook-form's watch(), so a click updates the screen on the same
+  // render every time — no dependency on react-hook-form's subscription
+  // timing for an unregistered nested field (see SecondStep's comment on
+  // selectedStoreCollectionId for why that was unreliable here).
+  const [selectedCollectionId, setSelectedCollectionId] = useState(storeCollectionValue);
+
+  // Stays in sync when the value changes from outside this component — the
+  // AI's initial pick arriving after analysis, or the field being reset.
+  useEffect(() => {
+    setSelectedCollectionId(storeCollectionValue);
+  }, [storeCollectionValue]);
+
   return (
     <>
       {/* Category — generic platform taxonomy. Shown only when the full AI
@@ -91,8 +104,9 @@ const ProductFormFields = ({
         <div>
           <label className="text-sm font-medium">Shopify Category</label>
           <select
-            value={storeCollectionValue}
+            value={selectedCollectionId}
             onChange={(e) => {
+              setSelectedCollectionId(e.target.value);
               const picked = storeCollectionOptions.find((c) => c.id === e.target.value);
               setValue(
                 "storeCollection",
