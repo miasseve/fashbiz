@@ -3,11 +3,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Spinner, Button } from "@heroui/react";
 import { IoIosCamera } from "react-icons/io";
+import { MdCrop } from "react-icons/md";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { setUploadedImagesOfProduct } from "@/features/productSlice";
 import { resizeImageFile } from "./resizeImage";
+import CropModal from "./CropModal";
 
 // Up to 4 photos per product — matches what the AI analysis uses (it caps at 4).
 const MAX_IMAGES = 4;
@@ -33,6 +35,12 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   // Index currently being removed, or null.
   const [deletingIndex, setDeletingIndex] = useState(null);
 
+  // True while a crop's re-upload is replacing a tile.
+  const [cropBusy, setCropBusy] = useState(false);
+  // Index of the tile the user chose to crop (just-added or long since
+  // landed — same button either way), or null.
+  const [editCropIndex, setEditCropIndex] = useState(null);
+
   // Camera state
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [availableCameras, setAvailableCameras] = useState([]);
@@ -55,8 +63,26 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep redux (and the "fash" localStorage persist) in sync with every
+  // add/remove/crop as it happens, not just on Next/Back — otherwise a
+  // mid-step refresh restores an earlier snapshot instead of what's on
+  // screen (e.g. a deleted photo reappearing after its Cloudinary asset
+  // was already gone).
+  useEffect(() => {
+    dispatch(setUploadedImagesOfProduct(images));
+  }, [images, dispatch]);
+
   const remainingSlots = MAX_IMAGES - images.length - uploadingCount;
   const atLimit = remainingSlots <= 0;
+
+  // Resolve a friendly message for an upload failure the same way
+  // everywhere it's reported, instead of repeating this per call site.
+  const uploadErrorMessage = (error) =>
+    error.code === "ECONNABORTED"
+      ? "Upload timed out. Please check your connection and try again."
+      : error.response?.data?.error ||
+        error.message ||
+        "Failed to upload image.";
 
   // ── Upload one already-validated file ──
   const uploadOne = async (file) => {
@@ -84,17 +110,46 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       const uploaded = await uploadOne(file);
       setImages((prev) => [...prev, uploaded]);
     } catch (error) {
-      const message =
-        error.code === "ECONNABORTED"
-          ? "Upload timed out. Please check your connection and try again."
-          : error.response?.data?.error ||
-            error.message ||
-            "Failed to upload image.";
-      toast.error(message);
+      toast.error(uploadErrorMessage(error));
     } finally {
       setUploadingCount((c) => c - 1);
     }
   };
+
+  // Crop a tile — new or long since landed, it's the same button and the
+  // same flow: upload the new crop, swap it
+  // into that same slot, then best-effort clean up the old Cloudinary asset.
+  const handleEditCropConfirm = async (croppedFile, err) => {
+    if (err) {
+      toast.error(err.message);
+      return;
+    }
+    const targetIndex = editCropIndex;
+    const previous = images[targetIndex];
+    setCropBusy(true);
+    try {
+      const uploaded = await uploadOne(croppedFile);
+      setImages((prev) =>
+        prev.map((img, i) => (i === targetIndex ? uploaded : img)),
+      );
+      setEditCropIndex(null);
+      if (previous?.publicId) {
+        axios
+          .delete(
+            `/api/upload?publicId=${previous.publicId}&removeBgPublicId=${
+              previous.removePublicId || ""
+            }`,
+          )
+          .catch(() => {});
+      }
+    } catch (error) {
+      toast.error(uploadErrorMessage(error));
+    } finally {
+      setCropBusy(false);
+    }
+  };
+
+  const handleEditCropCancel = () => setEditCropIndex(null);
 
   const openFilePicker = () => {
     setIsCameraOpen(false);
@@ -137,7 +192,8 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
       topRef.current.scrollIntoView({ behavior: "smooth" });
     }
 
-    // One at a time, so photos land in the order they were picked.
+    // One at a time, so photos land in the order they were picked. Each
+    // lands in the grid uncropped — cropping is an option on the tile.
     for (const file of filesToUse) {
       // eslint-disable-next-line no-await-in-loop
       await addFile(file);
@@ -323,20 +379,16 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
   }, []);
 
   // ── Step navigation ──
-  const commitImages = () => dispatch(setUploadedImagesOfProduct(images));
+  // Redux is already kept in sync with `images` on every change (see the
+  // sync effect above), so there's nothing left to commit here.
+  const handleNext = () => handleSaveUrl();
+  const handleBack = () => handleBackStep();
 
-  const handleNext = () => {
-    commitImages();
-    handleSaveUrl();
-  };
-
-  const handleBack = () => {
-    // Commit first so photos added since the last step aren't dropped.
-    commitImages();
-    handleBackStep();
-  };
-
-  const busy = uploadingCount > 0 || deletingIndex !== null;
+  const busy =
+    uploadingCount > 0 ||
+    deletingIndex !== null ||
+    cropBusy ||
+    editCropIndex !== null;
 
   return (
     <div
@@ -447,6 +499,19 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
                   </svg>
                 )}
               </Button>
+              <Button
+                isIconOnly
+                isDisabled={busy}
+                onPress={() => setEditCropIndex(index)}
+                aria-label={`Crop photo ${index + 1}`}
+                className={`absolute left-2 top-2 z-10 min-w-0 w-9 h-9 rounded-full text-white shadow-lg ${
+                  busy
+                    ? "bg-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                <MdCrop className="w-5 h-5" />
+              </Button>
               <Image
                 src={image.url}
                 alt={`Product photo ${index + 1}`}
@@ -526,6 +591,17 @@ const FirstStep = ({ handleSaveUrl, handleBackStep }) => {
           </div>
         </div>
       </div>
+
+      {editCropIndex !== null && images[editCropIndex] && (
+        <CropModal
+          src={images[editCropIndex].url}
+          crossOrigin
+          busy={cropBusy}
+          title="Crop photo"
+          onConfirm={handleEditCropConfirm}
+          onCancel={handleEditCropCancel}
+        />
+      )}
     </div>
   );
 };
