@@ -519,7 +519,7 @@ ${examplesText}
 Rules:
 - Keep the same schema structure
 - Align title style, tag conventions, and description tone with the examples
-- If examples use specific brand casing or tag patterns, follow them
+- Do not change the brand field — it is carried over from the initial analysis regardless of what you return here, since you cannot see the product images
 - Do not change factual information (color, size) unless the examples clearly show a pattern
 - Maintain or improve the confidence score based on example alignment
 
@@ -537,6 +537,12 @@ Condition grades: A/B/C`,
       });
 
       finalAiResult = JSON.parse(refinementResponse.choices[0]?.message?.content?.trim());
+      // Brand is a factual read off the images, same as store_collection_ref
+      // above — the refinement pass never sees the images, only the similar
+      // listings' text, so it has no basis to add, drop or change a brand the
+      // vision pass already determined. Carried forward verbatim rather than
+      // trusted from the refinement response.
+      finalAiResult.brand = visionResult.brand;
     } catch {
       console.error("Refinement parse failed, using vision result");
     }
