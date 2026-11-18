@@ -27,9 +27,13 @@ const PRODUCT_RESPONSE_SCHEMA = {
         title: {
           type: "string",
           description:
-            "Merchant-facing clean title. Specific, not generic — name the garment type, its most distinctive design detail (shape, hardware, print), and color. If no label is legible but the silhouette is unmistakably a well-known design house's signature style, name that style in the title with a '-Style' qualifier (never claim authenticity).",
+            "Merchant-facing clean title. Specific, not generic — name the garment type, its most distinctive design detail (shape, hardware, print), and color. If the brand field is Unbranded but the silhouette alone is unmistakably a well-known design house's signature shape, name that style in the title with a '-Style' qualifier (never claim authenticity). If the brand field is set to a real name, use it plainly in the title — no '-Style' qualifier needed.",
         },
-        brand: { type: "string", description: "Brand name, controlled vocabulary if matched" },
+        brand: {
+          type: "string",
+          description:
+            "Brand name. Set from a clearly legible label/logo, OR from a trademarked signature print/pattern (e.g. a monogram canvas, a house check) that is itself a recognized brand mark — that counts as confirmed, not a guess. 'Unbranded' only when neither a label nor a signature pattern is visible; a generic silhouette/shape alone is NOT enough evidence for this field.",
+        },
         size: { type: "string", description: "Normalized size format (S, M, L, EU 38, etc.)" },
         category: {
           type: "string",
@@ -412,9 +416,14 @@ export async function analyzeProductImages(imageUrls, storeId, options = {}) {
         - Tags: include product type, gender (men/women/unisex), color, style (casual/formal/vintage)
         - confidence_score: rate 0-1 based on image clarity and label visibility. Multiple clear images should increase confidence.
         - Description: write a short (1-2 sentence) resale-ready product description that calls out the garment's most distinctive, sellable details (silhouette, hardware, print, trim) — not a generic restatement of the category
-        - Do NOT invent brands — if no label/logo is clearly legible, the "brand" field must be "Unbranded". This applies ONLY to the "brand" field.
-        - Title and description may still name a recognizable design — if the silhouette is unmistakably a well-known design house's signature style (e.g. a double-bridge aviator shape, a specific monogram pattern) even with no legible label, say so in the title/description as "<House>-Style" or "in the style of <House>". Never phrase it as if it's confirmed authentic, and never put it in the "brand" field itself — that stays "Unbranded" until a real label is read.
-          Example: label illegible but the shape is clearly recognizable → brand: "Unbranded", title: "Dior Technologic-Style Gold Aviator Sunglasses, Two-Tone Mirror Lenses"
+        - Brand has two kinds of valid evidence, treated the same way:
+          1. A clearly legible label/logo/tag.
+          2. A trademarked signature PRINT or PATTERN that is itself a recognized brand mark (e.g. an interlocking monogram canvas, a house check) — this is as confirmed as a label, because the pattern itself IS the brand mark, not a guess.
+          If either is present, set "brand" to the real name, and the title/description should use it plainly (no "-Style" qualifier).
+        - A generic SILHOUETTE or SHAPE alone (no visible label and no signature print — e.g. just a particular frame or jacket cut) is weaker evidence. It is NOT enough to set "brand" — leave "brand" as "Unbranded". But the title/description may still note the resemblance as "<House>-Style" or "in the style of <House>", without claiming it's confirmed authentic.
+        - Do NOT invent a brand with no visual evidence at all (no label, no signature print, no recognizable silhouette) — "brand" must be "Unbranded" and the title/description should not reference any house name.
+          Example: a legible interlocking-GG monogram canvas print → brand: "Gucci", title: "Gucci Monogram Puffer Jacket with Blue Accents"
+          Example: label illegible, but the frame shape alone is unmistakably a specific design house's signature silhouette, no print/logo visible → brand: "Unbranded", title: "Dior Technologic-Style Gold Aviator Sunglasses, Two-Tone Mirror Lenses"
           Example: no recognizable design cues at all → brand: "Unbranded", title: "Navy Cotton Crewneck T-Shirt" (plain, no invented style reference)
         - price_tag_amount: only set this if a physical price tag is visible AND its price is clearly, unambiguously legible. If there's no tag, or it's blurry/handwritten/obscured/uncertain in any way, return null — never guess a price
 ${buildCollectionPromptBlock(collectionRefMap)}`,
