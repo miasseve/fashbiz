@@ -24,7 +24,11 @@ const PRODUCT_RESPONSE_SCHEMA = {
     schema: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Merchant-facing clean title" },
+        title: {
+          type: "string",
+          description:
+            "Merchant-facing clean title. Specific, not generic — name the garment type, its most distinctive design detail (shape, hardware, print), and color. If no label is legible but the silhouette is unmistakably a well-known design house's signature style, name that style in the title with a '-Style' qualifier (never claim authenticity).",
+        },
         brand: { type: "string", description: "Brand name, controlled vocabulary if matched" },
         size: { type: "string", description: "Normalized size format (S, M, L, EU 38, etc.)" },
         category: {
@@ -407,8 +411,11 @@ export async function analyzeProductImages(imageUrls, storeId, options = {}) {
         - Condition: assess from visible wear, stains, pilling, damage in the image
         - Tags: include product type, gender (men/women/unisex), color, style (casual/formal/vintage)
         - confidence_score: rate 0-1 based on image clarity and label visibility. Multiple clear images should increase confidence.
-        - Description: write a short (1-2 sentence) resale-ready product description
-        - Do NOT invent brands — if no brand visible, use "Unbranded"
+        - Description: write a short (1-2 sentence) resale-ready product description that calls out the garment's most distinctive, sellable details (silhouette, hardware, print, trim) — not a generic restatement of the category
+        - Do NOT invent brands — if no label/logo is clearly legible, the "brand" field must be "Unbranded". This applies ONLY to the "brand" field.
+        - Title and description may still name a recognizable design — if the silhouette is unmistakably a well-known design house's signature style (e.g. a double-bridge aviator shape, a specific monogram pattern) even with no legible label, say so in the title/description as "<House>-Style" or "in the style of <House>". Never phrase it as if it's confirmed authentic, and never put it in the "brand" field itself — that stays "Unbranded" until a real label is read.
+          Example: label illegible but the shape is clearly recognizable → brand: "Unbranded", title: "Dior Technologic-Style Gold Aviator Sunglasses, Two-Tone Mirror Lenses"
+          Example: no recognizable design cues at all → brand: "Unbranded", title: "Navy Cotton Crewneck T-Shirt" (plain, no invented style reference)
         - price_tag_amount: only set this if a physical price tag is visible AND its price is clearly, unambiguously legible. If there's no tag, or it's blurry/handwritten/obscured/uncertain in any way, return null — never guess a price
 ${buildCollectionPromptBlock(collectionRefMap)}`,
       },
